@@ -81,16 +81,28 @@ pnpm db:migrate
 >   - **마이그레이션/스키마 작업**: `DIRECT_URL` (Direct Connection)
 > - Vercel 배포 시 자동으로 `prisma generate`가 실행됩니다
 
-### 🔧 Supabase Shadow Database 문제 해결
+### 🔧 Supabase 데이터베이스 문제 해결
 
-Supabase에서 마이그레이션 시 Shadow Database 생성 권한 문제가 발생할 수 있습니다:
-
+#### 1. Shadow Database 문제
 ```bash
 # 문제: database "prisma_migrate_shadow_db_xxx" does not exist
 # 해결: --skip-seed 옵션으로 Shadow Database 검증 건너뛰기
-
 pnpm db:migrate  # 이미 --skip-seed 옵션이 포함되어 있음
 ```
+
+#### 2. Prepared Statement 충돌 문제 (중요!)
+```bash
+# 문제: prepared statement "s0" already exists
+# 원인: 여러 Prisma 프로세스가 동시에 같은 DB에 연결
+# 해결: Prisma 클라이언트에서 prepared statement 비활성화
+```
+
+**근본원인**: 
+- Next.js 개발 서버와 Prisma CLI가 동시 실행
+- 동일한 PostgreSQL 세션에서 같은 이름의 prepared statement 생성 시도
+- Supabase connection pooling과의 충돌
+
+**해결방법**: `src/lib/prisma.ts`에서 `prepared_statements=false` 설정 적용
 
 ### 6. 개발 서버 실행
 
@@ -243,4 +255,5 @@ pnpm db:reset
 
 ## 📄 라이센스
 
+MIT License
 MIT License
