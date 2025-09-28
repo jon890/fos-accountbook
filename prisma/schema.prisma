@@ -8,44 +8,57 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// =====================================================
+// NextAuth.js 인증 관련 모델들
+// =====================================================
+// 주의: 아래 Account, Session, User, VerificationToken 모델들은
+// NextAuth.js 공식 스키마 형식을 정확히 따라야 합니다.
+// 필드명이나 타입을 임의로 변경하면 NextAuth와 호환성 문제가 발생합니다.
+// 참조: https://authjs.dev/getting-started/adapters/prisma
+// =====================================================
+
+// NextAuth.js 공식 스키마 형식을 따라야 합니다.
+// 절대 필드명을 변경하지 마세요! NextAuth.js와의 호환성을 위해 정확한 형식을 유지해야 합니다.
 model Account {
   id                String  @id @default(cuid())
-  userId            String  @map("user_id")
+  userId            String
   type              String
   provider          String
-  providerAccountId String? @map("provider_account_id")
-  refreshToken      String? @map("refresh_token") @db.Text
-  accessToken       String? @map("access_token") @db.Text
-  expiresAt         Int?    @map("expires_at")
-  tokenType         String? @map("token_type")
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
   scope             String?
-  idToken           String? @map("id_token") @db.Text
-  sessionState      String? @map("session_state")
+  id_token          String? @db.Text
+  session_state     String?
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
 }
 
+// NextAuth.js 공식 스키마 형식을 따라야 합니다.
 model Session {
   id           String   @id @default(cuid())
-  sessionToken String   @unique @map("session_token")
-  userId       String   @map("user_id")
+  sessionToken String   @unique
+  userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
 
+// NextAuth.js 공식 스키마 형식을 따라야 합니다.
 model User {
   id            String         @id @default(cuid())
   name          String?
   email         String         @unique
-  emailVerified DateTime?      @map("email_verified")
+  emailVerified DateTime?
   image         String?
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
-  deletedAt     DateTime?      @map("deleted_at")
+  created_at    DateTime       @default(now())
+  updated_at    DateTime       @updatedAt
+  deleted_at    DateTime?
   accounts      Account[]
   familyMembers FamilyMember[] @relation("UserFamilyMembers")
   sessions      Session[]
@@ -53,6 +66,7 @@ model User {
   @@map("users")
 }
 
+// NextAuth.js 공식 스키마 형식을 따라야 합니다.
 model VerificationToken {
   identifier String
   token      String   @unique
@@ -61,6 +75,13 @@ model VerificationToken {
   @@unique([identifier, token])
   @@map("verification_tokens")
 }
+
+// =====================================================
+// 가계부 애플리케이션 비즈니스 모델들
+// =====================================================
+// 아래 모델들은 가계부 앱의 비즈니스 로직을 위한 것으로,
+// snake_case 컨벤션과 UUID 기반 관계를 사용합니다.
+// =====================================================
 
 model Family {
   id         BigInt         @id @default(autoincrement())
