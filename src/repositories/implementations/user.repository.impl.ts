@@ -16,7 +16,7 @@ export class UserRepositoryImpl implements IUserRepository {
   async findById(id: string): Promise<UserData | null> {
     const user = await prisma.user.findFirst({
       where: {
-        id: BigInt(id),
+        id: id,
         deletedAt: null,
       },
     });
@@ -65,7 +65,7 @@ export class UserRepositoryImpl implements IUserRepository {
   async create(data: CreateUserData): Promise<UserData> {
     const user = await prisma.user.create({
       data: {
-        authId: data.authId,
+        ...(data.id && { id: data.id }),
         name: data.name || null,
         email: data.email,
         emailVerified: data.emailVerified || null,
@@ -79,7 +79,7 @@ export class UserRepositoryImpl implements IUserRepository {
   async update(id: string, data: UpdateUserData): Promise<UserData | null> {
     try {
       const user = await prisma.user.update({
-        where: { id: BigInt(id) },
+        where: { id: id },
         data: {
           ...(data.name !== undefined && { name: data.name }),
           ...(data.email !== undefined && { email: data.email }),
@@ -100,7 +100,7 @@ export class UserRepositoryImpl implements IUserRepository {
   async softDelete(id: string): Promise<boolean> {
     try {
       await prisma.user.update({
-        where: { id: BigInt(id) },
+        where: { id: id },
         data: { deletedAt: new Date() },
       });
       return true;
@@ -112,7 +112,7 @@ export class UserRepositoryImpl implements IUserRepository {
   async restore(id: string): Promise<boolean> {
     try {
       await prisma.user.update({
-        where: { id: BigInt(id) },
+        where: { id: id },
         data: { deletedAt: null },
       });
       return true;
@@ -124,7 +124,7 @@ export class UserRepositoryImpl implements IUserRepository {
   async exists(id: string): Promise<boolean> {
     const count = await prisma.user.count({
       where: {
-        id: BigInt(id),
+        id: id,
         deletedAt: null,
       },
     });
@@ -147,7 +147,7 @@ export class UserRepositoryImpl implements IUserRepository {
 
   async findByAuthId(authId: string): Promise<UserData | null> {
     const user = await prisma.user.findUnique({
-      where: { authId },
+      where: { id: authId },
     });
 
     return user && !user.deletedAt ? (serialize(user) as UserData) : null;
@@ -182,7 +182,7 @@ export class UserRepositoryImpl implements IUserRepository {
   async existsByAuthId(authId: string): Promise<boolean> {
     const count = await prisma.user.count({
       where: {
-        authId,
+        id: authId,
         deletedAt: null,
       },
     });

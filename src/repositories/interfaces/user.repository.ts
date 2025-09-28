@@ -7,7 +7,7 @@ import { BaseRepository } from "./base.repository";
 export interface UserData {
   id: string;
   uuid: string;
-  authId: string;
+  internalId: string;
   name: string | null;
   email: string;
   emailVerified: Date | null;
@@ -18,7 +18,7 @@ export interface UserData {
 }
 
 export interface CreateUserData {
-  authId: string;
+  id?: string;
   name?: string;
   email: string;
   emailVerified?: Date;
