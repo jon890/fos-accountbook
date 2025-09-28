@@ -1,6 +1,8 @@
 'use client'
 
 import { useSession } from "next-auth/react"
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { LoginPage } from "@/components/auth/LoginPage"
 import { LoadingSpinner } from "@/components/common/LoadingSpinner"
 import { Header } from "@/components/layout/Header"
@@ -11,9 +13,34 @@ import { DashboardTabs } from "@/components/dashboard/DashboardTabs"
 
 export default function HomePage() {
   const { data: session, status } = useSession()
+  const router = useRouter()
+  const [checkingFamily, setCheckingFamily] = useState(false)
+
+  // 로그인 후 가족 정보 확인
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.id && !checkingFamily) {
+      checkFamily()
+    }
+  }, [status, session, checkingFamily])
+
+  const checkFamily = async () => {
+    setCheckingFamily(true)
+    try {
+      const response = await fetch('/api/families')
+      if (response.status === 404) {
+        // 가족이 없는 경우 생성 페이지로 리다이렉트
+        router.push('/families/create')
+        return
+      }
+    } catch (error) {
+      console.error('Family check error:', error)
+    } finally {
+      setCheckingFamily(false)
+    }
+  }
 
   // 세션 로딩 중
-  if (status === "loading") {
+  if (status === "loading" || checkingFamily) {
     return <LoadingSpinner />
   }
 

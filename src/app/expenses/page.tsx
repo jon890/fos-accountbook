@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { Header } from '@/components/layout/Header'
@@ -26,6 +27,7 @@ interface Family {
 
 export default function ExpensesPage() {
   const { data: session, status } = useSession()
+  const router = useRouter()
   const [family, setFamily] = useState<Family | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -45,6 +47,12 @@ export default function ExpensesPage() {
     try {
       setLoading(true)
       const response = await fetch('/api/families')
+      
+      if (response.status === 404) {
+        // 가족이 없는 경우 생성 페이지로 리다이렉트
+        router.push('/families/create')
+        return
+      }
       
       if (!response.ok) {
         throw new Error('가족 정보를 불러오는데 실패했습니다')
