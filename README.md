@@ -67,11 +67,14 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 ### 5. 데이터베이스 스키마 적용
 
 ```bash
-# .env.local 파일이 있는지 확인 후 실행 (Prisma 사용)
-pnpm db:push
+# .env.local 파일이 있는지 확인 후 실행 (마이그레이션 사용)
+pnpm db:migrate
 ```
 
-> **참고**: Prisma는 `DIRECT_URL`을 사용하여 마이그레이션을 수행하고, 애플리케이션 런타임에서는 `DATABASE_URL` (connection pool)을 사용합니다.
+> **중요**: 
+> - 개발 시 **마이그레이션**을 사용하여 스키마를 관리합니다
+> - `db:push`는 긴급한 프로토타이핑 시에만 사용
+> - Vercel 배포 시 자동으로 `prisma generate`가 실행됩니다
 
 ### 6. 개발 서버 실행
 
@@ -174,6 +177,11 @@ pnpm db:validate
 2. 환경 변수 설정 (위의 `.env.local` 내용)
 3. `NEXTAUTH_URL`을 배포된 도메인으로 변경
 4. Google OAuth 리디렉션 URI에 배포된 도메인 추가
+
+> **배포 주의사항**:
+> - `postinstall` 스크립트가 자동으로 `prisma generate`를 실행합니다
+> - 환경 변수가 제대로 설정되어 있는지 확인하세요
+> - Supabase 연결 풀링 URL(`DATABASE_URL`)을 사용하세요
 
 ## 📊 데이터베이스 진화 히스토리
 
