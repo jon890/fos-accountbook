@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react"
 import { useRouter } from 'next/navigation'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { LoginPage } from "@/components/auth/LoginPage"
 import { LoadingSpinner } from "@/components/common/LoadingSpinner"
 import { Header } from "@/components/layout/Header"
@@ -14,30 +14,32 @@ import { DashboardTabs } from "@/components/dashboard/DashboardTabs"
 export default function HomePage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const [familyChecked, setFamilyChecked] = useState(false)
   const [checkingFamily, setCheckingFamily] = useState(false)
-
-  const checkFamily = useCallback(async () => {
-    setCheckingFamily(true)
-    try {
-      const response = await fetch('/api/families')
-      if (response.status === 404) {
-        // 가족이 없는 경우 생성 페이지로 리다이렉트
-        router.push('/families/create')
-        return
-      }
-    } catch (error) {
-      console.error('Family check error:', error)
-    } finally {
-      setCheckingFamily(false)
-    }
-  }, [router])
 
   // 로그인 후 가족 정보 확인
   useEffect(() => {
-    if (status === 'authenticated' && session?.user?.id && !checkingFamily) {
+    if (status === 'authenticated' && session?.user?.id && !familyChecked && !checkingFamily) {
+      const checkFamily = async () => {
+        setCheckingFamily(true)
+        try {
+          const response = await fetch('/api/families')
+          if (response.status === 404) {
+            // 가족이 없는 경우 생성 페이지로 리다이렉트
+            router.push('/families/create')
+            return
+          }
+          setFamilyChecked(true)
+        } catch (error) {
+          console.error('Family check error:', error)
+        } finally {
+          setCheckingFamily(false)
+        }
+      }
+      
       checkFamily()
     }
-  }, [status, session, checkingFamily, checkFamily])
+  }, [status, session?.user?.id, familyChecked, checkingFamily, router])
 
   // 세션 로딩 중
   if (status === "loading" || checkingFamily) {

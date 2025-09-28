@@ -33,6 +33,42 @@ export default function ExpensesPage() {
   const [error, setError] = useState<string | null>(null)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
+  const [familyLoaded, setFamilyLoaded] = useState(false)
+
+  // 가족 정보 조회
+  useEffect(() => {
+    if (status === 'authenticated' && !familyLoaded) {
+      const fetchFamily = async () => {
+        try {
+          setLoading(true)
+          const response = await fetch('/api/families')
+          
+          if (response.status === 404) {
+            // 가족이 없는 경우 생성 페이지로 리다이렉트
+            router.push('/families/create')
+            return
+          }
+          
+          if (!response.ok) {
+            throw new Error('가족 정보를 불러오는데 실패했습니다')
+          }
+
+          const familyData = await response.json()
+          setFamily(familyData)
+          setError(null)
+          setFamilyLoaded(true)
+        } catch (err) {
+          setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다')
+        } finally {
+          setLoading(false)
+        }
+      }
+      
+      fetchFamily()
+    } else if (status === 'unauthenticated') {
+      setLoading(false)
+    }
+  }, [status, familyLoaded, router])
 
   const fetchFamily = useCallback(async () => {
     try {
@@ -40,7 +76,6 @@ export default function ExpensesPage() {
       const response = await fetch('/api/families')
       
       if (response.status === 404) {
-        // 가족이 없는 경우 생성 페이지로 리다이렉트
         router.push('/families/create')
         return
       }
@@ -58,15 +93,6 @@ export default function ExpensesPage() {
       setLoading(false)
     }
   }, [router])
-
-  // 가족 정보 조회
-  useEffect(() => {
-    if (status === 'authenticated') {
-      fetchFamily()
-    } else if (status === 'unauthenticated') {
-      setLoading(false)
-    }
-  }, [status, fetchFamily])
 
   const handleExpenseAdded = () => {
     setIsAddDialogOpen(false)
