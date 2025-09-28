@@ -11,7 +11,6 @@ import {
 } from "../interfaces/expense.repository";
 import { PaginationResult, FilterOptions } from "../interfaces/base.repository";
 import { prisma } from "@/lib/prisma";
-import { serialize } from "@/lib/serialization";
 
 export class ExpenseRepositoryImpl implements IExpenseRepository {
   async findById(id: string): Promise<ExpenseData | null> {
@@ -22,7 +21,20 @@ export class ExpenseRepositoryImpl implements IExpenseRepository {
       },
     });
 
-    return expense ? (serialize(expense) as ExpenseData) : null;
+    if (!expense) return null;
+
+    return {
+      id: expense.id.toString(),
+      uuid: expense.uuid,
+      familyId: expense.familyUuid,
+      categoryId: expense.categoryUuid,
+      amount: expense.amount.toString(),
+      description: expense.description,
+      date: expense.date,
+      createdAt: expense.createdAt,
+      updatedAt: expense.updatedAt,
+      deletedAt: expense.deletedAt,
+    };
   }
 
   async findAll(options?: {
@@ -66,7 +78,18 @@ export class ExpenseRepositoryImpl implements IExpenseRepository {
     ]);
 
     return {
-      data: serialize(expenses) as ExpenseData[],
+      data: expenses.map((expense) => ({
+        id: expense.id.toString(),
+        uuid: expense.uuid,
+        familyId: expense.familyUuid,
+        categoryId: expense.categoryUuid,
+        amount: expense.amount.toString(),
+        description: expense.description,
+        date: expense.date,
+        createdAt: expense.createdAt,
+        updatedAt: expense.updatedAt,
+        deletedAt: expense.deletedAt,
+      })),
       pagination: {
         page,
         limit,
@@ -87,7 +110,18 @@ export class ExpenseRepositoryImpl implements IExpenseRepository {
       },
     });
 
-    return serialize(expense) as ExpenseData;
+    return {
+      id: expense.id.toString(),
+      uuid: expense.uuid,
+      familyId: expense.familyUuid,
+      categoryId: expense.categoryUuid,
+      amount: expense.amount.toString(),
+      description: expense.description,
+      date: expense.date,
+      createdAt: expense.createdAt,
+      updatedAt: expense.updatedAt,
+      deletedAt: expense.deletedAt,
+    };
   }
 
   async update(
@@ -110,7 +144,18 @@ export class ExpenseRepositoryImpl implements IExpenseRepository {
         },
       });
 
-      return serialize(expense) as ExpenseData;
+      return {
+        id: expense.id.toString(),
+        uuid: expense.uuid,
+        familyId: expense.familyUuid,
+        categoryId: expense.categoryUuid,
+        amount: expense.amount.toString(),
+        description: expense.description,
+        date: expense.date,
+        createdAt: expense.createdAt,
+        updatedAt: expense.updatedAt,
+        deletedAt: expense.deletedAt,
+      };
     } catch {
       return null;
     }
@@ -350,23 +395,45 @@ export class ExpenseRepositoryImpl implements IExpenseRepository {
   }
 
   // Helper method to map expense with category
-  private mapToExpenseWithCategory(expenses: unknown[]): ExpenseWithCategory[] {
+  private mapToExpenseWithCategory(
+    expenses: Array<{
+      id: bigint;
+      uuid: string;
+      familyUuid: string;
+      categoryUuid: string;
+      amount: import("@prisma/client").Prisma.Decimal;
+      description: string | null;
+      date: Date;
+      createdAt: Date;
+      updatedAt: Date;
+      deletedAt: Date | null;
+      category: {
+        uuid: string;
+        name: string;
+        color: string;
+        icon: string | null;
+      };
+    }>
+  ): ExpenseWithCategory[] {
     return expenses.map((expense) => {
-      const expenseData = expense as Record<string, unknown>;
-      const serializedExpense = serialize(expenseData) as Record<
-        string,
-        unknown
-      >;
-      const category = expenseData.category as Record<string, unknown>;
       return {
-        ...serializedExpense,
+        id: expense.id.toString(), // BigInt만 문자열로 변환
+        uuid: expense.uuid,
+        familyId: expense.familyUuid,
+        categoryId: expense.categoryUuid,
+        amount: expense.amount.toString(), // Decimal을 문자열로 변환
+        description: expense.description,
+        date: expense.date, // Date 객체 그대로 유지
+        createdAt: expense.createdAt, // Date 객체 그대로 유지
+        updatedAt: expense.updatedAt, // Date 객체 그대로 유지
+        deletedAt: expense.deletedAt, // Date 객체 그대로 유지 (null 가능)
         category: {
-          id: category.uuid as string,
-          name: category.name as string,
-          color: category.color as string,
-          icon: category.icon as string,
+          id: expense.category.uuid,
+          name: expense.category.name,
+          color: expense.category.color,
+          icon: expense.category.icon || "",
         },
       };
-    }) as ExpenseWithCategory[];
+    });
   }
 }

@@ -2,83 +2,100 @@
  * Expense Repository 인터페이스
  */
 
-import { BaseRepository, PaginationResult, FilterOptions } from './base.repository'
+import {
+  BaseRepository,
+  PaginationResult,
+  FilterOptions,
+} from "./base.repository";
 
 export interface ExpenseData {
-  id: string
-  uuid: string
-  familyId: string
-  categoryId: string
-  amount: string
-  description: string | null
-  date: Date
-  createdAt: Date
-  updatedAt: Date
-  deletedAt: Date | null
+  id: string;
+  uuid: string;
+  familyId: string;
+  categoryId: string;
+  amount: string; // Prisma Decimal은 문자열로 변환됨
+  description: string | null;
+  date: Date; // ORM에서는 Date 객체로 유지
+  createdAt: Date; // ORM에서는 Date 객체로 유지
+  updatedAt: Date;
+  deletedAt: Date | null;
 }
 
 export interface ExpenseWithCategory extends ExpenseData {
   category: {
-    id: string
-    name: string
-    color: string
-    icon: string
-  }
+    id: string;
+    name: string;
+    color: string;
+    icon: string;
+  };
 }
 
 export interface CreateExpenseData {
-  familyId: string
-  categoryId: string
-  amount: number
-  description?: string
-  date?: Date
+  familyId: string;
+  categoryId: string;
+  amount: number;
+  description?: string;
+  date?: Date;
 }
 
 export interface UpdateExpenseData {
-  categoryId?: string
-  amount?: number
-  description?: string
-  date?: Date
+  categoryId?: string;
+  amount?: number;
+  description?: string;
+  date?: Date;
 }
 
 export interface ExpenseFilterOptions extends FilterOptions {
-  familyId: string
-  categoryId?: string
-  startDate?: Date
-  endDate?: Date
-  minAmount?: number
-  maxAmount?: number
+  familyId: string;
+  categoryId?: string;
+  startDate?: Date;
+  endDate?: Date;
+  minAmount?: number;
+  maxAmount?: number;
 }
 
-export interface IExpenseRepository extends BaseRepository<ExpenseData, CreateExpenseData, UpdateExpenseData> {
+export interface IExpenseRepository
+  extends BaseRepository<ExpenseData, CreateExpenseData, UpdateExpenseData> {
   // Expense 특화 메서드
   findByFamilyId(
-    familyId: string, 
+    familyId: string,
     options?: {
-      categoryId?: string
-      startDate?: Date
-      endDate?: Date
-      pagination?: { page: number; limit: number }
+      categoryId?: string;
+      startDate?: Date;
+      endDate?: Date;
+      pagination?: { page: number; limit: number };
     }
-  ): Promise<PaginationResult<ExpenseWithCategory>>
-  
-  findByCategoryId(categoryId: string): Promise<ExpenseWithCategory[]>
-  
-  getTotalByFamilyId(familyId: string, filters?: {
-    categoryId?: string
-    startDate?: Date
-    endDate?: Date
-  }): Promise<number>
-  
-  getMonthlyTotal(familyId: string, year: number, month: number): Promise<number>
-  
-  getCategoryTotals(familyId: string, filters?: {
-    startDate?: Date
-    endDate?: Date
-  }): Promise<Array<{
-    categoryId: string
-    categoryName: string
-    total: number
-    count: number
-  }>>
+  ): Promise<PaginationResult<ExpenseWithCategory>>;
+
+  findByCategoryId(categoryId: string): Promise<ExpenseWithCategory[]>;
+
+  getTotalByFamilyId(
+    familyId: string,
+    filters?: {
+      categoryId?: string;
+      startDate?: Date;
+      endDate?: Date;
+    }
+  ): Promise<number>;
+
+  getMonthlyTotal(
+    familyId: string,
+    year: number,
+    month: number
+  ): Promise<number>;
+
+  getCategoryTotals(
+    familyId: string,
+    filters?: {
+      startDate?: Date;
+      endDate?: Date;
+    }
+  ): Promise<
+    Array<{
+      categoryId: string;
+      categoryName: string;
+      total: number;
+      count: number;
+    }>
+  >;
 }

@@ -1,57 +1,66 @@
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
-import { expenseService } from '@/container'
-import { ExpenseWithCategory } from '@/repositories/interfaces/expense.repository'
-import { ExpensePagination } from './ExpensePagination'
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { expenseService } from "@/container";
+import { ExpenseWithCategory } from "@/repositories/interfaces/expense.repository";
+import { ExpensePagination } from "./ExpensePagination";
 
 interface Category {
-  id: string
-  name: string
-  color: string
-  icon: string
+  id: string;
+  name: string;
+  color: string;
+  icon: string;
 }
 
 interface ExpenseListProps {
-  familyId: string
-  categoryId?: string
-  startDate?: string
-  endDate?: string
-  page?: number
+  familyId: string;
+  categoryId?: string;
+  startDate?: string;
+  endDate?: string;
+  page?: number;
 }
 
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
-}
+const formatDate = (date: Date) => {
+  // Date 객체가 유효한지 확인
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    return "유효하지 않은 날짜";
+  }
+
+  return date.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
 
 const formatAmount = (amount: string) => {
-  return Number(amount).toLocaleString() + '원'
-}
+  // Prisma Decimal 타입은 Repository에서 문자열로 변환됨
+  const numAmount = parseFloat(amount);
+  if (isNaN(numAmount)) {
+    return "0원";
+  }
+  return numAmount.toLocaleString() + "원";
+};
 
-export async function ExpenseList({ 
-  familyId, 
+export async function ExpenseList({
+  familyId,
   categoryId,
   startDate,
   endDate,
-  page = 1 
+  page = 1,
 }: ExpenseListProps) {
   const filters = {
     ...(categoryId && { categoryId }),
     ...(startDate && { startDate: new Date(startDate) }),
-    ...(endDate && { endDate: new Date(endDate) })
-  }
+    ...(endDate && { endDate: new Date(endDate) }),
+  };
 
   const result = await expenseService.getExpensesByFamily(familyId, {
     page,
     limit: 10,
-    filters
-  })
+    filters,
+  });
 
-  const { data: expenses, pagination } = result
+  const { data: expenses, pagination } = result;
 
   return (
     <div className="space-y-3">
@@ -64,12 +73,15 @@ export async function ExpenseList({
       ) : (
         <>
           {expenses.map((expense: ExpenseWithCategory) => (
-            <Card key={expense.id} className="hover:shadow-md transition-shadow">
+            <Card
+              key={expense.id}
+              className="hover:shadow-md transition-shadow"
+            >
               <CardContent className="p-4">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge 
+                      <Badge
                         variant="secondary"
                         className="text-white"
                         style={{ backgroundColor: expense.category.color }}
@@ -78,19 +90,21 @@ export async function ExpenseList({
                         {expense.category.name}
                       </Badge>
                       <span className="text-sm text-gray-500">
-                        {formatDate(expense.date.toString())}
+                        {formatDate(expense.date)}
                       </span>
                     </div>
-                    
+
                     {expense.description && (
-                      <p className="text-gray-700 mb-1">{expense.description}</p>
+                      <p className="text-gray-700 mb-1">
+                        {expense.description}
+                      </p>
                     )}
-                    
+
                     <p className="text-xs text-gray-400">
-                      {formatDate(expense.createdAt.toString())}에 추가됨
+                      {formatDate(expense.createdAt)}에 추가됨
                     </p>
                   </div>
-                  
+
                   <div className="text-right">
                     <p className="text-lg font-semibold text-red-600">
                       -{formatAmount(expense.amount)}
@@ -100,11 +114,11 @@ export async function ExpenseList({
               </CardContent>
             </Card>
           ))}
-          
+
           {/* 페이지네이션 */}
           <ExpensePagination pagination={pagination} />
         </>
       )}
     </div>
-  )
+  );
 }
