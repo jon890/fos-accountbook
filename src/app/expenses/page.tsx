@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -34,16 +34,7 @@ export default function ExpensesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
-  // 가족 정보 조회
-  useEffect(() => {
-    if (status === 'authenticated') {
-      fetchFamily()
-    } else if (status === 'unauthenticated') {
-      setLoading(false)
-    }
-  }, [status])
-
-  const fetchFamily = async () => {
+  const fetchFamily = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch('/api/families')
@@ -66,7 +57,16 @@ export default function ExpensesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [router])
+
+  // 가족 정보 조회
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchFamily()
+    } else if (status === 'unauthenticated') {
+      setLoading(false)
+    }
+  }, [status, fetchFamily])
 
   const handleExpenseAdded = () => {
     setIsAddDialogOpen(false)

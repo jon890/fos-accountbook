@@ -35,10 +35,10 @@ export const GET = withAuth(async (user, request: NextRequest) => {
     // 사용자가 속한 가족 찾기
     const familyMember = await prisma.familyMember.findFirst({
       where: {
-        user_id: user.id,
-        deleted_at: null
+        userId: user.id,
+        deletedAt: null
       },
-      select: { family_uuid: true }
+      select: { familyUuid: true }
     })
 
     if (!familyMember) {
@@ -47,12 +47,12 @@ export const GET = withAuth(async (user, request: NextRequest) => {
 
     // 필터 조건 구성
     const where: Record<string, unknown> = {
-      family_uuid: familyMember.family_uuid,
-      deleted_at: null
+      familyUuid: familyMember.familyUuid,
+      deletedAt: null
     }
 
     if (categoryId) {
-      where.category_uuid = categoryId
+      where.categoryUuid = categoryId
     }
 
     if (startDate || endDate) {
@@ -99,10 +99,10 @@ export const POST = withAuth(async (user, request: NextRequest) => {
     // 사용자가 속한 가족 찾기
     const familyMember = await prisma.familyMember.findFirst({
       where: {
-        user_id: user.id,
-        deleted_at: null
+        userId: user.id,
+        deletedAt: null
       },
-      select: { family_uuid: true }
+      select: { familyUuid: true }
     })
 
     if (!familyMember) {
@@ -113,8 +113,8 @@ export const POST = withAuth(async (user, request: NextRequest) => {
     const category = await prisma.category.findFirst({
       where: {
         uuid: categoryId,
-        family_uuid: familyMember.family_uuid,
-        deleted_at: null
+        familyUuid: familyMember.familyUuid,
+        deletedAt: null
       }
     })
 
@@ -128,8 +128,8 @@ export const POST = withAuth(async (user, request: NextRequest) => {
         amount: amount,
         description: description || null,
         date: date ? new Date(date) : new Date(),
-        family_uuid: familyMember.family_uuid,
-        category_uuid: categoryId
+        familyUuid: familyMember.familyUuid,
+        categoryUuid: categoryId
       },
       include: {
         category: {

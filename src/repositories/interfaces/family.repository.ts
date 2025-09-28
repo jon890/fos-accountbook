@@ -39,6 +39,7 @@ export interface FamilyWithDetails extends FamilyData {
 export interface CreateFamilyData {
   name: string
   userId: string
+  type?: 'personal' | 'family'
   categories?: Array<{
     name: string
     color: string

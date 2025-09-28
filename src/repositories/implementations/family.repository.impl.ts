@@ -19,7 +19,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     const family = await prisma.family.findFirst({
       where: {
         id: BigInt(id),
-        deleted_at: null
+        deletedAt: null
       }
     })
     
@@ -32,11 +32,11 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     const family = await prisma.family.findFirst({
       where: {
         id: BigInt(id),
-        deleted_at: null
+        deletedAt: null
       },
       include: {
         members: {
-          where: { deleted_at: null },
+          where: { deletedAt: null },
           include: {
             user: {
               select: {
@@ -49,7 +49,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
           }
         },
         categories: {
-          where: { deleted_at: null },
+          where: { deletedAt: null },
           select: {
             id: true,
             name: true,
@@ -60,7 +60,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
         _count: {
           select: {
             expenses: {
-              where: { deleted_at: null }
+              where: { deletedAt: null }
             }
           }
         }
@@ -77,15 +77,15 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
       where: {
         members: {
           some: {
-            user_id: userId,
-            deleted_at: null
+            userId: userId,
+            deletedAt: null
           }
         },
-        deleted_at: null
+        deletedAt: null
       },
       include: {
         members: {
-          where: { deleted_at: null },
+          where: { deletedAt: null },
           include: {
             user: {
               select: {
@@ -98,7 +98,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
           }
         },
         categories: {
-          where: { deleted_at: null },
+          where: { deletedAt: null },
           orderBy: { name: 'asc' }
         }
       }
@@ -114,15 +114,15 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
       where: {
         members: {
           some: {
-            user_id: userId,
-            deleted_at: null
+            userId: userId,
+            deletedAt: null
           }
         },
-        deleted_at: null
+        deletedAt: null
       },
       include: {
         members: {
-          where: { deleted_at: null },
+          where: { deletedAt: null },
           include: {
             user: {
               select: {
@@ -135,7 +135,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
           }
         },
         categories: {
-          where: { deleted_at: null },
+          where: { deletedAt: null },
           select: {
             id: true,
             name: true,
@@ -146,12 +146,12 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
         _count: {
           select: {
             expenses: {
-              where: { deleted_at: null }
+              where: { deletedAt: null }
             }
           }
         }
       },
-      orderBy: { created_at: 'desc' }
+      orderBy: { createdAt: 'desc' }
     })
 
     return families.map(family => this.mapToFamilyWithDetails(family))
@@ -165,7 +165,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     const { pagination, sort, filters } = options || {}
     
     const where = {
-      deleted_at: null,
+      deletedAt: null,
       ...filters
     }
 
@@ -195,7 +195,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
   }
 
   async create(data: CreateFamilyData): Promise<FamilyData> {
-    const defaultCategories = data.categories || [
+    let defaultCategories = data.categories || [
       { name: '식비', color: '#ef4444', icon: '🍽️' },
       { name: '교통', color: '#3b82f6', icon: '🚗' },
       { name: '쇼핑', color: '#8b5cf6', icon: '🛍️' },
@@ -204,12 +204,21 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
       { name: '기타', color: '#6b7280', icon: '📝' }
     ]
 
+    // 개인 사용인 경우 추가 카테고리
+    if (data.type === 'personal') {
+      defaultCategories = [
+        ...defaultCategories,
+        { name: '용돈', color: '#ec4899', icon: '💰' },
+        { name: '저축', color: '#059669', icon: '🏦' }
+      ]
+    }
+
     const family = await prisma.family.create({
       data: {
         name: data.name,
         members: {
           create: {
-            user_id: data.userId,
+            userId: data.userId,
             role: 'admin'
           }
         },
@@ -241,7 +250,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     try {
       await prisma.family.update({
         where: { id: BigInt(id) },
-        data: { deleted_at: new Date() }
+        data: { deletedAt: new Date() }
       })
       return true
     } catch {
@@ -253,7 +262,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     try {
       await prisma.family.update({
         where: { id: BigInt(id) },
-        data: { deleted_at: null }
+        data: { deletedAt: null }
       })
       return true
     } catch {
@@ -265,7 +274,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     const count = await prisma.family.count({
       where: {
         id: BigInt(id),
-        deleted_at: null
+        deletedAt: null
       }
     })
     return count > 0
@@ -274,7 +283,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
   async count(filters?: FilterOptions): Promise<number> {
     return await prisma.family.count({
       where: {
-        deleted_at: null,
+        deletedAt: null,
         ...filters
       }
     })
@@ -284,8 +293,8 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     try {
       await prisma.familyMember.create({
         data: {
-          family_uuid: familyId,
-          user_id: userId,
+          familyUuid: familyId,
+          userId: userId,
           role
         }
       })
@@ -299,11 +308,11 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     try {
       await prisma.familyMember.updateMany({
         where: {
-          family_uuid: familyId,
-          user_id: userId,
-          deleted_at: null
+          familyUuid: familyId,
+          userId: userId,
+          deletedAt: null
         },
-        data: { deleted_at: new Date() }
+        data: { deletedAt: new Date() }
       })
       return true
     } catch {
@@ -315,9 +324,9 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     try {
       await prisma.familyMember.updateMany({
         where: {
-          family_uuid: familyId,
-          user_id: userId,
-          deleted_at: null
+          familyUuid: familyId,
+          userId: userId,
+          deletedAt: null
         },
         data: { role }
       })
@@ -330,9 +339,9 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
   async isMember(familyId: string, userId: string): Promise<boolean> {
     const count = await prisma.familyMember.count({
       where: {
-        family_uuid: familyId,
-        user_id: userId,
-        deleted_at: null
+        familyUuid: familyId,
+        userId: userId,
+        deletedAt: null
       }
     })
     return count > 0
@@ -341,10 +350,10 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
   async isAdmin(familyId: string, userId: string): Promise<boolean> {
     const count = await prisma.familyMember.count({
       where: {
-        family_uuid: familyId,
-        user_id: userId,
+        familyUuid: familyId,
+        userId: userId,
         role: 'admin',
-        deleted_at: null
+        deletedAt: null
       }
     })
     return count > 0
@@ -356,9 +365,9 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
       id: String(family.id),
       uuid: family.uuid as string,
       name: family.name as string,
-      createdAt: family.created_at as Date,
-      updatedAt: family.updated_at as Date,
-      deletedAt: family.deleted_at as Date | null
+      createdAt: family.createdAt as Date,
+      updatedAt: family.updatedAt as Date,
+      deletedAt: family.deletedAt as Date | null
     }
   }
 
@@ -368,7 +377,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
       members: (family.members as Record<string, unknown>[]).map((member) => ({
         id: String(member.id),
         role: member.role as string,
-        joinedAt: member.joined_at as Date,
+        joinedAt: member.joinedAt as Date,
         user: {
           id: String((member.user as Record<string, unknown>).id),
           name: (member.user as Record<string, unknown>).name as string | null,

@@ -45,7 +45,7 @@ export default function CreateFamilyPage() {
         throw new Error('가족 생성에 실패했습니다.')
       }
 
-      const family = await response.json()
+      await response.json()
       
       toast({
         title: "성공",
