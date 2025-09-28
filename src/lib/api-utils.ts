@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 
 // BigInt 직렬화를 위한 유틸리티
-export function serializeBigInt(obj: any): any {
+export function serializeBigInt(obj: unknown): unknown {
   if (obj === null || obj === undefined) {
     return obj
   }
@@ -18,7 +18,7 @@ export function serializeBigInt(obj: any): any {
   }
 
   if (typeof obj === 'object') {
-    const serialized: any = {}
+    const serialized: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(obj)) {
       serialized[key] = serializeBigInt(value)
     }
@@ -45,7 +45,7 @@ export async function getAuthenticatedUser() {
 }
 
 // API 핸들러 래퍼 - 인증 필수
-export function withAuth<T extends any[]>(
+export function withAuth<T extends unknown[]>(
   handler: (user: NonNullable<Awaited<ReturnType<typeof getAuthenticatedUser>>>, ...args: T) => Promise<NextResponse>
 ) {
   return async (...args: T): Promise<NextResponse> => {
@@ -68,7 +68,7 @@ export function withAuth<T extends any[]>(
 }
 
 // API 응답 래퍼 - BigInt 자동 직렬화
-export function apiResponse(data: any, options?: { status?: number }) {
+export function apiResponse(data: unknown, options?: { status?: number }) {
   const serializedData = serializeBigInt(data)
   return NextResponse.json(serializedData, { status: options?.status || 200 })
 }
@@ -79,9 +79,9 @@ export function handleValidationError(error: unknown) {
     return NextResponse.json(
       { 
         error: 'Validation error', 
-        details: error.errors.map(err => ({
-          field: err.path.join('.'),
-          message: err.message
+        details: error.issues.map(issue => ({
+          field: issue.path.join('.'),
+          message: issue.message
         }))
       },
       { status: 400 }
@@ -96,22 +96,27 @@ export function errorResponse(message: string, status: number = 500) {
 }
 
 // 성공 응답 생성
-export function successResponse(data: any, status: number = 200) {
+export function successResponse(data: unknown, status: number = 200) {
   return apiResponse(data, { status })
 }
 
-// Prisma 에러 처리
-export function handlePrismaError(error: any) {
+// Prisma 에러 처리  
+export function handlePrismaError(error: unknown) {
   console.error('Prisma Error:', error)
   
-  // P2002: Unique constraint failed
-  if (error.code === 'P2002') {
-    return errorResponse('이미 존재하는 데이터입니다', 409)
-  }
-  
-  // P2025: Record not found
-  if (error.code === 'P2025') {
-    return errorResponse('데이터를 찾을 수 없습니다', 404)
+  // 에러가 객체이고 code 속성이 있는지 확인
+  if (typeof error === 'object' && error !== null && 'code' in error) {
+    const prismaError = error as { code: string }
+    
+    // P2002: Unique constraint failed
+    if (prismaError.code === 'P2002') {
+      return errorResponse('이미 존재하는 데이터입니다', 409)
+    }
+    
+    // P2025: Record not found
+    if (prismaError.code === 'P2025') {
+      return errorResponse('데이터를 찾을 수 없습니다', 404)
+    }
   }
   
   return errorResponse('데이터베이스 오류가 발생했습니다')

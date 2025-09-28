@@ -29,7 +29,7 @@ interface ExpenseListProps {
   refreshTrigger?: number // 새로고침 트리거용
 }
 
-export function ExpenseList({ categories, refreshTrigger }: ExpenseListProps) {
+export function ExpenseList({ categories }: ExpenseListProps) {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -66,7 +66,7 @@ export function ExpenseList({ categories, refreshTrigger }: ExpenseListProps) {
     } finally {
       setLoading(false)
     }
-  }, [currentPage, selectedCategory, startDate, endDate, refreshTrigger])
+  }, [currentPage, selectedCategory, startDate, endDate])
 
   useEffect(() => {
     fetchExpenses()

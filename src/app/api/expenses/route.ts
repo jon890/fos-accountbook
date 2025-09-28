@@ -151,6 +151,3 @@ export const POST = withAuth(async (user, request: NextRequest) => {
     return handlePrismaError(error)
   }
 })
-
-export const runtime = 'edge'
-export const preferredRegion = 'icn1' // Seoul, South Korea

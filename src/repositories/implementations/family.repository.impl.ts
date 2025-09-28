@@ -353,12 +353,12 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
   // Helper methods
   private mapToFamilyData(family: Record<string, unknown>): FamilyData {
     return {
-      id: family.id.toString(),
-      uuid: family.uuid,
-      name: family.name,
-      createdAt: family.createdAt,
-      updatedAt: family.updatedAt,
-      deletedAt: family.deletedAt
+      id: String(family.id),
+      uuid: family.uuid as string,
+      name: family.name as string,
+      createdAt: family.createdAt as Date,
+      updatedAt: family.updatedAt as Date,
+      deletedAt: family.deletedAt as Date | null
     }
   }
 
@@ -366,18 +366,23 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     return {
       ...this.mapToFamilyData(family),
       members: (family.members as Record<string, unknown>[]).map((member) => ({
-        id: member.id.toString(),
-        role: member.role,
-        joinedAt: member.joinedAt,
-        user: member.user
+        id: String(member.id),
+        role: member.role as string,
+        joinedAt: member.joinedAt as Date,
+        user: {
+          id: String((member.user as Record<string, unknown>).id),
+          name: (member.user as Record<string, unknown>).name as string | null,
+          email: (member.user as Record<string, unknown>).email as string | null,
+          image: (member.user as Record<string, unknown>).image as string | null
+        }
       })),
       categories: (family.categories as Record<string, unknown>[]).map((category) => ({
-        id: category.id.toString(),
-        name: category.name,
-        color: category.color,
-        icon: category.icon
+        id: String(category.id),
+        name: category.name as string,
+        color: category.color as string,
+        icon: category.icon as string
       })),
-      _count: family._count
+      _count: family._count as { expenses: number } | undefined
     }
   }
 }

@@ -142,9 +142,11 @@ export function FamilySelector({ onFamilySelect, onCreateFamily }: FamilySelecto
                               className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-medium text-gray-700 overflow-hidden"
                             >
                               {member.user.image ? (
-                                <img 
+                                <Image 
                                   src={member.user.image} 
                                   alt={member.user.name || ''}
+                                  width={32}
+                                  height={32}
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
