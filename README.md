@@ -6,7 +6,7 @@
 
 - **Framework**: Next.js 15 + TypeScript
 - **Styling**: Tailwind CSS v3 + shadcn/ui
-- **Database**: Supabase (PostgreSQL) + Drizzle ORM
+- **Database**: Supabase (PostgreSQL) + Prisma ORM
 - **Auth**: NextAuth.js (Google OAuth)
 - **Package Manager**: pnpm
 
@@ -48,8 +48,12 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-# Database (Supabase 설정 > 데이터베이스 > 연결 문자열)
-DATABASE_URL=postgresql://postgres:your_password@db.your-project.supabase.co:5432/postgres
+# Database URLs (중요: 두 개의 다른 URL 필요)
+# Connection Pool URL for application runtime (port 6543)
+DATABASE_URL=postgresql://postgres:your_password@db.your-project.supabase.co:6543/postgres
+
+# Direct Connection URL for migrations and schema operations (port 5432)
+DIRECT_URL=postgresql://postgres:your_password@db.your-project.supabase.co:5432/postgres
 
 # NextAuth
 NEXTAUTH_URL=http://localhost:3000
@@ -63,11 +67,11 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 ### 5. 데이터베이스 스키마 적용
 
 ```bash
-# .env.local 파일이 있는지 확인 후 실행
-pnpm db:push
+# .env.local 파일이 있는지 확인 후 실행 (Prisma 사용)
+pnpm exec dotenv -e .env.local -- npx prisma db push
 ```
 
-> **참고**: 이제 `pnpm db:push` 명령어가 자동으로 `.env.local` 파일을 읽어서 환경 변수를 로드합니다.
+> **참고**: Prisma는 `DIRECT_URL`을 사용하여 마이그레이션을 수행하고, 애플리케이션 런타임에서는 `DATABASE_URL` (connection pool)을 사용합니다.
 
 ### 6. 개발 서버 실행
 
@@ -138,6 +142,31 @@ pnpm db:studio
 2. 환경 변수 설정 (위의 `.env.local` 내용)
 3. `NEXTAUTH_URL`을 배포된 도메인으로 변경
 4. Google OAuth 리디렉션 URI에 배포된 도메인 추가
+
+## 📊 마이그레이션 히스토리
+
+| 파일명 | 설명 | 주요 변경사항 |
+|--------|------|---------------|
+| `0000_living_silver_sable.sql` | Initial schema setup | 초기 테이블 생성 (families, family_members, categories, expenses) |
+| `0001_brief_silhouette.sql` | Add NextAuth tables | NextAuth 인증 테이블 추가 (users, accounts, sessions, verificationTokens) |
+| `0002_quick_sleeper.sql` | Add soft delete support | 모든 테이블에 deleted_at 컬럼 추가, cascade 제약조건 제거 |
+| `0003_groovy_lorna_dane.sql` | Fix NextAuth compatibility | NextAuth 테이블에서 deleted_at 제거, auth 테이블에 cascade 복원 |
+
+### 마이그레이션 명령어
+
+```bash
+# 자동 이름으로 마이그레이션 생성
+pnpm db:generate
+
+# 커스텀 이름으로 마이그레이션 생성
+pnpm db:generate:named "설명적인-마이그레이션-이름"
+
+# 마이그레이션 적용
+pnpm db:migrate
+
+# 개발 환경에서 스키마 직접 푸시 (주의: 프로덕션에서 사용 금지)
+pnpm db:push
+```
 
 ## 📄 라이센스
 

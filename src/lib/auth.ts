@@ -1,12 +1,10 @@
 import { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
-import { SupabaseAdapter } from "@auth/supabase-adapter"
+import { PrismaAdapter } from "@auth/prisma-adapter"
+import { prisma } from "./prisma"
 
 export const authOptions: NextAuthOptions = {
-  adapter: SupabaseAdapter({
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    secret: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  }),
+  adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -20,9 +18,15 @@ export const authOptions: NextAuthOptions = {
       }
       return session
     },
-    async signIn() {
-      // 가족 구성원인지 확인하는 로직을 여기에 추가할 수 있습니다
+    async signIn({ user, account, profile }) {
+      // OAuth 로그인이 성공하면 항상 true 반환
       return true
+    },
+    async redirect({ url, baseUrl }) {
+      // 로그인 후 리다이렉트 처리
+      if (url.startsWith('/')) return `${baseUrl}${url}`
+      if (new URL(url).origin === baseUrl) return url
+      return baseUrl
     },
   },
   pages: {

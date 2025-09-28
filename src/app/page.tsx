@@ -8,16 +8,17 @@ import { BottomNavigation } from "@/components/layout/BottomNavigation"
 import { WelcomeSection } from "@/components/dashboard/WelcomeSection"
 import { StatsCards } from "@/components/dashboard/StatsCards"
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs"
-import { TailwindTest } from "@/components/common/TailwindTest"
 
 export default function HomePage() {
   const { data: session, status } = useSession()
 
+  // 세션 로딩 중
   if (status === "loading") {
     return <LoadingSpinner />
   }
 
-  if (!session) {
+  // 로그인되지 않은 상태
+  if (status === "unauthenticated" || !session) {
     return <LoginPage />
   }
 
@@ -26,11 +27,6 @@ export default function HomePage() {
     monthlyExpense: 0,
     remainingBudget: 0,
     familyMembers: 1
-  }
-
-  // 개발 중 Tailwind 테스트를 위한 임시 코드
-  if (process.env.NODE_ENV === 'development' && session.user?.email === 'test@example.com') {
-    return <TailwindTest />
   }
 
   return (
@@ -47,13 +43,6 @@ export default function HomePage() {
         <WelcomeSection userName={session.user?.name} />
         <StatsCards data={statsData} />
         <DashboardTabs />
-        
-        {/* Tailwind 테스트 섹션 - 개발 중에만 표시 */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-12 border-t pt-8">
-            <TailwindTest />
-          </div>
-        )}
       </main>
 
       <BottomNavigation />
