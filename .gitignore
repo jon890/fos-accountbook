@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+*.db
+test*.db*
 
 # next.js
 /.next/
