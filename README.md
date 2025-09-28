@@ -48,12 +48,13 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-# Database URLs (중요: 두 개의 다른 URL 필요)
-# Connection Pool URL for application runtime (port 6543)
+# Database URLs (중요: 용도별로 다른 URL 사용)
+# Connection Pool URL - 애플리케이션 런타임에서 사용 (port 6543)
 DATABASE_URL=postgresql://postgres:your_password@db.your-project.supabase.co:6543/postgres
 
-# Direct Connection URL for migrations and schema operations (port 5432)
+# Direct Connection URL - 마이그레이션/스키마 변경 시에만 사용 (port 5432)
 DIRECT_URL=postgresql://postgres:your_password@db.your-project.supabase.co:5432/postgres
+
 
 # NextAuth
 NEXTAUTH_URL=http://localhost:3000
@@ -73,8 +74,22 @@ pnpm db:migrate
 
 > **중요**: 
 > - 개발 시 **마이그레이션**을 사용하여 스키마를 관리합니다
-> - `db:push`는 긴급한 프로토타이핑 시에만 사용
+> - Supabase Shadow Database 문제 해결을 위해 `--skip-seed` 옵션 사용
+> - Prisma는 자동으로 용도에 맞는 URL을 사용합니다:
+>   - **애플리케이션 런타임**: `DATABASE_URL` (Connection Pool)
+>   - **마이그레이션/스키마 작업**: `DIRECT_URL` (Direct Connection)
 > - Vercel 배포 시 자동으로 `prisma generate`가 실행됩니다
+
+### 🔧 Supabase Shadow Database 문제 해결
+
+Supabase에서 마이그레이션 시 Shadow Database 생성 권한 문제가 발생할 수 있습니다:
+
+```bash
+# 문제: database "prisma_migrate_shadow_db_xxx" does not exist
+# 해결: --skip-seed 옵션으로 Shadow Database 검증 건너뛰기
+
+pnpm db:migrate  # 이미 --skip-seed 옵션이 포함되어 있음
+```
 
 ### 6. 개발 서버 실행
 
