@@ -101,29 +101,3 @@ pnpm db:studio
 pnpm build
 vercel
 ```
-
-## 🗄️ 데이터베이스 스키마 규칙
-
-### 테이블 및 컬럼 명명 규칙
-- **테이블명**: snake_case (예: `family_members`, `verification_tokens`)
-- **컬럼명**: snake_case (예: `user_id`, `created_at`, `family_uuid`)
-- **관계 컬럼**: UUID 기반 (예: `family_uuid`, `category_uuid`)
-
-### 스키마 예시
-```prisma
-model FamilyMember {
-  id          BigInt    @id @default(autoincrement())
-  uuid        String    @unique @default(uuid()) @db.Uuid
-  family_uuid String    @db.Uuid @map("family_uuid")
-  user_id     String    @map("user_id")
-  role        String    @default("member")
-  joined_at   DateTime  @default(now()) @map("joined_at")
-  deleted_at  DateTime? @map("deleted_at")
-
-  family Family @relation("FamilyMembers", fields: [family_uuid], references: [uuid])
-  user   User   @relation("UserFamilyMembers", fields: [user_id], references: [id])
-
-  @@unique([family_uuid, user_id])
-  @@map("family_members")
-}
-```

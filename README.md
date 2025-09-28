@@ -93,9 +93,29 @@ pnpm dev
 ### 특징
 
 - **이중 식별자**: bigint autoincrement PK + UUID
-- **Row Level Security**: Supabase RLS 정책 적용
+- **snake_case 컨벤션**: 모든 테이블명과 컬럼명
+- **UUID 기반 조인**: 테이블 간 관계는 UUID로 연결
+- **Soft Delete**: `deleted_at` 컬럼을 통한 논리 삭제
 - **관계 설정**: 완전한 외래키 관계
 - **인덱스 최적화**: 성능을 위한 적절한 인덱스
+
+### 스키마 예시
+```sql
+-- 가족 구성원 테이블
+CREATE TABLE family_members (
+  id          BIGSERIAL PRIMARY KEY,
+  uuid        UUID UNIQUE DEFAULT gen_random_uuid(),
+  family_uuid UUID NOT NULL,
+  user_id     TEXT NOT NULL,
+  role        VARCHAR(20) DEFAULT 'member',
+  joined_at   TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at  TIMESTAMPTZ,
+  
+  FOREIGN KEY (family_uuid) REFERENCES families(uuid),
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  UNIQUE (family_uuid, user_id)
+);
+```
 
 ## 📱 주요 기능
 
@@ -143,30 +163,38 @@ pnpm db:studio
 3. `NEXTAUTH_URL`을 배포된 도메인으로 변경
 4. Google OAuth 리디렉션 URI에 배포된 도메인 추가
 
-## 📊 마이그레이션 히스토리
+## 📊 데이터베이스 진화 히스토리
 
-| 파일명 | 설명 | 주요 변경사항 |
-|--------|------|---------------|
-| `0000_living_silver_sable.sql` | Initial schema setup | 초기 테이블 생성 (families, family_members, categories, expenses) |
-| `0001_brief_silhouette.sql` | Add NextAuth tables | NextAuth 인증 테이블 추가 (users, accounts, sessions, verificationTokens) |
-| `0002_quick_sleeper.sql` | Add soft delete support | 모든 테이블에 deleted_at 컬럼 추가, cascade 제약조건 제거 |
-| `0003_groovy_lorna_dane.sql` | Fix NextAuth compatibility | NextAuth 테이블에서 deleted_at 제거, auth 테이블에 cascade 복원 |
+### 주요 변경사항
 
-### 마이그레이션 명령어
+| 버전 | 변경 내용 | 설명 |
+|------|-----------|------|
+| v1.0 | Drizzle ORM → Prisma ORM | 더 나은 NextAuth 호환성과 타입 안전성을 위해 전환 |
+| v2.0 | BigInt ID → UUID 조인 | 테이블 간 관계를 UUID 기반으로 변경하여 확장성 개선 |
+| v3.0 | camelCase → snake_case | 모든 테이블명과 컬럼명을 snake_case로 통일 |
+
+### 스키마 관리 명령어
 
 ```bash
-# 자동 이름으로 마이그레이션 생성
-pnpm db:generate
+# 스키마 변경사항을 데이터베이스에 적용
+pnpm exec dotenv -e .env.local -- npx prisma db push
 
-# 커스텀 이름으로 마이그레이션 생성
-pnpm db:generate:named "설명적인-마이그레이션-이름"
+# Prisma Studio에서 데이터베이스 확인
+pnpm exec dotenv -e .env.local -- npx prisma studio
 
-# 마이그레이션 적용
-pnpm db:migrate
+# 프로덕션용 마이그레이션 생성 (향후 사용)
+pnpm exec dotenv -e .env.local -- npx prisma migrate dev
 
-# 개발 환경에서 스키마 직접 푸시 (주의: 프로덕션에서 사용 금지)
-pnpm db:push
+# 스키마 검증
+pnpm exec dotenv -e .env.local -- npx prisma validate
 ```
+
+### 🔄 현재 스키마 특징
+
+- **snake_case 컨벤션**: 모든 테이블과 컬럼명
+- **UUID 기반 조인**: `family_uuid`, `category_uuid` 등
+- **Soft Delete**: `deleted_at` 컬럼 활용
+- **관계명 명시**: Prisma relation 이름으로 관계 명확화
 
 ## 📄 라이센스
 
