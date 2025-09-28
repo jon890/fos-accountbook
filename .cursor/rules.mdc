@@ -97,6 +97,15 @@ pnpm db:push
 # Prisma Studio 실행
 pnpm db:studio
 
+# 마이그레이션 생성 및 적용
+pnpm db:migrate
+
+# Prisma Client 생성
+pnpm db:generate
+
+# 스키마 검증
+pnpm db:validate
+
 # 빌드 및 배포
 pnpm build
 vercel

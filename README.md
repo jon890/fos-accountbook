@@ -68,7 +68,7 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 
 ```bash
 # .env.local 파일이 있는지 확인 후 실행 (Prisma 사용)
-pnpm exec dotenv -e .env.local -- npx prisma db push
+pnpm db:push
 ```
 
 > **참고**: Prisma는 `DIRECT_URL`을 사용하여 마이그레이션을 수행하고, 애플리케이션 런타임에서는 `DATABASE_URL` (connection pool)을 사용합니다.
@@ -141,17 +141,29 @@ pnpm start
 # 린팅
 pnpm lint
 
-# 데이터베이스 스키마 생성 (.env.local 자동 로드)
+# Prisma Client 생성 (.env.local 자동 로드)
 pnpm db:generate
 
-# 데이터베이스 마이그레이션 (.env.local 자동 로드)
+# 개발 환경 마이그레이션 (.env.local 자동 로드)
 pnpm db:migrate
+
+# 프로덕션 마이그레이션 배포 (.env.local 자동 로드)
+pnpm db:migrate:deploy
 
 # 데이터베이스 스키마 푸시 (.env.local 자동 로드)
 pnpm db:push
 
-# Drizzle Studio 실행 (.env.local 자동 로드)
+# Prisma Studio 실행 (.env.local 자동 로드)
 pnpm db:studio
+
+# 데이터베이스 시드 (.env.local 자동 로드)
+pnpm db:seed
+
+# 데이터베이스 리셋 (.env.local 자동 로드)
+pnpm db:reset
+
+# 스키마 검증 (.env.local 자동 로드)
+pnpm db:validate
 ```
 
 ## 🚀 배포
@@ -177,16 +189,25 @@ pnpm db:studio
 
 ```bash
 # 스키마 변경사항을 데이터베이스에 적용
-pnpm exec dotenv -e .env.local -- npx prisma db push
+pnpm db:push
 
 # Prisma Studio에서 데이터베이스 확인
-pnpm exec dotenv -e .env.local -- npx prisma studio
+pnpm db:studio
 
-# 프로덕션용 마이그레이션 생성 (향후 사용)
-pnpm exec dotenv -e .env.local -- npx prisma migrate dev
+# 개발용 마이그레이션 생성 및 적용
+pnpm db:migrate
+
+# 프로덕션용 마이그레이션 배포
+pnpm db:migrate:deploy
 
 # 스키마 검증
-pnpm exec dotenv -e .env.local -- npx prisma validate
+pnpm db:validate
+
+# Prisma Client 재생성
+pnpm db:generate
+
+# 데이터베이스 리셋 (모든 데이터 삭제 후 스키마 재적용)
+pnpm db:reset
 ```
 
 ### 🔄 현재 스키마 특징

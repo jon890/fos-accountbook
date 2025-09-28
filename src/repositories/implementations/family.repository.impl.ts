@@ -19,7 +19,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     const family = await prisma.family.findFirst({
       where: {
         id: BigInt(id),
-        ...createSoftDeleteCondition()
+        deleted_at: null
       }
     })
     
@@ -32,11 +32,11 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     const family = await prisma.family.findFirst({
       where: {
         id: BigInt(id),
-        ...createSoftDeleteCondition()
+        deleted_at: null
       },
       include: {
         members: {
-          where: createSoftDeleteCondition(),
+          where: { deleted_at: null },
           include: {
             user: {
               select: {
