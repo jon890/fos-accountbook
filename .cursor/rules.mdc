@@ -1,0 +1,117 @@
+---
+alwaysApply: true
+---
+
+# 우리집 가계부 - 개발 규칙
+
+## 기술 스택
+- **Framework**: Next.js 15 + TypeScript
+- **Styling**: Tailwind CSS v4 + shadcn/ui
+- **Database**: Supabase (PostgreSQL) + Drizzle ORM
+- **Auth**: NextAuth.js (Google OAuth)
+- **Package Manager**: pnpm
+
+## 코딩 스타일
+
+### React 컴포넌트
+```typescript
+// ✅ 올바른 방식
+interface ComponentProps {
+  title: string
+  children?: React.ReactNode
+}
+
+export function ComponentName({ title, children }: ComponentProps) {
+  return (
+    <div className="p-4">
+      <h1>{title}</h1>
+      {children}
+    </div>
+  )
+}
+```
+
+### Tailwind CSS v4
+- `@theme` 블록에서 CSS 변수 정의
+- 커스텀 클래스는 `@layer utilities`에 작성
+- 모바일 우선 반응형 디자인 (`sm:`, `md:`, `lg:`)
+
+### 파일 구조
+```
+src/
+├── app/                 # Next.js App Router
+├── components/
+│   ├── auth/           # 인증 관련
+│   ├── dashboard/      # 대시보드
+│   ├── layout/         # 레이아웃
+│   └── common/         # 공통 컴포넌트
+├── lib/                # 유틸리티, DB
+└── types/              # TypeScript 타입
+```
+
+## 개발 명령어
+- `pnpm dev` - 개발 서버 실행
+- `pnpm build` - 프로덕션 빌드
+- `pnpm db:push` - 데이터베이스 스키마 적용
+
+## 주의사항
+- 환경 변수는 `.env.local`에서 관리
+- 컴포넌트는 기능별로 분리
+- Props 인터페이스 정의 필수
+- 한국어 UI 텍스트 사용# 우리집 가계부 - 개발 규칙
+
+## 기술 스택
+- **Framework**: Next.js 15 + TypeScript
+- **Styling**: Tailwind CSS v4 + shadcn/ui
+- **Database**: Supabase (PostgreSQL) + Drizzle ORM
+- **Auth**: NextAuth.js (Google OAuth)
+- **Package Manager**: pnpm
+
+## 코딩 스타일
+
+### React 컴포넌트
+```typescript
+// ✅ 올바른 방식
+interface ComponentProps {
+  title: string
+  children?: React.ReactNode
+}
+
+export function ComponentName({ title, children }: ComponentProps) {
+  return (
+    <div className="p-4">
+      <h1>{title}</h1>
+      {children}
+    </div>
+  )
+}
+```
+
+### Tailwind CSS v4
+- `@theme` 블록에서 CSS 변수 정의
+- 커스텀 클래스는 `@layer utilities`에 작성
+- 모바일 우선 반응형 디자인 (`sm:`, `md:`, `lg:`)
+
+### 파일 구조
+```
+src/
+├── app/                 # Next.js App Router
+├── components/
+│   ├── auth/           # 인증 관련
+│   ├── dashboard/      # 대시보드
+│   ├── layout/         # 레이아웃
+│   └── common/         # 공통 컴포넌트
+├── lib/                # 유틸리티, DB
+└── types/              # TypeScript 타입
+```
+
+## 개발 명령어
+- `pnpm dev` - 개발 서버 실행
+- `pnpm build` - 프로덕션 빌드
+- `pnpm db:push` - 데이터베이스 스키마 적용
+
+## 주의사항
+- 환경 변수는 `.env.local`에서 관리
+- 컴포넌트는 기능별로 분리
+- Props 인터페이스 정의 필수
+- 한국어 UI 텍스트 사용
