@@ -5,7 +5,7 @@
 ## 🚀 기술 스택
 
 - **Framework**: Next.js 15 + TypeScript
-- **Styling**: Tailwind CSS v4 + shadcn/ui
+- **Styling**: Tailwind CSS v3 + shadcn/ui
 - **Database**: Supabase (PostgreSQL) + Drizzle ORM
 - **Auth**: NextAuth.js (Google OAuth)
 - **Package Manager**: pnpm
