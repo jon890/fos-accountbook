@@ -1,10 +1,27 @@
+'use client'
+
+import { useRouter } from 'next/navigation'
 import { Card, CardContent } from "@/components/ui/card"
 import { Plus, Settings } from "lucide-react"
 
 export function QuickActions() {
+  const router = useRouter()
+
+  const handleAddExpenseClick = () => {
+    router.push('/expenses')
+  }
+
+  const handleCategoryClick = () => {
+    // TODO: 카테고리 관리 페이지로 이동
+    console.log('카테고리 관리 (미구현)')
+  }
+
   return (
     <div className="grid grid-cols-2 gap-4">
-      <Card className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 bg-white/80 backdrop-blur-sm">
+      <Card 
+        className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
+        onClick={handleAddExpenseClick}
+      >
         <CardContent className="p-6">
           <div className="flex items-center space-x-4">
             <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
@@ -18,7 +35,10 @@ export function QuickActions() {
         </CardContent>
       </Card>
 
-      <Card className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 bg-white/80 backdrop-blur-sm">
+      <Card 
+        className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
+        onClick={handleCategoryClick}
+      >
         <CardContent className="p-6">
           <div className="flex items-center space-x-4">
             <div className="w-14 h-14 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">

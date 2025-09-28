@@ -18,7 +18,7 @@ export const authOptions: NextAuthOptions = {
       }
       return session
     },
-    async signIn({ user, account, profile }) {
+    async signIn() {
       // OAuth 로그인이 성공하면 항상 true 반환
       return true
     },

@@ -1,0 +1,144 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { z } from 'zod'
+
+// BigInt 직렬화를 위한 유틸리티
+export function serializeBigInt(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj
+  }
+
+  if (typeof obj === 'bigint') {
+    return obj.toString()
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(serializeBigInt)
+  }
+
+  if (typeof obj === 'object') {
+    const serialized: any = {}
+    for (const [key, value] of Object.entries(obj)) {
+      serialized[key] = serializeBigInt(value)
+    }
+    return serialized
+  }
+
+  return obj
+}
+
+// 인증된 사용자 정보 가져오기
+export async function getAuthenticatedUser() {
+  const session = await getServerSession(authOptions)
+  
+  if (!session?.user?.id) {
+    return null
+  }
+
+  return {
+    id: session.user.id,
+    name: session.user.name,
+    email: session.user.email,
+    image: session.user.image
+  }
+}
+
+// API 핸들러 래퍼 - 인증 필수
+export function withAuth<T extends any[]>(
+  handler: (user: NonNullable<Awaited<ReturnType<typeof getAuthenticatedUser>>>, ...args: T) => Promise<NextResponse>
+) {
+  return async (...args: T): Promise<NextResponse> => {
+    try {
+      const user = await getAuthenticatedUser()
+      
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+
+      return await handler(user, ...args)
+    } catch (error) {
+      console.error('API Error:', error)
+      return NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      )
+    }
+  }
+}
+
+// API 응답 래퍼 - BigInt 자동 직렬화
+export function apiResponse(data: any, options?: { status?: number }) {
+  const serializedData = serializeBigInt(data)
+  return NextResponse.json(serializedData, { status: options?.status || 200 })
+}
+
+// Validation 에러 처리
+export function handleValidationError(error: unknown) {
+  if (error instanceof z.ZodError) {
+    return NextResponse.json(
+      { 
+        error: 'Validation error', 
+        details: error.errors.map(err => ({
+          field: err.path.join('.'),
+          message: err.message
+        }))
+      },
+      { status: 400 }
+    )
+  }
+  return null
+}
+
+// 에러 응답 생성
+export function errorResponse(message: string, status: number = 500) {
+  return NextResponse.json({ error: message }, { status })
+}
+
+// 성공 응답 생성
+export function successResponse(data: any, status: number = 200) {
+  return apiResponse(data, { status })
+}
+
+// Prisma 에러 처리
+export function handlePrismaError(error: any) {
+  console.error('Prisma Error:', error)
+  
+  // P2002: Unique constraint failed
+  if (error.code === 'P2002') {
+    return errorResponse('이미 존재하는 데이터입니다', 409)
+  }
+  
+  // P2025: Record not found
+  if (error.code === 'P2025') {
+    return errorResponse('데이터를 찾을 수 없습니다', 404)
+  }
+  
+  return errorResponse('데이터베이스 오류가 발생했습니다')
+}
+
+// 페이지네이션 파라미터 파싱
+export function parsePaginationParams(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '10'))) // 최대 100개로 제한
+  
+  return {
+    page,
+    limit,
+    skip: (page - 1) * limit,
+    take: limit
+  }
+}
+
+// 날짜 파라미터 파싱
+export function parseDateParams(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const startDate = searchParams.get('startDate')
+  const endDate = searchParams.get('endDate')
+  
+  return {
+    startDate: startDate ? new Date(startDate) : undefined,
+    endDate: endDate ? new Date(endDate) : undefined
+  }
+}
