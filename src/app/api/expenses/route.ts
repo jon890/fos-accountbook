@@ -35,10 +35,10 @@ export const GET = withAuth(async (user, request: NextRequest) => {
     // 사용자가 속한 가족 찾기
     const familyMember = await prisma.familyMember.findFirst({
       where: {
-        userId: user.id,
-        deletedAt: null
+        user_id: user.id,
+        deleted_at: null
       },
-      select: { familyId: true }
+      select: { family_uuid: true }
     })
 
     if (!familyMember) {
@@ -47,12 +47,12 @@ export const GET = withAuth(async (user, request: NextRequest) => {
 
     // 필터 조건 구성
     const where: Record<string, unknown> = {
-      familyId: familyMember.familyId,
-      deletedAt: null
+      family_uuid: familyMember.family_uuid,
+      deleted_at: null
     }
 
     if (categoryId) {
-      where.categoryId = BigInt(categoryId)
+      where.category_uuid = categoryId
     }
 
     if (startDate || endDate) {
@@ -99,10 +99,10 @@ export const POST = withAuth(async (user, request: NextRequest) => {
     // 사용자가 속한 가족 찾기
     const familyMember = await prisma.familyMember.findFirst({
       where: {
-        userId: user.id,
-        deletedAt: null
+        user_id: user.id,
+        deleted_at: null
       },
-      select: { familyId: true }
+      select: { family_uuid: true }
     })
 
     if (!familyMember) {
@@ -112,9 +112,9 @@ export const POST = withAuth(async (user, request: NextRequest) => {
     // 카테고리 확인
     const category = await prisma.category.findFirst({
       where: {
-        id: BigInt(categoryId),
-        familyId: familyMember.familyId,
-        deletedAt: null
+        uuid: categoryId,
+        family_uuid: familyMember.family_uuid,
+        deleted_at: null
       }
     })
 
@@ -128,8 +128,8 @@ export const POST = withAuth(async (user, request: NextRequest) => {
         amount: amount,
         description: description || null,
         date: date ? new Date(date) : new Date(),
-        familyId: familyMember.familyId,
-        categoryId: BigInt(categoryId)
+        family_uuid: familyMember.family_uuid,
+        category_uuid: categoryId
       },
       include: {
         category: {

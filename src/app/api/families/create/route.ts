@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
         name,
         members: {
           create: {
-            userId: session.user.id,
+            user_id: session.user.id,
             role: 'admin'
           }
         },
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       },
       include: {
         members: {
-          where: { deletedAt: null },
+          where: { deleted_at: null },
           include: {
             user: {
               select: {
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
           }
         },
         categories: {
-          where: { deletedAt: null },
+          where: { deleted_at: null },
           orderBy: { name: 'asc' }
         }
       }
@@ -82,12 +82,12 @@ export async function POST(request: NextRequest) {
       members: family.members.map(member => ({
         ...member,
         id: member.id.toString(),
-        familyId: member.familyId.toString()
+        familyUuid: member.family_uuid
       })),
       categories: family.categories.map(category => ({
         ...category,
         id: category.id.toString(),
-        familyId: category.familyId.toString()
+        familyUuid: category.family_uuid
       }))
     }
 

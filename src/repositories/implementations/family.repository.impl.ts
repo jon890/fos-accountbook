@@ -11,7 +11,7 @@ import {
   UpdateFamilyData 
 } from '../interfaces/family.repository'
 import { PaginationResult, PaginationOptions, SortOptions, FilterOptions } from '../interfaces/base.repository'
-import { createSoftDeleteCondition, createSoftDeleteData } from '@/lib/database-utils'
+// import { handlePrismaError } from '@/lib/database-utils' // 현재 사용하지 않음
 
 export class FamilyRepositoryImpl implements IFamilyRepository {
   
@@ -49,7 +49,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
           }
         },
         categories: {
-          where: createSoftDeleteCondition(),
+          where: { deleted_at: null },
           select: {
             id: true,
             name: true,
@@ -60,7 +60,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
         _count: {
           select: {
             expenses: {
-              where: createSoftDeleteCondition()
+              where: { deleted_at: null }
             }
           }
         }
@@ -77,15 +77,15 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
       where: {
         members: {
           some: {
-            userId,
-            ...createSoftDeleteCondition()
+            user_id: userId,
+            deleted_at: null
           }
         },
-        ...createSoftDeleteCondition()
+        deleted_at: null
       },
       include: {
         members: {
-          where: createSoftDeleteCondition(),
+          where: { deleted_at: null },
           include: {
             user: {
               select: {
@@ -98,7 +98,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
           }
         },
         categories: {
-          where: createSoftDeleteCondition(),
+          where: { deleted_at: null },
           orderBy: { name: 'asc' }
         }
       }
@@ -114,15 +114,15 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
       where: {
         members: {
           some: {
-            userId,
-            ...createSoftDeleteCondition()
+            user_id: userId,
+            deleted_at: null
           }
         },
-        ...createSoftDeleteCondition()
+        deleted_at: null
       },
       include: {
         members: {
-          where: createSoftDeleteCondition(),
+          where: { deleted_at: null },
           include: {
             user: {
               select: {
@@ -135,7 +135,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
           }
         },
         categories: {
-          where: createSoftDeleteCondition(),
+          where: { deleted_at: null },
           select: {
             id: true,
             name: true,
@@ -146,12 +146,12 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
         _count: {
           select: {
             expenses: {
-              where: createSoftDeleteCondition()
+              where: { deleted_at: null }
             }
           }
         }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { created_at: 'desc' }
     })
 
     return families.map(family => this.mapToFamilyWithDetails(family))
@@ -165,7 +165,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     const { pagination, sort, filters } = options || {}
     
     const where = {
-      ...createSoftDeleteCondition(),
+      deleted_at: null,
       ...filters
     }
 
@@ -209,7 +209,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
         name: data.name,
         members: {
           create: {
-            userId: data.userId,
+            user_id: data.userId,
             role: 'admin'
           }
         },
@@ -241,7 +241,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     try {
       await prisma.family.update({
         where: { id: BigInt(id) },
-        data: createSoftDeleteData()
+        data: { deleted_at: new Date() }
       })
       return true
     } catch {
@@ -253,7 +253,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     try {
       await prisma.family.update({
         where: { id: BigInt(id) },
-        data: { deletedAt: null }
+        data: { deleted_at: null }
       })
       return true
     } catch {
@@ -265,7 +265,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     const count = await prisma.family.count({
       where: {
         id: BigInt(id),
-        ...createSoftDeleteCondition()
+        deleted_at: null
       }
     })
     return count > 0
@@ -274,7 +274,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
   async count(filters?: FilterOptions): Promise<number> {
     return await prisma.family.count({
       where: {
-        ...createSoftDeleteCondition(),
+        deleted_at: null,
         ...filters
       }
     })
@@ -284,8 +284,8 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     try {
       await prisma.familyMember.create({
         data: {
-          familyId: BigInt(familyId),
-          userId,
+          family_uuid: familyId,
+          user_id: userId,
           role
         }
       })
@@ -299,11 +299,11 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     try {
       await prisma.familyMember.updateMany({
         where: {
-          familyId: BigInt(familyId),
-          userId,
-          ...createSoftDeleteCondition()
+          family_uuid: familyId,
+          user_id: userId,
+          deleted_at: null
         },
-        data: createSoftDeleteData()
+        data: { deleted_at: new Date() }
       })
       return true
     } catch {
@@ -315,9 +315,9 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     try {
       await prisma.familyMember.updateMany({
         where: {
-          familyId: BigInt(familyId),
-          userId,
-          ...createSoftDeleteCondition()
+          family_uuid: familyId,
+          user_id: userId,
+          deleted_at: null
         },
         data: { role }
       })
@@ -330,9 +330,9 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
   async isMember(familyId: string, userId: string): Promise<boolean> {
     const count = await prisma.familyMember.count({
       where: {
-        familyId: BigInt(familyId),
-        userId,
-        ...createSoftDeleteCondition()
+        family_uuid: familyId,
+        user_id: userId,
+        deleted_at: null
       }
     })
     return count > 0
@@ -341,10 +341,10 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
   async isAdmin(familyId: string, userId: string): Promise<boolean> {
     const count = await prisma.familyMember.count({
       where: {
-        familyId: BigInt(familyId),
-        userId,
+        family_uuid: familyId,
+        user_id: userId,
         role: 'admin',
-        ...createSoftDeleteCondition()
+        deleted_at: null
       }
     })
     return count > 0
@@ -356,9 +356,9 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
       id: String(family.id),
       uuid: family.uuid as string,
       name: family.name as string,
-      createdAt: family.createdAt as Date,
-      updatedAt: family.updatedAt as Date,
-      deletedAt: family.deletedAt as Date | null
+      createdAt: family.created_at as Date,
+      updatedAt: family.updated_at as Date,
+      deletedAt: family.deleted_at as Date | null
     }
   }
 
@@ -368,7 +368,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
       members: (family.members as Record<string, unknown>[]).map((member) => ({
         id: String(member.id),
         role: member.role as string,
-        joinedAt: member.joinedAt as Date,
+        joinedAt: member.joined_at as Date,
         user: {
           id: String((member.user as Record<string, unknown>).id),
           name: (member.user as Record<string, unknown>).name as string | null,
