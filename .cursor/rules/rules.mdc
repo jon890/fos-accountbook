@@ -136,3 +136,57 @@ model FamilyMember {
   @@map("family_members")
 }
 ```
+
+## 🔄 최근 주요 개선사항 (2025-12-21)
+
+### Repository 레이어 아키텍처 개선
+- **문제**: Repository에서 `serialize()` 함수 사용으로 Date 객체가 문자열로 변환되어 ORM 이점 상실
+- **해결**: 
+  - Prisma가 제공하는 Date 객체를 그대로 유지
+  - BigInt와 Decimal만 필요 시 문자열로 변환
+  - `date.toLocaleDateString is not a function` 오류 해결
+
+### 타입 안전성 개선
+```typescript
+// ❌ 기존: 직렬화로 인한 타입 혼동
+interface ExpenseData {
+  date: Date | string  // 불안정한 유니온 타입
+  amount: string | number
+}
+
+// ✅ 개선: ORM 레이어에서 명확한 타입 유지
+interface ExpenseData {
+  date: Date           // Date 객체 유지
+  amount: string       // Repository에서 일관된 문자열 변환
+}
+```
+
+### 데이터 흐름 최적화
+```
+Prisma ORM → Repository → Service → UI
+     ↓            ↓        ↓       ↓
+   Date         Date    Date    Date  ✅ Date 객체 유지
+   Decimal   → string  string  string ✅ 일관된 변환
+   BigInt    → string  string  string ✅ 일관된 변환
+```
+
+### 핵심 원칙
+1. **ORM 이점 활용**: Prisma의 타입 안전성과 Date 객체를 최대한 활용
+2. **최소 변환**: 반드시 필요한 경우(BigInt, Decimal)만 문자열로 변환
+3. **일관된 인터페이스**: Repository 레이어에서 일관된 데이터 형태 제공
+4. **API 응답 시에만 Serialization**: 네트워크 전송 시에만 serialize 적용
+
+### 중요 파일들
+- `src/repositories/implementations/expense.repository.impl.ts`: Date 객체 유지 로직
+- `src/repositories/interfaces/expense.repository.ts`: 정확한 타입 정의
+- `src/components/expenses/ExpenseList.tsx`: Date 객체 직접 사용
+- `src/lib/serialization.ts`: API 응답용 직렬화 함수 (Repository에서 사용 금지)
+
+### 문제 해결 과정
+1. **문제 발견**: `date.toLocaleDateString is not a function` 에러 발생
+2. **원인 분석**: Repository에서 serialize 함수로 Date → string 변환
+3. **근본 해결**: ORM 레이어에서 Date 객체 그대로 유지
+4. **타입 정리**: 명확한 Date 타입 정의로 타입 안전성 확보
+5. **빌드 검증**: 프로덕션 빌드 성공 확인
+
+이 개선으로 인해 ORM의 장점을 완전히 활용하면서 타입 안전성도 크게 향상되었습니다.
