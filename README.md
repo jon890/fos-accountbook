@@ -50,7 +50,8 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 # Database URLs (중요: 용도별로 다른 URL 사용)
 # Connection Pool URL - 애플리케이션 런타임에서 사용 (port 6543)
-DATABASE_URL=postgresql://postgres:your_password@db.your-project.supabase.co:6543/postgres
+# prepared statement 충돌 방지를 위한 파라미터 추가
+DATABASE_URL=postgresql://postgres:your_password@db.your-project.supabase.co:6543/postgres?pgbouncer=true&connection_limit=1
 
 # Direct Connection URL - 마이그레이션/스키마 변경 시에만 사용 (port 5432)
 DIRECT_URL=postgresql://postgres:your_password@db.your-project.supabase.co:5432/postgres
