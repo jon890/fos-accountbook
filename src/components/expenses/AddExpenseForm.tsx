@@ -1,27 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
+import { createExpenseAction, type CreateExpenseFormState } from '@/app/actions/expense-actions'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
-
-const addExpenseSchema = z.object({
-  amount: z.string().min(1, '금액을 입력해주세요').refine(
-    (val) => !isNaN(Number(val)) && Number(val) > 0,
-    '올바른 금액을 입력해주세요'
-  ),
-  description: z.string().optional(),
-  categoryId: z.string().min(1, '카테고리를 선택해주세요'),
-  date: z.string().min(1, '날짜를 선택해주세요')
-})
-
-type AddExpenseFormData = z.infer<typeof addExpenseSchema>
+import { useEffect } from 'react'
+import { useFormState } from 'react-dom'
 
 interface Category {
   id: string
@@ -36,67 +22,32 @@ interface AddExpenseFormProps {
   onCancel?: () => void
 }
 
+const initialState: CreateExpenseFormState = {
+  message: '',
+  errors: {},
+  success: false
+}
+
 export function AddExpenseForm({ categories, onSuccess, onCancel }: AddExpenseFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
+  const [state, formAction] = useFormState(createExpenseAction, initialState)
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    watch,
-    reset
-  } = useForm<AddExpenseFormData>({
-    resolver: zodResolver(addExpenseSchema),
-    defaultValues: {
-      date: new Date().toISOString().split('T')[0] // 오늘 날짜를 기본값으로
-    }
-  })
-
-  const selectedCategoryId = watch('categoryId')
-  const selectedCategory = categories.find(cat => cat.id === selectedCategoryId)
-
-  const onSubmit = async (data: AddExpenseFormData) => {
-    setIsSubmitting(true)
-    
-    try {
-      const response = await fetch('/api/expenses', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          amount: Number(data.amount),
-          description: data.description,
-          categoryId: data.categoryId,
-          date: data.date
-        })
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || '지출 추가에 실패했습니다')
-      }
-
+  // 성공 시 처리
+  useEffect(() => {
+    if (state.success) {
       toast({
         title: '지출이 추가되었습니다',
-        description: `${Number(data.amount).toLocaleString()}원이 ${selectedCategory?.name} 카테고리에 추가되었습니다.`
+        description: state.message
       })
-
-      reset()
       onSuccess?.()
-    } catch (error) {
-      console.error('Add expense error:', error)
+    } else if (state.message && !state.success) {
       toast({
         title: '오류가 발생했습니다',
-        description: error instanceof Error ? error.message : '지출 추가에 실패했습니다',
+        description: state.message,
         variant: 'destructive'
       })
-    } finally {
-      setIsSubmitting(false)
     }
-  }
+  }, [state, toast, onSuccess])
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -104,54 +55,46 @@ export function AddExpenseForm({ categories, onSuccess, onCancel }: AddExpenseFo
         <CardTitle className="text-center">지출 추가</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form action={formAction} className="space-y-4">
           {/* 금액 입력 */}
           <div className="space-y-2">
             <Label htmlFor="amount">금액 *</Label>
             <div className="relative">
               <Input
                 id="amount"
+                name="amount"
                 type="number"
                 placeholder="0"
                 className="text-right pr-8"
-                {...register('amount')}
+                required
               />
               <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
                 원
               </span>
             </div>
-            {errors.amount && (
-              <p className="text-sm text-red-500">{errors.amount.message}</p>
+            {state.errors?.amount && (
+              <p className="text-sm text-red-500">{state.errors.amount[0]}</p>
             )}
           </div>
 
           {/* 카테고리 선택 */}
           <div className="space-y-2">
-            <Label>카테고리 *</Label>
-            <Select onValueChange={(value) => setValue('categoryId', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="카테고리를 선택하세요">
-                  {selectedCategory && (
-                    <div className="flex items-center gap-2">
-                      <span>{selectedCategory.icon}</span>
-                      <span>{selectedCategory.name}</span>
-                    </div>
-                  )}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    <div className="flex items-center gap-2">
-                      <span>{category.icon}</span>
-                      <span>{category.name}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.categoryId && (
-              <p className="text-sm text-red-500">{errors.categoryId.message}</p>
+            <Label htmlFor="categoryId">카테고리 *</Label>
+            <select
+              id="categoryId"
+              name="categoryId"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              required
+            >
+              <option value="">카테고리를 선택하세요</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.icon} {category.name}
+                </option>
+              ))}
+            </select>
+            {state.errors?.categoryId && (
+              <p className="text-sm text-red-500">{state.errors.categoryId[0]}</p>
             )}
           </div>
 
@@ -160,11 +103,13 @@ export function AddExpenseForm({ categories, onSuccess, onCancel }: AddExpenseFo
             <Label htmlFor="date">날짜 *</Label>
             <Input
               id="date"
+              name="date"
               type="date"
-              {...register('date')}
+              defaultValue={new Date().toISOString().split('T')[0]}
+              required
             />
-            {errors.date && (
-              <p className="text-sm text-red-500">{errors.date.message}</p>
+            {state.errors?.date && (
+              <p className="text-sm text-red-500">{state.errors.date[0]}</p>
             )}
           </div>
 
@@ -173,9 +118,12 @@ export function AddExpenseForm({ categories, onSuccess, onCancel }: AddExpenseFo
             <Label htmlFor="description">메모</Label>
             <Input
               id="description"
+              name="description"
               placeholder="간단한 메모를 입력하세요 (선택사항)"
-              {...register('description')}
             />
+            {state.errors?.description && (
+              <p className="text-sm text-red-500">{state.errors.description[0]}</p>
+            )}
           </div>
 
           {/* 버튼들 */}
@@ -186,7 +134,6 @@ export function AddExpenseForm({ categories, onSuccess, onCancel }: AddExpenseFo
                 variant="outline"
                 className="flex-1"
                 onClick={onCancel}
-                disabled={isSubmitting}
               >
                 취소
               </Button>
@@ -194,9 +141,8 @@ export function AddExpenseForm({ categories, onSuccess, onCancel }: AddExpenseFo
             <Button
               type="submit"
               className="flex-1"
-              disabled={isSubmitting}
             >
-              {isSubmitting ? '추가 중...' : '지출 추가'}
+              지출 추가
             </Button>
           </div>
         </form>

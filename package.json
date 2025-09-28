@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "pnpm@10.17.1",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
     "postinstall": "prisma generate",
@@ -19,7 +19,7 @@
     "db:migrate": "dotenv -e .env.local -- npx prisma migrate dev --skip-seed",
     "db:migrate:create": "dotenv -e .env.local -- npx prisma migrate dev --create-only",
     "db:migrate:deploy": "dotenv -e .env.local -- npx prisma migrate deploy",
-    "db:reset": "dotenv -e .env.local -- npx prisma migrate reset",
+    "db:push": "dotenv -e .env.local -- npx prisma db push",
     "db:validate": "dotenv -e .env.local -- npx prisma validate"
   },
   "dependencies": {

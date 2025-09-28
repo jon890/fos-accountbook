@@ -2,37 +2,40 @@
  * Family Repository 구현
  */
 
-import { prisma } from '@/lib/prisma'
-import { 
-  IFamilyRepository, 
-  FamilyData, 
-  FamilyWithDetails, 
-  CreateFamilyData, 
-  UpdateFamilyData 
-} from '../interfaces/family.repository'
-import { PaginationResult, PaginationOptions, SortOptions, FilterOptions } from '../interfaces/base.repository'
-// import { handlePrismaError } from '@/lib/database-utils' // 현재 사용하지 않음
+import { prisma } from "@/lib/prisma";
+import {
+  IFamilyRepository,
+  FamilyData,
+  FamilyWithDetails,
+  CreateFamilyData,
+  UpdateFamilyData,
+} from "../interfaces/family.repository";
+import {
+  PaginationResult,
+  PaginationOptions,
+  SortOptions,
+  FilterOptions,
+} from "../interfaces/base.repository";
 
 export class FamilyRepositoryImpl implements IFamilyRepository {
-  
   async findById(id: string): Promise<FamilyData | null> {
     const family = await prisma.family.findFirst({
       where: {
         id: BigInt(id),
-        deletedAt: null
-      }
-    })
-    
-    if (!family) return null
-    
-    return this.mapToFamilyData(family)
+        deletedAt: null,
+      },
+    });
+
+    if (!family) return null;
+
+    return this.mapToFamilyData(family);
   }
 
   async findWithDetails(id: string): Promise<FamilyWithDetails | null> {
     const family = await prisma.family.findFirst({
       where: {
         id: BigInt(id),
-        deletedAt: null
+        deletedAt: null,
       },
       include: {
         members: {
@@ -43,45 +46,45 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
                 id: true,
                 name: true,
                 email: true,
-                image: true
-              }
-            }
-          }
+                image: true,
+              },
+            },
+          },
         },
         categories: {
           where: { deletedAt: null },
           select: {
-            id: true,
+            uuid: true,
             name: true,
             color: true,
-            icon: true
-          }
+            icon: true,
+          },
         },
         _count: {
           select: {
             expenses: {
-              where: { deletedAt: null }
-            }
-          }
-        }
-      }
-    })
+              where: { deletedAt: null },
+            },
+          },
+        },
+      },
+    });
 
-    if (!family) return null
-    
-    return this.mapToFamilyWithDetails(family)
+    if (!family) return null;
+
+    return this.mapToFamilyWithDetails(family);
   }
 
-  async findByUserId(userId: string): Promise<FamilyWithDetails | null> {
+  async findByUserUuid(userUuid: string): Promise<FamilyWithDetails | null> {
     const family = await prisma.family.findFirst({
       where: {
         members: {
           some: {
-            userId: userId,
-            deletedAt: null
-          }
+            userUuid: userUuid,
+            deletedAt: null,
+          },
         },
-        deletedAt: null
+        deletedAt: null,
       },
       include: {
         members: {
@@ -92,33 +95,33 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
                 id: true,
                 name: true,
                 email: true,
-                image: true
-              }
-            }
-          }
+                image: true,
+              },
+            },
+          },
         },
         categories: {
           where: { deletedAt: null },
-          orderBy: { name: 'asc' }
-        }
-      }
-    })
+          orderBy: { name: "asc" },
+        },
+      },
+    });
 
-    if (!family) return null
-    
-    return this.mapToFamilyWithDetails(family)
+    if (!family) return null;
+
+    return this.mapToFamilyWithDetails(family);
   }
 
-  async findAllByUserId(userId: string): Promise<FamilyWithDetails[]> {
+  async findAllByUserUuid(userUuid: string): Promise<FamilyWithDetails[]> {
     const families = await prisma.family.findMany({
       where: {
         members: {
           some: {
-            userId: userId,
-            deletedAt: null
-          }
+            userUuid: userUuid,
+            deletedAt: null,
+          },
         },
-        deletedAt: null
+        deletedAt: null,
       },
       include: {
         members: {
@@ -129,120 +132,114 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
                 id: true,
                 name: true,
                 email: true,
-                image: true
-              }
-            }
-          }
+                image: true,
+              },
+            },
+          },
         },
         categories: {
           where: { deletedAt: null },
           select: {
-            id: true,
+            uuid: true,
             name: true,
             color: true,
-            icon: true
-          }
+            icon: true,
+          },
         },
         _count: {
           select: {
             expenses: {
-              where: { deletedAt: null }
-            }
-          }
-        }
+              where: { deletedAt: null },
+            },
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' }
-    })
+      orderBy: { createdAt: "desc" },
+    });
 
-    return families.map(family => this.mapToFamilyWithDetails(family))
+    return families.map((family) => this.mapToFamilyWithDetails(family));
   }
 
   async findAll(options?: {
-    pagination?: PaginationOptions
-    sort?: SortOptions
-    filters?: FilterOptions
+    pagination?: PaginationOptions;
+    sort?: SortOptions;
+    filters?: FilterOptions;
   }): Promise<PaginationResult<FamilyData>> {
-    const { pagination, sort, filters } = options || {}
-    
+    const { pagination, sort, filters } = options || {};
+
     const where = {
       deletedAt: null,
-      ...filters
-    }
+      ...filters,
+    };
 
     const [families, total] = await Promise.all([
       prisma.family.findMany({
         where,
         ...(pagination && {
           skip: (pagination.page - 1) * pagination.limit,
-          take: pagination.limit
+          take: pagination.limit,
         }),
         ...(sort && {
-          orderBy: { [sort.field]: sort.order }
-        })
+          orderBy: { [sort.field]: sort.order },
+        }),
       }),
-      prisma.family.count({ where })
-    ])
+      prisma.family.count({ where }),
+    ]);
 
     return {
-      data: families.map(family => this.mapToFamilyData(family)),
+      data: families.map((family) => this.mapToFamilyData(family)),
       pagination: {
         page: pagination?.page || 1,
         limit: pagination?.limit || families.length,
         total,
-        totalPages: pagination ? Math.ceil(total / pagination.limit) : 1
-      }
-    }
+        totalPages: pagination ? Math.ceil(total / pagination.limit) : 1,
+      },
+    };
   }
 
   async create(data: CreateFamilyData): Promise<FamilyData> {
     let defaultCategories = data.categories || [
-      { name: '식비', color: '#ef4444', icon: '🍽️' },
-      { name: '교통', color: '#3b82f6', icon: '🚗' },
-      { name: '쇼핑', color: '#8b5cf6', icon: '🛍️' },
-      { name: '의료', color: '#10b981', icon: '🏥' },
-      { name: '문화', color: '#f59e0b', icon: '🎭' },
-      { name: '기타', color: '#6b7280', icon: '📝' }
-    ]
+      { name: "식비", color: "#ef4444", icon: "🍽️" },
+      { name: "교통", color: "#3b82f6", icon: "🚗" },
+      { name: "쇼핑", color: "#8b5cf6", icon: "🛍️" },
+      { name: "의료", color: "#10b981", icon: "🏥" },
+      { name: "문화", color: "#f59e0b", icon: "🎭" },
+      { name: "기타", color: "#6b7280", icon: "📝" },
+    ];
 
     // 개인 사용인 경우 추가 카테고리
-    if (data.type === 'personal') {
+    if (data.type === "personal") {
       defaultCategories = [
         ...defaultCategories,
-        { name: '용돈', color: '#ec4899', icon: '💰' },
-        { name: '저축', color: '#059669', icon: '🏦' }
-      ]
+        { name: "용돈", color: "#ec4899", icon: "💰" },
+        { name: "저축", color: "#059669", icon: "🏦" },
+      ];
     }
 
     const family = await prisma.family.create({
       data: {
         name: data.name,
-        members: {
-          create: {
-            userId: data.userId,
-            role: 'admin'
-          }
-        },
         categories: {
           createMany: {
-            data: defaultCategories
-          }
-        }
-      }
-    })
+            data: defaultCategories,
+          },
+        },
+      },
+    });
 
-    return this.mapToFamilyData(family)
+    return this.mapToFamilyData(family);
   }
 
   async update(id: string, data: UpdateFamilyData): Promise<FamilyData | null> {
     try {
       const family = await prisma.family.update({
         where: { id: BigInt(id) },
-        data
-      })
-      
-      return this.mapToFamilyData(family)
+        data,
+      });
+
+      return this.mapToFamilyData(family);
     } catch {
-      return null
+      return null;
     }
   }
 
@@ -250,11 +247,11 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     try {
       await prisma.family.update({
         where: { id: BigInt(id) },
-        data: { deletedAt: new Date() }
-      })
-      return true
+        data: { deletedAt: new Date() },
+      });
+      return true;
     } catch {
-      return false
+      return false;
     }
   }
 
@@ -262,11 +259,11 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     try {
       await prisma.family.update({
         where: { id: BigInt(id) },
-        data: { deletedAt: null }
-      })
-      return true
+        data: { deletedAt: null },
+      });
+      return true;
     } catch {
-      return false
+      return false;
     }
   }
 
@@ -274,89 +271,97 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     const count = await prisma.family.count({
       where: {
         id: BigInt(id),
-        deletedAt: null
-      }
-    })
-    return count > 0
+        deletedAt: null,
+      },
+    });
+    return count > 0;
   }
 
   async count(filters?: FilterOptions): Promise<number> {
     return await prisma.family.count({
       where: {
         deletedAt: null,
-        ...filters
-      }
-    })
+        ...filters,
+      },
+    });
   }
 
-  async addMember(familyId: string, userId: string, role: string = 'member'): Promise<boolean> {
+  async addMember(
+    familyId: string,
+    userUuid: string,
+    role: string = "member"
+  ): Promise<boolean> {
     try {
       await prisma.familyMember.create({
         data: {
           familyUuid: familyId,
-          userId: userId,
-          role
-        }
-      })
-      return true
+          userUuid: userUuid,
+          role,
+        },
+      });
+      return true;
     } catch {
-      return false
+      return false;
     }
   }
 
-  async removeMember(familyId: string, userId: string): Promise<boolean> {
+  async removeMember(familyId: string, userUuid: string): Promise<boolean> {
     try {
       await prisma.familyMember.updateMany({
         where: {
           familyUuid: familyId,
-          userId: userId,
-          deletedAt: null
+          userUuid: userUuid,
+          deletedAt: null,
         },
-        data: { deletedAt: new Date() }
-      })
-      return true
+        data: { deletedAt: new Date() },
+      });
+      return true;
     } catch {
-      return false
+      return false;
     }
   }
 
-  async updateMemberRole(familyId: string, userId: string, role: string): Promise<boolean> {
+  async updateMemberRole(
+    familyId: string,
+    userUuid: string,
+    role: string
+  ): Promise<boolean> {
     try {
       await prisma.familyMember.updateMany({
         where: {
           familyUuid: familyId,
-          userId: userId,
-          deletedAt: null
+          userUuid: userUuid,
+          deletedAt: null,
         },
-        data: { role }
-      })
-      return true
+        data: { role },
+      });
+      return true;
     } catch {
-      return false
+      return false;
     }
   }
 
-  async isMember(familyId: string, userId: string): Promise<boolean> {
+  async isMember(familyId: string, userUuid: string): Promise<boolean> {
     const count = await prisma.familyMember.count({
       where: {
         familyUuid: familyId,
-        userId: userId,
-        deletedAt: null
-      }
-    })
-    return count > 0
+        userUuid: userUuid,
+        deletedAt: null,
+      },
+    });
+    return count > 0;
   }
 
-  async isAdmin(familyId: string, userId: string): Promise<boolean> {
+  async isAdmin(familyId: string, userUuid: string): Promise<boolean> {
     const count = await prisma.familyMember.count({
       where: {
         familyUuid: familyId,
-        userId: userId,
-        role: 'admin',
-        deletedAt: null
-      }
-    })
-    return count > 0
+        userUuid: userUuid,
+        role: "admin",
+        deletedAt: null,
+      },
+    });
+    return count > 0;
   }
 
   // Helper methods
@@ -367,11 +372,13 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
       name: family.name as string,
       createdAt: family.createdAt as Date,
       updatedAt: family.updatedAt as Date,
-      deletedAt: family.deletedAt as Date | null
-    }
+      deletedAt: family.deletedAt as Date | null,
+    };
   }
 
-  private mapToFamilyWithDetails(family: Record<string, unknown>): FamilyWithDetails {
+  private mapToFamilyWithDetails(
+    family: Record<string, unknown>
+  ): FamilyWithDetails {
     return {
       ...this.mapToFamilyData(family),
       members: (family.members as Record<string, unknown>[]).map((member) => ({
@@ -381,17 +388,23 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
         user: {
           id: String((member.user as Record<string, unknown>).id),
           name: (member.user as Record<string, unknown>).name as string | null,
-          email: (member.user as Record<string, unknown>).email as string | null,
-          image: (member.user as Record<string, unknown>).image as string | null
-        }
+          email: (member.user as Record<string, unknown>).email as
+            | string
+            | null,
+          image: (member.user as Record<string, unknown>).image as
+            | string
+            | null,
+        },
       })),
-      categories: (family.categories as Record<string, unknown>[]).map((category) => ({
-        id: String(category.id),
-        name: category.name as string,
-        color: category.color as string,
-        icon: category.icon as string
-      })),
-      _count: family._count as { expenses: number } | undefined
-    }
+      categories: (family.categories as Record<string, unknown>[]).map(
+        (category) => ({
+          id: category.uuid as string,
+          name: category.name as string,
+          color: category.color as string,
+          icon: category.icon as string,
+        })
+      ),
+      _count: family._count as { expenses: number } | undefined,
+    };
   }
 }

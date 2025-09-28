@@ -18,11 +18,10 @@ datasource db {
 // 참조: https://authjs.dev/getting-started/adapters/prisma
 // =====================================================
 
-// NextAuth.js 공식 스키마 형식을 따라야 합니다.
-// 절대 필드명을 변경하지 마세요! NextAuth.js와의 호환성을 위해 정확한 형식을 유지해야 합니다.
+// NextAuth.js 호환 Account 모델 (authId 참조)
 model Account {
   id                String  @id @default(cuid())
-  userId            String
+  userId            String  @map("user_id") // User.authId 참조
   type              String
   provider          String
   providerAccountId String
@@ -33,36 +32,38 @@ model Account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation("AccountUser", fields: [userId], references: [authId], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
 }
 
-// NextAuth.js 공식 스키마 형식을 따라야 합니다.
+// NextAuth.js 호환 Session 모델 (authId 참조)
 model Session {
   id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id") // User.authId 참조
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation("SessionUser", fields: [userId], references: [authId], onDelete: Cascade)
 
   @@map("sessions")
 }
 
-// NextAuth.js 공식 스키마 형식을 따라야 합니다.
+// 완전한 UUID 기반 User 모델
 model User {
-  id            String         @id @default(cuid())
+  id            BigInt         @id @default(autoincrement()) // 1,2,3... 순차 ID
+  uuid          String         @unique @default(uuid()) @db.Uuid // 비즈니스 로직용 UUID
+  authId        String         @unique @default(cuid()) @map("auth_id") // NextAuth 호환용 ID
   name          String?
   email         String         @unique
-  emailVerified DateTime?
+  emailVerified DateTime?      @map("email_verified")
   image         String?
-  created_at    DateTime       @default(now())
-  updated_at    DateTime       @updatedAt
-  deleted_at    DateTime?
-  accounts      Account[]
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  deletedAt     DateTime?      @map("deleted_at")
+  accounts      Account[]      @relation("AccountUser")
   familyMembers FamilyMember[] @relation("UserFamilyMembers")
-  sessions      Session[]
+  sessions      Session[]      @relation("SessionUser")
 
   @@map("users")
 }
@@ -102,14 +103,14 @@ model FamilyMember {
   id         BigInt    @id @default(autoincrement())
   uuid       String    @unique @default(uuid()) @db.Uuid
   familyUuid String    @map("family_uuid") @db.Uuid
-  userId     String    @map("user_id")
+  userUuid   String    @map("user_uuid") @db.Uuid // User.uuid 참조
   role       String    @default("member") @db.VarChar(20)
   joinedAt   DateTime  @default(now()) @map("joined_at")
   deletedAt  DateTime? @map("deleted_at")
   family     Family    @relation("FamilyMembers", fields: [familyUuid], references: [uuid])
-  user       User      @relation("UserFamilyMembers", fields: [userId], references: [id])
+  user       User      @relation("UserFamilyMembers", fields: [userUuid], references: [uuid])
 
-  @@unique([familyUuid, userId])
+  @@unique([familyUuid, userUuid])
   @@map("family_members")
 }
 

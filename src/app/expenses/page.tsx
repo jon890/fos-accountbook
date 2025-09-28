@@ -1,133 +1,65 @@
-'use client'
-
-import { useState, useEffect, useCallback } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
-import { Header } from '@/components/layout/Header'
-import { BottomNavigation } from '@/components/layout/BottomNavigation'
-import { AddExpenseForm } from '@/components/expenses/AddExpenseForm'
-import { ExpenseList } from '@/components/expenses/ExpenseList'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
-import { LoginPage } from '@/components/auth/LoginPage'
+import { ExpenseFilters } from '@/components/expenses/ExpenseFilters'
+import { ExpenseList } from '@/components/expenses/ExpenseList'
+import { ExpensePageClient } from '@/components/expenses/ExpensePageClient'
+import { BottomNavigation } from '@/components/layout/BottomNavigation'
+import { Header } from '@/components/layout/Header'
+import { Card, CardContent } from '@/components/ui/card'
+import { familyService } from '@/container'
+import { authOptions } from '@/lib/auth'
+import { getServerSession } from 'next-auth'
+import { redirect } from 'next/navigation'
+import { Suspense } from 'react'
 
-interface Category {
-  id: string
-  name: string
-  color: string
-  icon: string
+interface SearchParams {
+  categoryId?: string
+  startDate?: string
+  endDate?: string
+  page?: string
 }
 
-interface Family {
-  id: string
-  name: string
-  categories: Category[]
+interface ExpensesPageProps {
+  searchParams: Promise<SearchParams>
 }
 
-export default function ExpensesPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const [family, setFamily] = useState<Family | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [refreshTrigger, setRefreshTrigger] = useState(0)
-  const [familyLoaded, setFamilyLoaded] = useState(false)
+async function ExpenseListWrapper({ 
+  familyId, 
+  searchParams 
+}: { 
+  familyId: string
+  searchParams: SearchParams 
+}) {
+  const page = parseInt(searchParams.page || '1', 10)
+  
+  return (
+    <ExpenseList
+      familyId={familyId}
+      categoryId={searchParams.categoryId}
+      startDate={searchParams.startDate}
+      endDate={searchParams.endDate}
+      page={page}
+    />
+  )
+}
 
-  // 가족 정보 조회
-  useEffect(() => {
-    if (status === 'authenticated' && !familyLoaded) {
-      const fetchFamily = async () => {
-        try {
-          setLoading(true)
-          const response = await fetch('/api/families')
-          
-          if (response.status === 404) {
-            // 가족이 없는 경우 생성 페이지로 리다이렉트
-            router.push('/families/create')
-            return
-          }
-          
-          if (!response.ok) {
-            throw new Error('가족 정보를 불러오는데 실패했습니다')
-          }
-
-          const familyData = await response.json()
-          setFamily(familyData)
-          setError(null)
-          setFamilyLoaded(true)
-        } catch (err) {
-          setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다')
-        } finally {
-          setLoading(false)
-        }
-      }
-      
-      fetchFamily()
-    } else if (status === 'unauthenticated') {
-      setLoading(false)
-    }
-  }, [status, familyLoaded, router])
-
-  const fetchFamily = useCallback(async () => {
-    try {
-      setLoading(true)
-      const response = await fetch('/api/families')
-      
-      if (response.status === 404) {
-        router.push('/families/create')
-        return
-      }
-      
-      if (!response.ok) {
-        throw new Error('가족 정보를 불러오는데 실패했습니다')
-      }
-
-      const familyData = await response.json()
-      setFamily(familyData)
-      setError(null)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다')
-    } finally {
-      setLoading(false)
-    }
-  }, [router])
-
-  const handleExpenseAdded = () => {
-    setIsAddDialogOpen(false)
-    setRefreshTrigger(prev => prev + 1) // 지출 목록 새로고침 트리거
+export default async function ExpensesPage({ searchParams }: ExpensesPageProps) {
+  const session = await getServerSession(authOptions)
+  const resolvedSearchParams = await searchParams
+  
+  if (!session?.user?.id) {
+    redirect('/api/auth/signin')
   }
 
-  // 세션 로딩 중
-  if (status === 'loading' || loading) {
-    return <LoadingSpinner />
+  let family
+  try {
+    family = await familyService.getFamilyByUserId(session.user.id)
+  } catch (error) {
+    // 가족이 없는 경우 생성 페이지로 리다이렉트
+    redirect('/families/create')
   }
 
-  // 로그인되지 않은 상태
-  if (status === 'unauthenticated' || !session) {
-    return <LoginPage />
-  }
-
-  // 에러 상태
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-500 mb-4">{error}</p>
-          <Button onClick={fetchFamily}>다시 시도</Button>
-        </div>
-      </div>
-    )
-  }
-
-  // 가족 정보가 없는 경우
   if (!family) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    )
+    redirect('/families/create')
   }
 
   return (
@@ -145,27 +77,29 @@ export default function ExpensesPage() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">지출 관리</h1>
           
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                + 지출 추가
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="p-0 border-0 bg-transparent">
-              <AddExpenseForm
-                categories={family.categories}
-                onSuccess={handleExpenseAdded}
-                onCancel={() => setIsAddDialogOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
+          <ExpensePageClient categories={family.categories} />
+        </div>
+
+        {/* 필터 섹션 */}
+        <div className="mb-6">
+          <ExpenseFilters categories={family.categories} />
         </div>
 
         {/* 지출 목록 */}
-        <ExpenseList 
-          categories={family.categories}
-          refreshTrigger={refreshTrigger}
-        />
+        <Suspense 
+          fallback={
+            <Card>
+              <CardContent className="flex justify-center items-center py-8">
+                <LoadingSpinner />
+              </CardContent>
+            </Card>
+          }
+        >
+          <ExpenseListWrapper 
+            familyId={family.uuid}
+            searchParams={resolvedSearchParams}
+          />
+        </Suspense>
       </main>
 
       <BottomNavigation />
