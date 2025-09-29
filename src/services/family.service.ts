@@ -3,11 +3,12 @@
  */
 
 import {
-  IFamilyRepository,
-  FamilyWithDetails,
   CreateFamilyData,
+  FamilyWithDetails,
+  IFamilyRepository,
 } from "@/repositories/interfaces/family.repository";
 import { IUserRepository } from "@/repositories/interfaces/user.repository";
+import { MemberRole } from "@/types/enums";
 
 export class FamilyService {
   constructor(
@@ -46,7 +47,11 @@ export class FamilyService {
     const family = await this.familyRepository.create(data);
 
     // 생성된 Family에 첫 번째 멤버로 사용자 추가 (admin 권한)
-    await this.familyRepository.addMember(family.uuid, user.uuid, "admin");
+    await this.familyRepository.addMember(
+      family.uuid,
+      user.uuid,
+      MemberRole.ADMIN
+    );
 
     // 생성된 가족의 상세 정보를 다시 조회
     const familyWithDetails = await this.familyRepository.findWithDetails(
@@ -97,7 +102,7 @@ export class FamilyService {
   async addMember(
     familyId: string,
     userId: string,
-    role: string = "member"
+    role: MemberRole = MemberRole.MEMBER
   ): Promise<boolean> {
     // userId는 User.authId이므로, 먼저 User.uuid를 찾음
     const user = await this.userRepository.findByAuthId(userId);
@@ -117,7 +122,7 @@ export class FamilyService {
   async updateMemberRole(
     familyId: string,
     userId: string,
-    role: string
+    role: MemberRole
   ): Promise<boolean> {
     // userId는 User.authId이므로, 먼저 User.uuid를 찾음
     const user = await this.userRepository.findByAuthId(userId);

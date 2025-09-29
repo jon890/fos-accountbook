@@ -4,18 +4,26 @@
 
 import { prisma } from "@/lib/prisma";
 import {
-  IFamilyRepository,
+  MemberRole as AppMemberRole,
+  MemberStatus as AppMemberStatus,
+} from "@/types/enums";
+import {
+  MemberRole as PrismaMemberRole,
+  MemberStatus as PrismaMemberStatus,
+} from "@prisma/client";
+import {
+  FilterOptions,
+  PaginationOptions,
+  PaginationResult,
+  SortOptions,
+} from "../interfaces/base.repository";
+import {
+  CreateFamilyData,
   FamilyData,
   FamilyWithDetails,
-  CreateFamilyData,
+  IFamilyRepository,
   UpdateFamilyData,
 } from "../interfaces/family.repository";
-import {
-  PaginationResult,
-  PaginationOptions,
-  SortOptions,
-  FilterOptions,
-} from "../interfaces/base.repository";
 
 export class FamilyRepositoryImpl implements IFamilyRepository {
   async findById(id: string): Promise<FamilyData | null> {
@@ -289,14 +297,15 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
   async addMember(
     familyId: string,
     userUuid: string,
-    role: string = "member"
+    role: AppMemberRole = AppMemberRole.MEMBER
   ): Promise<boolean> {
     try {
       await prisma.familyMember.create({
         data: {
           familyUuid: familyId,
           userUuid: userUuid,
-          role,
+          role: role.code as PrismaMemberRole,
+          status: AppMemberStatus.ACTIVE.code as PrismaMemberStatus, // 멤버를 바로 활성 상태로 설정
         },
       });
       return true;
@@ -324,7 +333,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
   async updateMemberRole(
     familyId: string,
     userUuid: string,
-    role: string
+    role: AppMemberRole
   ): Promise<boolean> {
     try {
       await prisma.familyMember.updateMany({
@@ -333,12 +342,90 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
           userUuid: userUuid,
           deletedAt: null,
         },
-        data: { role },
+        data: { role: role.code as PrismaMemberRole },
       });
       return true;
     } catch {
       return false;
     }
+  }
+
+  async updateMemberStatus(
+    familyId: string,
+    userUuid: string,
+    status: AppMemberStatus
+  ): Promise<boolean> {
+    try {
+      await prisma.familyMember.updateMany({
+        where: {
+          familyUuid: familyId,
+          userUuid: userUuid,
+          deletedAt: null,
+        },
+        data: { status: status.code as PrismaMemberStatus },
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async getPendingMembers(familyId: string): Promise<
+    Array<{
+      id: string;
+      role: AppMemberRole;
+      status: AppMemberStatus;
+      joinedAt: Date;
+      user: {
+        id: string;
+        name: string | null;
+        email: string | null;
+        image: string | null;
+      };
+    }>
+  > {
+    const members = await prisma.familyMember.findMany({
+      where: {
+        familyUuid: familyId,
+        status: AppMemberStatus.PENDING.code as PrismaMemberStatus,
+        deletedAt: null,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        },
+      },
+    });
+
+    return members.map((member) => ({
+      id: String(member.id),
+      role: AppMemberRole.fromCode(member.role),
+      status: AppMemberStatus.fromCode(member.status),
+      joinedAt: member.joinedAt,
+      user: {
+        id: member.user.id,
+        name: member.user.name,
+        email: member.user.email,
+        image: member.user.image,
+      },
+    }));
+  }
+
+  async approveMember(familyId: string, userUuid: string): Promise<boolean> {
+    return this.updateMemberStatus(familyId, userUuid, AppMemberStatus.ACTIVE);
+  }
+
+  async rejectMember(familyId: string, userUuid: string): Promise<boolean> {
+    return this.updateMemberStatus(
+      familyId,
+      userUuid,
+      AppMemberStatus.REJECTED
+    );
   }
 
   async isMember(familyId: string, userUuid: string): Promise<boolean> {
@@ -357,7 +444,7 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
       where: {
         familyUuid: familyId,
         userUuid: userUuid,
-        role: "admin",
+        role: AppMemberRole.ADMIN.code as PrismaMemberRole,
         deletedAt: null,
       },
     });
@@ -383,7 +470,8 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
       ...this.mapToFamilyData(family),
       members: (family.members as Record<string, unknown>[]).map((member) => ({
         id: String(member.id),
-        role: member.role as string,
+        role: AppMemberRole.fromCode(member.role as string),
+        status: AppMemberStatus.fromCode(member.status as string),
         joinedAt: member.joinedAt as Date,
         user: {
           id: String((member.user as Record<string, unknown>).id),

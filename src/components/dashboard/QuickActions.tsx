@@ -1,24 +1,29 @@
-'use client'
+"use client";
 
-import { useRouter } from 'next/navigation'
-import { Card, CardContent } from "@/components/ui/card"
-import { Plus, Settings } from "lucide-react"
+import { useRouter } from "next/navigation";
+import { Card, CardContent } from "@/components/ui/card";
+import { Plus, Settings, Users } from "lucide-react";
 
 export function QuickActions() {
-  const router = useRouter()
+  const router = useRouter();
 
   const handleAddExpenseClick = () => {
-    router.push('/expenses')
-  }
+    router.push("/expenses");
+  };
 
   const handleCategoryClick = () => {
     // TODO: 카테고리 관리 페이지로 이동
-    console.log('카테고리 관리 (미구현)')
-  }
+    console.log("카테고리 관리 (미구현)");
+  };
+
+  const handleFamilyClick = () => {
+    // 로그인한 사용자만 가족 관리 페이지에 접근 가능
+    router.push("/families/manage");
+  };
 
   return (
-    <div className="grid grid-cols-2 gap-4">
-      <Card 
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <Card
         className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
         onClick={handleAddExpenseClick}
       >
@@ -35,7 +40,7 @@ export function QuickActions() {
         </CardContent>
       </Card>
 
-      <Card 
+      <Card
         className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
         onClick={handleCategoryClick}
       >
@@ -51,6 +56,23 @@ export function QuickActions() {
           </div>
         </CardContent>
       </Card>
+
+      <Card
+        className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
+        onClick={handleFamilyClick}
+      >
+        <CardContent className="p-6">
+          <div className="flex items-center space-x-4">
+            <div className="w-14 h-14 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
+              <Users className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-1">가족 관리</h3>
+              <p className="text-gray-600 text-sm">초대 및 승인</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 }

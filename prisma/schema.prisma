@@ -80,6 +80,7 @@ model User {
   deletedAt     DateTime?      @map("deleted_at")
   accounts      Account[]
   familyMembers FamilyMember[] @relation("UserFamilyMembers")
+  invites       FamilyInvite[] @relation("UserInvites")
   sessions      Session[]
 
   @@map("users")
@@ -95,23 +96,58 @@ model Family {
   categories Category[]     @relation("FamilyCategories")
   expenses   Expense[]      @relation("FamilyExpenses")
   members    FamilyMember[] @relation("FamilyMembers")
+  invites    FamilyInvite[] @relation("FamilyInvites")
 
   @@map("families")
 }
 
+enum MemberStatus {
+  pending
+  approved
+  rejected
+  active
+}
+
+enum MemberRole {
+  admin
+  member
+}
+
 model FamilyMember {
-  id         BigInt    @id @default(autoincrement())
-  uuid       String    @unique @default(uuid()) @db.Uuid
-  familyUuid String    @map("family_uuid") @db.Uuid
-  userUuid   String    @map("user_uuid") @db.Uuid // User.uuid 참조
-  role       String    @default("member") @db.VarChar(20)
-  joinedAt   DateTime  @default(now()) @map("joined_at")
-  deletedAt  DateTime? @map("deleted_at")
-  family     Family    @relation("FamilyMembers", fields: [familyUuid], references: [uuid])
-  user       User      @relation("UserFamilyMembers", fields: [userUuid], references: [uuid])
+  id         BigInt       @id @default(autoincrement())
+  uuid       String       @unique @default(uuid()) @db.Uuid
+  familyUuid String       @map("family_uuid") @db.Uuid
+  userUuid   String       @map("user_uuid") @db.Uuid // User.uuid 참조
+  role       MemberRole   @default(member)
+  status     MemberStatus @default(pending)
+  joinedAt   DateTime     @default(now()) @map("joined_at")
+  deletedAt  DateTime?    @map("deleted_at")
+  family     Family       @relation("FamilyMembers", fields: [familyUuid], references: [uuid])
+  user       User         @relation("UserFamilyMembers", fields: [userUuid], references: [uuid])
 
   @@unique([familyUuid, userUuid])
   @@map("family_members")
+}
+
+model FamilyInvite {
+  id         BigInt    @id @default(autoincrement())
+  uuid       String    @unique @default(uuid()) @db.Uuid
+  familyUuid String    @map("family_uuid") @db.Uuid
+  inviteCode String    @unique @map("invite_code") @db.VarChar(32) // 초대 링크용 고유 코드
+  invitedBy  String    @map("invited_by") @db.Uuid // 초대한 사용자의 UUID
+  expiresAt  DateTime  @map("expires_at") // 초대 링크 만료 시간
+  usageLimit Int?      @map("usage_limit") // 사용 횟수 제한 (null이면 무제한)
+  usedCount  Int       @default(0) @map("used_count") // 사용된 횟수
+  isActive   Boolean   @default(true) @map("is_active") // 활성화 상태
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+  family     Family    @relation("FamilyInvites", fields: [familyUuid], references: [uuid])
+  inviter    User      @relation("UserInvites", fields: [invitedBy], references: [uuid])
+
+  @@index([inviteCode])
+  @@index([familyUuid])
+  @@map("family_invites")
 }
 
 model Category {
