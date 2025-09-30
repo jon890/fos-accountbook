@@ -148,3 +148,20 @@ model Expense {
   @@index([categoryUuid])
   @@map("expenses")
 }
+
+model Invitation {
+  id            BigInt    @id @default(autoincrement())
+  uuid          String    @unique @default(uuid()) @db.Uuid
+  familyUuid    String    @map("family_uuid") @db.Uuid
+  createdByUuid String    @map("created_by_uuid") @db.Uuid
+  token         String    @unique @db.VarChar(64)
+  expiresAt     DateTime  @map("expires_at")
+  usedAt        DateTime? @map("used_at")
+  usedByUuid    String?   @map("used_by_uuid") @db.Uuid
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@index([token])
+  @@index([familyUuid])
+  @@map("invitations")
+}

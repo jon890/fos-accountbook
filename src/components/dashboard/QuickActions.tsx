@@ -1,11 +1,14 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent } from "@/components/ui/card"
-import { Plus, Settings } from "lucide-react"
+import { Plus, Settings, UserPlus } from "lucide-react"
+import { InviteFamilyDialog } from "./InviteFamilyDialog"
 
 export function QuickActions() {
   const router = useRouter()
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
 
   const handleAddExpenseClick = () => {
     router.push('/expenses')
@@ -16,41 +19,69 @@ export function QuickActions() {
     console.log('카테고리 관리 (미구현)')
   }
 
-  return (
-    <div className="grid grid-cols-2 gap-4">
-      <Card 
-        className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
-        onClick={handleAddExpenseClick}
-      >
-        <CardContent className="p-6">
-          <div className="flex items-center space-x-4">
-            <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
-              <Plus className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-1">지출 추가</h3>
-              <p className="text-gray-600 text-sm">새로운 지출 기록</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+  const handleInviteClick = () => {
+    setInviteDialogOpen(true)
+  }
 
-      <Card 
-        className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
-        onClick={handleCategoryClick}
-      >
-        <CardContent className="p-6">
-          <div className="flex items-center space-x-4">
-            <div className="w-14 h-14 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
-              <Settings className="w-7 h-7 text-white" />
+  return (
+    <>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <Card 
+          className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
+          onClick={handleAddExpenseClick}
+        >
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-4">
+              <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                <Plus className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">지출 추가</h3>
+                <p className="text-gray-600 text-sm">새로운 지출 기록</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-1">카테고리</h3>
-              <p className="text-gray-600 text-sm">분류 관리</p>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
+          onClick={handleInviteClick}
+        >
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-4">
+              <div className="w-14 h-14 bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                <UserPlus className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">가족 초대</h3>
+                <p className="text-gray-600 text-sm">구성원 추가</p>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
+          onClick={handleCategoryClick}
+        >
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-4">
+              <div className="w-14 h-14 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                <Settings className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">카테고리</h3>
+                <p className="text-gray-600 text-sm">분류 관리</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <InviteFamilyDialog 
+        open={inviteDialogOpen} 
+        onOpenChange={setInviteDialogOpen} 
+      />
+    </>
   )
 }

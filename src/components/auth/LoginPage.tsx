@@ -1,12 +1,16 @@
 'use client'
 
-import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Wallet, PiggyBank, BarChart3, Users } from "lucide-react"
+import { BarChart3, PiggyBank, Users, Wallet } from "lucide-react"
+import { signIn } from "next-auth/react"
 
-export function LoginPage() {
+interface LoginPageProps {
+  message?: string
+}
+
+export function LoginPage({ message }: LoginPageProps = {}) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4">
       <div className="w-full max-w-md">
@@ -32,7 +36,7 @@ export function LoginPage() {
                 우리집 가계부
               </CardTitle>
               <CardDescription className="text-gray-600 text-base">
-                가족과 함께 관리하는 스마트 가계부
+                {message || "가족과 함께 관리하는 스마트 가계부"}
               </CardDescription>
             </div>
           </CardHeader>
