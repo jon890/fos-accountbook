@@ -40,6 +40,19 @@ Next.js 15 + TypeScript + Prisma ORM + Tailwind CSS를 사용한 가족 가계�
   - 브라우저 전용 API 사용
 
 ### 5. 프론트엔드 컨벤션
+- **React 19 기능 사용**: 최신 React 19 API 및 기능을 적극 활용
+  - **❌ `ReactDOM.useFormState` 사용 금지** (deprecated)
+  - **✅ `React.useActionState` 사용** - React 19에서 공식 API로 변경
+  - import 경로: `react-dom` → `react`
+  ```typescript
+  // ❌ 잘못된 방법 (구버전)
+  import { useFormState } from 'react-dom'
+  const [state, formAction] = useFormState(action, initialState)
+  
+  // ✅ 올바른 방법 (React 19)
+  import { useActionState } from 'react'
+  const [state, formAction] = useActionState(action, initialState)
+  ```
 - **React Hooks 최적화**: `useCallback`, `useMemo` 적절히 사용
 - **Next.js Image 컴포넌트**: `<img>` 태그 대신 `<Image />` 사용
 - **Tailwind CSS**: 일관된 스타일링
