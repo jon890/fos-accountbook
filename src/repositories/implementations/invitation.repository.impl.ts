@@ -2,17 +2,17 @@
  * Invitation Repository 구현체
  */
 
+import { prisma } from "@/lib/prisma";
 import {
+  FilterOptions,
+  PaginationResult,
+} from "../interfaces/base.repository";
+import {
+  CreateInvitationData,
   IInvitationRepository,
   InvitationData,
-  CreateInvitationData,
   UpdateInvitationData,
 } from "../interfaces/invitation.repository";
-import {
-  PaginationResult,
-  FilterOptions,
-} from "../interfaces/base.repository";
-import { prisma } from "@/lib/prisma";
 
 export class InvitationRepositoryImpl implements IInvitationRepository {
   async findById(id: string): Promise<InvitationData | null> {

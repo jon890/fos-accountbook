@@ -30,8 +30,8 @@ export class InvitationService {
     createdByUserUuid: string,
     expiresInHours: number = 24
   ): Promise<InvitationData> {
-    // 가족 존재 여부 확인
-    const family = await this.familyRepository.findById(familyUuid);
+    // 가족 존재 여부 확인 (UUID로 조회)
+    const family = await this.familyRepository.findByUuid(familyUuid);
     if (!family) {
       throw new Error("가족을 찾을 수 없습니다");
     }
@@ -195,7 +195,7 @@ export class InvitationService {
       throw new Error("초대를 삭제할 권한이 없습니다");
     }
 
-    return await this.invitationRepository.delete(invitationId);
+    return await this.invitationRepository.softDelete(invitationId);
   }
 
   /**

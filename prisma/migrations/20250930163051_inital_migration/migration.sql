@@ -1,6 +1,3 @@
--- CreateSchema
-CREATE SCHEMA IF NOT EXISTS "public";
-
 -- CreateTable
 CREATE TABLE "public"."accounts" (
     "id" TEXT NOT NULL,
@@ -30,10 +27,17 @@ CREATE TABLE "public"."sessions" (
 );
 
 -- CreateTable
+CREATE TABLE "public"."verification_tokens" (
+    "identifier" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
+    "expires" TIMESTAMP(3) NOT NULL
+);
+
+-- CreateTable
 CREATE TABLE "public"."users" (
-    "id" BIGSERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "uuid" UUID NOT NULL,
-    "auth_id" TEXT NOT NULL,
+    "internal_id" BIGSERIAL NOT NULL,
     "name" TEXT,
     "email" TEXT NOT NULL,
     "email_verified" TIMESTAMP(3),
@@ -43,13 +47,6 @@ CREATE TABLE "public"."users" (
     "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."verification_tokens" (
-    "identifier" TEXT NOT NULL,
-    "token" TEXT NOT NULL,
-    "expires" TIMESTAMP(3) NOT NULL
 );
 
 -- CreateTable
@@ -108,6 +105,22 @@ CREATE TABLE "public"."expenses" (
     CONSTRAINT "expenses_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "public"."invitations" (
+    "id" BIGSERIAL NOT NULL,
+    "uuid" UUID NOT NULL,
+    "family_uuid" UUID NOT NULL,
+    "created_by_uuid" UUID NOT NULL,
+    "token" VARCHAR(64) NOT NULL,
+    "expires_at" TIMESTAMP(3) NOT NULL,
+    "used_at" TIMESTAMP(3),
+    "used_by_uuid" UUID,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "invitations_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "accounts_provider_providerAccountId_key" ON "public"."accounts"("provider", "providerAccountId");
 
@@ -115,19 +128,19 @@ CREATE UNIQUE INDEX "accounts_provider_providerAccountId_key" ON "public"."accou
 CREATE UNIQUE INDEX "sessions_session_token_key" ON "public"."sessions"("session_token");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "users_uuid_key" ON "public"."users"("uuid");
-
--- CreateIndex
-CREATE UNIQUE INDEX "users_auth_id_key" ON "public"."users"("auth_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "users_email_key" ON "public"."users"("email");
-
--- CreateIndex
 CREATE UNIQUE INDEX "verification_tokens_token_key" ON "public"."verification_tokens"("token");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "verification_tokens_identifier_token_key" ON "public"."verification_tokens"("identifier", "token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_uuid_key" ON "public"."users"("uuid");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_internal_id_key" ON "public"."users"("internal_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_email_key" ON "public"."users"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "families_uuid_key" ON "public"."families"("uuid");
@@ -150,11 +163,23 @@ CREATE INDEX "expenses_family_uuid_date_idx" ON "public"."expenses"("family_uuid
 -- CreateIndex
 CREATE INDEX "expenses_category_uuid_idx" ON "public"."expenses"("category_uuid");
 
--- AddForeignKey
-ALTER TABLE "public"."accounts" ADD CONSTRAINT "accounts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("auth_id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- CreateIndex
+CREATE UNIQUE INDEX "invitations_uuid_key" ON "public"."invitations"("uuid");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "invitations_token_key" ON "public"."invitations"("token");
+
+-- CreateIndex
+CREATE INDEX "invitations_token_idx" ON "public"."invitations"("token");
+
+-- CreateIndex
+CREATE INDEX "invitations_family_uuid_idx" ON "public"."invitations"("family_uuid");
 
 -- AddForeignKey
-ALTER TABLE "public"."sessions" ADD CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("auth_id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."accounts" ADD CONSTRAINT "accounts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."sessions" ADD CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."family_members" ADD CONSTRAINT "family_members_family_uuid_fkey" FOREIGN KEY ("family_uuid") REFERENCES "public"."families"("uuid") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -170,4 +195,3 @@ ALTER TABLE "public"."expenses" ADD CONSTRAINT "expenses_category_uuid_fkey" FOR
 
 -- AddForeignKey
 ALTER TABLE "public"."expenses" ADD CONSTRAINT "expenses_family_uuid_fkey" FOREIGN KEY ("family_uuid") REFERENCES "public"."families"("uuid") ON DELETE RESTRICT ON UPDATE CASCADE;
-

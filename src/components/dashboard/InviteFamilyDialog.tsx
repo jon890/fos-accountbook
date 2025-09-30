@@ -122,7 +122,7 @@ export function InviteFamilyDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-x-hidden">
           {/* 초대 링크 생성 버튼 */}
           <Button
             onClick={handleCreateInvitation}
@@ -154,17 +154,19 @@ export function InviteFamilyDialog({
                   key={invitation.uuid}
                   className="bg-gray-50 rounded-lg p-3 space-y-2"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 mb-1">
                         만료: {format(new Date(invitation.expiresAt), "M월 d일 HH:mm", { locale: ko })}
                       </p>
-                      <p className="text-xs font-mono text-gray-700 truncate mt-1">
-                        {invitation.inviteUrl}
-                      </p>
+                      <div className="w-full overflow-hidden">
+                        <p className="text-xs font-mono text-gray-700 truncate">
+                          {invitation.inviteUrl}
+                        </p>
+                      </div>
                     </div>
                     
-                    <div className="flex items-center space-x-1 ml-2">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       <Button
                         size="sm"
                         variant="ghost"
