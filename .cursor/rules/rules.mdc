@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+---
+
 # 우리집 가계부 - Cursor AI 개발 규칙
 
 ## 🎯 프로젝트 개요
@@ -22,11 +26,18 @@ Next.js 15 + TypeScript + Prisma ORM + Tailwind CSS를 사용한 가족 가계�
 - **Service 패턴**: 비즈니스 로직 캡슐화
 - **의존성 주입**: Container를 통한 인스턴스 관리
 
-### 4. API 설계
-- **RESTful API 설계**
-- **통일된 에러 처리**: `handlePrismaError`, `handleValidationError` 사용
-- **BigInt 자동 직렬화**: API 응답에서 BigInt → String 변환
-- **인증 래퍼**: `withAuth` 함수로 인증 통합 처리
+### 4. Next.js 15 아키텍처 패턴 (중요!)
+- **Server Components 우선 사용**: 기본적으로 모든 컴포넌트는 Server Component로 작성
+- **Server Actions 우선 사용**: 데이터 변경 작업은 Server Actions 사용
+- **API Routes는 최소화**: 다음 경우에만 API Routes 사용
+  - 외부 Webhook 처리
+  - 써드파티 API 통합
+  - NextAuth.js 등 라이브러리 요구사항
+  - 실시간 스트리밍 등 특수한 경우
+- **Client Component는 필요한 경우만**: 다음 경우에만 'use client' 사용
+  - 사용자 상호작용 (onClick, onChange 등)
+  - React Hooks 사용 (useState, useEffect 등)
+  - 브라우저 전용 API 사용
 
 ### 5. 프론트엔드 컨벤션
 - **React Hooks 최적화**: `useCallback`, `useMemo` 적절히 사용
@@ -36,7 +47,7 @@ Next.js 15 + TypeScript + Prisma ORM + Tailwind CSS를 사용한 가족 가계�
 
 ## 🛠 기술 스택
 - **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS v3
-- **Backend**: Next.js API Routes, Prisma ORM
+- **Backend**: Next.js Server Actions, Prisma ORM
 - **Database**: Supabase (PostgreSQL)
 - **Authentication**: NextAuth.js (Google OAuth)
 - **Deployment**: Vercel
@@ -46,7 +57,8 @@ Next.js 15 + TypeScript + Prisma ORM + Tailwind CSS를 사용한 가족 가계�
 ```
 src/
 ├── app/                 # Next.js App Router
-│   ├── api/            # API Routes
+│   ├── actions/        # Server Actions (권장)
+│   ├── api/            # API Routes (최소화)
 │   └── (pages)/        # Page Components
 ├── components/         # React Components
 │   ├── ui/            # shadcn/ui Components
@@ -61,30 +73,70 @@ src/
 
 ## 🚀 개발 가이드라인
 
-### 1. 새로운 API 엔드포인트 추가 시
+### 1. 새로운 기능 추가 시 (권장 패턴)
+1. Repository 인터페이스 정의
+2. Repository 구현체 작성
+3. Service 레이어 구현
+4. **Server Actions 작성** (`src/app/actions/` 디렉토리)
+5. Server Component에서 Server Actions 호출
+6. 필요한 부분만 Client Component로 분리
+
+**예시: Server Actions 패턴**
+```typescript
+// src/app/actions/todo-actions.ts
+'use server'
+
+import { auth } from "@/lib/auth"
+import { container } from "@/container"
+import { revalidatePath } from "next/cache"
+
+export async function createTodo(data: CreateTodoData) {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error('Unauthorized')
+  
+  const todoService = container.getTodoService()
+  const result = await todoService.create(data)
+  
+  revalidatePath('/todos')
+  return result
+}
+
+// src/app/todos/page.tsx (Server Component)
+import { getTodos } from '../actions/todo-actions'
+
+export default async function TodosPage() {
+  const todos = await getTodos()
+  return <TodoList todos={todos} />
+}
+```
+
+### 2. API Route가 필요한 경우 (예외)
 1. Repository 인터페이스 정의
 2. Repository 구현체 작성
 3. Service 레이어 구현
 4. API Route 작성 (`withAuth` 사용)
 5. 에러 처리 및 타입 안전성 확보
 
-### 2. 데이터베이스 스키마 변경 시
+### 3. 데이터베이스 스키마 변경 시
 1. Prisma 스키마 수정 (snake_case 준수)
 2. `npx prisma db push` 또는 마이그레이션 생성
 3. Repository 구현체 업데이트
 4. 타입 정의 확인
 
-### 3. 컴포넌트 개발 시
-1. TypeScript Props 인터페이스 정의
-2. React Hooks 의존성 최적화
-3. 에러 바운더리 고려
-4. 접근성 (a11y) 고려
+### 4. 컴포넌트 개발 시
+1. **기본은 Server Component**: 'use client' 없이 시작
+2. 상호작용이 필요한 경우만 Client Component로 분리
+3. TypeScript Props 인터페이스 정의
+4. React Hooks 의존성 최적화
+5. 에러 바운더리 고려
+6. 접근성 (a11y) 고려
 
 ## ⚠️ 주의사항
 - **Production 데이터베이스에서 `--force-reset` 절대 금지**
 - **환경변수 (.env.local) 커밋 금지**
 - **API 키 및 민감한 정보 노출 금지**
 - **타입 안전성을 위해 런타임 검증 필수**
+- **Server Actions에서는 항상 인증 확인 필수**
 
 ## 🔧 유용한 명령어
 ```bash
@@ -137,9 +189,38 @@ model FamilyMember {
 }
 ```
 
-## 🔄 최근 주요 개선사항 (2025-12-21)
+## 🔄 최근 주요 개선사항
 
-### Repository 레이어 아키텍처 개선
+### Next.js 15 Server Components & Server Actions 전환 (2025-09-30)
+- **변경**: API Routes 패턴에서 Server Components + Server Actions 패턴으로 전환
+- **장점**:
+  - Zero JavaScript by Default: Server Components는 클라이언트에 JS를 보내지 않음
+  - 더 빠른 초기 로딩: 서버에서 렌더링된 콘텐츠
+  - 향상된 SEO: 서버 사이드 렌더링
+  - 직접적인 데이터베이스 접근: 중간 API 레이어 불필요
+  - 자동 revalidation: `revalidatePath`로 실시간 동기화
+  - 타입 안전성: 전체 스택에서 TypeScript 타입 공유
+
+**데이터 흐름**
+```
+사용자 요청
+    ↓
+Server Component (page.tsx)
+    ↓
+Server Action (actions/*.ts)
+    ↓
+Service Layer
+    ↓
+Repository Layer
+    ↓
+Prisma ORM → Database
+    ↓
+HTML 렌더링 (서버)
+    ↓
+클라이언트 (최소 JavaScript)
+```
+
+### Repository 레이어 아키텍처 개선 (2025-12-21)
 - **문제**: Repository에서 `serialize()` 함수 사용으로 Date 객체가 문자열로 변환되어 ORM 이점 상실
 - **해결**: 
   - Prisma가 제공하는 Date 객체를 그대로 유지
@@ -163,30 +244,26 @@ interface ExpenseData {
 
 ### 데이터 흐름 최적화
 ```
-Prisma ORM → Repository → Service → UI
-     ↓            ↓        ↓       ↓
-   Date         Date    Date    Date  ✅ Date 객체 유지
-   Decimal   → string  string  string ✅ 일관된 변환
-   BigInt    → string  string  string ✅ 일관된 변환
+Prisma ORM → Repository → Service → Server Action → UI
+     ↓            ↓        ↓           ↓            ↓
+   Date         Date    Date        Date         Date  ✅ Date 객체 유지
+   Decimal   → string  string      string       string ✅ 일관된 변환
+   BigInt    → string  string      string       string ✅ 일관된 변환
 ```
 
 ### 핵심 원칙
 1. **ORM 이점 활용**: Prisma의 타입 안전성과 Date 객체를 최대한 활용
 2. **최소 변환**: 반드시 필요한 경우(BigInt, Decimal)만 문자열로 변환
 3. **일관된 인터페이스**: Repository 레이어에서 일관된 데이터 형태 제공
-4. **API 응답 시에만 Serialization**: 네트워크 전송 시에만 serialize 적용
+4. **Server Components 우선**: 기본적으로 Server Components와 Server Actions 사용
+5. **API Routes 최소화**: 외부 통합이나 특수 케이스만 API Routes 사용
 
 ### 중요 파일들
+- `src/app/actions/dashboard-actions.ts`: 대시보드 Server Actions
+- `src/app/actions/expense-actions.ts`: 지출 Server Actions
 - `src/repositories/implementations/expense.repository.impl.ts`: Date 객체 유지 로직
 - `src/repositories/interfaces/expense.repository.ts`: 정확한 타입 정의
-- `src/components/expenses/ExpenseList.tsx`: Date 객체 직접 사용
+- `src/components/dashboard/RecentActivity.tsx`: Date 객체 직접 사용
 - `src/lib/serialization.ts`: API 응답용 직렬화 함수 (Repository에서 사용 금지)
 
-### 문제 해결 과정
-1. **문제 발견**: `date.toLocaleDateString is not a function` 에러 발생
-2. **원인 분석**: Repository에서 serialize 함수로 Date → string 변환
-3. **근본 해결**: ORM 레이어에서 Date 객체 그대로 유지
-4. **타입 정리**: 명확한 Date 타입 정의로 타입 안전성 확보
-5. **빌드 검증**: 프로덕션 빌드 성공 확인
-
-이 개선으로 인해 ORM의 장점을 완전히 활용하면서 타입 안전성도 크게 향상되었습니다.
+이러한 개선을 통해 Next.js 15의 최신 기능을 활용하면서 ORM의 장점을 완전히 활용하고 타입 안전성도 크게 향상되었습니다.
