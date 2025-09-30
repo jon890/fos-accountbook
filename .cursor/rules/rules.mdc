@@ -117,11 +117,25 @@ export default async function TodosPage() {
 4. API Route 작성 (`withAuth` 사용)
 5. 에러 처리 및 타입 안전성 확보
 
-### 3. 데이터베이스 스키마 변경 시
+### 3. 데이터베이스 스키마 변경 시 (중요!)
+**⚠️ 반드시 마이그레이션을 사용하여 변경 이력을 추적해야 합니다**
+
 1. Prisma 스키마 수정 (snake_case 준수)
-2. `npx prisma db push` 또는 마이그레이션 생성
-3. Repository 구현체 업데이트
-4. 타입 정의 확인
+2. **마이그레이션 생성 및 적용** (필수)
+   ```bash
+   # 마이그레이션 생성 및 적용
+   pnpm db:migrate
+   
+   # 또는 생성만 하기 (검토 후 적용)
+   pnpm db:migrate:create
+   ```
+3. **❌ `db:push` 사용 금지** - 프로토타이핑 시에만 제한적 사용
+   - 마이그레이션 히스토리가 남지 않음
+   - 팀 협업 시 문제 발생 가능
+   - 프로덕션 배포 시 추적 불가
+4. Repository 구현체 업데이트
+5. 타입 정의 확인
+6. 마이그레이션 파일 커밋 (반드시 포함)
 
 ### 4. 컴포넌트 개발 시
 1. **기본은 Server Component**: 'use client' 없이 시작
@@ -132,35 +146,51 @@ export default async function TodosPage() {
 6. 접근성 (a11y) 고려
 
 ## ⚠️ 주의사항
-- **Production 데이터베이스에서 `--force-reset` 절대 금지**
+
+### 데이터베이스
+- **✅ 반드시 마이그레이션 사용**: 모든 스키마 변경은 `pnpm db:migrate`로 처리
+- **❌ `db:push` 금지**: 프로토타이핑 단계 외에는 사용하지 않음
+- **✅ 마이그레이션 파일 커밋**: `prisma/migrations/` 디렉토리 전체를 Git에 포함
+- **❌ Production에서 `--force-reset` 절대 금지**: 데이터 손실 위험
+- **✅ 마이그레이션 순서 유지**: 팀원과 마이그레이션 충돌 주의
+
+### 보안
 - **환경변수 (.env.local) 커밋 금지**
 - **API 키 및 민감한 정보 노출 금지**
-- **타입 안전성을 위해 런타임 검증 필수**
 - **Server Actions에서는 항상 인증 확인 필수**
 
+### 코드 품질
+- **타입 안전성을 위해 런타임 검증 필수**
+- **any 타입 사용 금지**: unknown 또는 정확한 타입 사용
+
 ## 🔧 유용한 명령어
+
+### 개발 서버
 ```bash
-# 개발 서버 실행
-pnpm dev
+pnpm dev              # 개발 서버 실행
+pnpm build            # 프로덕션 빌드
+```
 
-# 데이터베이스 스키마 적용
-pnpm db:push
+### 데이터베이스 (중요!)
+```bash
+# ✅ 마이그레이션 (권장 - 변경 이력 추적)
+pnpm db:migrate              # 마이그레이션 생성 및 적용
+pnpm db:migrate:create       # 마이그레이션 생성만 (검토 후 적용)
+pnpm db:migrate:deploy       # 프로덕션 배포용 마이그레이션 적용
 
-# Prisma Studio 실행
-pnpm db:studio
+# 📊 기타 유틸리티
+pnpm db:studio               # Prisma Studio 실행 (데이터 시각화)
+pnpm db:generate             # Prisma Client 생성
+pnpm db:validate             # 스키마 검증
 
-# 마이그레이션 생성 및 적용
-pnpm db:migrate
+# ⚠️ 프로토타이핑 전용 (일반 개발에서는 사용 금지)
+pnpm db:push                 # 마이그레이션 없이 스키마 동기화
+                             # 주의: 변경 이력이 남지 않음!
+```
 
-# Prisma Client 생성
-pnpm db:generate
-
-# 스키마 검증
-pnpm db:validate
-
-# 빌드 및 배포
-pnpm build
-vercel
+### 배포
+```bash
+vercel                # Vercel 배포
 ```
 
 ## 🗄️ 데이터베이스 스키마 규칙
