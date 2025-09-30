@@ -57,6 +57,7 @@ export interface IFamilyRepository
   findByUserUuid(userUuid: string): Promise<FamilyWithDetails | null>;
   findAllByUserUuid(userUuid: string): Promise<FamilyWithDetails[]>;
   findWithDetails(id: string): Promise<FamilyWithDetails | null>;
+  findByUuid(uuid: string): Promise<FamilyWithDetails | null>;
   addMember(
     familyId: string,
     userUuid: string,

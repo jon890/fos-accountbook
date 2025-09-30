@@ -252,8 +252,8 @@ export async function getInvitationInfo(token: string): Promise<{
       };
     }
 
-    // 가족 정보 조회
-    const family = await familyService.getFamilyWithDetails(
+    // 가족 정보 조회 (UUID로)
+    const family = await familyService.getFamilyByUuid(
       validation.invitation.familyUuid
     );
 

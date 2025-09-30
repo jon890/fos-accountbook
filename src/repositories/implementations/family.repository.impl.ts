@@ -4,18 +4,18 @@
 
 import { prisma } from "@/lib/prisma";
 import {
-  IFamilyRepository,
+  FilterOptions,
+  PaginationOptions,
+  PaginationResult,
+  SortOptions,
+} from "../interfaces/base.repository";
+import {
+  CreateFamilyData,
   FamilyData,
   FamilyWithDetails,
-  CreateFamilyData,
+  IFamilyRepository,
   UpdateFamilyData,
 } from "../interfaces/family.repository";
-import {
-  PaginationResult,
-  PaginationOptions,
-  SortOptions,
-  FilterOptions,
-} from "../interfaces/base.repository";
 
 export class FamilyRepositoryImpl implements IFamilyRepository {
   async findById(id: string): Promise<FamilyData | null> {
@@ -35,6 +35,50 @@ export class FamilyRepositoryImpl implements IFamilyRepository {
     const family = await prisma.family.findFirst({
       where: {
         id: BigInt(id),
+        deletedAt: null,
+      },
+      include: {
+        members: {
+          where: { deletedAt: null },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+              },
+            },
+          },
+        },
+        categories: {
+          where: { deletedAt: null },
+          select: {
+            uuid: true,
+            name: true,
+            color: true,
+            icon: true,
+          },
+        },
+        _count: {
+          select: {
+            expenses: {
+              where: { deletedAt: null },
+            },
+          },
+        },
+      },
+    });
+
+    if (!family) return null;
+
+    return this.mapToFamilyWithDetails(family);
+  }
+
+  async findByUuid(uuid: string): Promise<FamilyWithDetails | null> {
+    const family = await prisma.family.findFirst({
+      where: {
+        uuid: uuid,
         deletedAt: null,
       },
       include: {

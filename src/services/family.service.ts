@@ -35,6 +35,10 @@ export class FamilyService {
     return await this.familyRepository.findWithDetails(id);
   }
 
+  async getFamilyByUuid(uuid: string): Promise<FamilyWithDetails | null> {
+    return await this.familyRepository.findByUuid(uuid);
+  }
+
   async createFamily(data: CreateFamilyData): Promise<FamilyWithDetails> {
     // userId는 User.authId이므로, 먼저 User.uuid를 찾음
     const user = await this.userRepository.findByAuthId(data.userId);
