@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { format } from "sql-formatter";
+import { isDev } from "./env";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -7,7 +8,7 @@ const globalForPrisma = globalThis as unknown as {
 
 const createPrismaClient = () => {
   const prisma = new PrismaClient({
-    log: process.env.NODE_ENV === "development" 
+    log: isDev()
       ? [
           { level: "query", emit: "event" },
           { level: "error", emit: "stdout" },
@@ -17,7 +18,7 @@ const createPrismaClient = () => {
   });
 
   // 개발 환경에서만 쿼리 로깅
-  if (process.env.NODE_ENV === "development") {
+  if (isDev()) {
     prisma.$on("query", (e) => {
       // 필터링: commit, begin, deallocate 등 제외
       const skipQueries = [
@@ -81,6 +82,7 @@ const createPrismaClient = () => {
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
-if (process.env.NODE_ENV !== "production") {
+// 개발 환경에서만 전역 객체에 prisma 인스턴스 저장 (HMR 대응)
+if (isDev()) {
   globalForPrisma.prisma = prisma;
 }
