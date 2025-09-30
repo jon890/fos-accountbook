@@ -90,8 +90,9 @@ export async function createExpenseAction(
       date: date ? new Date(date) : undefined,
     });
 
-    // 지출 페이지 revalidate
+    // 지출 페이지 및 대시보드 revalidate
     revalidatePath("/expenses");
+    revalidatePath("/");
 
     return {
       message: "지출이 성공적으로 추가되었습니다.",
@@ -127,8 +128,9 @@ export async function deleteExpenseAction(expenseId: string): Promise<{
       };
     }
 
-    // 지출 페이지 revalidate
+    // 지출 페이지 및 대시보드 revalidate
     revalidatePath("/expenses");
+    revalidatePath("/");
 
     return {
       success: true,

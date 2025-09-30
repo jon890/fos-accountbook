@@ -1,4 +1,4 @@
-import { NextAuthOptions } from "next-auth"
+import { NextAuthOptions, getServerSession } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "./prisma"
@@ -63,4 +63,11 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
+}
+
+/**
+ * Server Component에서 사용할 수 있는 auth 헬퍼 함수
+ */
+export function auth() {
+  return getServerSession(authOptions)
 }

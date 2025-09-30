@@ -3,8 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { CreditCard, BarChart3 } from "lucide-react"
 import { QuickActions } from "./QuickActions"
 import { RecentActivity } from "./RecentActivity"
+import type { RecentExpense } from "@/app/actions/dashboard-actions"
 
-export function DashboardTabs() {
+interface DashboardTabsProps {
+  recentExpenses: RecentExpense[]
+}
+
+export function DashboardTabs({ recentExpenses }: DashboardTabsProps) {
   return (
     <Tabs defaultValue="overview" className="mb-8">
       <TabsList className="grid w-full grid-cols-3 mb-6 bg-white/60 backdrop-blur-sm">
@@ -21,7 +26,7 @@ export function DashboardTabs() {
 
       <TabsContent value="overview" className="space-y-6">
         <QuickActions />
-        <RecentActivity />
+        <RecentActivity expenses={recentExpenses} />
       </TabsContent>
 
       <TabsContent value="expenses">

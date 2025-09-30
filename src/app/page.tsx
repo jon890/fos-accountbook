@@ -1,80 +1,53 @@
-'use client'
+/**
+ * Home Page - Server Component
+ * Next.js 15 Server Component 패턴 사용
+ */
 
-import { useSession } from "next-auth/react"
-import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { redirect } from 'next/navigation'
+import { auth } from "@/lib/auth"
+import { getDashboardStats, checkUserFamily, getRecentExpenses } from "./actions/dashboard-actions"
 import { LoginPage } from "@/components/auth/LoginPage"
-import { LoadingSpinner } from "@/components/common/LoadingSpinner"
-import { Header } from "@/components/layout/Header"
-import { BottomNavigation } from "@/components/layout/BottomNavigation"
 import { WelcomeSection } from "@/components/dashboard/WelcomeSection"
 import { StatsCards } from "@/components/dashboard/StatsCards"
-import { DashboardTabs } from "@/components/dashboard/DashboardTabs"
+import { DashboardClient } from "@/components/dashboard/DashboardClient"
 
-export default function HomePage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const [familyChecked, setFamilyChecked] = useState(false)
-  const [checkingFamily, setCheckingFamily] = useState(false)
+export default async function HomePage() {
+  // 서버에서 세션 확인
+  const session = await auth()
 
-  // 로그인 후 가족 정보 확인
-  useEffect(() => {
-    if (status === 'authenticated' && session?.user?.id && !familyChecked && !checkingFamily) {
-      const checkFamily = async () => {
-        setCheckingFamily(true)
-        try {
-          const response = await fetch('/api/families')
-          if (response.status === 404) {
-            // 가족이 없는 경우 생성 페이지로 리다이렉트
-            router.push('/families/create')
-            return
-          }
-          setFamilyChecked(true)
-        } catch (error) {
-          console.error('Family check error:', error)
-        } finally {
-          setCheckingFamily(false)
-        }
-      }
-      
-      checkFamily()
-    }
-  }, [status, session?.user?.id, familyChecked, checkingFamily, router])
-
-  // 세션 로딩 중
-  if (status === "loading" || checkingFamily) {
-    return <LoadingSpinner />
-  }
-
-  // 로그인되지 않은 상태
-  if (status === "unauthenticated" || !session) {
+  // 로그인되지 않은 경우
+  if (!session?.user) {
     return <LoginPage />
   }
 
-  // Mock data - 나중에 실제 데이터로 교체
-  const statsData = {
+  // 가족 정보 확인
+  const { hasFamily } = await checkUserFamily()
+  
+  // 가족이 없으면 생성 페이지로 리다이렉트
+  if (!hasFamily) {
+    redirect('/families/create')
+  }
+
+  // 대시보드 데이터 병렬로 가져오기
+  const [stats, recentExpenses] = await Promise.all([
+    getDashboardStats(),
+    getRecentExpenses(10)
+  ])
+
+  // 기본값 설정 (데이터를 가져오지 못한 경우)
+  const statsData = stats || {
     monthlyExpense: 0,
     remainingBudget: 0,
-    familyMembers: 1
+    familyMembers: 0,
+    budget: 0,
+    year: new Date().getFullYear(),
+    month: new Date().getMonth() + 1,
   }
 
   return (
-    <div 
-      className="min-h-screen"
-      style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f8fafc 0%, rgba(59, 130, 246, 0.1) 50%, rgba(99, 102, 241, 0.1) 100%)'
-      }}
-    >
-      <Header session={session} />
-      
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
-        <WelcomeSection userName={session.user?.name} />
-        <StatsCards data={statsData} />
-        <DashboardTabs />
-      </main>
-
-      <BottomNavigation />
-    </div>
+    <DashboardClient initialSession={session} recentExpenses={recentExpenses}>
+      <WelcomeSection userName={session.user.name} />
+      <StatsCards data={statsData} />
+    </DashboardClient>
   )
 }

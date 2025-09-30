@@ -17,11 +17,24 @@ const expenseRepository: IExpenseRepository = new ExpenseRepositoryImpl();
 const userRepository: IUserRepository = new UserRepositoryImpl();
 
 // Service 인스턴스들
-export const familyService = new FamilyService(
+const familyServiceInstance = new FamilyService(
   familyRepository,
   userRepository
 );
-export const expenseService = new ExpenseService(expenseRepository);
+const expenseServiceInstance = new ExpenseService(expenseRepository);
+
+// 개별 export (레거시 호환)
+export const familyService = familyServiceInstance;
+export const expenseService = expenseServiceInstance;
+
+// Container 객체로 export (권장)
+export const container = {
+  getFamilyService: () => familyServiceInstance,
+  getExpenseService: () => expenseServiceInstance,
+  getFamilyRepository: () => familyRepository,
+  getExpenseRepository: () => expenseRepository,
+  getUserRepository: () => userRepository,
+};
 
 // 타입 체크용 export
 export type { IFamilyRepository, IExpenseRepository, IUserRepository };
