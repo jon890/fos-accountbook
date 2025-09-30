@@ -49,8 +49,8 @@ export async function createInvitationLink(): Promise<{
       };
     }
 
-    // 가족 정보 가져오기
-    const family = await familyService.getFamilyByUserId(session.user.id);
+    // 가족 정보 가져오기 (이미 user를 조회했으므로 userUuid로 직접 조회)
+    const family = await familyService.getFamilyByUserUuid(user.uuid);
     if (!family) {
       return {
         success: false,

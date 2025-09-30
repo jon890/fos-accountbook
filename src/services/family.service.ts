@@ -23,6 +23,11 @@ export class FamilyService {
     return await this.familyRepository.findByUserUuid(user.uuid);
   }
 
+  async getFamilyByUserUuid(userUuid: string): Promise<FamilyWithDetails | null> {
+    // 이미 userUuid를 가지고 있는 경우 직접 조회 (중복 쿼리 방지)
+    return await this.familyRepository.findByUserUuid(userUuid);
+  }
+
   async getAllFamiliesByUserId(userId: string): Promise<FamilyWithDetails[]> {
     // userId는 User.authId이므로, 먼저 User.uuid를 찾음
     const user = await this.userRepository.findByAuthId(userId);

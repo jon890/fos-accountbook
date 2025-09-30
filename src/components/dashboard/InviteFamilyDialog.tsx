@@ -61,6 +61,7 @@ export function InviteFamilyDialog({
     setIsCreating(true);
     try {
       const result = await createInvitationLink();
+      console.log(result);
 
       if (result.success && result.invitation) {
         toast.success(result.message);
