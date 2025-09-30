@@ -6,8 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
-import { useEffect } from 'react'
-import { useFormState } from 'react-dom'
+import { useEffect, useActionState } from 'react'
 
 interface Category {
   id: string
@@ -30,7 +29,7 @@ const initialState: CreateExpenseFormState = {
 
 export function AddExpenseForm({ categories, onSuccess, onCancel }: AddExpenseFormProps) {
   const { toast } = useToast()
-  const [state, formAction] = useFormState(createExpenseAction, initialState)
+  const [state, formAction] = useActionState(createExpenseAction, initialState)
 
   // 성공 시 처리
   useEffect(() => {

@@ -4,7 +4,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useActionState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,6 @@ import {
 } from "@/app/actions/expense-actions";
 import { getFamilyCategories, type CategoryInfo } from "@/app/actions/dashboard-actions";
 import { toast } from "sonner";
-import { useFormState } from "react-dom";
 
 interface AddExpenseDialogProps {
   open: boolean;
@@ -38,7 +37,7 @@ const initialState: CreateExpenseFormState = {
 export function AddExpenseDialog({ open, onOpenChange }: AddExpenseDialogProps) {
   const [categories, setCategories] = useState<CategoryInfo[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
-  const [state, formAction] = useFormState(createExpenseAction, initialState);
+  const [state, formAction] = useActionState(createExpenseAction, initialState);
 
   // 다이얼로그가 열릴 때 카테고리 로드
   const handleOpenChange = async (newOpen: boolean) => {
