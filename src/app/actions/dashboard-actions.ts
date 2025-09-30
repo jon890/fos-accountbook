@@ -157,3 +157,42 @@ export async function getRecentExpenses(limit: number = 10): Promise<RecentExpen
     return []
   }
 }
+
+/**
+ * 가족의 카테고리 목록 조회
+ */
+export interface CategoryInfo {
+  id: string
+  name: string
+  color: string
+  icon: string
+}
+
+export async function getFamilyCategories(): Promise<CategoryInfo[]> {
+  try {
+    const session = await auth()
+    
+    if (!session?.user?.id) {
+      return []
+    }
+
+    const familyService = container.getFamilyService()
+
+    // 사용자의 가족 정보 조회
+    const family = await familyService.getFamilyByUserId(session.user.id)
+    
+    if (!family) {
+      return []
+    }
+
+    return family.categories.map(category => ({
+      id: category.id,
+      name: category.name,
+      color: category.color,
+      icon: category.icon,
+    }))
+  } catch (error) {
+    console.error('Failed to load categories:', error)
+    return []
+  }
+}

@@ -1,0 +1,183 @@
+/**
+ * 지출 추가 다이얼로그
+ */
+
+"use client";
+
+import { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
+import {
+  createExpenseAction,
+  type CreateExpenseFormState,
+} from "@/app/actions/expense-actions";
+import { getFamilyCategories, type CategoryInfo } from "@/app/actions/dashboard-actions";
+import { toast } from "sonner";
+import { useFormState } from "react-dom";
+
+interface AddExpenseDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+const initialState: CreateExpenseFormState = {
+  message: "",
+  errors: {},
+  success: false,
+};
+
+export function AddExpenseDialog({ open, onOpenChange }: AddExpenseDialogProps) {
+  const [categories, setCategories] = useState<CategoryInfo[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [state, formAction] = useFormState(createExpenseAction, initialState);
+
+  // 다이얼로그가 열릴 때 카테고리 로드
+  const handleOpenChange = async (newOpen: boolean) => {
+    onOpenChange(newOpen);
+    if (newOpen && categories.length === 0) {
+      await loadCategories();
+    }
+  };
+
+  const loadCategories = async () => {
+    setIsLoadingCategories(true);
+    try {
+      const data = await getFamilyCategories();
+      setCategories(data);
+    } catch (error) {
+      toast.error("카테고리를 불러오는데 실패했습니다");
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  };
+
+  // 성공 시 처리
+  useEffect(() => {
+    if (state.success) {
+      toast.success(state.message);
+      onOpenChange(false);
+      // 폼 리셋을 위해 state 초기화
+    } else if (state.message && !state.success) {
+      toast.error(state.message);
+    }
+  }, [state, onOpenChange]);
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>지출 추가</DialogTitle>
+          <DialogDescription>
+            새로운 지출 내역을 추가합니다
+          </DialogDescription>
+        </DialogHeader>
+
+        <form action={formAction} className="space-y-4">
+          {/* 금액 입력 */}
+          <div className="space-y-2">
+            <Label htmlFor="amount">금액 *</Label>
+            <div className="relative">
+              <Input
+                id="amount"
+                name="amount"
+                type="number"
+                placeholder="0"
+                className="text-right pr-8"
+                required
+              />
+              <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
+                원
+              </span>
+            </div>
+            {state.errors?.amount && (
+              <p className="text-sm text-red-500">{state.errors.amount[0]}</p>
+            )}
+          </div>
+
+          {/* 카테고리 선택 */}
+          <div className="space-y-2">
+            <Label htmlFor="categoryId">카테고리 *</Label>
+            {isLoadingCategories ? (
+              <div className="flex items-center justify-center py-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+              </div>
+            ) : (
+              <select
+                id="categoryId"
+                name="categoryId"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                required
+              >
+                <option value="">카테고리를 선택하세요</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.icon} {category.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            {state.errors?.categoryId && (
+              <p className="text-sm text-red-500">
+                {state.errors.categoryId[0]}
+              </p>
+            )}
+          </div>
+
+          {/* 날짜 선택 */}
+          <div className="space-y-2">
+            <Label htmlFor="date">날짜 *</Label>
+            <Input
+              id="date"
+              name="date"
+              type="date"
+              defaultValue={new Date().toISOString().split("T")[0]}
+              required
+            />
+            {state.errors?.date && (
+              <p className="text-sm text-red-500">{state.errors.date[0]}</p>
+            )}
+          </div>
+
+          {/* 메모 입력 */}
+          <div className="space-y-2">
+            <Label htmlFor="description">메모</Label>
+            <Input
+              id="description"
+              name="description"
+              placeholder="간단한 메모를 입력하세요 (선택사항)"
+            />
+            {state.errors?.description && (
+              <p className="text-sm text-red-500">
+                {state.errors.description[0]}
+              </p>
+            )}
+          </div>
+
+          {/* 버튼들 */}
+          <div className="flex gap-2 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={() => onOpenChange(false)}
+            >
+              취소
+            </Button>
+            <Button type="submit" className="flex-1">
+              지출 추가
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
