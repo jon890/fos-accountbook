@@ -77,21 +77,20 @@ curl https://your-app.railway.app/api/v1/health
 
 ## 🔑 환경변수 설정
 
-### Railway MySQL 자동 주입 변수 (설정 불필요 ✅)
+### Railway MySQL 변수 설정 (Reference Variables 사용 ✅)
 
-Railway가 MySQL 서비스를 연결하면 **자동으로 주입**되는 변수:
+Spring Boot 앱의 **Variables 탭**에서 MySQL 서비스의 변수를 조합하여 설정:
 
-| 변수명 | 설명 | 값 예시 |
-|--------|------|---------|
-| `MYSQLHOST` | MySQL 호스트 | `mysql.railway.internal` |
-| `MYSQLPORT` | MySQL 포트 | `3306` |
-| `MYSQLDATABASE` | 데이터베이스명 | `railway` |
-| `MYSQLUSER` | DB 사용자명 | `root` |
-| `MYSQLPASSWORD` | DB 비밀번호 | 자동 생성 |
+| 변수명 | 설정 방법 | 설명 |
+|--------|----------|------|
+| `SPRING_DATASOURCE_URL` | `jdbc:mysql://${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}/${{MySQL.MYSQLDATABASE}}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true` | JDBC URL 조합 |
+| `SPRING_DATASOURCE_USERNAME` | `${{MySQL.MYSQLUSER}}` | MySQL 사용자 참조 |
+| `SPRING_DATASOURCE_PASSWORD` | `${{MySQL.MYSQLPASSWORD}}` | MySQL 비밀번호 참조 |
 
-**⚠️ 중요**:
-- Railway는 **언더스코어 없이** 변수를 주입합니다 (예: `MYSQLHOST`, not `MYSQL_HOST`)
-- `application-prod.yml`에서 이 변수들을 읽어 JDBC URL을 자동 구성합니다
+**💡 작동 방식**:
+- Railway는 `${{서비스명.변수명}}` 형식으로 다른 서비스의 변수를 참조할 수 있습니다
+- 문자열 안에서 여러 변수를 조합 가능합니다
+- MySQL 서비스 이름이 다르면 그에 맞게 변경하세요 (예: `${{mysql.MYSQLUSER}}`)
 
 ### 수동 설정 필요 변수 (직접 추가 ⚙️)
 

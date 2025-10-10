@@ -26,13 +26,11 @@ public class Application {
         log.info("DATABASE CONFIGURATION (Railway Debug)");
         log.info("=================================================");
         log.info("Active Profile: {}", String.join(", ", env.getActiveProfiles()));
-        log.info("MYSQLHOST: {}", env.getProperty("MYSQLHOST"));
-        log.info("MYSQLPORT: {}", env.getProperty("MYSQLPORT"));
-        log.info("MYSQLDATABASE: {}", env.getProperty("MYSQLDATABASE"));
-        log.info("MYSQLUSER: {}", env.getProperty("MYSQLUSER"));
-        log.info("MYSQLPASSWORD: {}", env.getProperty("MYSQLPASSWORD") != null ? "***SET***" : "null");
-        log.info("Computed Datasource URL: {}", env.getProperty("spring.datasource.url"));
-        log.info("Datasource Username: {}", env.getProperty("spring.datasource.username"));
+        log.info("SPRING_DATASOURCE_URL: {}", env.getProperty("SPRING_DATASOURCE_URL"));
+        log.info("SPRING_DATASOURCE_USERNAME: {}", env.getProperty("SPRING_DATASOURCE_USERNAME"));
+        log.info("SPRING_DATASOURCE_PASSWORD: {}", env.getProperty("SPRING_DATASOURCE_PASSWORD") != null ? "***SET***" : "null");
+        log.info("Resolved Datasource URL: {}", env.getProperty("spring.datasource.url"));
+        log.info("Resolved Datasource Username: {}", env.getProperty("spring.datasource.username"));
         log.info("=================================================");
     }
 }
