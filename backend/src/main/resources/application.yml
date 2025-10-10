@@ -1,5 +1,13 @@
+# ============================================
+# 공통 설정 (모든 프로파일에 적용)
+# ============================================
+# Profile별 설정 파일:
+#   - application-local.yml (로컬 개발)
+#   - application-prod.yml (Railway 프로덕션)
+#   - application-test.yml (테스트)
+
 server:
-  port: ${PORT:8080}  # Railway PORT 환경변수 또는 기본 8080
+  port: ${PORT:8080}
   servlet:
     context-path: /api/v1
 
@@ -7,54 +15,50 @@ spring:
   application:
     name: fos-accountbook-backend
   
-  # 프로덕션 환경 설정 (환경변수 필수)
+  # 데이터베이스 설정 (환경변수로 주입)
   datasource:
     url: ${DATABASE_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
   
+  # JPA 공통 설정
   jpa:
     hibernate:
-      ddl-auto: validate  # Flyway가 마이그레이션을 담당
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
-        format_sql: false
-        show_sql: false
     open-in-view: false
   
-  # Flyway 마이그레이션 설정
+  # Flyway 공통 설정
   flyway:
-    enabled: true
-    baseline-on-migrate: true  # 기존 DB에 Flyway 적용 시
+    baseline-on-migrate: true
     baseline-version: 0
     locations: classpath:db/migration
     validate-on-migrate: true
   
+  # Security 설정
   security:
     filter:
       dispatcher-types: async, error, request
 
+# JWT 설정
 jwt:
   secret: ${JWT_SECRET}
-  expiration: ${JWT_EXPIRATION:86400000}
-  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+  expiration: ${JWT_EXPIRATION:86400000}        # 기본 24시간 (밀리초)
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}  # 기본 7일 (밀리초)
 
-# SpringDoc OpenAPI 설정
+# SpringDoc OpenAPI 공통 설정
 springdoc:
   api-docs:
     path: /v3/api-docs
-    enabled: ${SWAGGER_ENABLED:false}  # 프로덕션에서는 비활성화
   swagger-ui:
     path: /swagger-ui.html
-    enabled: ${SWAGGER_ENABLED:false}
     tags-sorter: alpha
     operations-sorter: alpha
     display-request-duration: true
     disable-swagger-default-url: true
 
-# 로깅 설정은 logback-spring.xml에서 관리
-
+# 로깅은 logback-spring.xml에서 Profile별로 관리

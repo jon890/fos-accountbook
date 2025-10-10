@@ -334,18 +334,66 @@ src/main/
 
 ### Spring Profiles
 
+프로젝트는 다음 프로파일을 지원합니다:
+
+| Profile | 용도 | 데이터베이스 | Swagger | 로깅 | ddl-auto |
+|---------|------|-------------|---------|------|----------|
+| **local** | 로컬 개발 | Docker MySQL | ✅ | Console + File | validate |
+| **prod** | Railway 배포 | Railway MySQL | ❌ | Console만 | validate |
+| **test** | 테스트 | H2 in-memory | ❌ | Console만 | create-drop |
+
+#### 설정 파일 구조
+
+```
+application.yml           # 공통 설정 (모든 프로파일 공유)
+├─ application-local.yml  # 로컬 개발 오버라이드
+├─ application-prod.yml   # 프로덕션 오버라이드
+└─ application-test.yml   # 테스트 오버라이드
+```
+
+**설계 원칙**:
+- `application.yml`: 공통 설정 최대화 (중복 제거)
+- 각 프로파일: 환경별 차이만 오버라이드
+
+#### 프로파일별 상세 설정
+
 **local (로컬 개발)** - `application-local.yml`
 - MySQL: localhost:3306
 - 사용자: accountbook_user / accountbook_password
-- JPA ddl-auto: update (자동 테이블 생성/업데이트)
+- JPA: Flyway가 스키마 관리 (validate)
 - Swagger UI: 활성화
-- 디버그 로깅: 활성화
+- 로깅: DEBUG, Console + File (logs/)
+- Flyway clean: 허용
 
-**default (프로덕션)** - `application.yml`
+**prod (프로덕션)** - `application-prod.yml`
 - 환경변수 기반 설정 (DATABASE_URL, JWT_SECRET 등)
-- JPA ddl-auto: validate (테이블 검증만)
+- HikariCP 최적화 (커넥션 풀 10, 최소 2)
+- JPA: Flyway가 스키마 관리 (validate)
 - Swagger UI: 비활성화 (SWAGGER_ENABLED=true로 활성화 가능)
-- INFO 레벨 로깅
+- 로깅: INFO, Console만 (Railway 수집)
+- Flyway clean: 금지 (데이터 보호)
+
+**test (테스트)** - `application-test.yml`
+- H2 in-memory 데이터베이스
+- JPA: 자동 스키마 생성/삭제 (create-drop)
+- Flyway: 비활성화
+- 로깅: DEBUG, Console만
+
+#### 프로파일 활성화 방법
+
+```bash
+# IntelliJ IDEA (권장)
+Run Configuration → Active profiles → 'local' 입력
+
+# Gradle
+./gradlew bootRun --args='--spring.profiles.active=local'
+
+# JAR 실행
+java -jar app.jar --spring.profiles.active=prod
+
+# 환경변수
+export SPRING_PROFILES_ACTIVE=prod
+java -jar app.jar
 ```
 
 ## 🔧 주요 설정
@@ -392,35 +440,52 @@ Authorization: Bearer <token>
 
 **Local 프로파일** (`--spring.profiles.active=local`):
 ```
-com.bifos.accountbook: DEBUG
-org.springframework.web: DEBUG
-org.springframework.security: DEBUG
+출력: Console + File (logs/ 디렉토리)
+레벨: DEBUG
+- com.bifos.accountbook: DEBUG
+- org.springframework.web: DEBUG
+- org.springframework.security: DEBUG
 ```
 
-**프로덕션** (기본):
+**프로덕션** (`--spring.profiles.active=prod`):
 ```
-com.bifos.accountbook: INFO
-org.springframework.web: WARN
-org.springframework.security: WARN
+출력: Console만 (stdout/stderr)
+레벨: INFO
+- com.bifos.accountbook: INFO
+- org.springframework.web: WARN
+- org.springframework.security: WARN
+- org.hibernate.SQL: WARN
+
+💡 Railway/Docker 환경에서 필수!
 ```
 
 **테스트**:
 ```
-com.bifos.accountbook: DEBUG
-org.hibernate.SQL: DEBUG
-org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+출력: Console만
+레벨: DEBUG
+- com.bifos.accountbook: DEBUG
+- org.hibernate.SQL: DEBUG
+- org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 ```
 
 #### 로그 파일 관리
 
+**로컬 환경** (`local` 프로파일):
 - **위치**: `logs/` 디렉토리
 - **일일 로테이션**: 자동 (파일명: `application.YYYY-MM-DD.log`)
 - **보관 기간**: 30일
 - **최대 크기**: 1GB (전체)
 - **에러 로그**: 별도 파일 (`application-error.log`)
 
-#### 로그 파일 확인
+**프로덕션 환경** (`prod` 프로파일):
+- **파일 로깅**: ❌ 비활성화
+- **콘솔 로깅**: ✅ stdout/stderr로 출력
+- **로그 수집**: Railway/Docker가 자동으로 수집
+- **로그 확인**: Railway 대시보드 또는 `railway logs` 명령어
 
+#### 로그 확인
+
+**로컬 환경**:
 ```bash
 # 최신 로그 확인
 tail -f logs/application.log
@@ -430,6 +495,17 @@ tail -f logs/application-error.log
 
 # 특정 날짜 로그 확인
 cat logs/application.2025-01-10.log
+```
+
+**Railway/프로덕션 환경**:
+```bash
+# Railway 대시보드
+프로젝트 → 서비스 → Logs 탭
+
+# Railway CLI
+railway logs
+railway logs --follow  # 실시간 로그
+railway logs --filter error  # 에러만
 ```
 
 #### 로깅 레벨 커스터마이징
@@ -615,7 +691,7 @@ JWT_REFRESH_EXPIRATION=604800000  # 7일
 # Swagger (프로덕션에서는 false 권장)
 SWAGGER_ENABLED=false
 
-# Spring Profile (선택사항, 기본값 사용)
+# Spring Profile (필수 - 콘솔 로깅 사용)
 SPRING_PROFILES_ACTIVE=prod
 ```
 

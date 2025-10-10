@@ -47,6 +47,8 @@
     </appender>
     
     <!-- Spring Profile별 설정 -->
+    
+    <!-- 로컬 개발 환경: 콘솔 + 파일 로깅 -->
     <springProfile name="local">
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
@@ -58,15 +60,23 @@
         <logger name="org.springframework.security" level="DEBUG"/>
     </springProfile>
     
-    <springProfile name="!local">
+    <!-- 프로덕션 환경 (Railway, Docker 등): 콘솔만 (stdout/stderr) -->
+    <springProfile name="prod | production">
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
-            <appender-ref ref="FILE"/>
-            <appender-ref ref="ERROR_FILE"/>
         </root>
         <logger name="com.bifos.accountbook" level="INFO"/>
         <logger name="org.springframework.web" level="WARN"/>
         <logger name="org.springframework.security" level="WARN"/>
+        <logger name="org.hibernate.SQL" level="WARN"/>
+    </springProfile>
+    
+    <!-- 기본 설정 (프로파일 없음): 콘솔만 -->
+    <springProfile name="default">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        <logger name="com.bifos.accountbook" level="INFO"/>
     </springProfile>
 </configuration>
 

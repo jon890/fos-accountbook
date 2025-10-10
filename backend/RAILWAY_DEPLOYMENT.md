@@ -33,7 +33,12 @@ JWT_SECRET=your-super-secret-key-at-least-256-bits-long-required-for-hs512
 JWT_EXPIRATION=86400000
 JWT_REFRESH_EXPIRATION=604800000
 SWAGGER_ENABLED=false
+SPRING_PROFILES_ACTIVE=prod
 ```
+
+**⚠️ 중요**: `SPRING_PROFILES_ACTIVE=prod` 설정은 **필수**입니다!
+- 콘솔 로깅 사용 (Railway가 자동 수집)
+- 파일 로깅 비활성화 (컨테이너 환경에 적합)
 
 ### 5단계: 도메인 생성
 ```bash
@@ -88,8 +93,38 @@ curl https://your-app.railway.app/api/v1/health
 | `JWT_EXPIRATION` | Access Token 만료 시간 | `86400000` (24시간) |
 | `JWT_REFRESH_EXPIRATION` | Refresh Token 만료 시간 | `604800000` (7일) |
 | `SWAGGER_ENABLED` | Swagger UI 활성화 | `false` (프로덕션) |
+| `SPRING_PROFILES_ACTIVE` | Spring Profile | `prod` (**필수**) |
 
 ## 🐛 트러블슈팅
+
+### 로그 파일 오류
+
+**문제**: `FileNotFoundException: logs/application.log (No such file or directory)`
+
+**원인**: Railway는 컨테이너 환경으로 파일 시스템이 ephemeral(임시)입니다.
+
+**해결**: `SPRING_PROFILES_ACTIVE=prod` 환경변수 설정 (**필수**)
+
+```bash
+# Railway Variables 탭에서 설정
+SPRING_PROFILES_ACTIVE=prod
+```
+
+**이렇게 하면**:
+- ✅ 콘솔 로깅만 사용 (stdout/stderr)
+- ✅ Railway가 자동으로 로그 수집 및 표시
+- ✅ 파일 로깅 비활성화 (불필요)
+- ✅ 컨테이너 재시작 시에도 로그 유지
+
+**Railway에서 로그 확인**:
+```bash
+# Railway 대시보드
+프로젝트 → 서비스 → Logs 탭
+
+# Railway CLI
+railway logs
+railway logs --follow
+```
 
 ### Gradle 빌드 오류
 

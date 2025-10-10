@@ -1,64 +1,45 @@
-server:
-  port: 8080
-  servlet:
-    context-path: /api/v1
+# ============================================
+# 로컬 개발 환경 설정
+# ============================================
+# 실행: ./gradlew bootRun --args='--spring.profiles.active=local'
+# 또는 IntelliJ: Active profiles에 'local' 입력
 
 spring:
-  application:
-    name: fos-accountbook-backend
-  
-  # 로컬 개발용 MySQL (Docker) 설정
+  # 로컬 MySQL 설정 (Docker Compose)
   datasource:
     url: jdbc:mysql://localhost:3306/accountbook?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: accountbook_user
     password: accountbook_password
-    driver-class-name: com.mysql.cj.jdbc.Driver
   
+  # JPA 개발 환경 설정
   jpa:
     hibernate:
-      ddl-auto: validate  # Flyway가 마이그레이션을 담당
-      naming:
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+      ddl-auto: validate  # Flyway가 스키마 관리
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
-        format_sql: true
-        show_sql: true
+        format_sql: true   # SQL 포맷팅
+        show_sql: true     # SQL 로깅
         use_sql_comments: true
-    open-in-view: false
   
-  # Flyway 마이그레이션 설정 (로컬)
+  # Flyway 로컬 설정
   flyway:
     enabled: true
-    baseline-on-migrate: true
-    baseline-version: 0
-    locations: classpath:db/migration
-    validate-on-migrate: true
     clean-disabled: false  # 로컬에서만 clean 허용
-  
-  security:
-    filter:
-      dispatcher-types: async, error, request
 
-# 로컬 개발용 JWT 설정
+# JWT 로컬 개발용 설정
 jwt:
   secret: local-development-secret-key-for-testing-purposes-only-do-not-use-in-production-256bits
-  expiration: 86400000  # 24시간
+  expiration: 86400000     # 24시간
   refresh-expiration: 604800000  # 7일
 
-# SpringDoc OpenAPI 설정 (로컬 개발용)
+# Swagger 로컬에서 활성화
 springdoc:
   api-docs:
-    path: /v3/api-docs
-    enabled: true  # 로컬에서는 활성화
+    enabled: true
   swagger-ui:
-    path: /swagger-ui.html
-    enabled: true  # 로컬에서는 활성화
-    tags-sorter: alpha
-    operations-sorter: alpha
-    display-request-duration: true
-    disable-swagger-default-url: true
+    enabled: true
     doc-expansion: none  # API 목록 기본 접힌 상태
 
-# 로깅 설정은 logback-spring.xml에서 관리 (local 프로파일)
-
+# 로깅: logback-spring.xml의 'local' 프로파일 사용
+# - Console + File 로깅 (logs/ 디렉토리)
+# - DEBUG 레벨
