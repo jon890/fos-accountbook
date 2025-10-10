@@ -52,3 +52,8 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 }
+
+// Disable plain jar (only create executable boot jar)
+tasks.jar {
+    enabled = false
+}

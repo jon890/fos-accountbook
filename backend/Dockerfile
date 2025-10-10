@@ -29,7 +29,7 @@ RUN apk add --no-cache curl
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
-# Copy built jar from builder stage
+# Copy built jar from builder stage (only boot jar will be created)
 COPY --from=builder /app/build/libs/*.jar app.jar
 
 # Expose port (Railway will set PORT env var)
