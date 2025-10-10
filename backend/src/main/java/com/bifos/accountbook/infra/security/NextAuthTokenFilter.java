@@ -79,8 +79,9 @@ public class NextAuthTokenFilter extends OncePerRequestFilter {
      * <p>
      * 순서:
      * 1. Authorization 헤더에서 Bearer 토큰 확인
-     * 2. 쿠키에서 next-auth.session-token 확인 (프로덕션)
-     * 3. 쿠키에서 __Secure-next-auth.session-token 확인 (HTTPS)
+     * 2. 쿠키에서 authjs.session-token 확인 (Auth.js v5)
+     * 3. 쿠키에서 __Secure-authjs.session-token 확인 (HTTPS)
+     * 4. 하위 호환: next-auth.session-token (NextAuth v4)
      */
     private String extractTokenFromRequest(HttpServletRequest request) {
         // 1. Authorization 헤더 확인
@@ -93,8 +94,13 @@ public class NextAuthTokenFilter extends OncePerRequestFilter {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
-                // 로컬: next-auth.session-token
-                // 프로덕션 (HTTPS): __Secure-next-auth.session-token
+                // Auth.js v5 (NextAuth v5)
+                if ("authjs.session-token".equals(cookie.getName()) ||
+                        "__Secure-authjs.session-token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+                
+                // 하위 호환: NextAuth v4
                 if ("next-auth.session-token".equals(cookie.getName()) ||
                         "__Secure-next-auth.session-token".equals(cookie.getName())) {
                     return cookie.getValue();
