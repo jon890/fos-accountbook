@@ -5,7 +5,7 @@
 
 'use server'
 
-import { apiGet } from "@/lib/client"
+import { serverApiGet } from "@/lib/server/api/client"
 import { auth } from "@/lib/server/auth"
 import type { CategoryResponse, ExpenseResponse, FamilyResponse, PageResponse } from "@/types/api"
 
@@ -25,15 +25,12 @@ export async function getDashboardStats(): Promise<DashboardStats | null> {
   try {
     const session = await auth()
     
-    if (!session?.user?.id || !session?.user?.accessToken) {
+    if (!session?.user?.id) {
       return null
     }
 
     // 사용자의 첫 번째 가족 정보 조회
-    const families = await apiGet<FamilyResponse[]>(
-      "/families",
-      { token: session.user.accessToken }
-    )
+    const families = await serverApiGet<FamilyResponse[]>("/families")
     
     if (!families || families.length === 0) {
       return null
@@ -47,9 +44,8 @@ export async function getDashboardStats(): Promise<DashboardStats | null> {
     const month = now.getMonth() + 1
 
     // 이번 달 지출 목록 조회 (간단하게 전체 조회 후 필터링)
-    const expenses = await apiGet<PageResponse<ExpenseResponse>>(
-      `/families/${family.uuid}/expenses?page=0&size=1000`,
-      { token: session.user.accessToken }
+    const expenses = await serverApiGet<PageResponse<ExpenseResponse>>(
+      `/families/${family.uuid}/expenses?page=0&size=1000`
     )
 
     // 이번 달 지출만 필터링하고 합계 계산
@@ -92,14 +88,11 @@ export async function checkUserFamily(): Promise<{
   try {
     const session = await auth()
     
-    if (!session?.user?.id || !session?.user?.accessToken) {
+    if (!session?.user?.id) {
       return { hasFamily: false }
     }
 
-    const families = await apiGet<FamilyResponse[]>(
-      "/families",
-      { token: session.user.accessToken }
-    )
+    const families = await serverApiGet<FamilyResponse[]>("/families")
     
     return {
       hasFamily: families && families.length > 0,
@@ -132,15 +125,12 @@ export async function getRecentExpenses(limit: number = 10): Promise<RecentExpen
   try {
     const session = await auth()
     
-    if (!session?.user?.id || !session?.user?.accessToken) {
+    if (!session?.user?.id) {
       return []
     }
 
     // 사용자의 첫 번째 가족 정보 조회
-    const families = await apiGet<FamilyResponse[]>(
-      "/families",
-      { token: session.user.accessToken }
-    )
+    const families = await serverApiGet<FamilyResponse[]>("/families")
     
     if (!families || families.length === 0) {
       return []
@@ -149,15 +139,13 @@ export async function getRecentExpenses(limit: number = 10): Promise<RecentExpen
     const family = families[0]
 
     // 최근 지출 조회 (페이징)
-    const expensesPage = await apiGet<PageResponse<ExpenseResponse>>(
-      `/families/${family.uuid}/expenses?page=0&size=${limit}&sort=-date`,
-      { token: session.user.accessToken }
+    const expensesPage = await serverApiGet<PageResponse<ExpenseResponse>>(
+      `/families/${family.uuid}/expenses?page=0&size=${limit}&sort=-date`
     )
 
     // 카테고리 정보 조회
-    const categories = await apiGet<CategoryResponse[]>(
-      `/families/${family.uuid}/categories`,
-      { token: session.user.accessToken }
+    const categories = await serverApiGet<CategoryResponse[]>(
+      `/families/${family.uuid}/categories`
     )
 
     // 카테고리 맵 생성
@@ -192,15 +180,12 @@ export async function getFamilyCategories(): Promise<CategoryResponse[]> {
   try {
     const session = await auth()
     
-    if (!session?.user?.id || !session?.user?.accessToken) {
+    if (!session?.user?.id) {
       return []
     }
 
     // 사용자의 첫 번째 가족 정보 조회
-    const families = await apiGet<FamilyResponse[]>(
-      "/families",
-      { token: session.user.accessToken }
-    )
+    const families = await serverApiGet<FamilyResponse[]>("/families")
     
     if (!families || families.length === 0) {
       return []
@@ -209,9 +194,8 @@ export async function getFamilyCategories(): Promise<CategoryResponse[]> {
     const family = families[0]
 
     // 카테고리 목록 조회
-    const categories = await apiGet<CategoryResponse[]>(
-      `/families/${family.uuid}/categories`,
-      { token: session.user.accessToken }
+    const categories = await serverApiGet<CategoryResponse[]>(
+      `/families/${family.uuid}/categories`
     )
 
     return categories

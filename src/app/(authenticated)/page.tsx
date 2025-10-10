@@ -8,14 +8,13 @@ import { StatsCards } from "@/components/dashboard/StatsCards"
 import { WelcomeSection } from "@/components/dashboard/WelcomeSection"
 import { auth } from "@/lib/server/auth"
 import { redirect } from 'next/navigation'
-import { checkUserFamily, getDashboardStats, getRecentExpenses } from "./actions/dashboard-actions"
+import { checkUserFamily, getDashboardStats, getRecentExpenses } from "../actions/dashboard-actions"
 
 export default async function HomePage() {
-  // 서버에서 세션 확인
+  // Layout에서 이미 인증 체크 완료 ✅
   const session = await auth()
-
-  // 로그인되지 않은 경우 로그인 페이지로 리다이렉트
-  if (!session?.user) {
+  if (!session) {
+    // Layout에서 이미 체크했으니 도달하지 않음
     redirect('/auth/signin')
   }
 

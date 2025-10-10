@@ -23,8 +23,8 @@ export class ApiError extends Error {
 /**
  * 백엔드 API 호출 헬퍼 함수
  * 
- * NextAuth 세션 토큰을 쿠키에서 자동으로 가져와 요청에 포함합니다.
- * 백엔드의 NextAuthTokenFilter가 이 토큰을 검증합니다.
+ * NextAuth 세션 쿠키를 자동으로 전송합니다.
+ * 백엔드의 NextAuthTokenFilter가 쿠키에서 토큰을 추출하여 검증합니다.
  */
 export async function apiClient<T = unknown>(
   endpoint: string,
@@ -38,7 +38,7 @@ export async function apiClient<T = unknown>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
-    credentials: 'include', // NextAuth 세션 쿠키 포함
+    credentials: 'include', // ✅ NextAuth 쿠키 자동 전송 (httpOnly 쿠키 포함)
   })
 
   if (!response.ok) {

@@ -135,15 +135,132 @@ pnpm dev
 - ✅ JWT 토큰 자동 관리
 - ✅ 실시간 데이터 동기화
 
-## 🔐 인증 흐름
+## 🔐 인증 시스템
+
+### 인증 보호 방식: Route Groups Layout 패턴
+
+**모든 인증이 필요한 페이지는 `(authenticated)` 폴더 내부에 위치**하며, 이 폴더의 `layout.tsx`에서 **자동으로 인증을 체크**합니다.
+
+```typescript
+// src/app/(authenticated)/layout.tsx
+export default async function AuthenticatedLayout({ children }) {
+  const session = await auth()
+  
+  // 로그인하지 않은 사용자는 자동으로 로그인 페이지로 리다이렉트
+  if (!session?.user) {
+    redirect('/auth/signin')
+  }
+
+  return <>{children}</>
+}
+```
+
+**장점:**
+- ✅ **중복 제거**: 각 페이지에서 인증 체크 반복 불필요
+- ✅ **자동 보호**: `(authenticated)` 폴더에 추가하면 자동으로 인증 필요
+- ✅ **URL 영향 없음**: Route Groups는 URL에 포함되지 않음 (`/expenses`, `/families`)
+- ✅ **Edge Function 크기 제한 회피**: Middleware 대신 Layout 사용
+
+### 인증 흐름
 
 ```
 1. 사용자가 Google OAuth로 로그인
 2. NextAuth가 User 정보를 MySQL에 저장
-3. 백엔드 /auth/register API 호출
-4. 백엔드에서 JWT 토큰 발급
-5. NextAuth Session에 JWT 토큰 저장
-6. 모든 API 요청에 JWT 토큰 자동 주입
+3. NextAuth가 JWT 세션 토큰을 httpOnly 쿠키에 저장 (JWS, HS256 서명)
+   - 쿠키명: authjs.session-token (HTTP) 또는 __Secure-authjs.session-token (HTTPS)
+   - 암호화 없이 서명만 사용 (백엔드 호환)
+   - AUTH_SECRET으로 서명
+4. 모든 `(authenticated)` 페이지 접근 시:
+   - Layout에서 자동으로 세션 체크 ✅
+   - 로그인하지 않은 사용자는 /auth/signin으로 리다이렉트
+5. 클라이언트에서 백엔드 API 호출 시 쿠키 자동 전송
+   - fetch(..., { credentials: 'include' })
+   - httpOnly 쿠키가 자동으로 포함됨
+6. 백엔드의 NextAuthTokenFilter가 쿠키에서 JWT 토큰 추출 및 검증
+   - HS256 알고리즘으로 서명 검증
+   - 동일한 AUTH_SECRET 사용
+   - Spring Security Authentication 설정
+```
+
+**핵심 개선사항:**
+- ✅ **NextAuth JWT를 암호화 없이 서명만 사용 (JWS)**
+  - 백엔드에서 표준 JWT 라이브러리로 검증 가능
+- ✅ **쿠키 기반 자동 인증**
+  - httpOnly 쿠키로 XSS 공격 방어
+  - `credentials: 'include'`로 쿠키 자동 전송
+  - 클라이언트 코드에서 토큰 관리 불필요
+- ✅ **간단한 API 호출**
+  - `apiGet('/families')` - 토큰 처리 없이 간단하게 호출
+  - `apiPost('/families', data)` - 쿠키가 자동으로 전송됨
+- ✅ **프론트엔드와 백엔드 동일한 `AUTH_SECRET` 공유**
+  - 별도의 백엔드 JWT 발급 불필요
+  - NextAuth 토큰을 그대로 검증
+
+## 💻 API 호출 예시
+
+### 클라이언트 컴포넌트에서 간단하게 API 호출
+
+```typescript
+'use client'
+
+import { apiGet, apiPost } from '@/lib/client'
+
+// GET 요청 - 쿠키 자동 전송
+const families = await apiGet<Family[]>('/families')
+
+// POST 요청 - 쿠키 자동 전송
+await apiPost('/families', {
+  name: '우리가족',
+  description: '가족 가계부'
+})
+
+// ✅ Authorization 헤더나 토큰 관리 불필요!
+// ✅ NextAuth 쿠키가 자동으로 전송됨
+// ✅ 백엔드가 쿠키에서 토큰 추출 및 검증
+```
+
+### API 클라이언트 내부 구현
+
+```typescript
+// src/lib/client/api.ts
+export async function apiClient<T>(endpoint: string, options: RequestInit = {}) {
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+    credentials: 'include', // ✅ httpOnly 쿠키 자동 전송
+  })
+  
+  return response.json()
+}
+```
+
+### 백엔드에서 쿠키 파싱
+
+```java
+// NextAuthTokenFilter.java
+private String extractTokenFromRequest(HttpServletRequest request) {
+    // 쿠키에서 NextAuth 세션 토큰 추출
+    Cookie[] cookies = request.getCookies();
+    if (cookies != null) {
+        for (Cookie cookie : cookies) {
+            // Auth.js v5 (NextAuth v5)
+            if ("authjs.session-token".equals(cookie.getName()) ||
+                "__Secure-authjs.session-token".equals(cookie.getName())) {
+                return cookie.getValue(); // ✅ JWT 토큰 반환
+            }
+            
+            // 하위 호환: NextAuth v4
+            if ("next-auth.session-token".equals(cookie.getName()) ||
+                "__Secure-next-auth.session-token".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+    }
+    return null;
+}
 ```
 
 ## 🛠️ 개발 명령어
@@ -175,19 +292,47 @@ pnpm db:validate      # 스키마 검증
 
 ### Vercel 배포
 
+**⚠️ 중요: Middleware Edge Function 크기 제한**
+
+Vercel의 Edge Function 크기 제한(1MB)을 준수하기 위해:
+- Middleware는 최소한의 기능만 수행
+- 인증 체크는 각 페이지의 Server Component에서 `auth()` 호출
+- Prisma 등 무거운 라이브러리는 Middleware에서 제외
+
+**배포 단계:**
+
 1. Vercel에 프로젝트 연결
+
 2. 환경 변수 설정:
+   ```bash
+   # 데이터베이스
+   DATABASE_URL="mysql://..."  # 프로덕션 MySQL
+   
+   # NextAuth
+   NEXTAUTH_URL="https://your-domain.vercel.app"
+   AUTH_SECRET="your-256bit-secret-key"  # 백엔드와 동일한 값!
+   
+   # Google OAuth
+   GOOGLE_CLIENT_ID="your-google-client-id"
+   GOOGLE_CLIENT_SECRET="your-google-client-secret"
+   
+   # 백엔드 API
+   NEXT_PUBLIC_API_URL="https://your-backend.railway.app/api/v1"
+   BACKEND_API_URL="https://your-backend.railway.app/api/v1"
    ```
-   DATABASE_URL (프로덕션 MySQL)
-   NEXTAUTH_URL (배포 도메인)
-   NEXTAUTH_SECRET
-   GOOGLE_CLIENT_ID
-   GOOGLE_CLIENT_SECRET
-   NEXT_PUBLIC_API_BASE_URL (백엔드 프로덕션 URL)
-   BACKEND_API_URL (백엔드 프로덕션 URL)
-   ```
+
 3. Google OAuth 리디렉션 URI에 배포 도메인 추가
+   - `https://your-domain.vercel.app/api/auth/callback/google`
+
 4. 배포!
+
+**빌드 최적화 확인:**
+```bash
+pnpm build
+
+# Middleware 크기 확인
+ƒ Middleware    39.1 kB  ✅ (1MB 제한 준수)
+```
 
 ## 🧪 테스트
 
@@ -209,9 +354,15 @@ pnpm test:watch       # Watch 모드
 fos-accountbook/
 ├── src/
 │   ├── app/                    # Next.js App Router
-│   │   ├── actions/           # Server Actions (백엔드 API 호출)
-│   │   ├── api/auth/          # NextAuth API Routes
-│   │   └── (pages)/           # 페이지 컴포넌트
+│   │   ├── (authenticated)/   # 인증 필요 페이지 (Layout으로 자동 인증 체크) 🔒
+│   │   │   ├── layout.tsx    # 인증 체크 Layout
+│   │   │   ├── page.tsx      # 대시보드
+│   │   │   ├── expenses/     # 지출 관리
+│   │   │   ├── families/     # 가족 관리
+│   │   │   └── invite/       # 초대 수락
+│   │   ├── auth/             # 인증 페이지 (로그인, 로그아웃) 🔓
+│   │   ├── actions/          # Server Actions (백엔드 API 호출)
+│   │   └── api/auth/         # NextAuth API Routes
 │   ├── components/            # React 컴포넌트
 │   │   ├── ui/               # shadcn/ui 컴포넌트
 │   │   ├── common/           # 공통 컴포넌트

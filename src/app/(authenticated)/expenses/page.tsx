@@ -5,7 +5,7 @@ import { ExpensePageClient } from '@/components/expenses/ExpensePageClient'
 import { BottomNavigation } from '@/components/layout/BottomNavigation'
 import { Header } from '@/components/layout/Header'
 import { Card, CardContent } from '@/components/ui/card'
-import { apiGet } from '@/lib/client'
+import { serverApiGet } from '@/lib/server/api/client'
 import { auth } from '@/lib/server/auth'
 import type { FamilyResponse } from '@/types/api'
 import { redirect } from 'next/navigation'
@@ -43,20 +43,19 @@ async function ExpenseListWrapper({
 }
 
 export default async function ExpensesPage({ searchParams }: ExpensesPageProps) {
+  // Layout에서 이미 인증 체크 완료 ✅
   const session = await auth()
-  const resolvedSearchParams = await searchParams
-  
-  if (!session?.user?.id || !session?.user?.accessToken) {
-    redirect('/api/auth/signin')
+  if (!session) {
+    // Layout에서 이미 체크했으니 도달하지 않음
+    redirect('/auth/signin')
   }
+  
+  const resolvedSearchParams = await searchParams
 
-  // 백엔드 API에서 가족 정보 조회
+  // 백엔드 API에서 가족 정보 조회 (Server-side API 호출)
   let families: FamilyResponse[]
   try {
-    families = await apiGet<FamilyResponse[]>(
-      "/families",
-      { token: session.user.accessToken }
-    )
+    families = await serverApiGet<FamilyResponse[]>("/families")
   } catch (error) {
     console.error("Failed to fetch families:", error)
     redirect('/families/create')

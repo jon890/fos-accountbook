@@ -1,81 +1,28 @@
 /**
- * Auth.js v5 Middleware
+ * Lightweight Middleware for Edge Runtime
  * 
- * Auth.js v5의 강력한 기능 중 하나로, 
- * 특정 경로에 대한 인증 보호를 간단하게 설정할 수 있습니다.
+ * Vercel Edge Function 크기 제한(1MB)을 준수하기 위해
+ * Middleware는 최소한의 기능만 수행하고,
+ * 인증 체크는 각 페이지의 Server Component에서 수행합니다.
  * 
- * - 인증이 필요한 경로를 자동으로 보호
- * - 인증되지 않은 사용자는 로그인 페이지로 리디렉트
- * - 공개 경로와 인증 경로를 명확하게 구분
+ * 이 Middleware는:
+ * - CORS 헤더 설정
+ * - Public 경로 허용
+ * - 나머지는 각 페이지에서 auth() 체크
  */
 
-import { auth } from "@/lib/server/auth"
 import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
 
 /**
- * 공개 접근 가능한 경로 (인증 불필요)
+ * Middleware 함수
  */
-const publicPaths = [
-  "/auth/signin",
-  "/auth/error",
-  "/api/auth",
-  "/_next",
-  "/favicon.ico",
-]
-
-/**
- * 항상 인증이 필요한 경로
- */
-const protectedPaths = [
-  "/dashboard",
-  "/expenses",
-  "/families",
-  "/invite",
-]
-
-/**
- * 경로가 공개 경로인지 확인
- */
-function isPublicPath(pathname: string): boolean {
-  return publicPaths.some(path => pathname.startsWith(path))
+export function middleware(request: NextRequest) {
+  // CORS 헤더 추가 (필요한 경우)
+  const response = NextResponse.next()
+  
+  return response
 }
-
-/**
- * 경로가 보호된 경로인지 확인
- */
-function isProtectedPath(pathname: string): boolean {
-  return protectedPaths.some(path => pathname.startsWith(path))
-}
-
-/**
- * Auth.js v5 Middleware
- */
-export default auth((req) => {
-  const { pathname } = req.nextUrl
-  const isLoggedIn = !!req.auth
-
-  // 공개 경로는 항상 허용
-  if (isPublicPath(pathname)) {
-    return NextResponse.next()
-  }
-
-  // 보호된 경로는 인증 필요
-  if (isProtectedPath(pathname) && !isLoggedIn) {
-    const signInUrl = new URL("/auth/signin", req.url)
-    signInUrl.searchParams.set("callbackUrl", pathname)
-    return NextResponse.redirect(signInUrl)
-  }
-
-  // 루트 경로 처리
-  if (pathname === "/") {
-    if (!isLoggedIn) {
-      return NextResponse.redirect(new URL("/auth/signin", req.url))
-    }
-    return NextResponse.next()
-  }
-
-  return NextResponse.next()
-})
 
 /**
  * Middleware 설정

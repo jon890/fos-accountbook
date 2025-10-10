@@ -3,8 +3,18 @@ import type { NextAuthConfig } from "next-auth"
 import NextAuth from "next-auth"
 import Google from "next-auth/providers/google"
 import { prisma } from "@/lib/server/database/prisma"
+import { SignJWT, jwtVerify } from "jose"
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+
+/**
+ * JWT Secret Key (백엔드와 동일한 키 사용)
+ */
+const AUTH_SECRET = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+if (!AUTH_SECRET) {
+  throw new Error("AUTH_SECRET is not defined");
+}
+const encodedSecret = new TextEncoder().encode(AUTH_SECRET);
 
 /**
  * 백엔드 API에서 JWT 토큰 획득
@@ -77,6 +87,44 @@ export const authConfig: NextAuthConfig = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
+  jwt: {
+    /**
+     * 커스텀 JWT Encode: 암호화 없이 서명만 사용 (백엔드 호환)
+     * 
+     * NextAuth v5는 기본적으로 JWT를 JWE(암호화)로 생성하지만,
+     * 백엔드에서 JWS(서명된 JWT)만 검증할 수 있으므로 커스터마이징
+     */
+    async encode({ token, secret }) {
+      if (!token) {
+        throw new Error("Token is required");
+      }
+      
+      // HS256 알고리즘으로 JWT 생성 (암호화 없이 서명만)
+      return await new SignJWT(token)
+        .setProtectedHeader({ alg: "HS256" })
+        .setIssuedAt()
+        .setExpirationTime("30d") // 30일 만료
+        .sign(encodedSecret);
+    },
+    /**
+     * 커스텀 JWT Decode: 서명 검증 후 페이로드 반환
+     */
+    async decode({ token, secret }) {
+      if (!token) {
+        return null;
+      }
+      
+      try {
+        const { payload } = await jwtVerify(token, encodedSecret, {
+          algorithms: ["HS256"],
+        });
+        return payload;
+      } catch (error) {
+        console.error("JWT decode error:", error);
+        return null;
+      }
+    },
+  },
   callbacks: {
     async jwt({ token, user, account, trigger }) {
       // 초기 로그인 시

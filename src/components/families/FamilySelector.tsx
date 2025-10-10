@@ -50,7 +50,7 @@ export function FamilySelector({ onFamilySelect, onCreateFamily }: FamilySelecto
   const fetchFamilies = async () => {
     try {
       setLoading(true)
-      // API 클라이언트를 사용하여 백엔드 호출 (NextAuth 세션 토큰 자동 포함)
+      // API 클라이언트로 백엔드 호출 (NextAuth 쿠키 자동 전송)
       const data = await apiGet<Family[]>('/families')
       setFamilies(data)
       setError(null)

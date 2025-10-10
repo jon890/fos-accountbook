@@ -19,11 +19,10 @@ interface InvitePageProps {
 export default async function InvitePage({ params }: InvitePageProps) {
   const { token } = params;
 
-  // 세션 확인
+  // Layout에서 이미 인증 체크 완료 ✅
   const session = await auth();
-
-  // 로그인되지 않은 경우 로그인 페이지로 리다이렉트 (초대 링크 유지)
-  if (!session?.user) {
+  if (!session) {
+    // Layout에서 이미 체크했으니 도달하지 않음
     redirect(`/auth/signin?callbackUrl=${encodeURIComponent(`/invite/${token}`)}`);
   }
 
