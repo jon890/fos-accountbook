@@ -26,14 +26,33 @@
 ### 4단계: 환경변수 설정
 ```bash
 # Variables 탭에서 추가
-DATABASE_URL=${{MySQL.MYSQL_URL}}
-DB_USERNAME=${{MySQL.MYSQL_USER}}
-DB_PASSWORD=${{MySQL.MYSQL_PASSWORD}}
+
+# ⚠️ Railway MySQL 자동 주입 변수 (자동으로 설정됨)
+# MYSQL_HOST=${{MySQL.MYSQL_HOST}}           # mysql.railway.internal
+# MYSQL_PORT=${{MySQL.MYSQL_PORT}}           # 3306
+# MYSQL_DATABASE=${{MySQL.MYSQL_DATABASE}}   # railway
+# MYSQL_USER=${{MySQL.MYSQL_USER}}           # root
+# MYSQL_PASSWORD=${{MySQL.MYSQL_PASSWORD}}   # 자동 생성
+
+# 🔧 수동으로 추가해야 하는 변수
 JWT_SECRET=your-super-secret-key-at-least-256-bits-long-required-for-hs512
 JWT_EXPIRATION=86400000
 JWT_REFRESH_EXPIRATION=604800000
 SWAGGER_ENABLED=false
 SPRING_PROFILES_ACTIVE=prod
+```
+
+**✅ Railway MySQL 변수 자동 주입**:
+Railway는 MySQL 서비스를 추가하면 다음 환경변수를 **자동으로 주입**합니다:
+- `MYSQL_HOST`: mysql.railway.internal
+- `MYSQL_PORT`: 3306
+- `MYSQL_DATABASE`: railway
+- `MYSQL_USER`: root
+- `MYSQL_PASSWORD`: 자동 생성된 비밀번호
+
+이 변수들은 `application.yml`에서 자동으로 읽어서 JDBC URL을 구성합니다:
+```yaml
+jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}
 ```
 
 **⚠️ 중요**: `SPRING_PROFILES_ACTIVE=prod` 설정은 **필수**입니다!
@@ -82,18 +101,29 @@ curl https://your-app.railway.app/api/v1/health
 - [ ] CORS 설정 확인
 - [ ] Auth.js에 백엔드 URL 추가
 
-## 🔑 필수 환경변수
+## 🔑 환경변수 가이드
+
+### Railway MySQL 자동 주입 변수 (설정 불필요 ✅)
 
 | 변수명 | 설명 | 예시 |
 |--------|------|------|
-| `DATABASE_URL` | MySQL 연결 URL | `${{MySQL.MYSQL_URL}}` |
-| `DB_USERNAME` | DB 사용자명 | `${{MySQL.MYSQL_USER}}` |
-| `DB_PASSWORD` | DB 비밀번호 | `${{MySQL.MYSQL_PASSWORD}}` |
-| `JWT_SECRET` | JWT 서명 키 (256bit+) | `your-secret-key...` |
-| `JWT_EXPIRATION` | Access Token 만료 시간 | `86400000` (24시간) |
-| `JWT_REFRESH_EXPIRATION` | Refresh Token 만료 시간 | `604800000` (7일) |
-| `SWAGGER_ENABLED` | Swagger UI 활성화 | `false` (프로덕션) |
-| `SPRING_PROFILES_ACTIVE` | Spring Profile | `prod` (**필수**) |
+| `MYSQL_HOST` | MySQL 호스트 | `mysql.railway.internal` |
+| `MYSQL_PORT` | MySQL 포트 | `3306` |
+| `MYSQL_DATABASE` | 데이터베이스명 | `railway` |
+| `MYSQL_USER` | DB 사용자명 | `root` |
+| `MYSQL_PASSWORD` | DB 비밀번호 | 자동 생성 |
+
+**📝 참고**: Railway가 MySQL 서비스를 자동으로 연결하면 위 변수들이 **자동으로 주입**됩니다.
+
+### 수동 설정 필요 변수 (직접 추가 ⚙️)
+
+| 변수명 | 설명 | 예시 | 필수 여부 |
+|--------|------|------|----------|
+| `JWT_SECRET` | JWT 서명 키 (256bit+) | `openssl rand -base64 64` 로 생성 | ✅ 필수 |
+| `JWT_EXPIRATION` | Access Token 만료 시간 (밀리초) | `86400000` (24시간) | ⚪ 선택 |
+| `JWT_REFRESH_EXPIRATION` | Refresh Token 만료 시간 (밀리초) | `604800000` (7일) | ⚪ 선택 |
+| `SWAGGER_ENABLED` | Swagger UI 활성화 | `false` (프로덕션 권장) | ⚪ 선택 |
+| `SPRING_PROFILES_ACTIVE` | Spring Profile | `prod` | ✅ **필수** |
 
 ## 🐛 트러블슈팅
 
@@ -143,12 +173,53 @@ railway logs --follow
 4. Docker 로컬 테스트: docker build -t test .
 ```
 
+### JDBC URL 오류 (Railway MySQL)
+
+**문제**: `Driver com.mysql.cj.jdbc.Driver claims to not accept jdbcUrl, mysql://...`
+
+**원인**: Railway의 `MYSQL_URL`은 `mysql://` 프로토콜을 사용하지만, JDBC는 `jdbc:mysql://` 형식을 기대합니다.
+
+**해결**: ✅ 이미 해결됨! `application.yml`이 Railway의 자동 주입 변수를 사용합니다:
+
+```yaml
+# application.yml에서 자동으로 JDBC URL 구성
+spring:
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+```
+
+**Railway MySQL 자동 주입 변수**:
+- `MYSQL_HOST`: mysql.railway.internal
+- `MYSQL_PORT`: 3306
+- `MYSQL_DATABASE`: railway
+- `MYSQL_USER`: root
+- `MYSQL_PASSWORD`: 자동 생성
+
+**⚠️ 주의**: 이전처럼 `DATABASE_URL`, `DB_USERNAME`, `DB_PASSWORD`를 수동으로 설정하지 마세요!
+
 ### 데이터베이스 연결 실패
+```bash
+# 1. MySQL 서비스 상태 확인
+Railway 대시보드 → MySQL 서비스 → Status: Running 확인
+
+# 2. 자동 주입 변수 확인 (Spring Boot 앱의 Variables 탭)
+MYSQL_HOST=mysql.railway.internal    # Railway가 자동 주입
+MYSQL_PORT=3306                      # Railway가 자동 주입
+MYSQL_DATABASE=railway               # Railway가 자동 주입
+MYSQL_USER=root                      # Railway가 자동 주입
+MYSQL_PASSWORD=***                   # Railway가 자동 주입
+
+# 3. 서비스 재시작
+Railway 대시보드 → Spring Boot 앱 → Deploy → Restart
+
+# 4. 로그 확인
+Railway 대시보드 → Spring Boot 앱 → Logs 탭
+# "HikariPool-1 - Started" 메시지 확인
 ```
-1. Variables에서 DATABASE_URL 확인
-2. MySQL 서비스가 Running 상태인지 확인
-3. ${{MySQL.MYSQL_URL}} 형식으로 설정했는지 확인
-```
+
+**주의**: Railway가 MySQL 변수를 자동으로 주입하려면 두 서비스가 **같은 프로젝트**에 있어야 합니다!
 
 ### Health Check 실패
 ```

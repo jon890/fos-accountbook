@@ -17,9 +17,9 @@ spring:
   
   # 데이터베이스 설정 (환경변수로 주입)
   datasource:
-    url: ${DATABASE_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:accountbook}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${MYSQL_USER:accountbook_user}
+    password: ${MYSQL_PASSWORD:accountbook_password}
     driver-class-name: com.mysql.cj.jdbc.Driver
   
   # JPA 공통 설정

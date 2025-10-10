@@ -4,6 +4,14 @@
 # Railway에서 SPRING_PROFILES_ACTIVE=prod 환경변수 설정 필수
 
 spring:
+  # 데이터베이스 설정은 application.yml의 환경변수 기본값 사용
+  # Railway는 다음 환경변수를 자동 주입:
+  #   - MYSQL_HOST: mysql.railway.internal
+  #   - MYSQL_PORT: 3306
+  #   - MYSQL_DATABASE: railway
+  #   - MYSQL_USER: root
+  #   - MYSQL_PASSWORD: 자동 생성
+  
   # HikariCP 커넥션 풀 최적화
   datasource:
     hikari:
