@@ -1,11 +1,11 @@
 "use server";
 
+import { apiDelete, ApiError, apiPost } from "@/lib/client";
+import { auth } from "@/lib/server/auth";
+import type { CreateExpenseRequest, ExpenseResponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
-import { apiPost, apiDelete, ApiError } from "@/lib/api";
-import type { CreateExpenseRequest, ExpenseResponse } from "@/types/api";
 
 // 지출 생성 스키마
 const createExpenseSchema = z.object({

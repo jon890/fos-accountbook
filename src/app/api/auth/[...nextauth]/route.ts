@@ -6,6 +6,6 @@
  * - POST: 로그인, 로그아웃 등
  */
 
-import { handlers } from "@/lib/auth"
+import { handlers } from "@/lib/server/auth"
 
 export const { GET, POST } = handlers

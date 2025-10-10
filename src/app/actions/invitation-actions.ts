@@ -5,15 +5,15 @@
 
 "use server";
 
-import { auth } from "@/lib/auth";
-import { apiGet, apiPost, apiDelete, ApiError } from "@/lib/api";
-import { revalidatePath } from "next/cache";
-import type { 
-  FamilyResponse, 
-  InvitationResponse, 
+import { apiDelete, ApiError, apiGet, apiPost } from "@/lib/client";
+import { auth } from "@/lib/server/auth";
+import type {
+  AcceptInvitationRequest,
   CreateInvitationRequest,
-  AcceptInvitationRequest 
+  FamilyResponse,
+  InvitationResponse
 } from "@/types/api";
+import { revalidatePath } from "next/cache";
 
 export interface InvitationInfo {
   uuid: string;

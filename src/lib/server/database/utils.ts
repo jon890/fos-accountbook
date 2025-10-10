@@ -9,7 +9,7 @@ import {
   PrismaClientUnknownRequestError,
   PrismaClientValidationError
 } from '@prisma/client/runtime/library'
-import { errorResponse } from '../api/responses'
+import { errorResponse } from '@/lib/server/api/responses'
 
 // Prisma 에러 처리 (타입 안전한 방식)
 export function handlePrismaError(error: unknown) {

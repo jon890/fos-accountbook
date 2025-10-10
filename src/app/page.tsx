@@ -3,12 +3,12 @@
  * Next.js 15 Server Component 패턴 사용
  */
 
-import { redirect } from 'next/navigation'
-import { auth } from "@/lib/auth"
-import { getDashboardStats, checkUserFamily, getRecentExpenses } from "./actions/dashboard-actions"
-import { WelcomeSection } from "@/components/dashboard/WelcomeSection"
-import { StatsCards } from "@/components/dashboard/StatsCards"
 import { DashboardClient } from "@/components/dashboard/DashboardClient"
+import { StatsCards } from "@/components/dashboard/StatsCards"
+import { WelcomeSection } from "@/components/dashboard/WelcomeSection"
+import { auth } from "@/lib/server/auth"
+import { redirect } from 'next/navigation'
+import { checkUserFamily, getDashboardStats, getRecentExpenses } from "./actions/dashboard-actions"
 
 export default async function HomePage() {
   // 서버에서 세션 확인

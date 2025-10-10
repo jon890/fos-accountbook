@@ -9,7 +9,7 @@
  * - 공개 경로와 인증 경로를 명확하게 구분
  */
 
-import { auth } from "@/lib/auth"
+import { auth } from "@/lib/server/auth"
 import { NextResponse } from "next/server"
 
 /**

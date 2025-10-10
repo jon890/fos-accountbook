@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { auth } from "@/lib/auth";
-import { apiGet } from "@/lib/api";
+import { apiGet } from "@/lib/client";
+import { auth } from "@/lib/server/auth";
 import type { ExpenseResponse, PageResponse } from "@/types/api";
 import { ExpensePagination } from "./ExpensePagination";
 

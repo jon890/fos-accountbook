@@ -1,6 +1,6 @@
-import { signOut } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { signOut } from "@/lib/server/auth";
 import { LogOut } from "lucide-react";
 import Link from "next/link";
 

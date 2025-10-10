@@ -216,28 +216,28 @@ fos-accountbook/
 │   │   ├── ui/               # shadcn/ui 컴포넌트
 │   │   ├── common/           # 공통 컴포넌트
 │   │   └── (features)/       # 기능별 컴포넌트
-│   ├── lib/                  # 유틸리티 및 설정 (체계적으로 분류됨) 📦
-│   │   ├── api/              # API 클라이언트 및 응답 처리
-│   │   │   ├── client.ts     # 백엔드 API 호출 함수
-│   │   │   ├── responses.ts  # API 응답 래퍼 함수
-│   │   │   ├── utils.ts      # API 관련 유틸리티
+│   ├── lib/                  # 유틸리티 및 설정 (client/server 명확히 분리) 📦
+│   │   ├── client/           # 클라이언트 안전 모듈 ✅
+│   │   │   ├── api.ts        # 백엔드 API 호출 함수
+│   │   │   ├── utils.ts      # Tailwind 병합 등 범용 함수
 │   │   │   └── index.ts      # 통합 export
-│   │   ├── auth/             # 인증 관련
-│   │   │   ├── config.ts     # NextAuth 설정
-│   │   │   ├── utils.ts      # 인증 유틸리티
-│   │   │   └── index.ts      # 통합 export
-│   │   ├── database/         # 데이터베이스 관련
-│   │   │   ├── prisma.ts     # Prisma 클라이언트
-│   │   │   ├── serialization.ts  # 데이터 직렬화
-│   │   │   ├── utils.ts      # DB 유틸리티
-│   │   │   └── index.ts      # 통합 export
-│   │   ├── utils/            # 범용 유틸리티
-│   │   │   ├── cn.ts         # Tailwind 클래스 병합
-│   │   │   ├── request.ts    # HTTP 요청 유틸리티
-│   │   │   └── index.ts      # 통합 export
-│   │   └── config/           # 환경 설정
-│   │       ├── env.ts        # 환경 변수 관리
-│   │       └── index.ts      # 통합 export
+│   │   └── server/           # 서버 전용 모듈 ⚠️
+│   │       ├── api/          # API 응답 헬퍼
+│   │       │   ├── responses.ts
+│   │       │   ├── utils.ts
+│   │       │   └── index.ts
+│   │       ├── auth/         # NextAuth 설정
+│   │       │   ├── config.ts
+│   │       │   ├── utils.ts
+│   │       │   └── index.ts
+│   │       ├── database/     # Prisma 클라이언트
+│   │       │   ├── prisma.ts
+│   │       │   ├── serialization.ts
+│   │       │   ├── utils.ts
+│   │       │   └── index.ts
+│   │       └── config/       # 환경 설정
+│   │           ├── env.ts
+│   │           └── index.ts
 │   └── types/
 │       ├── api.ts            # 백엔드 API 타입
 │       └── next-auth.d.ts    # NextAuth 타입 확장
@@ -268,24 +268,76 @@ fos-accountbook/
 
 **권장 import 방식:**
 ```typescript
-// ✅ 권장: 카테고리별 index.ts를 통한 import
-import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api'
-import { auth } from '@/lib/auth'
-import { prisma } from '@/lib/database'
-import { cn } from '@/lib/utils'
-import { env } from '@/lib/config'
+// ✅ 클라이언트 안전 모듈 (브라우저에서 실행 가능)
+import { apiGet, apiPost, apiPut, apiDelete, ApiError } from '@/lib/client'
+import { cn } from '@/lib/client'
 
-// ❌ 지양: 직접 파일 import (유지보수성 저하)
-import { apiGet } from '@/lib/api/client'
-import { auth } from '@/lib/auth/config'
+// ⚠️ 서버 전용 모듈 (Node.js 환경에서만 실행)
+import { auth, signIn, signOut, handlers } from '@/lib/server/auth'
+import { prisma } from '@/lib/server/database'
+import { apiResponse, successResponse, errorResponse } from '@/lib/server/api'
+import { withAuth, handlePrismaError } from '@/lib/server/api'
+import { env, isDev } from '@/lib/server/config'
 ```
 
+**💡 핵심 개선: import 경로로 즉시 구분!**
+- `@/lib/client` → 클라이언트 안전 ✅ ('use client'에서 사용 가능)
+- `@/lib/server` → 서버 전용 ⚠️ (절대 'use client'에서 사용 금지!)
+
 **각 모듈의 역할:**
-- `@/lib/api` - 백엔드 API 호출, 응답 처리, 에러 핸들링
-- `@/lib/auth` - NextAuth 설정, 인증 유틸리티
-- `@/lib/database` - Prisma 클라이언트, 데이터 직렬화
-- `@/lib/utils` - Tailwind 병합, HTTP 요청 등 범용 함수
-- `@/lib/config` - 환경 변수 관리
+- `@/lib/client` - 백엔드 API 호출, Tailwind 유틸리티 (클라이언트 안전 ✅)
+- `@/lib/server/auth` - NextAuth 설정, 인증 유틸리티 (서버 전용 ⚠️)
+- `@/lib/server/database` - Prisma 클라이언트, 데이터 직렬화 (서버 전용 ⚠️)
+- `@/lib/server/api` - API 응답 헬퍼, 서버 유틸리티 (서버 전용 ⚠️)
+- `@/lib/server/config` - 환경 변수 관리 (서버 전용 ⚠️)
+
+**개발 가이드라인:**
+
+1. **클라이언트 컴포넌트 (`'use client'`)** - `@/lib/client`만 사용!
+   ```typescript
+   'use client'
+   
+   // ✅ 사용 가능
+   import { apiGet, apiPost, cn } from '@/lib/client'
+   import { useToast } from '@/hooks/use-toast'
+   
+   // ❌ 절대 금지 - Prisma 번들링 에러!
+   import { prisma } from '@/lib/server/database'
+   import { auth } from '@/lib/server/auth'
+   ```
+
+2. **Server Components (기본)** - 모든 lib 모듈 사용 가능
+   ```typescript
+   // ✅ 모두 가능
+   import { apiGet } from '@/lib/client'
+   import { auth } from '@/lib/server/auth'
+   import { prisma } from '@/lib/server/database'
+   ```
+
+3. **Server Actions** - 모든 lib 모듈 사용 가능
+   ```typescript
+   'use server'
+   
+   // ✅ 모두 가능
+   import { apiPost } from '@/lib/client'
+   import { auth } from '@/lib/server/auth'
+   import { prisma } from '@/lib/server/database'
+   import { revalidatePath } from 'next/cache'
+   ```
+
+4. **API Routes** - 서버 모듈 + 응답 헬퍼
+   ```typescript
+   import { NextRequest } from 'next/server'
+   
+   // ✅ 서버 전용 헬퍼 사용
+   import { apiResponse, errorResponse } from '@/lib/server/api'
+   import { withAuth } from '@/lib/server/api'
+   import { prisma } from '@/lib/server/database'
+   ```
+
+**🎯 간단한 규칙:**
+- `'use client'` 있음 → `@/lib/client`만!
+- `'use client'` 없음 → 모든 lib 사용 가능!
 
 ### 4. 개발자 경험
 - Hot Reload

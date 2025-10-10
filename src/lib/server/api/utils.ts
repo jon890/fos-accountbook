@@ -1,6 +1,6 @@
-import { auth } from '@/lib/auth'
+import { auth } from '@/lib/server/auth'
 import { NextRequest, NextResponse } from 'next/server'
-import { errorResponse } from './responses'
+import { errorResponse } from '@/lib/server/api/responses'
 
 // BigInt 직렬화를 위한 유틸리티
 export function serializeBigInt(obj: unknown): unknown {

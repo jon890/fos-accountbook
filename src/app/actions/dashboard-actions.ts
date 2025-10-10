@@ -5,9 +5,9 @@
 
 'use server'
 
-import { auth } from "@/lib/auth"
-import { apiGet } from "@/lib/api"
-import type { FamilyResponse, ExpenseResponse, CategoryResponse, PageResponse } from "@/types/api"
+import { apiGet } from "@/lib/client"
+import { auth } from "@/lib/server/auth"
+import type { CategoryResponse, ExpenseResponse, FamilyResponse, PageResponse } from "@/types/api"
 
 export interface DashboardStats {
   monthlyExpense: number

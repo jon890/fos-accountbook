@@ -2,7 +2,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import type { NextAuthConfig } from "next-auth"
 import NextAuth from "next-auth"
 import Google from "next-auth/providers/google"
-import { prisma } from "../database/prisma"
+import { prisma } from "@/lib/server/database/prisma"
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
 

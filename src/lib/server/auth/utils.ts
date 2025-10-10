@@ -3,7 +3,7 @@
  * Auth.js v5 호환
  */
 
-import { auth } from '@/lib/auth'
+import { auth } from '@/lib/server/auth'
 import { NextResponse } from 'next/server'
 
 // 인증된 사용자 정보 타입

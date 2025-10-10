@@ -1,7 +1,6 @@
-import { signIn } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { signIn } from "@/lib/server/auth";
 
 /**
  * 로그인 페이지

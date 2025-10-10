@@ -7,7 +7,7 @@ import {
   getInvitationInfo
 } from "@/app/actions/invitation-actions";
 import { InvitePageClient } from "@/components/invite/InvitePageClient";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/server/auth";
 import { redirect } from "next/navigation";
 
 interface InvitePageProps {
