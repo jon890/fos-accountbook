@@ -1,6 +1,6 @@
 'use client'
 
-import { signOut } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Wallet, Bell, LogOut } from "lucide-react"
@@ -11,6 +11,8 @@ interface HeaderProps {
 }
 
 export function Header({ session }: HeaderProps) {
+  const router = useRouter()
+
   return (
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-gray-200/50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -40,7 +42,7 @@ export function Header({ session }: HeaderProps) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => signOut()}
+              onClick={() => router.push('/auth/signout')}
               className="text-gray-600 hover:text-gray-900"
             >
               <LogOut className="w-4 h-4" />

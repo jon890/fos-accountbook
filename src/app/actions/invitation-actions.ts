@@ -1,13 +1,19 @@
 /**
  * Invitation Server Actions
- * 초대 링크 관련 Server Actions
+ * 백엔드 API를 호출하여 초대 링크 관리
  */
 
 "use server";
 
 import { auth } from "@/lib/auth";
-import { container } from "@/container";
+import { apiGet, apiPost, apiDelete, ApiError } from "@/lib/api-client";
 import { revalidatePath } from "next/cache";
+import type { 
+  FamilyResponse, 
+  InvitationResponse, 
+  CreateInvitationRequest,
+  AcceptInvitationRequest 
+} from "@/types/api";
 
 export interface InvitationInfo {
   uuid: string;
@@ -29,40 +35,37 @@ export async function createInvitationLink(): Promise<{
 }> {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    if (!session?.user?.id || !session?.user?.accessToken) {
       return {
         success: false,
         message: "로그인이 필요합니다",
       };
     }
 
-    const familyService = container.getFamilyService();
-    const userService = container.getUserRepository();
-    const invitationService = container.getInvitationService();
+    // 사용자의 첫 번째 가족 정보 가져오기
+    const families = await apiGet<FamilyResponse[]>(
+      "/families",
+      { token: session.user.accessToken }
+    );
 
-    // 사용자 UUID 가져오기
-    const user = await userService.findByAuthId(session.user.id);
-    if (!user) {
-      return {
-        success: false,
-        message: "사용자 정보를 찾을 수 없습니다",
-      };
-    }
-
-    // 가족 정보 가져오기 (이미 user를 조회했으므로 userUuid로 직접 조회)
-    const family = await familyService.getFamilyByUserUuid(user.uuid);
-    if (!family) {
+    if (!families || families.length === 0) {
       return {
         success: false,
         message: "가족 정보를 찾을 수 없습니다",
       };
     }
 
-    // 초대 링크 생성 (24시간 유효)
-    const invitation = await invitationService.createInvitation(
-      family.uuid,
-      user.uuid,
-      24
+    const family = families[0];
+
+    // 초대장 생성 (24시간 유효)
+    const requestBody: CreateInvitationRequest = {
+      expiresInHours: 24
+    };
+
+    const invitation = await apiPost<InvitationResponse>(
+      `/invitations/families/${family.uuid}`,
+      requestBody,
+      { token: session.user.accessToken }
     );
 
     // 초대 링크 URL 생성
@@ -70,16 +73,17 @@ export async function createInvitationLink(): Promise<{
     const inviteUrl = `${baseUrl}/invite/${invitation.token}`;
 
     const now = new Date();
-    const isExpired = now > invitation.expiresAt;
-    const isUsed = !!invitation.usedAt;
+    const expiresAt = new Date(invitation.expiresAt);
+    const isExpired = now > expiresAt;
+    const isUsed = invitation.status === "ACCEPTED";
 
     return {
       success: true,
       invitation: {
         uuid: invitation.uuid,
         token: invitation.token,
-        expiresAt: invitation.expiresAt,
-        createdAt: invitation.createdAt,
+        expiresAt,
+        createdAt: new Date(invitation.createdAt),
         isExpired,
         isUsed,
         inviteUrl,
@@ -88,6 +92,12 @@ export async function createInvitationLink(): Promise<{
     };
   } catch (error) {
     console.error("Failed to create invitation:", error);
+    if (error instanceof ApiError) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
     return {
       success: false,
       message: "초대 링크 생성에 실패했습니다",
@@ -101,36 +111,43 @@ export async function createInvitationLink(): Promise<{
 export async function getActiveInvitations(): Promise<InvitationInfo[]> {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    if (!session?.user?.id || !session?.user?.accessToken) {
       return [];
     }
 
-    const familyService = container.getFamilyService();
-    const invitationService = container.getInvitationService();
+    // 사용자의 첫 번째 가족 정보 가져오기
+    const families = await apiGet<FamilyResponse[]>(
+      "/families",
+      { token: session.user.accessToken }
+    );
 
-    // 가족 정보 가져오기
-    const family = await familyService.getFamilyByUserId(session.user.id);
-    if (!family) {
+    if (!families || families.length === 0) {
       return [];
     }
 
-    // 활성 초대 목록
-    const invitations = await invitationService.getActiveInvitations(
-      family.uuid
+    const family = families[0];
+
+    // 활성 초대 목록 조회
+    const invitations = await apiGet<InvitationResponse[]>(
+      `/invitations/families/${family.uuid}`,
+      { token: session.user.accessToken }
     );
 
     const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
     const now = new Date();
 
-    return invitations.map((inv) => ({
-      uuid: inv.uuid,
-      token: inv.token,
-      expiresAt: inv.expiresAt,
-      createdAt: inv.createdAt,
-      isExpired: now > inv.expiresAt,
-      isUsed: !!inv.usedAt,
-      inviteUrl: `${baseUrl}/invite/${inv.token}`,
-    }));
+    return invitations.map((inv) => {
+      const expiresAt = new Date(inv.expiresAt);
+      return {
+        uuid: inv.uuid,
+        token: inv.token,
+        expiresAt,
+        createdAt: new Date(inv.createdAt),
+        isExpired: now > expiresAt || inv.status === "EXPIRED",
+        isUsed: inv.status === "ACCEPTED",
+        inviteUrl: `${baseUrl}/invite/${inv.token}`,
+      };
+    });
   } catch (error) {
     console.error("Failed to get invitations:", error);
     return [];
@@ -138,7 +155,7 @@ export async function getActiveInvitations(): Promise<InvitationInfo[]> {
 }
 
 /**
- * 초대 링크 삭제
+ * 초대 링크 삭제 (취소)
  */
 export async function deleteInvitation(
   invitationUuid: string
@@ -148,27 +165,18 @@ export async function deleteInvitation(
 }> {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    if (!session?.user?.id || !session?.user?.accessToken) {
       return {
         success: false,
         message: "로그인이 필요합니다",
       };
     }
 
-    const userService = container.getUserRepository();
-    const invitationService = container.getInvitationService();
-
-    // 사용자 UUID 가져오기
-    const user = await userService.findByAuthId(session.user.id);
-    if (!user) {
-      return {
-        success: false,
-        message: "사용자 정보를 찾을 수 없습니다",
-      };
-    }
-
-    // 초대 삭제
-    await invitationService.deleteInvitation(invitationUuid, user.uuid);
+    // 초대 취소 (DELETE)
+    await apiDelete(
+      `/invitations/${invitationUuid}`,
+      { token: session.user.accessToken }
+    );
 
     revalidatePath("/");
 
@@ -178,11 +186,15 @@ export async function deleteInvitation(
     };
   } catch (error) {
     console.error("Failed to delete invitation:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "초대 링크 삭제에 실패했습니다";
+    if (error instanceof ApiError) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
     return {
       success: false,
-      message: errorMessage,
+      message: "초대 링크 삭제에 실패했습니다",
     };
   }
 }
@@ -199,28 +211,38 @@ export async function acceptInvitation(
 }> {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    if (!session?.user?.id || !session?.user?.accessToken) {
       return {
         success: false,
         message: "로그인이 필요합니다",
       };
     }
 
-    const invitationService = container.getInvitationService();
-
     // 초대 수락
-    const result = await invitationService.acceptInvitation(
-      token,
-      session.user.id
+    const requestBody: AcceptInvitationRequest = {
+      token
+    };
+
+    await apiPost(
+      `/invitations/accept`,
+      requestBody,
+      { token: session.user.accessToken }
     );
 
-    if (result.success) {
-      revalidatePath("/");
-    }
+    revalidatePath("/");
 
-    return result;
+    return {
+      success: true,
+      message: "초대를 수락했습니다",
+    };
   } catch (error) {
     console.error("Failed to accept invitation:", error);
+    if (error instanceof ApiError) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
     return {
       success: false,
       message: "초대 수락에 실패했습니다",
@@ -239,41 +261,40 @@ export async function getInvitationInfo(token: string): Promise<{
   message?: string;
 }> {
   try {
-    const invitationService = container.getInvitationService();
-    const familyService = container.getFamilyService();
+    // 초대 정보 조회 (인증 불필요)
+    const invitation = await apiGet<InvitationResponse>(
+      `/invitations/token/${token}`,
+      { requireAuth: false }
+    );
 
-    // 초대 유효성 검증
-    const validation = await invitationService.validateInvitation(token);
-
-    if (!validation.valid || !validation.invitation) {
+    if (!invitation || invitation.status === "EXPIRED" || invitation.status === "CANCELLED") {
       return {
         valid: false,
-        message: validation.reason,
+        message: invitation.status === "EXPIRED" ? "만료된 초대장입니다" : "취소된 초대장입니다",
       };
     }
 
-    // 가족 정보 조회 (UUID로)
-    const family = await familyService.getFamilyByUuid(
-      validation.invitation.familyUuid
-    );
-
-    if (!family) {
+    if (invitation.status === "ACCEPTED") {
       return {
         valid: false,
-        message: "가족 정보를 찾을 수 없습니다",
+        message: "이미 사용된 초대장입니다",
       };
     }
 
-    // 초대자 정보 찾기
-    const inviter = family.members.find(
-      (m) => m.user.id === validation.invitation?.createdByUuid
-    );
+    const expiresAt = new Date(invitation.expiresAt);
+    const now = new Date();
+    if (now > expiresAt) {
+      return {
+        valid: false,
+        message: "만료된 초대장입니다",
+      };
+    }
 
     return {
       valid: true,
-      familyName: family.name,
-      inviterName: inviter?.user.name || "알 수 없음",
-      expiresAt: validation.invitation.expiresAt,
+      familyName: invitation.familyName || "가족",
+      inviterName: invitation.inviterName || "알 수 없음",
+      expiresAt,
     };
   } catch (error) {
     console.error("Failed to get invitation info:", error);

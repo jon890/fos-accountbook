@@ -16,10 +16,6 @@
     "test:integration": "jest --testPathPatterns=integration",
     "test:unit": "jest --testPathPatterns=auth|api|components",
     "db:generate": "dotenv -e .env.local -- npx prisma generate",
-    "db:migrate": "dotenv -e .env.local -- npx prisma migrate dev --skip-seed",
-    "db:migrate:create": "dotenv -e .env.local -- npx prisma migrate dev --create-only",
-    "db:migrate:deploy": "dotenv -e .env.local -- npx prisma migrate deploy",
-    "db:push": "dotenv -e .env.local -- npx prisma db push",
     "db:validate": "dotenv -e .env.local -- npx prisma validate"
   },
   "dependencies": {
@@ -41,7 +37,7 @@
     "date-fns": "^4.1.0",
     "lucide-react": "^0.544.0",
     "next": "15.5.4",
-    "next-auth": "^4.24.11",
+    "next-auth": "5.0.0-beta.25",
     "next-themes": "^0.4.6",
     "postgres": "^3.4.7",
     "prisma": "^6.16.2",

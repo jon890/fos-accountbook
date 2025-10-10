@@ -5,11 +5,11 @@ import { ExpensePageClient } from '@/components/expenses/ExpensePageClient'
 import { BottomNavigation } from '@/components/layout/BottomNavigation'
 import { Header } from '@/components/layout/Header'
 import { Card, CardContent } from '@/components/ui/card'
-import { familyService } from '@/container'
-import { authOptions } from '@/lib/auth'
-import { getServerSession } from 'next-auth'
+import { auth } from '@/lib/auth'
+import { apiGet } from '@/lib/api-client'
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
+import type { FamilyResponse } from '@/types/api'
 
 interface SearchParams {
   categoryId?: string
@@ -43,24 +43,30 @@ async function ExpenseListWrapper({
 }
 
 export default async function ExpensesPage({ searchParams }: ExpensesPageProps) {
-  const session = await getServerSession(authOptions)
+  const session = await auth()
   const resolvedSearchParams = await searchParams
   
-  if (!session?.user?.id) {
+  if (!session?.user?.id || !session?.user?.accessToken) {
     redirect('/api/auth/signin')
   }
 
-  let family
+  // 백엔드 API에서 가족 정보 조회
+  let families: FamilyResponse[]
   try {
-    family = await familyService.getFamilyByUserId(session.user.id)
+    families = await apiGet<FamilyResponse[]>(
+      "/families",
+      { token: session.user.accessToken }
+    )
   } catch (error) {
-    // 가족이 없는 경우 생성 페이지로 리다이렉트
+    console.error("Failed to fetch families:", error)
     redirect('/families/create')
   }
 
-  if (!family) {
+  if (!families || families.length === 0) {
     redirect('/families/create')
   }
+
+  const family = families[0] // 첫 번째 가족 사용
 
   return (
     <div 
@@ -77,12 +83,12 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">지출 관리</h1>
           
-          <ExpensePageClient categories={family.categories} />
+          <ExpensePageClient categories={family.categories || []} />
         </div>
 
         {/* 필터 섹션 */}
         <div className="mb-6">
-          <ExpenseFilters categories={family.categories} />
+          <ExpenseFilters categories={family.categories || []} />
         </div>
 
         {/* 지출 목록 */}

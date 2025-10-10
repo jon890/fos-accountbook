@@ -3,14 +3,12 @@
  * /invite/[token] 경로로 접속
  */
 
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import {
-  getInvitationInfo,
-  acceptInvitation,
+  getInvitationInfo
 } from "@/app/actions/invitation-actions";
 import { InvitePageClient } from "@/components/invite/InvitePageClient";
-import { LoginPage } from "@/components/auth/LoginPage";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 interface InvitePageProps {
   params: {
@@ -24,9 +22,9 @@ export default async function InvitePage({ params }: InvitePageProps) {
   // 세션 확인
   const session = await auth();
 
-  // 로그인되지 않은 경우 로그인 페이지 표시
+  // 로그인되지 않은 경우 로그인 페이지로 리다이렉트 (초대 링크 유지)
   if (!session?.user) {
-    return <LoginPage message="초대를 수락하려면 먼저 로그인해주세요" />;
+    redirect(`/auth/signin?callbackUrl=${encodeURIComponent(`/invite/${token}`)}`);
   }
 
   // 초대 정보 조회

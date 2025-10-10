@@ -1,108 +1,107 @@
-# 우리집 가계부 📱💰
+# 우리집 가계부 - 프론트엔드 📱💰
 
-가족과 함께 관리하는 스마트 가계부 앱입니다.
+가족과 함께 관리하는 스마트 가계부 앱 (Next.js 15 + TypeScript)
+
+## 🏗️ 아키텍처
+
+이 프로젝트는 **프론트엔드와 백엔드가 완전히 분리**되어 있습니다:
+
+```
+프론트엔드 (Next.js 15)        백엔드 (Spring Boot)
+├── NextAuth 인증 전용    ←→   ├── 모든 비즈니스 로직
+├── UI/UX 담당                 ├── RESTful API
+└── 백엔드 API 호출            └── MySQL 데이터베이스
+```
+
+**프론트엔드 역할:**
+- ✅ NextAuth.js를 통한 Google OAuth 인증
+- ✅ 사용자 인터페이스 (UI/UX)
+- ✅ 백엔드 API 호출
+- ✅ Prisma는 인증 테이블만 사용
+
+**백엔드 역할:**
+- ✅ 모든 비즈니스 로직 처리
+- ✅ Family, Category, Expense, Invitation 관리
+- ✅ JWT 기반 인증
+- ✅ MySQL 데이터베이스 관리
 
 ## 🚀 기술 스택
 
-- **Framework**: Next.js 15 + TypeScript
+- **Framework**: Next.js 15 + React 19 + TypeScript
 - **Styling**: Tailwind CSS v3 + shadcn/ui
-- **Database**: Supabase (PostgreSQL) + Prisma ORM
 - **Auth**: NextAuth.js (Google OAuth)
+- **Database**: MySQL (인증 테이블만)
+- **ORM**: Prisma (NextAuth 전용)
+- **API Client**: Custom fetch-based client
 - **Package Manager**: pnpm
 
-## 📋 설정 가이드
+## 📋 빠른 시작
 
 ### 1. 프로젝트 클론 및 의존성 설치
 
 ```bash
 git clone <repository-url>
-cd family-budget
+cd fos-accountbook
 pnpm install
 ```
 
-### 2. Supabase 프로젝트 생성
+### 2. 백엔드 설정 (필수!)
 
-1. [supabase.com](https://supabase.com)에서 새 프로젝트 생성
-2. 데이터베이스 비밀번호 설정
-3. 프로젝트 설정 > API에서 다음 정보 확인:
-   - Project URL
-   - anon public key
-   - service_role key
+먼저 백엔드 프로젝트를 설정하고 실행해야 합니다:
 
-### 3. Google OAuth 설정
+```bash
+cd ../fos-accountbook-backend
+
+# MySQL 시작
+docker compose up -d
+
+# IntelliJ에서 Application.java 실행 (Active profiles: local)
+```
+
+백엔드가 실행되면:
+- API: http://localhost:8080/api/v1
+- Swagger UI: http://localhost:8080/api/v1/swagger-ui.html
+
+### 3. 환경 변수 설정
+
+`.env.local` 파일을 생성하고 다음 내용을 입력:
+
+```bash
+# 데이터베이스 (MySQL - 백엔드와 동일한 DB 사용)
+DATABASE_URL="mysql://accountbook_user:accountbook_password@localhost:3306/accountbook"
+
+# NextAuth
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-nextauth-secret-change-in-production"
+
+# Google OAuth
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+
+# 백엔드 API
+NEXT_PUBLIC_API_BASE_URL="http://localhost:8080/api/v1"
+BACKEND_API_URL="http://localhost:8080/api/v1"
+```
+
+### 4. Google OAuth 설정
 
 1. [Google Cloud Console](https://console.cloud.google.com)에서 프로젝트 생성
 2. APIs & Services > Credentials > Create Credentials > OAuth 2.0 Client IDs
-3. Application type: Web application
-4. Authorized redirect URIs 추가:
+3. Authorized redirect URIs 추가:
    - `http://localhost:3000/api/auth/callback/google`
    - `https://your-domain.vercel.app/api/auth/callback/google` (배포 시)
 
-### 4. 환경 변수 설정
-
-`.env.local` 파일을 생성하고 다음 값들을 설정하세요:
-
-```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-
-# Database URLs (중요: 용도별로 다른 URL 사용)
-# Connection Pool URL - 애플리케이션 런타임에서 사용 (port 6543)
-# prepared statement 충돌 방지를 위한 파라미터 추가
-DATABASE_URL=postgresql://postgres:your_password@db.your-project.supabase.co:6543/postgres?pgbouncer=true&connection_limit=1
-
-# Direct Connection URL - 마이그레이션/스키마 변경 시에만 사용 (port 5432)
-DIRECT_URL=postgresql://postgres:your_password@db.your-project.supabase.co:5432/postgres
-
-
-# NextAuth
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your_random_secret_key
-
-# Google OAuth
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-```
-
-### 5. 데이터베이스 스키마 적용
+### 5. Prisma 설정
 
 ```bash
-# .env.local 파일이 있는지 확인 후 실행 (마이그레이션 사용)
-pnpm db:migrate
+# Prisma Client 생성
+pnpm db:generate
+
+# 스키마 검증
+pnpm db:validate
 ```
 
-> **중요**: 
-> - 개발 시 **마이그레이션**을 사용하여 스키마를 관리합니다
-> - Supabase Shadow Database 문제 해결을 위해 `--skip-seed` 옵션 사용
-> - Prisma는 자동으로 용도에 맞는 URL을 사용합니다:
->   - **애플리케이션 런타임**: `DATABASE_URL` (Connection Pool)
->   - **마이그레이션/스키마 작업**: `DIRECT_URL` (Direct Connection)
-> - Vercel 배포 시 자동으로 `prisma generate`가 실행됩니다
-
-### 🔧 Supabase 데이터베이스 문제 해결
-
-#### 1. Shadow Database 문제
-```bash
-# 문제: database "prisma_migrate_shadow_db_xxx" does not exist
-# 해결: --skip-seed 옵션으로 Shadow Database 검증 건너뛰기
-pnpm db:migrate  # 이미 --skip-seed 옵션이 포함되어 있음
-```
-
-#### 2. Prepared Statement 충돌 문제 (중요!)
-```bash
-# 문제: prepared statement "s0" already exists
-# 원인: 여러 Prisma 프로세스가 동시에 같은 DB에 연결
-# 해결: Prisma 클라이언트에서 prepared statement 비활성화
-```
-
-**근본원인**: 
-- Next.js 개발 서버와 Prisma CLI가 동시 실행
-- 동일한 PostgreSQL 세션에서 같은 이름의 prepared statement 생성 시도
-- Supabase connection pooling과의 충돌
-
-**해결방법**: `src/lib/prisma.ts`에서 `prepared_statements=false` 설정 적용
+**참고:** 백엔드 Spring Boot의 JPA가 모든 테이블을 자동으로 생성합니다.
 
 ### 6. 개발 서버 실행
 
@@ -110,52 +109,42 @@ pnpm db:migrate  # 이미 --skip-seed 옵션이 포함되어 있음
 pnpm dev
 ```
 
-브라우저에서 `http://localhost:3000`을 열어 확인하세요.
+브라우저에서 http://localhost:3000 접속
 
 ## 🗄️ 데이터베이스 스키마
 
-### 주요 테이블
+프론트엔드는 **NextAuth 인증 테이블만** 관리합니다:
 
-- **families**: 가족 정보
-- **family_members**: 가족 구성원
-- **categories**: 지출 카테고리
-- **expenses**: 지출 내역
+### 인증 테이블 (Prisma)
+- ✅ `users` - 사용자 정보 (백엔드와 동기화)
+- ✅ `accounts` - OAuth 계정 정보
+- ✅ `sessions` - 세션 정보
+- ✅ `verification_tokens` - 이메일 인증 토큰
 
-### 특징
-
-- **이중 식별자**: bigint autoincrement PK + UUID
-- **snake_case 컨벤션**: 모든 테이블명과 컬럼명
-- **UUID 기반 조인**: 테이블 간 관계는 UUID로 연결
-- **Soft Delete**: `deleted_at` 컬럼을 통한 논리 삭제
-- **관계 설정**: 완전한 외래키 관계
-- **인덱스 최적화**: 성능을 위한 적절한 인덱스
-
-### 스키마 예시
-```sql
--- 가족 구성원 테이블
-CREATE TABLE family_members (
-  id          BIGSERIAL PRIMARY KEY,
-  uuid        UUID UNIQUE DEFAULT gen_random_uuid(),
-  family_uuid UUID NOT NULL,
-  user_id     TEXT NOT NULL,
-  role        VARCHAR(20) DEFAULT 'member',
-  joined_at   TIMESTAMPTZ DEFAULT NOW(),
-  deleted_at  TIMESTAMPTZ,
-  
-  FOREIGN KEY (family_uuid) REFERENCES families(uuid),
-  FOREIGN KEY (user_id) REFERENCES users(id),
-  UNIQUE (family_uuid, user_id)
-);
-```
+### 비즈니스 테이블 (백엔드 전용)
+- ❌ `families`, `family_members` - 백엔드 API로 접근
+- ❌ `categories` - 백엔드 API로 접근
+- ❌ `expenses` - 백엔드 API로 접근
+- ❌ `invitations` - 백엔드 API로 접근
 
 ## 📱 주요 기능
 
-- ✅ Google OAuth 로그인
+- ✅ Google OAuth 로그인 (NextAuth)
 - ✅ 모바일 최적화 UI
-- ✅ 가족 구성원 관리
-- ✅ 지출 카테고리 관리
-- ✅ 지출 내역 추가/수정/삭제
-- ✅ 실시간 통계 대시보드
+- ✅ 백엔드 API를 통한 모든 비즈니스 로직
+- ✅ JWT 토큰 자동 관리
+- ✅ 실시간 데이터 동기화
+
+## 🔐 인증 흐름
+
+```
+1. 사용자가 Google OAuth로 로그인
+2. NextAuth가 User 정보를 MySQL에 저장
+3. 백엔드 /auth/register API 호출
+4. 백엔드에서 JWT 토큰 발급
+5. NextAuth Session에 JWT 토큰 저장
+6. 모든 API 요청에 JWT 토큰 자동 주입
+```
 
 ## 🛠️ 개발 명령어
 
@@ -172,29 +161,14 @@ pnpm start
 # 린팅
 pnpm lint
 
-# Prisma Client 생성 (.env.local 자동 로드)
-pnpm db:generate
+# 테스트
+pnpm test
 
-# 개발 환경 마이그레이션 (.env.local 자동 로드)
-pnpm db:migrate
+# Prisma (NextAuth 전용)
+pnpm db:generate      # Prisma Client 생성
+pnpm db:validate      # 스키마 검증
 
-# 프로덕션 마이그레이션 배포 (.env.local 자동 로드)
-pnpm db:migrate:deploy
-
-# 데이터베이스 스키마 푸시 (.env.local 자동 로드)
-pnpm db:push
-
-# Prisma Studio 실행 (.env.local 자동 로드)
-pnpm db:studio
-
-# 데이터베이스 시드 (.env.local 자동 로드)
-pnpm db:seed
-
-# 데이터베이스 리셋 (.env.local 자동 로드)
-pnpm db:reset
-
-# 스키마 검증 (.env.local 자동 로드)
-pnpm db:validate
+# 참고: 테이블 생성은 백엔드(Spring Boot JPA)에서 자동 처리
 ```
 
 ## 🚀 배포
@@ -202,58 +176,94 @@ pnpm db:validate
 ### Vercel 배포
 
 1. Vercel에 프로젝트 연결
-2. 환경 변수 설정 (위의 `.env.local` 내용)
-3. `NEXTAUTH_URL`을 배포된 도메인으로 변경
-4. Google OAuth 리디렉션 URI에 배포된 도메인 추가
+2. 환경 변수 설정:
+   ```
+   DATABASE_URL (프로덕션 MySQL)
+   NEXTAUTH_URL (배포 도메인)
+   NEXTAUTH_SECRET
+   GOOGLE_CLIENT_ID
+   GOOGLE_CLIENT_SECRET
+   NEXT_PUBLIC_API_BASE_URL (백엔드 프로덕션 URL)
+   BACKEND_API_URL (백엔드 프로덕션 URL)
+   ```
+3. Google OAuth 리디렉션 URI에 배포 도메인 추가
+4. 배포!
 
-> **배포 주의사항**:
-> - `postinstall` 스크립트가 자동으로 `prisma generate`를 실행합니다
-> - 환경 변수가 제대로 설정되어 있는지 확인하세요
-> - Supabase 연결 풀링 URL(`DATABASE_URL`)을 사용하세요
+## 🧪 테스트
 
-## 📊 데이터베이스 진화 히스토리
-
-### 주요 변경사항
-
-| 버전 | 변경 내용 | 설명 |
-|------|-----------|------|
-| v1.0 | Drizzle ORM → Prisma ORM | 더 나은 NextAuth 호환성과 타입 안전성을 위해 전환 |
-| v2.0 | BigInt ID → UUID 조인 | 테이블 간 관계를 UUID 기반으로 변경하여 확장성 개선 |
-| v3.0 | camelCase → snake_case | 모든 테이블명과 컬럼명을 snake_case로 통일 |
-
-### 스키마 관리 명령어
-
+### 전체 테스트 실행
 ```bash
-# 스키마 변경사항을 데이터베이스에 적용
-pnpm db:push
-
-# Prisma Studio에서 데이터베이스 확인
-pnpm db:studio
-
-# 개발용 마이그레이션 생성 및 적용
-pnpm db:migrate
-
-# 프로덕션용 마이그레이션 배포
-pnpm db:migrate:deploy
-
-# 스키마 검증
-pnpm db:validate
-
-# Prisma Client 재생성
-pnpm db:generate
-
-# 데이터베이스 리셋 (모든 데이터 삭제 후 스키마 재적용)
-pnpm db:reset
+pnpm test
 ```
 
-### 🔄 현재 스키마 특징
+### 특정 테스트만 실행
+```bash
+pnpm test:unit        # 단위 테스트
+pnpm test:integration # 통합 테스트
+pnpm test:watch       # Watch 모드
+```
 
-- **snake_case 컨벤션**: 모든 테이블과 컬럼명
-- **UUID 기반 조인**: `family_uuid`, `category_uuid` 등
-- **Soft Delete**: `deleted_at` 컬럼 활용
-- **관계명 명시**: Prisma relation 이름으로 관계 명확화
+## 🤝 프로젝트 구조
+
+```
+fos-accountbook/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── actions/           # Server Actions (백엔드 API 호출)
+│   │   ├── api/auth/          # NextAuth API Routes
+│   │   └── (pages)/           # 페이지 컴포넌트
+│   ├── components/            # React 컴포넌트
+│   │   ├── ui/               # shadcn/ui 컴포넌트
+│   │   ├── common/           # 공통 컴포넌트
+│   │   └── (features)/       # 기능별 컴포넌트
+│   ├── lib/
+│   │   ├── api-client.ts     # 백엔드 API 클라이언트
+│   │   ├── auth.ts           # NextAuth 설정
+│   │   └── prisma.ts         # Prisma Client
+│   └── types/
+│       ├── api.ts            # 백엔드 API 타입
+│       └── next-auth.d.ts    # NextAuth 타입 확장
+├── prisma/
+│   └── schema.prisma         # Prisma Schema (NextAuth 전용)
+└── public/                   # 정적 파일
+```
+
+## 🔗 관련 프로젝트
+
+**백엔드 레포지터리:** fos-accountbook-backend
+  - Spring Boot 3.5 + Java 21
+  - MySQL + JPA
+  - RESTful API + Swagger
+
+## 🎯 주요 특징
+
+### 1. 완전한 프론트-백 분리
+- 프론트엔드: UI + 인증만
+- 백엔드: 비즈니스 로직 전체
+
+### 2. 타입 안전성
+- TypeScript 엄격 모드
+- 백엔드 API 타입 정의
+- Prisma 타입 생성
+
+### 3. 개발자 경험
+- Hot Reload
+- TypeScript 지원
+- Tailwind CSS IntelliSense
+- Prisma Studio
+
+### 4. 성능
+- Next.js 15 최적화
+- Server Components 활용
+- 이미지 최적화
 
 ## 📄 라이센스
 
 MIT License
-MIT License
+
+---
+
+**개발:**
+- Frontend: Next.js 15 + Auth.js v5 + Prisma
+- Backend: Spring Boot 3.5 + JPA + MySQL
+- Full-Stack: TypeScript + Java 21

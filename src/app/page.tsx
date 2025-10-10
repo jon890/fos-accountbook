@@ -6,7 +6,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from "@/lib/auth"
 import { getDashboardStats, checkUserFamily, getRecentExpenses } from "./actions/dashboard-actions"
-import { LoginPage } from "@/components/auth/LoginPage"
 import { WelcomeSection } from "@/components/dashboard/WelcomeSection"
 import { StatsCards } from "@/components/dashboard/StatsCards"
 import { DashboardClient } from "@/components/dashboard/DashboardClient"
@@ -15,9 +14,9 @@ export default async function HomePage() {
   // 서버에서 세션 확인
   const session = await auth()
 
-  // 로그인되지 않은 경우
+  // 로그인되지 않은 경우 로그인 페이지로 리다이렉트
   if (!session?.user) {
-    return <LoginPage />
+    redirect('/auth/signin')
   }
 
   // 가족 정보 확인

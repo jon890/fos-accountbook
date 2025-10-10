@@ -1,12 +1,13 @@
 /**
  * Dashboard Server Actions
- * Next.js 15 Server Actions를 사용한 대시보드 데이터 로직
+ * 백엔드 API를 호출하여 대시보드 데이터 조회
  */
 
 'use server'
 
-import { container } from "@/container"
 import { auth } from "@/lib/auth"
+import { apiGet } from "@/lib/api-client"
+import type { FamilyResponse, ExpenseResponse, CategoryResponse, PageResponse } from "@/types/api"
 
 export interface DashboardStats {
   monthlyExpense: number
@@ -24,34 +25,44 @@ export async function getDashboardStats(): Promise<DashboardStats | null> {
   try {
     const session = await auth()
     
-    if (!session?.user?.id) {
+    if (!session?.user?.id || !session?.user?.accessToken) {
       return null
     }
 
-    const familyService = container.getFamilyService()
-    const expenseService = container.getExpenseService()
-
-    // 사용자의 가족 정보 조회
-    const family = await familyService.getFamilyByUserId(session.user.id)
+    // 사용자의 첫 번째 가족 정보 조회
+    const families = await apiGet<FamilyResponse[]>(
+      "/families",
+      { token: session.user.accessToken }
+    )
     
-    if (!family) {
+    if (!families || families.length === 0) {
       return null
     }
+
+    const family = families[0]
 
     // 현재 연도와 월 계산
     const now = new Date()
     const year = now.getFullYear()
     const month = now.getMonth() + 1
 
-    // 이번 달 총 지출 조회
-    const monthlyExpense = await expenseService.getMonthlyTotal(
-      family.uuid,
-      year,
-      month
+    // 이번 달 지출 목록 조회 (간단하게 전체 조회 후 필터링)
+    const expenses = await apiGet<PageResponse<ExpenseResponse>>(
+      `/families/${family.uuid}/expenses?page=0&size=1000`,
+      { token: session.user.accessToken }
     )
 
+    // 이번 달 지출만 필터링하고 합계 계산
+    const monthlyExpense = expenses.content
+      .filter(expense => {
+        const expenseDate = new Date(expense.date)
+        return expenseDate.getFullYear() === year && 
+               expenseDate.getMonth() + 1 === month
+      })
+      .reduce((sum, expense) => sum + parseFloat(expense.amount), 0)
+
     // 가족 구성원 수
-    const familyMembers = family.members.length
+    const familyMembers = family.members?.length || 0
 
     // 예산 정보 (추후 예산 기능 구현 시 실제 데이터로 대체)
     const budget = 0
@@ -81,16 +92,18 @@ export async function checkUserFamily(): Promise<{
   try {
     const session = await auth()
     
-    if (!session?.user?.id) {
+    if (!session?.user?.id || !session?.user?.accessToken) {
       return { hasFamily: false }
     }
 
-    const familyService = container.getFamilyService()
-    const family = await familyService.getFamilyByUserId(session.user.id)
+    const families = await apiGet<FamilyResponse[]>(
+      "/families",
+      { token: session.user.accessToken }
+    )
     
     return {
-      hasFamily: !!family,
-      familyId: family?.uuid
+      hasFamily: families && families.length > 0,
+      familyId: families && families.length > 0 ? families[0].uuid : undefined
     }
   } catch (error) {
     console.error('Failed to check family:', error)
@@ -119,39 +132,53 @@ export async function getRecentExpenses(limit: number = 10): Promise<RecentExpen
   try {
     const session = await auth()
     
-    if (!session?.user?.id) {
+    if (!session?.user?.id || !session?.user?.accessToken) {
       return []
     }
 
-    const familyService = container.getFamilyService()
-    const expenseService = container.getExpenseService()
-
-    // 사용자의 가족 정보 조회
-    const family = await familyService.getFamilyByUserId(session.user.id)
+    // 사용자의 첫 번째 가족 정보 조회
+    const families = await apiGet<FamilyResponse[]>(
+      "/families",
+      { token: session.user.accessToken }
+    )
     
-    if (!family) {
+    if (!families || families.length === 0) {
       return []
     }
 
-    // 최근 지출 조회
-    const result = await expenseService.getExpensesByFamily(family.uuid, {
-      page: 1,
-      limit,
-    })
+    const family = families[0]
 
-    return result.data.map(expense => ({
-      id: expense.id,
-      uuid: expense.uuid,
-      amount: expense.amount,
-      description: expense.description,
-      date: expense.date,
-      category: {
-        id: expense.category.id,
-        name: expense.category.name,
-        color: expense.category.color,
-        icon: expense.category.icon,
+    // 최근 지출 조회 (페이징)
+    const expensesPage = await apiGet<PageResponse<ExpenseResponse>>(
+      `/families/${family.uuid}/expenses?page=0&size=${limit}&sort=-date`,
+      { token: session.user.accessToken }
+    )
+
+    // 카테고리 정보 조회
+    const categories = await apiGet<CategoryResponse[]>(
+      `/families/${family.uuid}/categories`,
+      { token: session.user.accessToken }
+    )
+
+    // 카테고리 맵 생성
+    const categoryMap = new Map(categories.map(cat => [cat.uuid, cat]))
+
+    return expensesPage.content.map(expense => {
+      const category = categoryMap.get(expense.categoryUuid)
+      return {
+        id: expense.id.toString(),
+        uuid: expense.uuid,
+        amount: expense.amount,
+        description: expense.description || null,
+        date: new Date(expense.date),
+        category: {
+          id: expense.categoryUuid,
+          name: category?.name || 'Unknown',
+          color: category?.color || '#6366f1',
+          icon: category?.icon || '💰',
+        }
       }
-    }))
+    })
   } catch (error) {
     console.error('Failed to load recent expenses:', error)
     return []
@@ -161,36 +188,33 @@ export async function getRecentExpenses(limit: number = 10): Promise<RecentExpen
 /**
  * 가족의 카테고리 목록 조회
  */
-export interface CategoryInfo {
-  id: string
-  name: string
-  color: string
-  icon: string
-}
-
-export async function getFamilyCategories(): Promise<CategoryInfo[]> {
+export async function getFamilyCategories(): Promise<CategoryResponse[]> {
   try {
     const session = await auth()
     
-    if (!session?.user?.id) {
+    if (!session?.user?.id || !session?.user?.accessToken) {
       return []
     }
 
-    const familyService = container.getFamilyService()
-
-    // 사용자의 가족 정보 조회
-    const family = await familyService.getFamilyByUserId(session.user.id)
+    // 사용자의 첫 번째 가족 정보 조회
+    const families = await apiGet<FamilyResponse[]>(
+      "/families",
+      { token: session.user.accessToken }
+    )
     
-    if (!family) {
+    if (!families || families.length === 0) {
       return []
     }
 
-    return family.categories.map(category => ({
-      id: category.id,
-      name: category.name,
-      color: category.color,
-      icon: category.icon,
-    }))
+    const family = families[0]
+
+    // 카테고리 목록 조회
+    const categories = await apiGet<CategoryResponse[]>(
+      `/families/${family.uuid}/categories`,
+      { token: session.user.accessToken }
+    )
+
+    return categories
   } catch (error) {
     console.error('Failed to load categories:', error)
     return []

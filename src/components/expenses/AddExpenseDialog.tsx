@@ -20,7 +20,8 @@ import {
   createExpenseAction,
   type CreateExpenseFormState,
 } from "@/app/actions/expense-actions";
-import { getFamilyCategories, type CategoryInfo } from "@/app/actions/dashboard-actions";
+import { getFamilyCategories } from "@/app/actions/dashboard-actions";
+import type { CategoryResponse } from "@/types/api";
 import { toast } from "sonner";
 
 interface AddExpenseDialogProps {
@@ -35,7 +36,7 @@ const initialState: CreateExpenseFormState = {
 };
 
 export function AddExpenseDialog({ open, onOpenChange }: AddExpenseDialogProps) {
-  const [categories, setCategories] = useState<CategoryInfo[]>([]);
+  const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [state, formAction] = useActionState(createExpenseAction, initialState);
 
@@ -118,7 +119,7 @@ export function AddExpenseDialog({ open, onOpenChange }: AddExpenseDialogProps) 
               >
                 <option value="">카테고리를 선택하세요</option>
                 {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
+                  <option key={category.uuid} value={category.uuid}>
                     {category.icon} {category.name}
                   </option>
                 ))}

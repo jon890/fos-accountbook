@@ -1,15 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { expenseService } from "@/container";
-import { ExpenseWithCategory } from "@/repositories/interfaces/expense.repository";
+import { auth } from "@/lib/auth";
+import { apiGet } from "@/lib/api-client";
+import type { ExpenseResponse, PageResponse } from "@/types/api";
 import { ExpensePagination } from "./ExpensePagination";
-
-interface Category {
-  id: string;
-  name: string;
-  color: string;
-  icon: string;
-}
 
 interface ExpenseListProps {
   familyId: string;
@@ -19,22 +13,23 @@ interface ExpenseListProps {
   page?: number;
 }
 
-const formatDate = (date: Date) => {
+const formatDate = (date: Date | string) => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
   // Date 객체가 유효한지 확인
-  if (!(date instanceof Date) || isNaN(date.getTime())) {
+  if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
     return "유효하지 않은 날짜";
   }
 
-  return date.toLocaleDateString("ko-KR", {
+  return dateObj.toLocaleDateString("ko-KR", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 };
 
-const formatAmount = (amount: string) => {
-  // Prisma Decimal 타입은 Repository에서 문자열로 변환됨
-  const numAmount = parseFloat(amount);
+const formatAmount = (amount: string | number) => {
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
   if (isNaN(numAmount)) {
     return "0원";
   }
@@ -48,76 +43,130 @@ export async function ExpenseList({
   endDate,
   page = 1,
 }: ExpenseListProps) {
-  const filters = {
-    ...(categoryId && { categoryId }),
-    ...(startDate && { startDate: new Date(startDate) }),
-    ...(endDate && { endDate: new Date(endDate) }),
-  };
+  const session = await auth();
 
-  const result = await expenseService.getExpensesByFamily(familyId, {
-    page,
-    limit: 10,
-    filters,
-  });
+  if (!session?.user?.accessToken) {
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <p className="text-center text-gray-500">로그인이 필요합니다.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
-  const { data: expenses, pagination } = result;
+  // 백엔드 API로 지출 목록 조회
+  const limit = 10;
+  let queryParams = `page=${page - 1}&size=${limit}`; // 백엔드는 0-based index
+  
+  if (categoryId) {
+    queryParams += `&categoryId=${categoryId}`;
+  }
+  if (startDate) {
+    queryParams += `&startDate=${startDate}`;
+  }
+  if (endDate) {
+    queryParams += `&endDate=${endDate}`;
+  }
+
+  let expensePage: PageResponse<ExpenseResponse>;
+  try {
+    expensePage = await apiGet<PageResponse<ExpenseResponse>>(
+      `/families/${familyId}/expenses?${queryParams}`,
+      { token: session.user.accessToken }
+    );
+  } catch (error) {
+    console.error("Failed to fetch expenses:", error);
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <p className="text-center text-gray-500">
+            지출 내역을 불러오는데 실패했습니다.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const { content: expenses, totalPages, totalElements, number: currentPage } = expensePage;
+
+  if (expenses.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <p className="text-center text-gray-500">
+            아직 지출 내역이 없습니다. 첫 번째 지출을 추가해보세요!
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div className="space-y-3">
-      {expenses.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-center text-gray-500">
-            <p>등록된 지출이 없습니다.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          {expenses.map((expense: ExpenseWithCategory) => (
-            <Card
-              key={expense.id}
-              className="hover:shadow-md transition-shadow"
-            >
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start">
+    <div className="space-y-4">
+      <div className="space-y-3">
+        {expenses.map((expense) => (
+          <Card
+            key={expense.uuid}
+            className="hover:shadow-md transition-shadow duration-200"
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3 flex-1">
+                  {/* 카테고리 아이콘 */}
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
+                    style={{
+                      backgroundColor: `${expense.category.color}20`,
+                    }}
+                  >
+                    {expense.category.icon || "💰"}
+                  </div>
+
+                  {/* 지출 정보 */}
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-gray-900">
+                        {expense.description || "지출"}
+                      </h3>
                       <Badge
                         variant="secondary"
-                        className="text-white"
-                        style={{ backgroundColor: expense.category.color }}
+                        style={{
+                          backgroundColor: `${expense.category.color}20`,
+                          color: expense.category.color,
+                        }}
                       >
-                        <span className="mr-1">{expense.category.icon}</span>
                         {expense.category.name}
                       </Badge>
-                      <span className="text-sm text-gray-500">
-                        {formatDate(expense.date)}
-                      </span>
                     </div>
-
-                    {expense.description && (
-                      <p className="text-gray-700 mb-1">
-                        {expense.description}
-                      </p>
-                    )}
-
-                    <p className="text-xs text-gray-400">
-                      {formatDate(expense.createdAt)}에 추가됨
+                    <p className="text-sm text-gray-500 mt-1">
+                      {formatDate(expense.date)}
                     </p>
                   </div>
 
+                  {/* 금액 */}
                   <div className="text-right">
-                    <p className="text-lg font-semibold text-red-600">
-                      -{formatAmount(expense.amount)}
+                    <p className="text-lg font-bold text-gray-900">
+                      {formatAmount(expense.amount)}
                     </p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-          {/* 페이지네이션 */}
-          <ExpensePagination pagination={pagination} />
-        </>
+      {/* 페이지네이션 */}
+      {totalPages > 1 && (
+        <ExpensePagination
+          pagination={{
+            page: currentPage + 1, // 백엔드는 0-based, UI는 1-based
+            limit: limit,
+            total: totalElements,
+            totalPages: totalPages,
+          }}
+        />
       )}
     </div>
   );

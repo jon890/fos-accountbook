@@ -1,9 +1,9 @@
 /**
  * 인증 관련 유틸리티
+ * Auth.js v5 호환
  */
 
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 
 // 인증된 사용자 정보 타입
@@ -14,9 +14,9 @@ export interface AuthenticatedUser {
   image: string | null
 }
 
-// 인증된 사용자 정보 가져오기
+// 인증된 사용자 정보 가져오기 (Auth.js v5)
 export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> {
-  const session = await getServerSession(authOptions)
+  const session = await auth()
   
   if (!session?.user?.id) {
     return null

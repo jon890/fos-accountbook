@@ -1,22 +1,125 @@
-import { NextAuthOptions, getServerSession } from "next-auth"
-import GoogleProvider from "next-auth/providers/google"
+import NextAuth from "next-auth"
+import Google from "next-auth/providers/google"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "./prisma"
+import type { NextAuthConfig } from "next-auth"
 
-export const authOptions: NextAuthOptions = {
+const BACKEND_API_URL = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+
+/**
+ * 백엔드 API에서 JWT 토큰 획득
+ */
+async function getBackendJWT(user: { email?: string | null; name?: string | null; image?: string | null }) {
+  try {
+    const response = await fetch(`${BACKEND_API_URL}/auth/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: user.email,
+        name: user.name,
+        image: user.image,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to get backend JWT:", response.status, response.statusText);
+      return null;
+    }
+
+    const data = await response.json();
+    
+    // ApiSuccessResponse<AuthResponse> 형식에서 데이터 추출
+    return data.data || data;
+  } catch (error) {
+    console.error("Error getting backend JWT:", error);
+    return null;
+  }
+}
+
+/**
+ * JWT 토큰 갱신
+ */
+async function refreshAccessToken(refreshToken: string) {
+  try {
+    const response = await fetch(`${BACKEND_API_URL}/auth/refresh`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        refreshToken,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to refresh token:", response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    return data.data || data;
+  } catch (error) {
+    console.error("Error refreshing token:", error);
+    return null;
+  }
+}
+
+/**
+ * Auth.js v5 Configuration
+ */
+export const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(prisma),
   providers: [
-    GoogleProvider({
+    Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
   callbacks: {
+    async jwt({ token, user, account, trigger }) {
+      // 초기 로그인 시
+      if (user && account) {
+        // 백엔드에서 JWT 토큰 획득
+        const backendAuth = await getBackendJWT({
+          email: user.email,
+          name: user.name,
+          image: user.image,
+        });
+
+        if (backendAuth) {
+          token.accessToken = backendAuth.accessToken;
+          token.refreshToken = backendAuth.refreshToken;
+          token.accessTokenExpires = Date.now() + (backendAuth.expiresIn || 86400) * 1000; // expiresIn은 초 단위
+        }
+      }
+
+      // 토큰이 아직 유효한 경우
+      if (token.accessTokenExpires && Date.now() < (token.accessTokenExpires as number)) {
+        return token;
+      }
+
+      // 토큰 만료 시 갱신
+      if (token.refreshToken) {
+        const refreshedTokens = await refreshAccessToken(token.refreshToken as string);
+        
+        if (refreshedTokens) {
+          token.accessToken = refreshedTokens.accessToken;
+          token.refreshToken = refreshedTokens.refreshToken;
+          token.accessTokenExpires = Date.now() + (refreshedTokens.expiresIn || 86400) * 1000;
+        }
+      }
+
+      return token;
+    },
     async session({ session, token }) {
       if (session.user && token.sub) {
-        session.user.id = token.sub
+        session.user.id = token.sub;
+        session.user.accessToken = token.accessToken as string | undefined;
+        session.user.refreshToken = token.refreshToken as string | undefined;
       }
-      return session
+      return session;
     },
     async signIn({ user, account, profile }) {
       // OAuth 로그인 시 계정 연결 처리
@@ -49,12 +152,6 @@ export const authOptions: NextAuthOptions = {
       
       return true
     },
-    async redirect({ url, baseUrl }) {
-      // 로그인 후 리다이렉트 처리
-      if (url.startsWith('/')) return `${baseUrl}${url}`
-      if (new URL(url).origin === baseUrl) return url
-      return baseUrl
-    },
   },
   pages: {
     signIn: "/auth/signin",
@@ -66,8 +163,10 @@ export const authOptions: NextAuthOptions = {
 }
 
 /**
- * Server Component에서 사용할 수 있는 auth 헬퍼 함수
+ * Auth.js v5 exports
+ * - handlers: API 라우트 핸들러 (GET, POST)
+ * - auth: Server Component에서 세션 가져오기
+ * - signIn: 로그인 함수
+ * - signOut: 로그아웃 함수
  */
-export function auth() {
-  return getServerSession(authOptions)
-}
+export const { handlers, auth, signIn, signOut } = NextAuth(authConfig)

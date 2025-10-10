@@ -3,25 +3,23 @@ generator client {
 }
 
 datasource db {
-  provider          = "postgresql"
-  url               = env("DATABASE_URL")
-  directUrl         = env("DIRECT_URL")
-  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 // =====================================================
-// NextAuth.js 인증 관련 모델들
+// NextAuth.js 인증 전용 스키마
 // =====================================================
-// 주의: 아래 Account, Session, User, VerificationToken 모델들은
-// NextAuth.js 공식 스키마 형식을 정확히 따라야 합니다.
-// 필드명이나 타입을 임의로 변경하면 NextAuth와 호환성 문제가 발생합니다.
+// Auth.js Prisma Adapter는 필드명을 그대로 DB 컬럼명으로 사용합니다.
+// @map을 사용해도 어댑터가 무시하므로, camelCase 필드명을 유지합니다.
+//
 // 참조: https://authjs.dev/getting-started/adapters/prisma
 // =====================================================
 
 // NextAuth.js 호환 Account 모델
 model Account {
   id                String  @id @default(cuid())
-  userId            String  @map("user_id")
+  userId            String
   type              String
   provider          String
   providerAccountId String
@@ -41,15 +39,33 @@ model Account {
 // NextAuth.js 호환 Session 모델
 model Session {
   id           String   @id @default(cuid())
-  sessionToken String   @unique @map("session_token")
-  userId       String   @map("user_id")
+  sessionToken String   @unique
+  userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
 
-// NextAuth.js 공식 스키마 형식을 따라야 합니다.
+// NextAuth.js 호환 User 모델
+// 백엔드와 공유: uuid, createdAt, updatedAt, deletedAt는 백엔드 JPA가 관리
+model User {
+  id            String    @id @default(cuid())
+  uuid          String    @unique @default(uuid()) // 백엔드 동기화용
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now()) // 백엔드와 공유
+  updatedAt     DateTime  @updatedAt // 백엔드와 공유
+  deletedAt     DateTime? // 백엔드와 공유 (Soft Delete)
+  accounts      Account[]
+  sessions      Session[]
+
+  @@map("users")
+}
+
+// NextAuth.js VerificationToken 모델
 model VerificationToken {
   identifier String
   token      String   @unique
@@ -57,111 +73,4 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
-}
-
-// =====================================================
-// 가계부 애플리케이션 비즈니스 모델들
-// =====================================================
-// 아래 모델들은 가계부 앱의 비즈니스 로직을 위한 것으로,
-// snake_case 컨벤션과 UUID 기반 관계를 사용합니다.
-// =====================================================
-
-// NextAuth.js 호환 User 모델 + 비즈니스 확장
-model User {
-  id            String         @id @default(cuid()) // NextAuth 기본 ID
-  uuid          String         @unique @default(uuid()) @db.Uuid // 비즈니스 로직용 UUID
-  internalId    BigInt         @unique @default(autoincrement()) @map("internal_id") // 내부 순차 ID
-  name          String?
-  email         String         @unique
-  emailVerified DateTime?      @map("email_verified")
-  image         String?
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
-  deletedAt     DateTime?      @map("deleted_at")
-  accounts      Account[]
-  familyMembers FamilyMember[] @relation("UserFamilyMembers")
-  sessions      Session[]
-
-  @@map("users")
-}
-
-model Family {
-  id         BigInt         @id @default(autoincrement())
-  uuid       String         @unique @default(uuid()) @db.Uuid
-  name       String         @db.VarChar(100)
-  createdAt  DateTime       @default(now()) @map("created_at")
-  updatedAt  DateTime       @updatedAt @map("updated_at")
-  deletedAt  DateTime?      @map("deleted_at")
-  categories Category[]     @relation("FamilyCategories")
-  expenses   Expense[]      @relation("FamilyExpenses")
-  members    FamilyMember[] @relation("FamilyMembers")
-
-  @@map("families")
-}
-
-model FamilyMember {
-  id         BigInt    @id @default(autoincrement())
-  uuid       String    @unique @default(uuid()) @db.Uuid
-  familyUuid String    @map("family_uuid") @db.Uuid
-  userUuid   String    @map("user_uuid") @db.Uuid // User.uuid 참조
-  role       String    @default("member") @db.VarChar(20)
-  joinedAt   DateTime  @default(now()) @map("joined_at")
-  deletedAt  DateTime? @map("deleted_at")
-  family     Family    @relation("FamilyMembers", fields: [familyUuid], references: [uuid])
-  user       User      @relation("UserFamilyMembers", fields: [userUuid], references: [uuid])
-
-  @@unique([familyUuid, userUuid])
-  @@map("family_members")
-}
-
-model Category {
-  id         BigInt    @id @default(autoincrement())
-  uuid       String    @unique @default(uuid()) @db.Uuid
-  familyUuid String    @map("family_uuid") @db.Uuid
-  name       String    @db.VarChar(50)
-  color      String    @default("#6366f1") @db.VarChar(7)
-  icon       String?   @db.VarChar(50)
-  createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
-  deletedAt  DateTime? @map("deleted_at")
-  family     Family    @relation("FamilyCategories", fields: [familyUuid], references: [uuid])
-  expenses   Expense[] @relation("CategoryExpenses")
-
-  @@map("categories")
-}
-
-model Expense {
-  id           BigInt    @id @default(autoincrement())
-  uuid         String    @unique @default(uuid()) @db.Uuid
-  familyUuid   String    @map("family_uuid") @db.Uuid
-  categoryUuid String    @map("category_uuid") @db.Uuid
-  amount       Decimal   @db.Decimal(12, 2)
-  description  String?
-  date         DateTime  @default(now())
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  deletedAt    DateTime? @map("deleted_at")
-  category     Category  @relation("CategoryExpenses", fields: [categoryUuid], references: [uuid])
-  family       Family    @relation("FamilyExpenses", fields: [familyUuid], references: [uuid])
-
-  @@index([familyUuid, date])
-  @@index([categoryUuid])
-  @@map("expenses")
-}
-
-model Invitation {
-  id            BigInt    @id @default(autoincrement())
-  uuid          String    @unique @default(uuid()) @db.Uuid
-  familyUuid    String    @map("family_uuid") @db.Uuid
-  createdByUuid String    @map("created_by_uuid") @db.Uuid
-  token         String    @unique @db.VarChar(64)
-  expiresAt     DateTime  @map("expires_at")
-  usedAt        DateTime? @map("used_at")
-  usedByUuid    String?   @map("used_by_uuid") @db.Uuid
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-
-  @@index([token])
-  @@index([familyUuid])
-  @@map("invitations")
 }

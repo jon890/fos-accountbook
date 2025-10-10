@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from '@/lib/auth'
 import { z } from 'zod'
 
 // BigInt 직렬화를 위한 유틸리티
@@ -28,9 +27,9 @@ export function serializeBigInt(obj: unknown): unknown {
   return obj
 }
 
-// 인증된 사용자 정보 가져오기
+// 인증된 사용자 정보 가져오기 (Auth.js v5)
 export async function getAuthenticatedUser() {
-  const session = await getServerSession(authOptions)
+  const session = await auth()
   
   if (!session?.user?.id) {
     return null

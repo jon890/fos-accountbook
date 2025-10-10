@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
 import { z } from "zod";
-import { authOptions } from "@/lib/auth";
-import { expenseService, familyService } from "@/container";
+import { auth } from "@/lib/auth";
+import { apiPost, apiDelete, ApiError } from "@/lib/api-client";
+import type { CreateExpenseRequest, ExpenseResponse } from "@/types/api";
 
 // 지출 생성 스키마
 const createExpenseSchema = z.object({
@@ -32,14 +32,14 @@ export async function createExpenseAction(
 ): Promise<CreateExpenseFormState> {
   try {
     // 인증 확인
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const session = await auth();
+    if (!session?.user?.id || !session?.user?.accessToken) {
       redirect("/api/auth/signin");
     }
 
-    // 사용자의 가족 정보 가져오기
-    const family = await familyService.getFamilyByUserId(session.user.id);
-    if (!family) {
+    // familyUuid 가져오기 (폼 데이터 또는 첫 번째 가족 사용)
+    const familyUuid = formData.get("familyUuid")?.toString();
+    if (!familyUuid) {
       return {
         message: "가족 정보를 찾을 수 없습니다. 먼저 가족을 생성해주세요.",
         success: false,
@@ -67,28 +67,19 @@ export async function createExpenseAction(
 
     const { amount, description, categoryId, date } = validatedFields.data;
 
-    // 카테고리가 해당 가족에 속하는지 확인 (UUID 기반)
-    const categoryExists = family.categories.some(
-      (cat) => cat.id === categoryId
-    );
-    if (!categoryExists) {
-      return {
-        errors: {
-          categoryId: ["유효하지 않은 카테고리입니다."],
-        },
-        message: "유효하지 않은 카테고리입니다.",
-        success: false,
-      };
-    }
-
-    // 지출 생성
-    await expenseService.createExpense({
-      familyId: family.uuid,
-      categoryId,
+    // 백엔드 API 호출
+    const requestBody: CreateExpenseRequest = {
+      categoryUuid: categoryId,
       amount,
-      description: description || undefined,
-      date: date ? new Date(date) : undefined,
-    });
+      description,
+      date: date ? new Date(date).toISOString() : new Date().toISOString(),
+    };
+
+    await apiPost<ExpenseResponse>(
+      `/families/${familyUuid}/expenses`,
+      requestBody,
+      { token: session.user.accessToken }
+    );
 
     // 지출 페이지 및 대시보드 revalidate
     revalidatePath("/expenses");
@@ -100,6 +91,14 @@ export async function createExpenseAction(
     };
   } catch (error) {
     console.error("지출 추가 중 오류:", error);
+    
+    if (error instanceof ApiError) {
+      return {
+        message: error.message || "지출 추가 중 오류가 발생했습니다.",
+        success: false,
+      };
+    }
+
     return {
       message: "지출 추가 중 오류가 발생했습니다. 다시 시도해주세요.",
       success: false,
@@ -107,26 +106,25 @@ export async function createExpenseAction(
   }
 }
 
-export async function deleteExpenseAction(expenseId: string): Promise<{
+export async function deleteExpenseAction(
+  familyUuid: string,
+  expenseUuid: string
+): Promise<{
   success: boolean;
   message: string;
 }> {
   try {
     // 인증 확인
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const session = await auth();
+    if (!session?.user?.id || !session?.user?.accessToken) {
       redirect("/api/auth/signin");
     }
 
-    // 지출 삭제
-    const success = await expenseService.deleteExpense(expenseId);
-
-    if (!success) {
-      return {
-        success: false,
-        message: "지출 삭제에 실패했습니다.",
-      };
-    }
+    // 백엔드 API 호출
+    await apiDelete(
+      `/families/${familyUuid}/expenses/${expenseUuid}`,
+      { token: session.user.accessToken }
+    );
 
     // 지출 페이지 및 대시보드 revalidate
     revalidatePath("/expenses");
@@ -138,6 +136,14 @@ export async function deleteExpenseAction(expenseId: string): Promise<{
     };
   } catch (error) {
     console.error("지출 삭제 중 오류:", error);
+    
+    if (error instanceof ApiError) {
+      return {
+        success: false,
+        message: error.message || "지출 삭제에 실패했습니다.",
+      };
+    }
+
     return {
       success: false,
       message: "지출 삭제 중 오류가 발생했습니다.",

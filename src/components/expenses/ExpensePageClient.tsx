@@ -5,16 +5,10 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { AddExpenseForm } from '@/components/expenses/AddExpenseForm'
-
-interface Category {
-  id: string
-  name: string
-  color: string
-  icon: string
-}
+import type { CategoryResponse } from '@/types/api'
 
 interface ExpensePageClientProps {
-  categories: Category[]
+  categories: CategoryResponse[]
 }
 
 export function ExpensePageClient({ categories }: ExpensePageClientProps) {

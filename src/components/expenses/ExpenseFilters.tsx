@@ -6,16 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-
-interface Category {
-  id: string
-  name: string
-  color: string
-  icon: string
-}
+import type { CategoryResponse } from '@/types/api'
 
 interface ExpenseFiltersProps {
-  categories: Category[]
+  categories: CategoryResponse[]
 }
 
 export function ExpenseFilters({ categories }: ExpenseFiltersProps) {
@@ -64,7 +58,7 @@ export function ExpenseFilters({ categories }: ExpenseFiltersProps) {
               <SelectContent>
                 <SelectItem value="all">전체 카테고리</SelectItem>
                 {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
+                  <SelectItem key={category.uuid} value={category.uuid}>
                     <div className="flex items-center gap-2">
                       <span>{category.icon}</span>
                       <span>{category.name}</span>

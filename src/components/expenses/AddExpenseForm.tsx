@@ -7,16 +7,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { useEffect, useActionState } from 'react'
-
-interface Category {
-  id: string
-  name: string
-  color: string
-  icon: string
-}
+import type { CategoryResponse } from '@/types/api'
 
 interface AddExpenseFormProps {
-  categories: Category[]
+  categories: CategoryResponse[]
   onSuccess?: () => void
   onCancel?: () => void
 }
@@ -87,7 +81,7 @@ export function AddExpenseForm({ categories, onSuccess, onCancel }: AddExpenseFo
             >
               <option value="">카테고리를 선택하세요</option>
               {categories.map((category) => (
-                <option key={category.id} value={category.id}>
+                <option key={category.uuid} value={category.uuid}>
                   {category.icon} {category.name}
                 </option>
               ))}
