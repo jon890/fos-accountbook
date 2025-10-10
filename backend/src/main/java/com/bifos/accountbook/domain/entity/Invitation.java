@@ -32,8 +32,8 @@ public class Invitation {
     @Column(name = "family_uuid", nullable = false, columnDefinition = "BINARY(16)")
     private UUID familyUuid;
 
-    @Column(name = "inviter_user_uuid", nullable = false, columnDefinition = "BINARY(16)")
-    private UUID inviterUserUuid;
+    @Column(name = "inviter_user_uuid", nullable = false, columnDefinition = "VARCHAR(36)")
+    private String inviterUserUuid;
 
     @Column(nullable = false, unique = true, length = 255)
     private String token;
@@ -65,9 +65,7 @@ public class Invitation {
         if (uuid == null) {
             uuid = UUID.randomUUID();
         }
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
+        // createdAt은 JPA Auditing이 자동 관리
     }
 }
 

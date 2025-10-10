@@ -5,8 +5,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
-
 @Getter
 @Builder
 @NoArgsConstructor
@@ -25,7 +23,7 @@ public class AuthResponse {
     @AllArgsConstructor
     public static class UserInfo {
         private String id;
-        private UUID uuid;
+        private String uuid; // VARCHAR(36) 문자열 형식
         private String email;
         private String name;
         private String image;

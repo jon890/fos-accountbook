@@ -170,7 +170,7 @@ public class InvitationService {
     /**
      * 가족 접근 권한 확인
      */
-    private void validateFamilyAccess(UUID userUuid, UUID familyUuid) {
+    private void validateFamilyAccess(String userUuid, UUID familyUuid) {
         boolean isMember = familyMemberRepository.existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(
                 familyUuid, userUuid
         );
@@ -183,7 +183,7 @@ public class InvitationService {
     /**
      * 초대장 삭제 권한 확인
      */
-    private void validateInvitationDeletePermission(UUID userUuid, Invitation invitation) {
+    private void validateInvitationDeletePermission(String userUuid, Invitation invitation) {
         // 초대장 생성자인지 확인
         if (invitation.getInviterUserUuid().equals(userUuid)) {
             return;

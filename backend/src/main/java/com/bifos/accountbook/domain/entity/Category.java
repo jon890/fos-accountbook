@@ -65,17 +65,7 @@ public class Category {
         if (uuid == null) {
             uuid = UUID.randomUUID();
         }
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
-        if (updatedAt == null) {
-            updatedAt = LocalDateTime.now();
-        }
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        updatedAt = LocalDateTime.now();
+        // createdAt, updatedAt은 JPA Auditing이 자동 관리
     }
 }
 

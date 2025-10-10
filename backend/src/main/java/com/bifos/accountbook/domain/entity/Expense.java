@@ -36,8 +36,8 @@ public class Expense {
     @Column(name = "category_uuid", nullable = false, columnDefinition = "BINARY(16)")
     private UUID categoryUuid;
 
-    @Column(name = "user_uuid", nullable = false, columnDefinition = "BINARY(16)")
-    private UUID userUuid;
+    @Column(name = "user_uuid", nullable = false, columnDefinition = "VARCHAR(36)")
+    private String userUuid;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
@@ -80,17 +80,7 @@ public class Expense {
         if (date == null) {
             date = LocalDateTime.now();
         }
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
-        if (updatedAt == null) {
-            updatedAt = LocalDateTime.now();
-        }
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        updatedAt = LocalDateTime.now();
+        // createdAt, updatedAt은 JPA Auditing이 자동 관리
     }
 }
 

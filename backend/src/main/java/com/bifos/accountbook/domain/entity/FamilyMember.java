@@ -27,8 +27,8 @@ public class FamilyMember {
     @Column(name = "family_uuid", nullable = false, columnDefinition = "BINARY(16)")
     private UUID familyUuid;
 
-    @Column(name = "user_uuid", nullable = false, columnDefinition = "BINARY(16)")
-    private UUID userUuid;
+    @Column(name = "user_uuid", nullable = false, columnDefinition = "VARCHAR(36)")
+    private String userUuid;
 
     @Column(nullable = false, length = 20)
     @Builder.Default

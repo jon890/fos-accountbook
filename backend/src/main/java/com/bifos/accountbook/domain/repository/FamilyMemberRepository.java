@@ -18,15 +18,15 @@ public interface FamilyMemberRepository extends JpaRepository<FamilyMember, Long
     @Query("SELECT fm FROM FamilyMember fm WHERE fm.familyUuid = :familyUuid AND fm.userUuid = :userUuid AND fm.deletedAt IS NULL")
     Optional<FamilyMember> findByFamilyUuidAndUserUuid(
             @Param("familyUuid") UUID familyUuid,
-            @Param("userUuid") UUID userUuid
+            @Param("userUuid") String userUuid
     );
     
     @Query("SELECT fm FROM FamilyMember fm WHERE fm.familyUuid = :familyUuid AND fm.deletedAt IS NULL")
     List<FamilyMember> findAllByFamilyUuid(@Param("familyUuid") UUID familyUuid);
     
     @Query("SELECT fm FROM FamilyMember fm WHERE fm.userUuid = :userUuid AND fm.deletedAt IS NULL")
-    List<FamilyMember> findAllByUserUuid(@Param("userUuid") UUID userUuid);
+    List<FamilyMember> findAllByUserUuid(@Param("userUuid") String userUuid);
     
-    boolean existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(UUID familyUuid, UUID userUuid);
+    boolean existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(UUID familyUuid, String userUuid);
 }
 

@@ -25,8 +25,8 @@ public class User {
     @Column(length = 191)
     private String id; // NextAuth cuid
 
-    @Column(nullable = false, unique = true, columnDefinition = "BINARY(16)")
-    private UUID uuid;
+    @Column(nullable = false, unique = true, columnDefinition = "VARCHAR(36)")
+    private String uuid; // UUID 문자열 형식 (Auth.js 호환)
 
     @Column(length = 255)
     private String name;
@@ -62,19 +62,9 @@ public class User {
     @PrePersist
     public void prePersist() {
         if (uuid == null) {
-            uuid = UUID.randomUUID();
+            uuid = UUID.randomUUID().toString(); // 문자열 형식으로 변환
         }
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
-        if (updatedAt == null) {
-            updatedAt = LocalDateTime.now();
-        }
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        updatedAt = LocalDateTime.now();
+        // createdAt, updatedAt은 JPA Auditing이 자동 관리
     }
 }
 
