@@ -1,0 +1,60 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api/v1
+
+spring:
+  application:
+    name: fos-accountbook-backend
+  
+  # 프로덕션 환경 설정 (환경변수 필수)
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Flyway가 마이그레이션을 담당
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
+        show_sql: false
+    open-in-view: false
+  
+  # Flyway 마이그레이션 설정
+  flyway:
+    enabled: true
+    baseline-on-migrate: true  # 기존 DB에 Flyway 적용 시
+    baseline-version: 0
+    locations: classpath:db/migration
+    validate-on-migrate: true
+  
+  security:
+    filter:
+      dispatcher-types: async, error, request
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:86400000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+
+# SpringDoc OpenAPI 설정
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: ${SWAGGER_ENABLED:false}  # 프로덕션에서는 비활성화
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: ${SWAGGER_ENABLED:false}
+    tags-sorter: alpha
+    operations-sorter: alpha
+    display-request-duration: true
+    disable-swagger-default-url: true
+
+# 로깅 설정은 logback-spring.xml에서 관리
+

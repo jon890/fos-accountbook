@@ -1,0 +1,163 @@
+package com.bifos.accountbook.application.service;
+
+import com.bifos.accountbook.application.dto.family.CreateFamilyRequest;
+import com.bifos.accountbook.application.dto.family.FamilyResponse;
+import com.bifos.accountbook.application.dto.family.UpdateFamilyRequest;
+import com.bifos.accountbook.domain.entity.Family;
+import com.bifos.accountbook.domain.entity.FamilyMember;
+import com.bifos.accountbook.domain.entity.User;
+import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
+import com.bifos.accountbook.domain.repository.FamilyRepository;
+import com.bifos.accountbook.domain.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class FamilyService {
+
+    private final FamilyRepository familyRepository;
+    private final FamilyMemberRepository familyMemberRepository;
+    private final UserRepository userRepository;
+
+    /**
+     * 가족 생성 (생성자를 owner로 자동 추가)
+     */
+    @Transactional
+    public FamilyResponse createFamily(String userId, CreateFamilyRequest request) {
+        // 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+
+        // 가족 생성
+        Family family = Family.builder()
+                .name(request.getName())
+                .build();
+
+        family = familyRepository.save(family);
+        log.info("Created family: {} by user: {}", family.getUuid(), userId);
+
+        // 생성자를 owner로 추가
+        FamilyMember member = FamilyMember.builder()
+                .familyUuid(family.getUuid())
+                .userUuid(user.getUuid())
+                .role("owner")
+                .build();
+
+        familyMemberRepository.save(member);
+        log.info("Added owner to family: {}", family.getUuid());
+
+        return FamilyResponse.fromWithoutMembers(family);
+    }
+
+    /**
+     * 사용자가 속한 가족 목록 조회
+     */
+    @Transactional(readOnly = true)
+    public List<FamilyResponse> getUserFamilies(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+
+        // 사용자가 속한 가족 멤버십 조회
+        List<FamilyMember> memberships = familyMemberRepository.findAllByUserUuid(user.getUuid());
+
+        // 가족 정보 조회
+        return memberships.stream()
+                .map(FamilyMember::getFamilyUuid)
+                .map(familyRepository::findActiveByUuid)
+                .filter(opt -> opt.isPresent())
+                .map(opt -> opt.get())
+                .map(FamilyResponse::fromWithoutMembers)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 가족 상세 조회
+     */
+    @Transactional(readOnly = true)
+    public FamilyResponse getFamily(String userId, UUID familyUuid) {
+        // 권한 확인
+        validateFamilyAccess(userId, familyUuid);
+
+        Family family = familyRepository.findActiveByUuid(familyUuid)
+                .orElseThrow(() -> new IllegalArgumentException("가족을 찾을 수 없습니다"));
+
+        return FamilyResponse.fromWithoutMembers(family);
+    }
+
+    /**
+     * 가족 정보 수정
+     */
+    @Transactional
+    public FamilyResponse updateFamily(String userId, UUID familyUuid, UpdateFamilyRequest request) {
+        // 권한 확인 (owner만 수정 가능)
+        validateFamilyOwner(userId, familyUuid);
+
+        Family family = familyRepository.findActiveByUuid(familyUuid)
+                .orElseThrow(() -> new IllegalArgumentException("가족을 찾을 수 없습니다"));
+
+        family.setName(request.getName());
+        family = familyRepository.save(family);
+
+        log.info("Updated family: {} by user: {}", familyUuid, userId);
+
+        return FamilyResponse.fromWithoutMembers(family);
+    }
+
+    /**
+     * 가족 삭제 (Soft Delete)
+     */
+    @Transactional
+    public void deleteFamily(String userId, UUID familyUuid) {
+        // 권한 확인 (owner만 삭제 가능)
+        validateFamilyOwner(userId, familyUuid);
+
+        Family family = familyRepository.findActiveByUuid(familyUuid)
+                .orElseThrow(() -> new IllegalArgumentException("가족을 찾을 수 없습니다"));
+
+        family.setDeletedAt(LocalDateTime.now());
+        familyRepository.save(family);
+
+        log.info("Deleted family: {} by user: {}", familyUuid, userId);
+    }
+
+    /**
+     * 가족 접근 권한 확인
+     */
+    private void validateFamilyAccess(String userId, UUID familyUuid) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+
+        boolean isMember = familyMemberRepository.existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(
+                familyUuid, user.getUuid()
+        );
+
+        if (!isMember) {
+            throw new IllegalStateException("해당 가족에 접근할 권한이 없습니다");
+        }
+    }
+
+    /**
+     * 가족 소유자 권한 확인
+     */
+    private void validateFamilyOwner(String userId, UUID familyUuid) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+
+        FamilyMember membership = familyMemberRepository.findByFamilyUuidAndUserUuid(familyUuid, user.getUuid())
+                .orElseThrow(() -> new IllegalStateException("해당 가족에 접근할 권한이 없습니다"));
+
+        if (!"owner".equals(membership.getRole())) {
+            throw new IllegalStateException("가족 소유자만 이 작업을 수행할 수 있습니다");
+        }
+    }
+}
+
