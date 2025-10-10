@@ -6,7 +6,7 @@
 "use server";
 
 import { auth } from "@/lib/auth";
-import { apiGet, apiPost, apiDelete, ApiError } from "@/lib/api-client";
+import { apiGet, apiPost, apiDelete, ApiError } from "@/lib/api";
 import { revalidatePath } from "next/cache";
 import type { 
   FamilyResponse, 
@@ -256,15 +256,13 @@ export async function acceptInvitation(
 export async function getInvitationInfo(token: string): Promise<{
   valid: boolean;
   familyName?: string;
-  inviterName?: string;
   expiresAt?: Date;
   message?: string;
 }> {
   try {
-    // 초대 정보 조회 (인증 불필요)
+    // 초대 정보 조회 (인증 불필요 - 백엔드에서 공개 엔드포인트로 설정됨)
     const invitation = await apiGet<InvitationResponse>(
-      `/invitations/token/${token}`,
-      { requireAuth: false }
+      `/invitations/token/${token}`
     );
 
     if (!invitation || invitation.status === "EXPIRED" || invitation.status === "CANCELLED") {
@@ -293,7 +291,6 @@ export async function getInvitationInfo(token: string): Promise<{
     return {
       valid: true,
       familyName: invitation.familyName || "가족",
-      inviterName: invitation.inviterName || "알 수 없음",
       expiresAt,
     };
   } catch (error) {

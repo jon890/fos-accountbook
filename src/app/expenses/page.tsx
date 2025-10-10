@@ -5,11 +5,11 @@ import { ExpensePageClient } from '@/components/expenses/ExpensePageClient'
 import { BottomNavigation } from '@/components/layout/BottomNavigation'
 import { Header } from '@/components/layout/Header'
 import { Card, CardContent } from '@/components/ui/card'
+import { apiGet } from '@/lib/api'
 import { auth } from '@/lib/auth'
-import { apiGet } from '@/lib/api-client'
+import type { FamilyResponse } from '@/types/api'
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
-import type { FamilyResponse } from '@/types/api'
 
 interface SearchParams {
   categoryId?: string

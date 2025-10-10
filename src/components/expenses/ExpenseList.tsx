@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
-import { apiGet } from "@/lib/api-client";
+import { apiGet } from "@/lib/api";
 import type { ExpenseResponse, PageResponse } from "@/types/api";
 import { ExpensePagination } from "./ExpensePagination";
 
@@ -117,10 +117,10 @@ export async function ExpenseList({
                   <div
                     className="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
                     style={{
-                      backgroundColor: `${expense.category.color}20`,
+                      backgroundColor: `${expense.categoryColor || '#6366f1'}20`,
                     }}
                   >
-                    {expense.category.icon || "💰"}
+                    💰
                   </div>
 
                   {/* 지출 정보 */}
@@ -132,11 +132,11 @@ export async function ExpenseList({
                       <Badge
                         variant="secondary"
                         style={{
-                          backgroundColor: `${expense.category.color}20`,
-                          color: expense.category.color,
+                          backgroundColor: `${expense.categoryColor || '#6366f1'}20`,
+                          color: expense.categoryColor || '#6366f1',
                         }}
                       >
-                        {expense.category.name}
+                        {expense.categoryName || "기타"}
                       </Badge>
                     </div>
                     <p className="text-sm text-gray-500 mt-1">

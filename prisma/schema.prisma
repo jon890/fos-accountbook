@@ -51,7 +51,7 @@ model Session {
 // 백엔드와 공유: uuid, createdAt, updatedAt, deletedAt는 백엔드 JPA가 관리
 model User {
   id            String    @id @default(cuid())
-  uuid          String    @unique @default(uuid()) // 백엔드 동기화용
+  uuid          String    @unique @default(dbgenerated("(UUID())")) @db.VarChar(36) // MySQL UUID 함수 사용
   name          String?
   email         String    @unique
   emailVerified DateTime?

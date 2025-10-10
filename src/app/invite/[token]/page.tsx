@@ -39,7 +39,6 @@ export default async function InvitePage({ params }: InvitePageProps) {
     <InvitePageClient
       token={token}
       familyName={invitationInfo.familyName || ""}
-      inviterName={invitationInfo.inviterName || ""}
       expiresAt={invitationInfo.expiresAt!}
     />
   );

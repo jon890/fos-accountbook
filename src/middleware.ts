@@ -11,7 +11,6 @@
 
 import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
 
 /**
  * 공개 접근 가능한 경로 (인증 불필요)

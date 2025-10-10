@@ -216,10 +216,28 @@ fos-accountbook/
 │   │   ├── ui/               # shadcn/ui 컴포넌트
 │   │   ├── common/           # 공통 컴포넌트
 │   │   └── (features)/       # 기능별 컴포넌트
-│   ├── lib/
-│   │   ├── api-client.ts     # 백엔드 API 클라이언트
-│   │   ├── auth.ts           # NextAuth 설정
-│   │   └── prisma.ts         # Prisma Client
+│   ├── lib/                  # 유틸리티 및 설정 (체계적으로 분류됨) 📦
+│   │   ├── api/              # API 클라이언트 및 응답 처리
+│   │   │   ├── client.ts     # 백엔드 API 호출 함수
+│   │   │   ├── responses.ts  # API 응답 래퍼 함수
+│   │   │   ├── utils.ts      # API 관련 유틸리티
+│   │   │   └── index.ts      # 통합 export
+│   │   ├── auth/             # 인증 관련
+│   │   │   ├── config.ts     # NextAuth 설정
+│   │   │   ├── utils.ts      # 인증 유틸리티
+│   │   │   └── index.ts      # 통합 export
+│   │   ├── database/         # 데이터베이스 관련
+│   │   │   ├── prisma.ts     # Prisma 클라이언트
+│   │   │   ├── serialization.ts  # 데이터 직렬화
+│   │   │   ├── utils.ts      # DB 유틸리티
+│   │   │   └── index.ts      # 통합 export
+│   │   ├── utils/            # 범용 유틸리티
+│   │   │   ├── cn.ts         # Tailwind 클래스 병합
+│   │   │   ├── request.ts    # HTTP 요청 유틸리티
+│   │   │   └── index.ts      # 통합 export
+│   │   └── config/           # 환경 설정
+│   │       ├── env.ts        # 환경 변수 관리
+│   │       └── index.ts      # 통합 export
 │   └── types/
 │       ├── api.ts            # 백엔드 API 타입
 │       └── next-auth.d.ts    # NextAuth 타입 확장
@@ -246,7 +264,30 @@ fos-accountbook/
 - 백엔드 API 타입 정의
 - Prisma 타입 생성
 
-### 3. 개발자 경험
+### 3. lib 폴더 사용법 📦
+
+**권장 import 방식:**
+```typescript
+// ✅ 권장: 카테고리별 index.ts를 통한 import
+import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api'
+import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/database'
+import { cn } from '@/lib/utils'
+import { env } from '@/lib/config'
+
+// ❌ 지양: 직접 파일 import (유지보수성 저하)
+import { apiGet } from '@/lib/api/client'
+import { auth } from '@/lib/auth/config'
+```
+
+**각 모듈의 역할:**
+- `@/lib/api` - 백엔드 API 호출, 응답 처리, 에러 핸들링
+- `@/lib/auth` - NextAuth 설정, 인증 유틸리티
+- `@/lib/database` - Prisma 클라이언트, 데이터 직렬화
+- `@/lib/utils` - Tailwind 병합, HTTP 요청 등 범용 함수
+- `@/lib/config` - 환경 변수 관리
+
+### 4. 개발자 경험
 - Hot Reload
 - TypeScript 지원
 - Tailwind CSS IntelliSense

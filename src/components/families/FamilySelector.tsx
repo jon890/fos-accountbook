@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Image from 'next/image'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Plus, Users, User, ChevronRight } from 'lucide-react'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { apiGet } from '@/lib/api'
+import { ChevronRight, Plus, User, Users } from 'lucide-react'
+import Image from 'next/image'
+import { useEffect, useState } from 'react'
 
 interface Family {
   id: string
@@ -49,13 +50,8 @@ export function FamilySelector({ onFamilySelect, onCreateFamily }: FamilySelecto
   const fetchFamilies = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/families/all')
-      
-      if (!response.ok) {
-        throw new Error('가족 목록을 불러오는데 실패했습니다')
-      }
-
-      const data = await response.json()
+      // API 클라이언트를 사용하여 백엔드 호출 (NextAuth 세션 토큰 자동 포함)
+      const data = await apiGet<Family[]>('/families')
       setFamilies(data)
       setError(null)
     } catch (err) {

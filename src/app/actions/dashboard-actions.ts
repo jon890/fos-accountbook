@@ -6,7 +6,7 @@
 'use server'
 
 import { auth } from "@/lib/auth"
-import { apiGet } from "@/lib/api-client"
+import { apiGet } from "@/lib/api"
 import type { FamilyResponse, ExpenseResponse, CategoryResponse, PageResponse } from "@/types/api"
 
 export interface DashboardStats {
@@ -62,7 +62,7 @@ export async function getDashboardStats(): Promise<DashboardStats | null> {
       .reduce((sum, expense) => sum + parseFloat(expense.amount), 0)
 
     // 가족 구성원 수
-    const familyMembers = family.members?.length || 0
+    const familyMembers = family.memberCount || 0
 
     // 예산 정보 (추후 예산 기능 구현 시 실제 데이터로 대체)
     const budget = 0
@@ -166,7 +166,7 @@ export async function getRecentExpenses(limit: number = 10): Promise<RecentExpen
     return expensesPage.content.map(expense => {
       const category = categoryMap.get(expense.categoryUuid)
       return {
-        id: expense.id.toString(),
+        id: expense.uuid, // UUID를 id로 사용
         uuid: expense.uuid,
         amount: expense.amount,
         description: expense.description || null,

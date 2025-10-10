@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { format } from "sql-formatter";
-import { isDev } from "./env";
+import { isDev } from "../config/env";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;

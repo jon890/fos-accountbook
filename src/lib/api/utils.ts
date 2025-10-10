@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { z } from 'zod'
+import { NextRequest, NextResponse } from 'next/server'
+import { errorResponse } from './responses'
 
 // BigInt 직렬화를 위한 유틸리티
 export function serializeBigInt(obj: unknown): unknown {
@@ -64,39 +64,6 @@ export function withAuth<T extends unknown[]>(
       )
     }
   }
-}
-
-// API 응답 래퍼 - BigInt 자동 직렬화
-export function apiResponse(data: unknown, options?: { status?: number }) {
-  const serializedData = serializeBigInt(data)
-  return NextResponse.json(serializedData, { status: options?.status || 200 })
-}
-
-// Validation 에러 처리
-export function handleValidationError(error: unknown) {
-  if (error instanceof z.ZodError) {
-    return NextResponse.json(
-      { 
-        error: 'Validation error', 
-        details: error.issues.map(issue => ({
-          field: issue.path.join('.'),
-          message: issue.message
-        }))
-      },
-      { status: 400 }
-    )
-  }
-  return null
-}
-
-// 에러 응답 생성
-export function errorResponse(message: string, status: number = 500) {
-  return NextResponse.json({ error: message }, { status })
-}
-
-// 성공 응답 생성
-export function successResponse(data: unknown, status: number = 200) {
-  return apiResponse(data, { status })
 }
 
 // Prisma 에러 처리  

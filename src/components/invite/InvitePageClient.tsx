@@ -23,14 +23,12 @@ import { toast } from "sonner";
 interface InvitePageClientProps {
   token: string;
   familyName: string;
-  inviterName: string;
   expiresAt: Date;
 }
 
 export function InvitePageClient({
   token,
   familyName,
-  inviterName,
   expiresAt,
 }: InvitePageClientProps) {
   const router = useRouter();
@@ -90,16 +88,6 @@ export function InvitePageClient({
                 <p className="text-sm text-gray-600">가족 이름</p>
                 <p className="text-lg font-semibold text-gray-900">
                   {familyName}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <UserPlus className="w-5 h-5 text-purple-600" />
-              <div>
-                <p className="text-sm text-gray-600">초대한 사람</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {inviterName}
                 </p>
               </div>
             </div>

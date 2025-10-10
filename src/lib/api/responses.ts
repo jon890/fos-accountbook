@@ -4,7 +4,7 @@
 
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { serialize } from './serialization'
+import { serialize } from '../database/serialization'
 
 // API 응답 래퍼 - 자동 직렬화
 export function apiResponse(data: unknown, options?: { status?: number }) {
