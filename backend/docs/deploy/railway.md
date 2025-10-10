@@ -40,7 +40,7 @@ Spring Boot 앱 → **Variables** 탭에서 다음 변수 추가:
 
 ```bash
 # 필수 환경변수
-JWT_SECRET=your-256bit-secret-key-here
+AUTH_SECRET=your-256bit-secret-key-here  # 프론트엔드와 동일한 값 사용 🔑
 SPRING_PROFILES_ACTIVE=prod
 
 # 선택 환경변수 (기본값 있음)
@@ -49,6 +49,7 @@ JWT_REFRESH_EXPIRATION=604800000    # 7일
 SWAGGER_ENABLED=false                # 프로덕션에서는 비활성화
 ```
 
+**✅ AUTH_SECRET**: 백엔드 JWT와 NextAuth 세션 검증에 공통으로 사용됩니다!
 **⚠️ MySQL 변수는 Railway가 자동으로 주입하므로 수동 설정 불필요!**
 
 ### 5단계: 서비스 연결
@@ -96,21 +97,33 @@ Spring Boot 앱의 **Variables 탭**에서 MySQL 서비스의 변수를 조합�
 
 | 변수명 | 필수 여부 | 설명 | 예시 |
 |--------|----------|------|------|
-| `JWT_SECRET` | ✅ **필수** | JWT 서명 키 (256bit+) | `openssl rand -base64 64`로 생성 |
+| `AUTH_SECRET` | ✅ **필수** | JWT + NextAuth 공통 비밀키 🔑 | `npx auth secret`로 생성 (프론트엔드와 동일) |
 | `SPRING_PROFILES_ACTIVE` | ✅ **필수** | Spring Profile | `prod` |
 | `JWT_EXPIRATION` | ⚪ 선택 | Access Token 만료 시간 (밀리초) | `86400000` (24시간) |
 | `JWT_REFRESH_EXPIRATION` | ⚪ 선택 | Refresh Token 만료 시간 (밀리초) | `604800000` (7일) |
 | `SWAGGER_ENABLED` | ⚪ 선택 | Swagger UI 활성화 | `false` (프로덕션 권장) |
 
-### JWT_SECRET 생성 방법
+### AUTH_SECRET 생성 방법 🔑
 
+**✅ 권장**: NextAuth CLI 사용 (프론트엔드와 동일한 방법)
 ```bash
-# OpenSSL 사용
-openssl rand -base64 64 | tr -d '\n'
+cd /path/to/frontend-project
+npx auth secret
+```
 
-# 생성 예시
+**대안**: OpenSSL 사용
+```bash
+openssl rand -base64 64 | tr -d '\n'
+```
+
+**생성 예시**:
+```
 pYM7yRFQGhtweUwSXOe7Jfp+Wqmrq0Nn6ibMx2tTg77jG4NKMkCgScMRD/NOAc4fWZPZepyi9ivu6DYPJGUl+Q==
 ```
+
+**⚠️ 중요**: 
+- 프론트엔드 `.env.local`의 `AUTH_SECRET`과 **동일한 값** 사용
+- 백엔드 Railway의 `AUTH_SECRET` 환경변수에 동일한 값 설정
 
 ---
 

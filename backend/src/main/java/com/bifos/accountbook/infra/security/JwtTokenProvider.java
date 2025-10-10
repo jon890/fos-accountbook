@@ -1,7 +1,6 @@
 package com.bifos.accountbook.infra.security;
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -11,23 +10,28 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 백엔드 자체 JWT 토큰 생성 및 검증 프로바이더
+ * 
+ * AbstractJwtTokenProvider를 상속하여 공통 로직을 재사용하고,
+ * 백엔드 전용 기능(토큰 생성, roles 추출)을 추가로 제공합니다.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class JwtTokenProvider {
+public class JwtTokenProvider extends AbstractJwtTokenProvider {
 
     private final JwtProperties jwtProperties;
 
-    private SecretKey getSigningKey() {
-        byte[] keyBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
-        return Keys.hmacShaKeyFor(keyBytes);
+    @Override
+    protected SecretKey getSigningKey() {
+        return createSigningKey(jwtProperties.getSecret());
     }
 
     /**
@@ -67,41 +71,17 @@ public class JwtTokenProvider {
     }
 
     /**
-     * 토큰에서 사용자 ID 추출
-     */
-    public String getUserIdFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
-        return claims.getSubject();
-    }
-
-    /**
-     * 토큰에서 이메일 추출
-     */
-    public String getEmailFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
-        return claims.get("email", String.class);
-    }
-
-    /**
-     * 토큰에서 권한 정보 추출
+     * 토큰에서 권한 정보 추출 (백엔드 JWT 전용)
+     * 
+     * @param token JWT 토큰
+     * @return 권한 목록
      */
     @SuppressWarnings("unchecked")
     public Collection<? extends GrantedAuthority> getAuthoritiesFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        Claims claims = getClaimsFromToken(token);
+        if (claims == null) {
+            return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+        }
 
         List<String> roles = claims.get("roles", List.class);
         if (roles == null || roles.isEmpty()) {
@@ -111,30 +91,6 @@ public class JwtTokenProvider {
         return roles.stream()
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * 토큰 검증
-     */
-    public boolean validateToken(String token) {
-        try {
-            Jwts.parser()
-                    .verifyWith(getSigningKey())
-                    .build()
-                    .parseSignedClaims(token);
-            return true;
-        } catch (SecurityException e) {
-            log.error("Invalid JWT signature: {}", e.getMessage());
-        } catch (MalformedJwtException e) {
-            log.error("Invalid JWT token: {}", e.getMessage());
-        } catch (ExpiredJwtException e) {
-            log.error("Expired JWT token: {}", e.getMessage());
-        } catch (UnsupportedJwtException e) {
-            log.error("Unsupported JWT token: {}", e.getMessage());
-        } catch (IllegalArgumentException e) {
-            log.error("JWT claims string is empty: {}", e.getMessage());
-        }
-        return false;
     }
 
     /**

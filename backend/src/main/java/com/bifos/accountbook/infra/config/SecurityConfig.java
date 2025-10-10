@@ -1,6 +1,7 @@
 package com.bifos.accountbook.infra.config;
 
 import com.bifos.accountbook.infra.security.JwtAuthenticationFilter;
+import com.bifos.accountbook.infra.security.NextAuthTokenFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +29,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final NextAuthTokenFilter nextAuthTokenFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -63,6 +65,8 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 
+                // NextAuth 세션 필터 추가 (JWT 필터보다 먼저 실행)
+                .addFilterBefore(nextAuthTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 // JWT 필터 추가
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

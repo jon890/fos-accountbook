@@ -203,7 +203,7 @@ src/main/resources/db/migration/
 | `MYSQLDATABASE` | DB 이름 | `accountbook` |
 | `MYSQLUSER` | DB 사용자 | `accountbook_user` |
 | `MYSQLPASSWORD` | DB 비밀번호 | `accountbook_password` |
-| `JWT_SECRET` | JWT 서명 키 | (로컬용 기본값 있음) |
+| `AUTH_SECRET` | JWT + NextAuth 공통 비밀키 🔑 | (로컬용 기본값 있음) |
 
 **프로덕션 환경변수**는 [Railway 배포 가이드](docs/deploy/railway.md)를 참조하세요.
 
@@ -249,7 +249,7 @@ docker build -t fos-accountbook-backend .
 # 컨테이너 실행 (local 프로파일)
 docker run -p 8080:8080 \
   -e SPRING_PROFILES_ACTIVE=local \
-  -e JWT_SECRET=test-secret \
+  -e AUTH_SECRET=test-secret \
   fos-accountbook-backend
 ```
 

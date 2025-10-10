@@ -55,7 +55,7 @@ springdoc:
 # - DATABASE_URL: Railway MySQL URL
 # - DB_USERNAME: Railway MySQL 사용자
 # - DB_PASSWORD: Railway MySQL 비밀번호
-# - JWT_SECRET: 256bit 이상의 시크릿 키
+# - AUTH_SECRET: JWT + NextAuth 공통 비밀키 (프론트엔드와 동일한 값)
 # - JWT_EXPIRATION: Access Token 만료 시간 (선택, 기본 24시간)
 # - JWT_REFRESH_EXPIRATION: Refresh Token 만료 시간 (선택, 기본 7일)
 # - SWAGGER_ENABLED: Swagger UI 활성화 여부 (선택, 기본 false)
