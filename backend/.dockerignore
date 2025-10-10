@@ -25,6 +25,11 @@ Thumbs.db
 .gitignore
 .gitattributes
 
+# Gradle wrapper (not needed with gradle image)
+gradlew
+gradlew.bat
+gradle/wrapper/*.jar
+
 # Documentation
 README.md
 docs/

@@ -710,24 +710,43 @@ fos-accountbook-backend/
 
 ### 트러블슈팅
 
+#### Railway 빌드 방식
+
+Railway에서는 Dockerfile을 사용하여 빌드합니다:
+- ✅ **Gradle 이미지** 사용 (`gradle:8.14-jdk21-alpine`)
+- ✅ **`gradle` 명령어** 직접 사용 (Wrapper 불필요)
+- ✅ **Multi-stage build**로 최소 이미지 크기
+
+**장점**:
+- `gradle-wrapper.jar` Git 추적 불필요
+- 일관된 Gradle 버전 (8.14)
+- 빌드 캐싱으로 빠른 재빌드
+
 #### 빌드 실패 시
 
 **문제 1: Out of Memory**
 ```
-Railway Settings → Resources → 메모리 증가 (최소 1GB 권장)
+Railway Settings → Resources → 메모리 증가 (최소 2GB 권장)
 ```
 
 **문제 2: 빌드 타임아웃**
 ```
-railway.json의 buildCommand에 -x test 추가 (테스트 스킵)
+Dockerfile 사용 (DOCKERFILE builder)
+railway.json에서 builder: "DOCKERFILE" 설정 확인
 ```
 
-**문제 3: Gradle 캐시 문제**
+**문제 3: Docker 빌드 테스트**
 ```bash
-# 로컬에서 빌드 테스트
-./gradlew clean build -x test
+# 로컬에서 Docker 빌드 테스트
+docker build -t fos-accountbook-test .
 
-# Dockerfile에서 --no-daemon 사용
+# 빌드된 이미지 실행 테스트
+docker run -p 8080:8080 \
+  -e DATABASE_URL=jdbc:mysql://... \
+  -e DB_USERNAME=user \
+  -e DB_PASSWORD=pass \
+  -e JWT_SECRET=test-secret \
+  fos-accountbook-test
 ```
 
 #### 런타임 오류

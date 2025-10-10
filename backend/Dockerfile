@@ -5,18 +5,17 @@ FROM gradle:8.14-jdk21-alpine AS builder
 
 WORKDIR /app
 
-# Copy gradle files first for better caching
-COPY build.gradle.kts settings.gradle.kts gradlew ./
-COPY gradle ./gradle
+# Copy gradle config files
+COPY build.gradle.kts settings.gradle.kts ./
 
 # Download dependencies (this layer will be cached)
-RUN ./gradlew dependencies --no-daemon || true
+RUN gradle dependencies --no-daemon || true
 
 # Copy source code
 COPY src ./src
 
 # Build the application (skip tests for faster builds)
-RUN ./gradlew clean build -x test --no-daemon
+RUN gradle clean build -x test --no-daemon
 
 # Stage 2: Runtime
 FROM eclipse-temurin:21-jre-alpine
