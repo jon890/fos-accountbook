@@ -54,3 +54,6 @@ logs/
 *.zip
 *.tar.gz
 *.rar
+
+# Railway
+.railway/

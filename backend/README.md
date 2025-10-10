@@ -556,6 +556,251 @@ Spring Application Context가 정상적으로 로드되는지 확인합니다.
 
 **참고:** Swagger UI (http://localhost:8080/api/v1/swagger-ui.html)에서 모든 API를 테스트할 수 있습니다.
 
+## 🚂 Railway 배포
+
+Railway를 사용한 프로덕션 배포 가이드입니다.
+
+### 사전 준비
+
+1. **Railway 계정 생성**
+   - https://railway.app 에서 GitHub 계정으로 가입
+   - New Project 클릭
+
+2. **Git 레포지터리 준비**
+   - GitHub/GitLab에 코드 푸시
+   - Private 레포지터리도 가능
+
+### Step 1: MySQL 데이터베이스 추가
+
+1. Railway 프로젝트에서 **New** 클릭
+2. **Database** → **Add MySQL** 선택
+3. MySQL 서비스가 자동으로 생성됩니다
+
+**생성된 환경변수 (자동):**
+- `MYSQL_URL`: MySQL 연결 URL
+- `MYSQL_HOST`: 호스트명
+- `MYSQL_PORT`: 포트 (기본 3306)
+- `MYSQL_DATABASE`: 데이터베이스명
+- `MYSQL_USER`: 사용자명
+- `MYSQL_PASSWORD`: 비밀번호
+
+### Step 2: Spring Boot 애플리케이션 배포
+
+1. **Deploy from GitHub Repo** 선택
+2. 레포지터리 연결 및 선택
+3. **Deploy Now** 클릭
+
+Railway가 자동으로:
+- `Dockerfile` 감지 및 사용
+- 또는 `railway.json` 설정 사용
+- 빌드 및 배포 실행
+
+### Step 3: 환경변수 설정
+
+Railway 프로젝트 → **Variables** 탭에서 다음 환경변수 설정:
+
+#### 필수 환경변수
+
+```bash
+# 데이터베이스 설정 (MySQL 서비스와 연결)
+DATABASE_URL=${{MySQL.MYSQL_URL}}  # Reference Variable 사용
+DB_USERNAME=${{MySQL.MYSQL_USER}}
+DB_PASSWORD=${{MySQL.MYSQL_PASSWORD}}
+
+# JWT 설정 (256bit 이상의 시크릿)
+JWT_SECRET=your-production-secret-key-minimum-256-bits-required-for-hs512-algorithm-example
+JWT_EXPIRATION=86400000    # 24시간 (밀리초)
+JWT_REFRESH_EXPIRATION=604800000  # 7일
+
+# Swagger (프로덕션에서는 false 권장)
+SWAGGER_ENABLED=false
+
+# Spring Profile (선택사항, 기본값 사용)
+SPRING_PROFILES_ACTIVE=prod
+```
+
+#### Reference Variables 사용법
+
+Railway는 서비스 간 환경변수를 참조할 수 있습니다:
+```
+${{ServiceName.VARIABLE_NAME}}
+```
+
+예시:
+```
+DATABASE_URL=${{MySQL.MYSQL_URL}}
+```
+
+### Step 4: 포트 설정
+
+Railway는 자동으로 `PORT` 환경변수를 주입합니다.
+
+**application.yml에서 Railway 포트 감지:**
+```yaml
+server:
+  port: ${PORT:8080}  # Railway PORT 또는 기본 8080
+```
+
+현재 설정에서는 `/api/v1`이 컨텍스트 경로이므로:
+- Health Check: `https://your-app.railway.app/api/v1/health`
+- Swagger: `https://your-app.railway.app/api/v1/swagger-ui.html`
+
+### Step 5: 배포 확인
+
+#### 빌드 로그 확인
+1. Railway 프로젝트 → 서비스 클릭
+2. **Deployments** 탭에서 빌드 진행 상황 확인
+3. 로그에서 에러 확인
+
+#### 서비스 URL 확인
+1. **Settings** 탭 → **Networking**
+2. **Generate Domain** 클릭 (무료 `.railway.app` 도메인)
+3. 또는 Custom Domain 설정 가능
+
+#### Health Check 테스트
+```bash
+curl https://your-app.railway.app/api/v1/health
+```
+
+예상 응답:
+```json
+{
+  "status": "UP"
+}
+```
+
+### Step 6: 데이터베이스 마이그레이션
+
+Railway에 배포하면 Flyway가 자동으로 실행됩니다.
+
+**최초 배포 시:**
+1. Railway MySQL 서비스에 접속
+2. 또는 Flyway가 자동으로 스키마 생성
+
+**마이그레이션 확인:**
+```sql
+-- Railway MySQL 콘솔에서 확인
+SELECT * FROM flyway_schema_history;
+```
+
+### Step 7: 자동 배포 설정
+
+Railway는 기본적으로 Git Push 시 자동 배포됩니다.
+
+**배포 트리거:**
+- `main` 또는 `master` 브랜치에 Push
+- PR 머지 시 자동 배포
+
+**특정 브랜치만 배포하려면:**
+1. **Settings** → **Deploys**
+2. **Branch** 설정
+
+### 배포 파일 구조
+
+```
+fos-accountbook-backend/
+├── Dockerfile              # Docker 이미지 빌드 설정
+├── railway.json            # Railway 배포 설정
+├── .dockerignore          # Docker 빌드 제외 파일
+└── src/
+    └── main/
+        └── resources/
+            └── application.yml  # 환경변수 기반 설정
+```
+
+### 트러블슈팅
+
+#### 빌드 실패 시
+
+**문제 1: Out of Memory**
+```
+Railway Settings → Resources → 메모리 증가 (최소 1GB 권장)
+```
+
+**문제 2: 빌드 타임아웃**
+```
+railway.json의 buildCommand에 -x test 추가 (테스트 스킵)
+```
+
+**문제 3: Gradle 캐시 문제**
+```bash
+# 로컬에서 빌드 테스트
+./gradlew clean build -x test
+
+# Dockerfile에서 --no-daemon 사용
+```
+
+#### 런타임 오류
+
+**데이터베이스 연결 실패:**
+```
+Variables 탭에서 DATABASE_URL 확인
+${{MySQL.MYSQL_URL}} 형식으로 설정했는지 확인
+```
+
+**Health Check 실패:**
+```
+healthcheckPath가 올바른지 확인: /api/v1/health
+컨텍스트 경로 포함 여부 확인
+```
+
+**Flyway 마이그레이션 실패:**
+```
+MySQL 서비스가 시작되었는지 확인
+V1__init.sql 파일이 올바른지 검증
+```
+
+### 비용 안내
+
+Railway는 **$5/월** 크레딧을 무료로 제공합니다:
+- **Hobby Plan**: $5 크레딧 포함
+- **리소스 기반 과금**: 실사용량만 청구
+- **Sleep 기능**: 사용하지 않을 때 자동 절전
+
+**예상 비용:**
+- MySQL: ~$1-2/월
+- Spring Boot App: ~$3-5/월 (트래픽에 따라)
+
+### 유용한 Railway CLI 명령어
+
+```bash
+# Railway CLI 설치
+npm i -g @railway/cli
+
+# 로그인
+railway login
+
+# 프로젝트 연결
+railway link
+
+# 로컬에서 Railway 환경변수로 실행
+railway run ./gradlew bootRun
+
+# 로그 확인
+railway logs
+
+# 환경변수 확인
+railway variables
+```
+
+### 모니터링
+
+Railway 대시보드에서 확인 가능:
+- **Metrics**: CPU, 메모리, 네트워크 사용량
+- **Logs**: 실시간 애플리케이션 로그
+- **Deployments**: 배포 이력
+- **Usage**: 비용 추적
+
+### 프로덕션 체크리스트
+
+- [ ] MySQL 데이터베이스 생성 및 연결
+- [ ] 환경변수 모두 설정 (`DATABASE_URL`, `JWT_SECRET` 등)
+- [ ] Swagger 프로덕션에서 비활성화 (`SWAGGER_ENABLED=false`)
+- [ ] Custom Domain 설정 (선택)
+- [ ] 백업 전략 수립 (Railway MySQL 자동 백업 확인)
+- [ ] 모니터링 알림 설정
+- [ ] CORS 설정에 프로덕션 프론트엔드 URL 추가
+
 ## 🔗 관련 프로젝트
 
 **프론트엔드 레포지터리:** fos-accountbook
