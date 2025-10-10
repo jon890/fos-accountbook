@@ -15,12 +15,9 @@ spring:
   application:
     name: fos-accountbook-backend
   
-  # 데이터베이스 설정 (환경변수로 주입)
-  datasource:
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:accountbook}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: ${MYSQL_USER:accountbook_user}
-    password: ${MYSQL_PASSWORD:accountbook_password}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+  # 데이터베이스 설정 (Profile별로 설정)
+  # - application-local.yml: 로컬 MySQL 직접 설정
+  # - application-prod.yml: Railway MySQL 환경변수 사용
   
   # JPA 공통 설정
   jpa:
