@@ -1,46 +1,49 @@
-'use client'
+"use client";
 
-import { createExpenseAction, type CreateExpenseFormState } from '@/app/actions/expense-actions'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { useToast } from '@/hooks/use-toast'
-import { useEffect, useActionState } from 'react'
-import type { CategoryResponse } from '@/types/api'
+import {
+  createExpenseAction,
+  type CreateExpenseFormState,
+} from "@/app/actions/expense-actions";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { useEffect, useActionState } from "react";
+import type { CategoryResponse } from "@/types/api";
 
 interface AddExpenseFormProps {
-  categories: CategoryResponse[]
-  onSuccess?: () => void
-  onCancel?: () => void
+  categories: CategoryResponse[];
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
 const initialState: CreateExpenseFormState = {
-  message: '',
+  message: "",
   errors: {},
-  success: false
-}
+  success: false,
+};
 
-export function AddExpenseForm({ categories, onSuccess, onCancel }: AddExpenseFormProps) {
-  const { toast } = useToast()
-  const [state, formAction] = useActionState(createExpenseAction, initialState)
+export function AddExpenseForm({
+  categories,
+  onSuccess,
+  onCancel,
+}: AddExpenseFormProps) {
+  const [state, formAction] = useActionState(createExpenseAction, initialState);
 
   // 성공 시 처리
   useEffect(() => {
     if (state.success) {
-      toast({
-        title: '지출이 추가되었습니다',
-        description: state.message
-      })
-      onSuccess?.()
-    } else if (state.message && !state.success) {
-      toast({
-        title: '오류가 발생했습니다',
+      toast.success("지출이 추가되었습니다", {
         description: state.message,
-        variant: 'destructive'
-      })
+      });
+      onSuccess?.();
+    } else if (state.message && !state.success) {
+      toast.error("오류가 발생했습니다", {
+        description: state.message,
+      });
     }
-  }, [state, toast, onSuccess])
+  }, [state, onSuccess]);
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -87,7 +90,9 @@ export function AddExpenseForm({ categories, onSuccess, onCancel }: AddExpenseFo
               ))}
             </select>
             {state.errors?.categoryId && (
-              <p className="text-sm text-red-500">{state.errors.categoryId[0]}</p>
+              <p className="text-sm text-red-500">
+                {state.errors.categoryId[0]}
+              </p>
             )}
           </div>
 
@@ -98,7 +103,7 @@ export function AddExpenseForm({ categories, onSuccess, onCancel }: AddExpenseFo
               id="date"
               name="date"
               type="date"
-              defaultValue={new Date().toISOString().split('T')[0]}
+              defaultValue={new Date().toISOString().split("T")[0]}
               required
             />
             {state.errors?.date && (
@@ -115,7 +120,9 @@ export function AddExpenseForm({ categories, onSuccess, onCancel }: AddExpenseFo
               placeholder="간단한 메모를 입력하세요 (선택사항)"
             />
             {state.errors?.description && (
-              <p className="text-sm text-red-500">{state.errors.description[0]}</p>
+              <p className="text-sm text-red-500">
+                {state.errors.description[0]}
+              </p>
             )}
           </div>
 
@@ -131,15 +138,12 @@ export function AddExpenseForm({ categories, onSuccess, onCancel }: AddExpenseFo
                 취소
               </Button>
             )}
-            <Button
-              type="submit"
-              className="flex-1"
-            >
+            <Button type="submit" className="flex-1">
               지출 추가
             </Button>
           </div>
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }

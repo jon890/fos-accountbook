@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { apiPost } from "@/lib/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -20,17 +20,12 @@ export default function CreateFamilyPage() {
   const [familyType, setFamilyType] = useState<"personal" | "family">("family");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!familyName.trim()) {
-      toast({
-        title: "오류",
-        description: "가족 이름을 입력해주세요.",
-        variant: "destructive",
-      });
+      toast.error("가족 이름을 입력해주세요.");
       return;
     }
 
@@ -43,24 +38,18 @@ export default function CreateFamilyPage() {
         description: familyType === "personal" ? "개인 가계부" : undefined,
       });
 
-      toast({
-        title: "성공",
-        description: "가족이 성공적으로 생성되었습니다!",
-      });
+      toast.success("가족이 성공적으로 생성되었습니다!");
 
       // 생성 후 홈페이지로 이동
       router.push("/");
       router.refresh(); // 데이터 새로고침
     } catch (error) {
       console.error("Family creation error:", error);
-      toast({
-        title: "오류",
-        description:
-          error instanceof Error
-            ? error.message
-            : "가족 생성 중 오류가 발생했습니다. 다시 시도해주세요.",
-        variant: "destructive",
-      });
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "가족 생성 중 오류가 발생했습니다. 다시 시도해주세요."
+      );
     } finally {
       setIsLoading(false);
     }
