@@ -82,46 +82,51 @@ curl https://your-app.railway.app/api/v1/health
 
 Spring Boot 앱의 **Variables 탭**에서 MySQL 서비스의 변수를 조합하여 설정:
 
-| 변수명 | 설정 방법 | 설명 |
-|--------|----------|------|
-| `SPRING_DATASOURCE_URL` | `jdbc:mysql://${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}/${{MySQL.MYSQLDATABASE}}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true` | JDBC URL 조합 |
-| `SPRING_DATASOURCE_USERNAME` | `${{MySQL.MYSQLUSER}}` | MySQL 사용자 참조 |
-| `SPRING_DATASOURCE_PASSWORD` | `${{MySQL.MYSQLPASSWORD}}` | MySQL 비밀번호 참조 |
+| 변수명                       | 설정 방법                                                                                                                                                                     | 설명                |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| `SPRING_DATASOURCE_URL`      | `jdbc:mysql://${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}/${{MySQL.MYSQLDATABASE}}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true` | JDBC URL 조합       |
+| `SPRING_DATASOURCE_USERNAME` | `${{MySQL.MYSQLUSER}}`                                                                                                                                                        | MySQL 사용자 참조   |
+| `SPRING_DATASOURCE_PASSWORD` | `${{MySQL.MYSQLPASSWORD}}`                                                                                                                                                    | MySQL 비밀번호 참조 |
 
 **💡 작동 방식**:
+
 - Railway는 `${{서비스명.변수명}}` 형식으로 다른 서비스의 변수를 참조할 수 있습니다
 - 문자열 안에서 여러 변수를 조합 가능합니다
 - MySQL 서비스 이름이 다르면 그에 맞게 변경하세요 (예: `${{mysql.MYSQLUSER}}`)
 
 ### 수동 설정 필요 변수 (직접 추가 ⚙️)
 
-| 변수명 | 필수 여부 | 설명 | 예시 |
-|--------|----------|------|------|
-| `AUTH_SECRET` | ✅ **필수** | JWT + NextAuth 공통 비밀키 🔑 | `npx auth secret`로 생성 (프론트엔드와 동일) |
-| `SPRING_PROFILES_ACTIVE` | ✅ **필수** | Spring Profile | `prod` |
-| `JWT_EXPIRATION` | ⚪ 선택 | Access Token 만료 시간 (밀리초) | `86400000` (24시간) |
-| `JWT_REFRESH_EXPIRATION` | ⚪ 선택 | Refresh Token 만료 시간 (밀리초) | `604800000` (7일) |
-| `SWAGGER_ENABLED` | ⚪ 선택 | Swagger UI 활성화 | `false` (프로덕션 권장) |
+| 변수명                   | 필수 여부   | 설명                             | 예시                                         |
+| ------------------------ | ----------- | -------------------------------- | -------------------------------------------- |
+| `AUTH_SECRET`            | ✅ **필수** | JWT + NextAuth 공통 비밀키 🔑    | `npx auth secret`로 생성 (프론트엔드와 동일) |
+| `SPRING_PROFILES_ACTIVE` | ✅ **필수** | Spring Profile                   | `prod`                                       |
+| `JWT_EXPIRATION`         | ⚪ 선택     | Access Token 만료 시간 (밀리초)  | `86400000` (24시간)                          |
+| `JWT_REFRESH_EXPIRATION` | ⚪ 선택     | Refresh Token 만료 시간 (밀리초) | `604800000` (7일)                            |
+| `SWAGGER_ENABLED`        | ⚪ 선택     | Swagger UI 활성화                | `false` (프로덕션 권장)                      |
 
 ### AUTH_SECRET 생성 방법 🔑
 
 **✅ 권장**: NextAuth CLI 사용 (프론트엔드와 동일한 방법)
+
 ```bash
 cd /path/to/frontend-project
 npx auth secret
 ```
 
 **대안**: OpenSSL 사용
+
 ```bash
 openssl rand -base64 64 | tr -d '\n'
 ```
 
 **생성 예시**:
+
 ```
 pYM7yRFQGhtweUwSXOe7Jfp+Wqmrq0Nn6ibMx2tTg77jG4NKMkCgScMRD/NOAc4fWZPZepyi9ivu6DYPJGUl+Q==
 ```
 
-**⚠️ 중요**: 
+**⚠️ 중요**:
+
 - 프론트엔드 `.env.local`의 `AUTH_SECRET`과 **동일한 값** 사용
 - 백엔드 Railway의 `AUTH_SECRET` 환경변수에 동일한 값 설정
 
@@ -207,7 +212,7 @@ spring:
     username: ${MYSQLUSER}
     password: ${MYSQLPASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    
+
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
@@ -278,11 +283,14 @@ springdoc:
 `src/main/resources/application-prod.yml` 파일에서 실제 Vercel 도메인으로 변경:
 
 ```yaml
+# CORS 설정 (프로덕션 환경) - allowed-origins만 오버라이드
 cors:
   allowed-origins:
-    - https://family-budget.vercel.app  # ← 실제 도메인으로 변경
-    - https://family-budget-*.vercel.app  # Preview 배포 포함 (와일드카드 주의)
+    - https://family-budget.vercel.app # ← 실제 도메인으로 변경
 ```
+
+> 💡 **팁**: 공통 CORS 설정(methods, headers 등)은 `application.yml`에서 관리되므로  
+> 환경별로 **도메인만 변경**하면 됩니다!
 
 Git에 커밋하고 푸시하면 자동 배포됩니다.
 
@@ -309,6 +317,7 @@ MYSQLPASSWORD=***
 ```
 
 **해결**: 변수가 없다면
+
 1. Settings → "Connect to a service" → MySQL 선택
 2. 자동으로 환경변수 주입 및 재배포
 
@@ -319,12 +328,14 @@ Railway 대시보드 → Settings → Networking
 ```
 
 **해결**: Private Networking이 비활성화되어 있다면
+
 1. "Enable Private Networking" 클릭
 2. MySQL과 Spring Boot 앱 모두 재배포
 
 **C. 서비스 시작 순서**
 
 **해결**:
+
 1. MySQL 서비스 재시작
 2. 30초 대기 (MySQL 완전 시작)
 3. Spring Boot 앱 재배포
@@ -336,6 +347,7 @@ Railway 대시보드 → Spring Boot 앱 → Logs 탭
 ```
 
 찾아볼 내용:
+
 ```
 =================================================
 DATABASE CONFIGURATION (Railway Debug)
@@ -357,6 +369,7 @@ Computed Datasource URL: jdbc:mysql://mysql.railway.internal:3306/railway?...
 **원인**: Railway의 `MYSQL_URL`은 `mysql://` 프로토콜이지만 JDBC는 `jdbc:mysql://` 필요
 
 **해결**: ✅ 이미 해결됨!
+
 - `application-prod.yml`이 JDBC URL을 올바르게 구성합니다
 - Railway 변수 (`MYSQLHOST`, `MYSQLPORT` 등)를 사용하여 자동 구성
 
@@ -367,6 +380,7 @@ Computed Datasource URL: jdbc:mysql://mysql.railway.internal:3306/railway?...
 **원인**: Railway 컨테이너 환경은 파일 시스템이 임시(ephemeral)
 
 **해결**: `SPRING_PROFILES_ACTIVE=prod` 설정 확인
+
 - `prod` 프로파일은 **콘솔 로깅만** 사용
 - Railway가 자동으로 로그 수집 및 표시
 
@@ -375,6 +389,7 @@ Computed Datasource URL: jdbc:mysql://mysql.railway.internal:3306/railway?...
 **에러**: `Could not find or load main class org.gradle.wrapper.GradleWrapperMain`
 
 **해결**: ✅ 이미 해결됨!
+
 - Dockerfile이 `gradle:8.14-jdk21-alpine` 이미지 사용
 - `gradle` 명령어로 직접 빌드 (wrapper 불필요)
 
@@ -383,6 +398,7 @@ Computed Datasource URL: jdbc:mysql://mysql.railway.internal:3306/railway?...
 **에러**: `OutOfMemoryError` 또는 빌드 중단
 
 **해결**:
+
 1. Railway 대시보드 → 앱 선택
 2. **Settings** → **Resources**
 3. 메모리 증가 (최소 2GB 권장)
@@ -392,6 +408,7 @@ Computed Datasource URL: jdbc:mysql://mysql.railway.internal:3306/railway?...
 **에러**: `Deployment failed: Health check timeout`
 
 **해결**:
+
 1. 로그에서 앱 시작 확인
 2. PORT 환경변수 자동 주입 확인 (Railway가 자동 설정)
 3. Health check path 확인: `/api/v1/health`
@@ -402,6 +419,7 @@ Computed Datasource URL: jdbc:mysql://mysql.railway.internal:3306/railway?...
 **에러**: `FlywayException: Validate failed`
 
 **해결**:
+
 1. Railway MySQL → **Data** 탭에서 테이블 확인
 2. Flyway 히스토리 조회:
    ```sql
@@ -512,12 +530,12 @@ Railway 대시보드 → Deployments 탭
 
 ### 예상 비용
 
-| 항목 | 예상 비용 |
-|------|----------|
-| **무료 크레딧** | $5/월 |
-| MySQL (512MB) | ~$1-2/월 |
-| Spring Boot (512MB-1GB) | ~$3-5/월 |
-| **총 예상 비용** | ~$4-7/월 |
+| 항목                    | 예상 비용 |
+| ----------------------- | --------- |
+| **무료 크레딧**         | $5/월     |
+| MySQL (512MB)           | ~$1-2/월  |
+| Spring Boot (512MB-1GB) | ~$3-5/월  |
+| **총 예상 비용**        | ~$4-7/월  |
 
 **💡 팁**: 무료 크레딧($5/월) 내에서 충분히 운영 가능
 
@@ -615,7 +633,7 @@ Railway 대시보드 → Help → Contact Support
 
 ## ✅ 배포 완료!
 
-축하합니다! 🎉 
+축하합니다! 🎉
 
 이제 다음 URL에서 API를 사용할 수 있습니다:
 
@@ -635,4 +653,3 @@ Railway 대시보드 → Help → Contact Support
 
 **마지막 업데이트**: 2025-10-10  
 **작성자**: fos-accountbook Team
-

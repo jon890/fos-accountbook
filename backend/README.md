@@ -93,6 +93,21 @@ infra/            # 기술적 구현 (Config, Security, Exception)
 
 이 프로젝트는 **CORS 설정을 코드가 아닌 설정 파일**에서 관리합니다.
 
+**공통 설정** (`application.yml`):
+```yaml
+cors:
+  allowed-methods:
+    - GET, POST, PUT, PATCH, DELETE, OPTIONS
+  allowed-headers:
+    - Authorization, Content-Type, X-Requested-With, Accept, Origin
+  exposed-headers:
+    - Authorization
+  allow-credentials: true
+  max-age: 3600
+```
+
+**환경별 allowed-origins 설정**:
+
 **로컬 개발** (`application-local.yml`):
 ```yaml
 cors:
@@ -107,12 +122,18 @@ cors:
 ```yaml
 cors:
   allowed-origins:
-    - https://your-app.vercel.app  # ⚠️ 실제 Vercel 도메인으로 변경 필수!
+    - https://your-app.vercel.app  # ⚠️ 실제 Vercel 도메인으로 변경!
 ```
 
+**💡 장점**:
+- 공통 설정은 한 곳에서 관리 (중복 제거)
+- 환경별로 도메인만 변경하면 됨
+- 코드 수정 없이 설정 파일만 수정
+
 설정 파일 위치:
-- `src/main/resources/application-local.yml` (로컬)
-- `src/main/resources/application-prod.yml` (프로덕션)
+- `src/main/resources/application.yml` (공통)
+- `src/main/resources/application-local.yml` (로컬 - 도메인만)
+- `src/main/resources/application-prod.yml` (프로덕션 - 도메인만)
 - `src/main/java/com/bifos/accountbook/infra/config/CorsProperties.java` (설정 클래스)
 
 ---

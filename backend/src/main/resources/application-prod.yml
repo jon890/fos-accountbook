@@ -45,40 +45,7 @@ springdoc:
   swagger-ui:
     enabled: ${SWAGGER_ENABLED:false} # 기본 비활성화
 
-# CORS 설정 (프로덕션 환경)
-# ⚠️ 실제 Vercel 배포 도메인으로 변경하세요!
+# CORS 설정 (프로덕션 환경) - allowed-origins만 오버라이드
 cors:
   allowed-origins:
     - https://fos-accountbook.vercel.app
-  allowed-methods:
-    - GET
-    - POST
-    - PUT
-    - PATCH
-    - DELETE
-    - OPTIONS
-  allowed-headers:
-    - Authorization
-    - Content-Type
-    - X-Requested-With
-    - Accept
-    - Origin
-  exposed-headers:
-    - Authorization
-  allow-credentials: true
-  max-age: 3600
-# 로깅: logback-spring.xml의 'prod' 프로파일 사용
-# - Console 로깅만 (stdout/stderr)
-# - Railway가 자동으로 로그 수집 및 표시
-# - 파일 로깅 비활성화
-# - INFO 레벨
-
-# Railway 환경변수 (필수):
-# - DATABASE_URL: Railway MySQL URL
-# - DB_USERNAME: Railway MySQL 사용자
-# - DB_PASSWORD: Railway MySQL 비밀번호
-# - AUTH_SECRET: JWT + NextAuth 공통 비밀키 (프론트엔드와 동일한 값)
-# - JWT_EXPIRATION: Access Token 만료 시간 (선택, 기본 24시간)
-# - JWT_REFRESH_EXPIRATION: Refresh Token 만료 시간 (선택, 기본 7일)
-# - SWAGGER_ENABLED: Swagger UI 활성화 여부 (선택, 기본 false)
-# - PORT: Railway가 자동 주입

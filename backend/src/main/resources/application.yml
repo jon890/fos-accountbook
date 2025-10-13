@@ -18,11 +18,11 @@ spring:
 
   application:
     name: fos-accountbook-backend
-  
+
   # 데이터베이스 설정 (Profile별로 설정)
   # - application-local.yml: 로컬 MySQL 직접 설정
   # - application-prod.yml: Railway MySQL 환경변수 사용
-  
+
   # JPA 공통 설정
   jpa:
     hibernate:
@@ -32,14 +32,14 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
     open-in-view: false
-  
+
   # Flyway 공통 설정
   flyway:
     baseline-on-migrate: true
     baseline-version: 0
     locations: classpath:db/migration
     validate-on-migrate: true
-  
+
   # Security 설정
   security:
     filter:
@@ -49,8 +49,8 @@ spring:
 # AUTH_SECRET: 프론트엔드와 동일한 비밀키 사용 (npx auth secret으로 생성)
 jwt:
   secret: ${AUTH_SECRET}
-  expiration: ${JWT_EXPIRATION:86400000}        # 기본 24시간 (밀리초)
-  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}  # 기본 7일 (밀리초)
+  expiration: ${JWT_EXPIRATION:86400000} # 기본 24시간 (밀리초)
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 기본 7일 (밀리초)
 
 # NextAuth 설정 (Auth.js 세션 검증용) - JWT와 동일한 SECRET 사용
 nextauth:
@@ -67,4 +67,23 @@ springdoc:
     display-request-duration: true
     disable-swagger-default-url: true
 
+# CORS 공통 설정 (allowed-origins는 각 프로파일에서 설정)
+cors:
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  allowed-headers:
+    - Authorization
+    - Content-Type
+    - X-Requested-With
+    - Accept
+    - Origin
+  exposed-headers:
+    - Authorization
+  allow-credentials: true
+  max-age: 3600
 # 로깅은 logback-spring.xml에서 Profile별로 관리

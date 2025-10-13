@@ -44,30 +44,7 @@ springdoc:
     enabled: true
     doc-expansion: none # API 목록 기본 접힌 상태
 
-# CORS 설정 (로컬 개발 환경)
+# CORS 설정 (로컬 개발 환경) - allowed-origins만 오버라이드
 cors:
   allowed-origins:
     - http://localhost:3000
-    - http://localhost:3001
-    - http://localhost:3002
-    - http://localhost:3003
-  allowed-methods:
-    - GET
-    - POST
-    - PUT
-    - PATCH
-    - DELETE
-    - OPTIONS
-  allowed-headers:
-    - Authorization
-    - Content-Type
-    - X-Requested-With
-    - Accept
-    - Origin
-  exposed-headers:
-    - Authorization
-  allow-credentials: true
-  max-age: 3600
-# 로깅: logback-spring.xml의 'local' 프로파일 사용
-# - Console + File 로깅 (logs/ 디렉토리)
-# - DEBUG 레벨
