@@ -19,9 +19,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
-import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -30,41 +27,42 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final NextAuthTokenFilter nextAuthTokenFilter;
+    private final CorsProperties corsProperties;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 // CSRF 비활성화 (JWT 사용)
                 .csrf(AbstractHttpConfigurer::disable)
-                
+
                 // CORS 설정
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                
+
                 // 세션 사용하지 않음 (JWT 사용)
-                .sessionManagement(session -> 
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
                 // 요청에 대한 인증/인가 설정
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers("/health", "/actuator/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/invitations/token/**").permitAll() // 초대장 조회
+                        .requestMatchers(HttpMethod.GET, "/invitations/token/**").permitAll() // 초대장
+                        // 조회
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        
+
                         // Swagger UI 및 OpenAPI 문서
                         .requestMatchers(
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/swagger-resources/**",
-                                "/webjars/**"
-                        ).permitAll()
-                        
+                                "/webjars/**")
+                        .permitAll()
+
                         // 나머지 요청은 인증 필요
-                        .anyRequest().authenticated()
-                )
-                
+                        .anyRequest().authenticated())
+
                 // NextAuth 세션 필터 추가 (JWT 필터보다 먼저 실행)
                 .addFilterBefore(nextAuthTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 // JWT 필터 추가
@@ -76,40 +74,18 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
-        // 허용할 Origin (Next.js 개발 서버 및 프로덕션)
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:3000",
-                "http://localhost:3001",
-                "https://your-frontend-domain.com" // 프로덕션 도메인
-        ));
-        
-        // 허용할 HTTP 메서드
-        configuration.setAllowedMethods(Arrays.asList(
-                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
-        ));
-        
-        // 허용할 헤더
-        configuration.setAllowedHeaders(Arrays.asList(
-                "Authorization", 
-                "Content-Type", 
-                "X-Requested-With",
-                "Accept",
-                "Origin"
-        ));
-        
-        // 노출할 헤더
-        configuration.setExposedHeaders(List.of("Authorization"));
-        
-        // 자격 증명 허용
-        configuration.setAllowCredentials(true);
-        
-        // preflight 요청 캐싱 시간 (초)
-        configuration.setMaxAge(3600L);
+
+        // application.yml에서 CORS 설정 읽기
+        configuration.setAllowedOrigins(corsProperties.getAllowedOrigins());
+        configuration.setAllowedMethods(corsProperties.getAllowedMethods());
+        configuration.setAllowedHeaders(corsProperties.getAllowedHeaders());
+        configuration.setExposedHeaders(corsProperties.getExposedHeaders());
+        configuration.setAllowCredentials(corsProperties.isAllowCredentials());
+        configuration.setMaxAge(corsProperties.getMaxAge());
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
-        
+
         return source;
     }
 
@@ -118,4 +94,3 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
-

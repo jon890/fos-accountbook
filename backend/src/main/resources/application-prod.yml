@@ -14,37 +14,59 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    
+
     # HikariCP 커넥션 풀 최적화
     hikari:
-      maximum-pool-size: 10       # 최대 커넥션 수
-      minimum-idle: 2             # 최소 유휴 커넥션
-      connection-timeout: 30000   # 30초
-      idle-timeout: 600000        # 10분
-      max-lifetime: 1800000       # 30분
-      connection-test-query: SELECT 1  # 연결 테스트
-  
+      maximum-pool-size: 10 # 최대 커넥션 수
+      minimum-idle: 2 # 최소 유휴 커넥션
+      connection-timeout: 30000 # 30초
+      idle-timeout: 600000 # 10분
+      max-lifetime: 1800000 # 30분
+      connection-test-query: SELECT 1 # 연결 테스트
+
   # JPA 프로덕션 설정
   jpa:
     hibernate:
-      ddl-auto: validate  # Flyway가 스키마 관리 (변경 금지)
+      ddl-auto: validate # Flyway가 스키마 관리 (변경 금지)
     properties:
       hibernate:
-        format_sql: false  # SQL 포맷팅 비활성화
-        show_sql: false    # SQL 로깅 비활성화
-  
+        format_sql: false # SQL 포맷팅 비활성화
+        show_sql: false # SQL 로깅 비활성화
+
   # Flyway 프로덕션 설정
   flyway:
     enabled: true
-    clean-disabled: true  # 프로덕션에서 clean 금지 (데이터 보호)
+    clean-disabled: true # 프로덕션에서 clean 금지 (데이터 보호)
 
 # Swagger 프로덕션 설정 (환경변수로 제어)
 springdoc:
   api-docs:
-    enabled: ${SWAGGER_ENABLED:false}  # 기본 비활성화
+    enabled: ${SWAGGER_ENABLED:false} # 기본 비활성화
   swagger-ui:
-    enabled: ${SWAGGER_ENABLED:false}  # 기본 비활성화
+    enabled: ${SWAGGER_ENABLED:false} # 기본 비활성화
 
+# CORS 설정 (프로덕션 환경)
+# ⚠️ 실제 Vercel 배포 도메인으로 변경하세요!
+cors:
+  allowed-origins:
+    - https://fos-accountbook.vercel.app
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  allowed-headers:
+    - Authorization
+    - Content-Type
+    - X-Requested-With
+    - Accept
+    - Origin
+  exposed-headers:
+    - Authorization
+  allow-credentials: true
+  max-age: 3600
 # 로깅: logback-spring.xml의 'prod' 프로파일 사용
 # - Console 로깅만 (stdout/stderr)
 # - Railway가 자동으로 로그 수집 및 표시

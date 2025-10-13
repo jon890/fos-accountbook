@@ -89,6 +89,32 @@ infra/            # 기술적 구현 (Config, Security, Exception)
 | **prod** | Railway 배포 | Railway MySQL | ❌ | Console만 |
 | **test** | 테스트 | H2 in-memory | ❌ | Console만 |
 
+### CORS 설정 (application.yml에서 관리)
+
+이 프로젝트는 **CORS 설정을 코드가 아닌 설정 파일**에서 관리합니다.
+
+**로컬 개발** (`application-local.yml`):
+```yaml
+cors:
+  allowed-origins:
+    - http://localhost:3000
+    - http://localhost:3001
+    - http://localhost:3002
+    - http://localhost:3003
+```
+
+**프로덕션** (`application-prod.yml`):
+```yaml
+cors:
+  allowed-origins:
+    - https://your-app.vercel.app  # ⚠️ 실제 Vercel 도메인으로 변경 필수!
+```
+
+설정 파일 위치:
+- `src/main/resources/application-local.yml` (로컬)
+- `src/main/resources/application-prod.yml` (프로덕션)
+- `src/main/java/com/bifos/accountbook/infra/config/CorsProperties.java` (설정 클래스)
+
 ---
 
 ## 🚀 빠른 시작

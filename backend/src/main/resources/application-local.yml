@@ -11,27 +11,27 @@ spring:
     username: accountbook_user
     password: accountbook_password
     driver-class-name: com.mysql.cj.jdbc.Driver
-  
+
   # JPA 개발 환경 설정
   jpa:
     hibernate:
-      ddl-auto: validate  # Flyway가 스키마 관리
+      ddl-auto: validate # Flyway가 스키마 관리
     properties:
       hibernate:
-        format_sql: true   # SQL 포맷팅
-        show_sql: true     # SQL 로깅
+        format_sql: true # SQL 포맷팅
+        show_sql: true # SQL 로깅
         use_sql_comments: true
-  
+
   # Flyway 로컬 설정
   flyway:
     enabled: true
-    clean-disabled: false  # 로컬에서만 clean 허용
+    clean-disabled: false # 로컬에서만 clean 허용
 
 # JWT 로컬 개발용 설정
 jwt:
   secret: local-development-secret-key-for-testing-purposes-only-do-not-use-in-production-256bits
-  expiration: 86400000     # 24시간
-  refresh-expiration: 604800000  # 7일
+  expiration: 86400000 # 24시간
+  refresh-expiration: 604800000 # 7일
 
 nextauth:
   secret: local-development-secret-key-for-testing-purposes-only-do-not-use-in-production-256bits
@@ -42,8 +42,32 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
-    doc-expansion: none  # API 목록 기본 접힌 상태
+    doc-expansion: none # API 목록 기본 접힌 상태
 
+# CORS 설정 (로컬 개발 환경)
+cors:
+  allowed-origins:
+    - http://localhost:3000
+    - http://localhost:3001
+    - http://localhost:3002
+    - http://localhost:3003
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  allowed-headers:
+    - Authorization
+    - Content-Type
+    - X-Requested-With
+    - Accept
+    - Origin
+  exposed-headers:
+    - Authorization
+  allow-credentials: true
+  max-age: 3600
 # 로깅: logback-spring.xml의 'local' 프로파일 사용
 # - Console + File 로깅 (logs/ 디렉토리)
 # - DEBUG 레벨

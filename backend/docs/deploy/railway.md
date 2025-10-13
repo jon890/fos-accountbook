@@ -269,9 +269,22 @@ springdoc:
 #### 프론트엔드 연동
 
 - [ ] Railway 앱 URL을 프론트엔드 환경변수에 추가
-- [ ] CORS 설정 확인 (SecurityConfig.java)
+- [ ] **CORS 설정 확인** (`application-prod.yml` 수정 필수!)
 - [ ] Auth.js에 백엔드 URL 설정
 - [ ] 로그인 테스트
+
+**⚠️ CORS 설정 (중요!)**
+
+`src/main/resources/application-prod.yml` 파일에서 실제 Vercel 도메인으로 변경:
+
+```yaml
+cors:
+  allowed-origins:
+    - https://family-budget.vercel.app  # ← 실제 도메인으로 변경
+    - https://family-budget-*.vercel.app  # Preview 배포 포함 (와일드카드 주의)
+```
+
+Git에 커밋하고 푸시하면 자동 배포됩니다.
 
 ---
 

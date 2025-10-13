@@ -31,5 +31,27 @@ jwt:
 nextauth:
   secret: test-secret-key-for-jwt-token-generation-must-be-at-least-256-bits
 
+# CORS 설정 (테스트 환경)
+cors:
+  allowed-origins:
+    - http://localhost:3000
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  allowed-headers:
+    - Authorization
+    - Content-Type
+    - X-Requested-With
+    - Accept
+    - Origin
+  exposed-headers:
+    - Authorization
+  allow-credentials: true
+  max-age: 3600
+
 # 로깅 설정은 logback-test.xml에서 관리
 
