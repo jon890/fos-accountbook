@@ -6,7 +6,7 @@
  */
 
 import { cookies } from "next/headers";
-import { serverEnv } from "@/lib/env";
+import { serverEnv } from "@/lib/env/server.env";
 
 const API_URL = serverEnv.BACKEND_API_URL;
 

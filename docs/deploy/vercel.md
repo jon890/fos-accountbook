@@ -1,439 +1,181 @@
 # Vercel 배포 가이드
 
-Next.js 프론트엔드를 Vercel에 배포하는 완전한 가이드입니다.
+## 🚀 Vercel 배포하기
 
-## 📋 목차
+### 1️⃣ 환경변수 설정 (필수!)
 
-- [사전 준비](#-사전-준비)
-- [환경변수 설정](#-환경변수-설정)
-- [Vercel 배포](#-vercel-배포)
-- [Google OAuth 설정](#-google-oauth-설정)
-- [트러블슈팅](#-트러블슈팅)
+Vercel 대시보드에서 다음 환경변수를 **반드시** 설정해야 합니다.
 
----
+#### 🔧 Vercel Dashboard → Settings → Environment Variables
 
-## 🔧 사전 준비
+| 환경변수                   | 설명                              | 예시 값                                   | 환경                             |
+| -------------------------- | --------------------------------- | ----------------------------------------- | -------------------------------- |
+| `DATABASE_URL`             | MySQL 데이터베이스 연결 문자열    | `mysql://user:pass@host:3306/db`          | Production, Preview, Development |
+| `NEXTAUTH_URL`             | 배포된 앱의 URL                   | `https://your-app.vercel.app`             | Production, Preview              |
+| `NEXTAUTH_SECRET`          | NextAuth 시크릿 (32자 이상)       | `openssl rand -base64 32` 실행 결과       | Production, Preview, Development |
+| `GOOGLE_CLIENT_ID`         | Google OAuth Client ID            | `xxx.apps.googleusercontent.com`          | Production, Preview, Development |
+| `GOOGLE_CLIENT_SECRET`     | Google OAuth Client Secret        | `GOCSPX-xxx`                              | Production, Preview, Development |
+| `NEXT_PUBLIC_API_BASE_URL` | **백엔드 API URL (클라이언트용)** | `https://your-backend.railway.app/api/v1` | Production, Preview, Development |
+| `BACKEND_API_URL`          | **백엔드 API URL (서버용)**       | `https://your-backend.railway.app/api/v1` | Production, Preview, Development |
 
-### 1. 백엔드 URL 확인
-
-Railway 백엔드가 배포되어 있어야 합니다:
-```
-https://fos-accountbook-backend-production.up.railway.app
-```
-
-Health Check:
-```bash
-curl https://fos-accountbook-backend-production.up.railway.app/api/v1/health
-# 응답: {"status":"UP"}
-```
-
-### 2. Railway MySQL 연결 정보
-
-Railway 대시보드 → MySQL 서비스 → Variables 탭에서 확인:
-- `MYSQL_URL`: `mysql://root:password@mysql.railway.internal:3306/railway`
-
-또는 Public URL (Vercel에서 접근):
-- `MYSQL_PUBLIC_URL`: `mysql://root:password@monorail.proxy.rlwy.net:12345/railway`
-
-### 3. 필요한 계정
-
-- [Vercel 계정](https://vercel.com) (GitHub 연동)
-- [Google Cloud Console](https://console.cloud.google.com) (OAuth용)
+> ⚠️ **중요**: `NEXT_PUBLIC_*` 환경변수는 빌드 시점에 번들에 포함됩니다.  
+> 환경변수를 변경한 후에는 **반드시 재배포**해야 합니다!
 
 ---
 
-## 🔑 환경변수 설정
+### 2️⃣ 환경변수가 제대로 설정되었는지 확인
 
-### Vercel 대시보드에서 설정
-
-```
-Vercel 대시보드 → 프로젝트 선택 → Settings → Environment Variables
-```
-
-### 필수 환경변수
-
-| Variable Name | Value | Environment |
-|---------------|-------|-------------|
-| `AUTH_SECRET` | Auth.js 암호화 키 (아래 생성 방법 참고) | Production, Preview, Development |
-| `NEXT_PUBLIC_API_URL` | `https://fos-accountbook-backend-production.up.railway.app/api/v1` | Production, Preview |
-| `NEXT_PUBLIC_API_URL` | `http://localhost:8080/api/v1` | Development |
-| `AUTH_GOOGLE_ID` | Google OAuth Client ID | Production, Preview, Development |
-| `AUTH_GOOGLE_SECRET` | Google OAuth Client Secret | Production, Preview, Development |
-| `DATABASE_URL` | Railway MySQL Public URL | Production, Preview, Development |
-
-### 선택 환경변수
-
-| Variable Name | Value | Environment |
-|---------------|-------|-------------|
-| `NEXTAUTH_URL` | `https://your-app.vercel.app` | Production (Vercel이 자동 설정) |
-| `NODE_ENV` | `production` | Production (Vercel이 자동 설정) |
-
----
-
-## 🔐 AUTH_SECRET 생성
-
-### 방법 1: Auth.js CLI (권장)
+#### Vercel Build Logs 확인
 
 ```bash
-cd /Users/nhn/personal/fos-accountbook
-npx auth secret
+# 빌드 로그에서 다음 메시지가 나와야 합니다:
+✅ Environment variables validated successfully
 ```
 
-출력:
-```
-AUTH_SECRET="gnZmUTovb2pCd3l5b2pCd3l5b2pCd3l5b2pCd3l5b2pCd3l5b2pCd3l5b2pCd3l5"
-```
-
-이 값을 복사하여 Vercel에 추가합니다.
-
-### 방법 2: OpenSSL
+만약 다음과 같은 에러가 나타나면 환경변수가 누락되었거나 잘못된 것입니다:
 
 ```bash
-openssl rand -base64 32
+❌ Invalid server environment variables:
+{
+  "NEXT_PUBLIC_API_BASE_URL": {
+    "_errors": ["Required"]
+  }
+}
+Error: Invalid server environment variables
 ```
 
 ---
 
-## 🔗 DATABASE_URL 설정
+### 3️⃣ Google OAuth Redirect URI 설정
 
-### Railway MySQL Public URL 가져오기
+Google Cloud Console에서 Redirect URI를 추가해야 합니다:
 
-```bash
-Railway 대시보드 → MySQL 서비스 → Variables 탭
-→ MYSQL_PUBLIC_URL 복사
-```
-
-**예시**:
-```
-mysql://root:xYzAbC123@monorail.proxy.rlwy.net:54321/railway
-```
-
-**⚠️ 주의**: 
-- **Internal URL** (`mysql.railway.internal`)은 Railway 내부에서만 접근 가능
-- **Public URL** (`monorail.proxy.rlwy.net`)을 Vercel에서 사용해야 함
-
-### Vercel에 설정
-
-```
-Vercel → Settings → Environment Variables
-
-Variable Name: DATABASE_URL
-Variable Value: mysql://root:xYzAbC123@monorail.proxy.rlwy.net:54321/railway
-```
-
----
-
-## 🎨 Google OAuth 설정
-
-### 1. Google Cloud Console 접속
-
-https://console.cloud.google.com/
-
-### 2. 프로젝트 생성
-
-1. "New Project" 클릭
-2. 프로젝트 이름: "FOS Accountbook"
-3. "Create" 클릭
-
-### 3. OAuth 동의 화면 구성
-
-```
-APIs & Services → OAuth consent screen
-
-1. User Type: External 선택
-2. 앱 이름: "우리집 가계부"
-3. 사용자 지원 이메일: your-email@example.com
-4. 범위 추가: email, profile
-5. 저장 및 계속
-```
-
-### 4. OAuth 2.0 Client ID 생성
-
-```
-APIs & Services → Credentials → Create Credentials → OAuth 2.0 Client IDs
-
-1. Application type: Web application
-2. Name: "FOS Accountbook Web"
-3. Authorized redirect URIs:
-   - http://localhost:3000/api/auth/callback/google (로컬)
-   - https://your-app.vercel.app/api/auth/callback/google (프로덕션)
-4. Create 클릭
-```
-
-### 5. Client ID와 Secret 복사
-
-```
-Client ID: 123456789-abcdefg.apps.googleusercontent.com
-Client Secret: GOCSPX-xYzAbC123
-```
-
-이 값들을 Vercel 환경변수에 추가합니다.
-
----
-
-## 🚀 Vercel 배포
-
-### 1. GitHub 레포지터리 연결
-
-```bash
-# GitHub에 푸시
-git add .
-git commit -m "feat: Add Vercel deployment config"
-git push origin main
-```
-
-### 2. Vercel 프로젝트 생성
-
-```
-Vercel 대시보드 → New Project
-→ Import Git Repository
-→ fos-accountbook 선택
-→ Deploy
-```
-
-### 3. 환경변수 설정
-
-```
-프로젝트 → Settings → Environment Variables
-→ 위에서 정리한 환경변수 모두 추가
-```
-
-**Production 환경변수**:
-```
-AUTH_SECRET=your-auth-secret
-NEXT_PUBLIC_API_URL=https://fos-accountbook-backend-production.up.railway.app/api/v1
-AUTH_GOOGLE_ID=your-google-client-id.apps.googleusercontent.com
-AUTH_GOOGLE_SECRET=GOCSPX-your-google-secret
-DATABASE_URL=mysql://root:password@monorail.proxy.rlwy.net:12345/railway
-```
-
-### 4. 재배포
-
-환경변수 추가 후:
-```
-Deployments 탭 → 최신 배포 → "Redeploy" 클릭
-```
-
-### 5. 도메인 확인
-
-```
-Vercel 대시보드 → 프로젝트 → Domains
-→ your-app.vercel.app 또는 커스텀 도메인
-```
-
----
-
-## ✅ 배포 확인
-
-### 1. 프론트엔드 접속
-
-```
-https://your-app.vercel.app
-```
-
-### 2. Google 로그인 테스트
-
-1. "Sign In with Google" 클릭
-2. Google 계정 선택
-3. 권한 승인
-4. 대시보드로 리디렉션 확인
-
-### 3. 백엔드 API 연동 확인
-
-브라우저 개발자 도구 → Network 탭:
-```
-Request URL: https://fos-accountbook-backend-production.up.railway.app/api/v1/families
-Status: 200 OK
-```
-
----
-
-## 🔧 로컬 개발 환경 설정
-
-### .env.local 파일 생성
-
-프로젝트 루트에 `.env.local` 파일 생성:
-
-```bash
-# Auth.js
-AUTH_SECRET="your-local-auth-secret"
-AUTH_GOOGLE_ID="your-google-client-id.apps.googleusercontent.com"
-AUTH_GOOGLE_SECRET="GOCSPX-your-google-secret"
-
-# 백엔드 API (로컬)
-NEXT_PUBLIC_API_URL="http://localhost:8080/api/v1"
-
-# 데이터베이스 (Auth.js 테이블용)
-DATABASE_URL="mysql://root:password@monorail.proxy.rlwy.net:12345/railway"
-
-# Next.js
-NEXTAUTH_URL="http://localhost:3000"
-NODE_ENV="development"
-```
-
-### Prisma Client 생성
-
-```bash
-cd /Users/nhn/personal/fos-accountbook
-pnpm db:generate
-```
-
-### 로컬 개발 서버 실행
-
-```bash
-pnpm dev
-```
-
-브라우저에서 `http://localhost:3000` 접속
-
----
-
-## 🐛 트러블슈팅
-
-### 1. Google OAuth 오류
-
-**에러**: `redirect_uri_mismatch`
-
-**원인**: Authorized redirect URIs가 일치하지 않음
-
-**해결**:
-1. Google Cloud Console → OAuth 2.0 Client ID
-2. Authorized redirect URIs 확인:
+1. [Google Cloud Console](https://console.cloud.google.com/apis/credentials) 접속
+2. OAuth 2.0 클라이언트 ID 선택
+3. **승인된 리디렉션 URI**에 다음 추가:
    ```
    https://your-app.vercel.app/api/auth/callback/google
    ```
-3. Vercel 도메인과 정확히 일치하는지 확인
-
-### 2. 백엔드 연결 실패
-
-**에러**: `Failed to fetch from backend`
-
-**원인**: CORS 설정 또는 잘못된 API URL
-
-**해결**:
-1. `NEXT_PUBLIC_API_URL` 확인:
-   ```
-   https://fos-accountbook-backend-production.up.railway.app/api/v1
-   ```
-2. 백엔드 CORS 설정 확인 (SecurityConfig.java):
-   ```java
-   .allowedOrigins("https://your-app.vercel.app")
-   ```
-
-### 3. DATABASE_URL 연결 실패
-
-**에러**: `Can't reach database server`
-
-**원인**: Internal URL 사용 또는 잘못된 연결 정보
-
-**해결**:
-1. Railway MySQL **Public URL** 사용:
-   ```
-   mysql://root:pass@monorail.proxy.rlwy.net:12345/railway
-   ```
-2. Railway MySQL → Networking → Public Networking 활성화 확인
-
-### 4. Auth.js 세션 오류
-
-**에러**: `[auth][error] SessionTokenVerificationError`
-
-**원인**: AUTH_SECRET 불일치
-
-**해결**:
-1. `npx auth secret`로 새로운 secret 생성
-2. Vercel 환경변수 업데이트
-3. 재배포
-
-### 5. Prisma Client 오류
-
-**에러**: `PrismaClient is unable to run in the browser`
-
-**원인**: 클라이언트 컴포넌트에서 Prisma 직접 사용
-
-**해결**:
-- Auth.js는 서버 사이드에서만 Prisma 사용
-- 비즈니스 로직은 백엔드 API 호출
 
 ---
 
-## 📊 환경별 설정 요약
+### 4️⃣ 백엔드 API CORS 설정
 
-### Production (Vercel)
+백엔드 API에서 Vercel 도메인을 CORS 허용 목록에 추가해야 합니다.
 
-```bash
-AUTH_SECRET=production-secret
-NEXT_PUBLIC_API_URL=https://fos-accountbook-backend-production.up.railway.app/api/v1
-DATABASE_URL=mysql://root:pass@monorail.proxy.rlwy.net:12345/railway
-AUTH_GOOGLE_ID=prod-client-id.apps.googleusercontent.com
-AUTH_GOOGLE_SECRET=GOCSPX-prod-secret
-```
+**Spring Boot 예시:**
 
-### Preview (Vercel)
-
-```bash
-# Production과 동일하거나 별도 설정
-AUTH_SECRET=preview-secret
-NEXT_PUBLIC_API_URL=https://fos-accountbook-backend-production.up.railway.app/api/v1
-DATABASE_URL=mysql://root:pass@monorail.proxy.rlwy.net:12345/railway
-AUTH_GOOGLE_ID=prod-client-id.apps.googleusercontent.com
-AUTH_GOOGLE_SECRET=GOCSPX-prod-secret
-```
-
-### Development (Local)
-
-```bash
-AUTH_SECRET=local-secret
-NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
-DATABASE_URL=mysql://root:pass@monorail.proxy.rlwy.net:12345/railway
-AUTH_GOOGLE_ID=prod-client-id.apps.googleusercontent.com
-AUTH_GOOGLE_SECRET=GOCSPX-prod-secret
-NEXTAUTH_URL=http://localhost:3000
+```java
+@Configuration
+public class SecurityConfig {
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList(
+            "http://localhost:3000",
+            "https://your-app.vercel.app"  // ← Vercel 도메인 추가
+        ));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowCredentials(true);
+        // ...
+    }
+}
 ```
 
 ---
 
-## 🔗 유용한 링크
+### 5️⃣ 배포 전 체크리스트
 
-- [Vercel 대시보드](https://vercel.com/dashboard)
-- [Vercel 환경변수 가이드](https://vercel.com/docs/projects/environment-variables)
-- [Auth.js v5 문서](https://authjs.dev/)
-- [Google OAuth 설정](https://developers.google.com/identity/protocols/oauth2)
-- [Railway Public Networking](https://docs.railway.app/reference/public-networking)
-
----
-
-## 📞 지원
-
-문제 발생 시:
-1. Vercel 배포 로그 확인
-2. 브라우저 개발자 도구 → Console 확인
-3. 백엔드 API Health Check 확인
-4. 이 가이드의 트러블슈팅 섹션 참조
+- [ ] Vercel 환경변수 모두 설정됨
+- [ ] `NEXT_PUBLIC_API_BASE_URL`이 실제 백엔드 URL로 설정됨
+- [ ] `NEXTAUTH_URL`이 Vercel 도메인으로 설정됨
+- [ ] Google OAuth Redirect URI에 Vercel 도메인 추가됨
+- [ ] 백엔드 CORS 설정에 Vercel 도메인 추가됨
+- [ ] 데이터베이스가 외부에서 접근 가능한지 확인
 
 ---
 
-## ✅ 배포 완료 체크리스트
+## 🔍 트러블슈팅
 
-- [ ] Railway 백엔드 배포 완료
-- [ ] Railway MySQL Public URL 확인
-- [ ] Google OAuth Client ID 생성
-- [ ] Vercel 프로젝트 생성
-- [ ] Vercel 환경변수 모두 설정
-- [ ] 재배포 완료
-- [ ] Google 로그인 테스트 성공
-- [ ] 백엔드 API 연동 확인
-- [ ] 지출 등록 테스트 성공
+### 문제: API 요청이 localhost로 가는 경우
+
+**원인**: `NEXT_PUBLIC_API_BASE_URL` 환경변수가 빌드 시점에 설정되지 않았거나, 환경변수 변경 후 재배포하지 않음
+
+**해결방법**:
+
+1. Vercel Dashboard → Settings → Environment Variables에서 `NEXT_PUBLIC_API_BASE_URL` 확인
+2. 값이 없거나 잘못되었다면 수정
+3. **Deployments 탭 → 최신 배포 → Redeploy → Use existing Build Cache 체크 해제**
+4. 재배포 후 빌드 로그에서 "✅ Environment variables validated successfully" 확인
+
+### 문제: 환경변수 검증 에러
+
+**에러 메시지**:
+
+```
+Error: Invalid server environment variables
+```
+
+**해결방법**:
+
+1. 빌드 로그에서 어떤 환경변수가 문제인지 확인
+2. Vercel Dashboard에서 해당 환경변수 설정
+3. 형식이 올바른지 확인 (URL은 http:// 또는 https://로 시작)
+4. 재배포
+
+### 문제: Google OAuth 로그인 실패
+
+**원인**: Redirect URI가 설정되지 않음
+
+**해결방법**:
+
+1. Google Cloud Console에서 Redirect URI 확인
+2. `https://your-app.vercel.app/api/auth/callback/google` 추가
+3. 설정 저장 후 5-10분 대기 (Google에서 설정이 전파되는 시간)
 
 ---
 
-**축하합니다!** 🎉
+## 📌 환경변수 관리 팁
 
-이제 다음 URL에서 앱을 사용할 수 있습니다:
-- **프론트엔드**: `https://your-app.vercel.app`
-- **백엔드**: `https://fos-accountbook-backend-production.up.railway.app`
+### Development vs Production
+
+```bash
+# Development (로컬)
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8080/api/v1
+BACKEND_API_URL=http://localhost:8080/api/v1
+
+# Production (Vercel)
+NEXT_PUBLIC_API_BASE_URL=https://api.production.com/api/v1
+BACKEND_API_URL=https://api.production.com/api/v1
+
+# Preview (Vercel Preview Deployments)
+NEXT_PUBLIC_API_BASE_URL=https://api.staging.com/api/v1
+BACKEND_API_URL=https://api.staging.com/api/v1
+```
+
+### 환경별 설정 방법
+
+Vercel에서는 환경변수를 다음 3가지 환경에 따라 다르게 설정할 수 있습니다:
+
+- **Production**: `main` 브랜치 배포 시 사용
+- **Preview**: Pull Request 배포 시 사용
+- **Development**: `vercel dev` 로컬 실행 시 사용
+
+각 환경에 맞는 값을 설정하세요!
 
 ---
 
-**마지막 업데이트**: 2025-10-10  
-**작성자**: fos-accountbook Team
+## 🔐 보안 주의사항
 
+1. **절대 커밋하지 마세요**: `.env.local` 파일은 `.gitignore`에 포함되어 있습니다
+2. **NEXTAUTH_SECRET 생성**: `openssl rand -base64 32`로 강력한 시크릿 생성
+3. **환경변수 로테이션**: 정기적으로 시크릿 변경
+4. **최소 권한 원칙**: 데이터베이스 사용자는 필요한 권한만 부여
+
+---
+
+## 📖 참고 자료
+
+- [Vercel Environment Variables 공식 문서](https://vercel.com/docs/concepts/projects/environment-variables)
+- [Next.js Environment Variables](https://nextjs.org/docs/app/building-your-application/configuring/environment-variables)
+- [NextAuth.js Deployment](https://next-auth.js.org/deployment)

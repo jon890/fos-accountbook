@@ -4,7 +4,7 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { prisma } from "@/lib/server/database/prisma";
 import { SignJWT, jwtVerify } from "jose";
-import { serverEnv } from "@/lib/env";
+import { serverEnv } from "@/lib/env/server.env";
 
 const BACKEND_API_URL = serverEnv.BACKEND_API_URL;
 

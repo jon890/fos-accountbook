@@ -14,12 +14,14 @@
 ```
 
 **프론트엔드 역할:**
+
 - ✅ NextAuth.js를 통한 Google OAuth 인증
 - ✅ 사용자 인터페이스 (UI/UX)
 - ✅ 백엔드 API 호출
 - ✅ Prisma는 인증 테이블만 사용
 
 **백엔드 역할:**
+
 - ✅ 모든 비즈니스 로직 처리
 - ✅ Family, Category, Expense, Invitation 관리
 - ✅ JWT 기반 인증
@@ -59,6 +61,7 @@ docker compose up -d
 ```
 
 백엔드가 실행되면:
+
 - API: http://localhost:8080/api/v1
 - Swagger UI: http://localhost:8080/api/v1/swagger-ui.html
 
@@ -72,16 +75,21 @@ DATABASE_URL="mysql://accountbook_user:accountbook_password@localhost:3306/accou
 
 # NextAuth
 NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-nextauth-secret-change-in-production"
+NEXTAUTH_SECRET="your-nextauth-secret-change-in-production-must-be-at-least-32-characters"
 
 # Google OAuth
 GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
 
 # 백엔드 API
-NEXT_PUBLIC_API_BASE_URL="http://localhost:8080/api/v1"
-BACKEND_API_URL="http://localhost:8080/api/v1"
+NEXT_PUBLIC_API_BASE_URL="http://localhost:8080/api/v1"  # 클라이언트 사이드용
+BACKEND_API_URL="http://localhost:8080/api/v1"           # 서버 사이드용
 ```
+
+> 💡 **환경변수 타입 안전성**: 이 프로젝트는 Zod를 사용하여 환경변수를 검증합니다.  
+> 필수 환경변수가 없거나 잘못된 형식이면 앱이 시작되지 않습니다.
+>
+> 환경변수 스키마: `src/lib/env/server.env.ts`, `src/lib/env/client.env.ts`
 
 ### 4. Google OAuth 설정
 
@@ -116,12 +124,14 @@ pnpm dev
 프론트엔드는 **NextAuth 인증 테이블만** 관리합니다:
 
 ### 인증 테이블 (Prisma)
+
 - ✅ `users` - 사용자 정보 (백엔드와 동기화)
 - ✅ `accounts` - OAuth 계정 정보
 - ✅ `sessions` - 세션 정보
 - ✅ `verification_tokens` - 이메일 인증 토큰
 
 ### 비즈니스 테이블 (백엔드 전용)
+
 - ❌ `families`, `family_members` - 백엔드 API로 접근
 - ❌ `categories` - 백엔드 API로 접근
 - ❌ `expenses` - 백엔드 API로 접근
@@ -144,18 +154,19 @@ pnpm dev
 ```typescript
 // src/app/(authenticated)/layout.tsx
 export default async function AuthenticatedLayout({ children }) {
-  const session = await auth()
-  
+  const session = await auth();
+
   // 로그인하지 않은 사용자는 자동으로 로그인 페이지로 리다이렉트
   if (!session?.user) {
-    redirect('/auth/signin')
+    redirect("/auth/signin");
   }
 
-  return <>{children}</>
+  return <>{children}</>;
 }
 ```
 
 **장점:**
+
 - ✅ **중복 제거**: 각 페이지에서 인증 체크 반복 불필요
 - ✅ **자동 보호**: `(authenticated)` 폴더에 추가하면 자동으로 인증 필요
 - ✅ **URL 영향 없음**: Route Groups는 URL에 포함되지 않음 (`/expenses`, `/families`)
@@ -183,6 +194,7 @@ export default async function AuthenticatedLayout({ children }) {
 ```
 
 **핵심 개선사항:**
+
 - ✅ **NextAuth JWT를 암호화 없이 서명만 사용 (JWS)**
   - 백엔드에서 표준 JWT 라이브러리로 검증 가능
 - ✅ **쿠키 기반 자동 인증**
@@ -201,18 +213,18 @@ export default async function AuthenticatedLayout({ children }) {
 ### 클라이언트 컴포넌트에서 간단하게 API 호출
 
 ```typescript
-'use client'
+"use client";
 
-import { apiGet, apiPost } from '@/lib/client'
+import { apiGet, apiPost } from "@/lib/client";
 
 // GET 요청 - 쿠키 자동 전송
-const families = await apiGet<Family[]>('/families')
+const families = await apiGet<Family[]>("/families");
 
 // POST 요청 - 쿠키 자동 전송
-await apiPost('/families', {
-  name: '우리가족',
-  description: '가족 가계부'
-})
+await apiPost("/families", {
+  name: "우리가족",
+  description: "가족 가계부",
+});
 
 // ✅ Authorization 헤더나 토큰 관리 불필요!
 // ✅ NextAuth 쿠키가 자동으로 전송됨
@@ -223,17 +235,20 @@ await apiPost('/families', {
 
 ```typescript
 // src/lib/client/api.ts
-export async function apiClient<T>(endpoint: string, options: RequestInit = {}) {
+export async function apiClient<T>(
+  endpoint: string,
+  options: RequestInit = {}
+) {
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...options.headers,
     },
-    credentials: 'include', // ✅ httpOnly 쿠키 자동 전송
-  })
-  
-  return response.json()
+    credentials: "include", // ✅ httpOnly 쿠키 자동 전송
+  });
+
+  return response.json();
 }
 ```
 
@@ -251,7 +266,7 @@ private String extractTokenFromRequest(HttpServletRequest request) {
                 "__Secure-authjs.session-token".equals(cookie.getName())) {
                 return cookie.getValue(); // ✅ JWT 토큰 반환
             }
-            
+
             // 하위 호환: NextAuth v4
             if ("next-auth.session-token".equals(cookie.getName()) ||
                 "__Secure-next-auth.session-token".equals(cookie.getName())) {
@@ -292,41 +307,56 @@ pnpm db:validate      # 스키마 검증
 
 ### Vercel 배포
 
-**⚠️ 중요: Middleware Edge Function 크기 제한**
+> 📖 **상세 가이드**: [Vercel 배포 가이드 문서](./docs/deploy/VERCEL.md)
 
-Vercel의 Edge Function 크기 제한(1MB)을 준수하기 위해:
-- Middleware는 최소한의 기능만 수행
-- 인증 체크는 각 페이지의 Server Component에서 `auth()` 호출
-- Prisma 등 무거운 라이브러리는 Middleware에서 제외
+**⚠️ 필수 확인사항**
 
-**배포 단계:**
+1. **환경변수 설정 필수**: Vercel Dashboard에서 모든 환경변수 설정
+2. **`NEXT_PUBLIC_*` 환경변수는 빌드 시점에 포함됨** → 변경 후 재배포 필요!
+3. **환경변수 검증**: 빌드 로그에서 "✅ Environment variables validated successfully" 확인
 
-1. Vercel에 프로젝트 연결
+**빠른 배포 체크리스트:**
 
-2. 환경 변수 설정:
-   ```bash
-   # 데이터베이스
-   DATABASE_URL="mysql://..."  # 프로덕션 MySQL
-   
-   # NextAuth
-   NEXTAUTH_URL="https://your-domain.vercel.app"
-   AUTH_SECRET="your-256bit-secret-key"  # 백엔드와 동일한 값!
-   
-   # Google OAuth
-   GOOGLE_CLIENT_ID="your-google-client-id"
-   GOOGLE_CLIENT_SECRET="your-google-client-secret"
-   
-   # 백엔드 API
-   NEXT_PUBLIC_API_URL="https://your-backend.railway.app/api/v1"
-   BACKEND_API_URL="https://your-backend.railway.app/api/v1"
-   ```
+- [ ] Vercel에 프로젝트 연결
+- [ ] **모든 환경변수 설정** (아래 참조)
+- [ ] Google OAuth Redirect URI 추가
+- [ ] 백엔드 CORS 설정에 Vercel 도메인 추가
+- [ ] 배포 후 빌드 로그 확인
 
-3. Google OAuth 리디렉션 URI에 배포 도메인 추가
-   - `https://your-domain.vercel.app/api/auth/callback/google`
+**필수 환경변수:**
 
-4. 배포!
+```bash
+# ⚠️ Vercel Dashboard → Settings → Environment Variables에서 설정!
+
+# 데이터베이스
+DATABASE_URL="mysql://..."  # 프로덕션 MySQL
+
+# NextAuth
+NEXTAUTH_URL="https://your-domain.vercel.app"
+NEXTAUTH_SECRET="your-secret-at-least-32-characters"  # openssl rand -base64 32
+
+# Google OAuth
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+
+# 백엔드 API (⚠️ 중요!)
+NEXT_PUBLIC_API_BASE_URL="https://your-backend.railway.app/api/v1"  # 클라이언트용
+BACKEND_API_URL="https://your-backend.railway.app/api/v1"           # 서버용
+```
+
+**트러블슈팅:**
+
+- **API가 localhost로 요청되는 경우**:
+  - Vercel에서 `NEXT_PUBLIC_API_BASE_URL` 환경변수 확인
+  - 환경변수 변경 후 **재배포** (Use existing Build Cache 체크 해제)
+- **환경변수 검증 에러**:
+  - 빌드 로그에서 어떤 환경변수가 문제인지 확인
+  - 형식 확인 (URL은 `https://`로 시작, SECRET은 32자 이상)
+
+자세한 내용은 [Vercel 배포 가이드](./docs/deploy/VERCEL.md)를 참조하세요.
 
 **빌드 최적화 확인:**
+
 ```bash
 pnpm build
 
@@ -337,11 +367,13 @@ pnpm build
 ## 🧪 테스트
 
 ### 전체 테스트 실행
+
 ```bash
 pnpm test
 ```
 
 ### 특정 테스트만 실행
+
 ```bash
 pnpm test:unit        # 단위 테스트
 pnpm test:integration # 통합 테스트
@@ -400,17 +432,20 @@ fos-accountbook/
 ## 🔗 관련 프로젝트
 
 **백엔드 레포지터리:** fos-accountbook-backend
-  - Spring Boot 3.5 + Java 21
-  - MySQL + JPA
-  - RESTful API + Swagger
+
+- Spring Boot 3.5 + Java 21
+- MySQL + JPA
+- RESTful API + Swagger
 
 ## 🎯 주요 특징
 
 ### 1. 완전한 프론트-백 분리
+
 - 프론트엔드: UI + 인증만
 - 백엔드: 비즈니스 로직 전체
 
 ### 2. 타입 안전성
+
 - TypeScript 엄격 모드
 - 백엔드 API 타입 정의
 - Prisma 타입 생성
@@ -418,85 +453,98 @@ fos-accountbook/
 ### 3. lib 폴더 사용법 📦
 
 **권장 import 방식:**
+
 ```typescript
 // ✅ 클라이언트 안전 모듈 (브라우저에서 실행 가능)
-import { apiGet, apiPost, apiPut, apiDelete, ApiError } from '@/lib/client'
-import { cn } from '@/lib/client'
+import { apiGet, apiPost, apiPut, apiDelete, ApiError } from "@/lib/client";
+import { cn } from "@/lib/client";
+import { clientEnv } from "@/lib/env"; // 클라이언트 환경변수
 
 // ⚠️ 서버 전용 모듈 (Node.js 환경에서만 실행)
-import { auth, signIn, signOut, handlers } from '@/lib/server/auth'
-import { prisma } from '@/lib/server/database'
-import { apiResponse, successResponse, errorResponse } from '@/lib/server/api'
-import { withAuth, handlePrismaError } from '@/lib/server/api'
-import { env, isDev } from '@/lib/server/config'
+import { auth, signIn, signOut, handlers } from "@/lib/server/auth";
+import { prisma } from "@/lib/server/database";
+import { apiResponse, successResponse, errorResponse } from "@/lib/server/api";
+import { withAuth, handlePrismaError } from "@/lib/server/api";
+import { serverEnv } from "@/lib/env/server.env"; // 서버 환경변수 (직접 import)
+import { isDev, isProduction } from "@/lib/env"; // 환경 유틸리티
 ```
 
 **💡 핵심 개선: import 경로로 즉시 구분!**
+
 - `@/lib/client` → 클라이언트 안전 ✅ ('use client'에서 사용 가능)
 - `@/lib/server` → 서버 전용 ⚠️ (절대 'use client'에서 사용 금지!)
+- `@/lib/env` → **환경변수 관리** (타입 안전, Zod 검증)
 
 **각 모듈의 역할:**
+
 - `@/lib/client` - 백엔드 API 호출, Tailwind 유틸리티 (클라이언트 안전 ✅)
 - `@/lib/server/auth` - NextAuth 설정, 인증 유틸리티 (서버 전용 ⚠️)
 - `@/lib/server/database` - Prisma 클라이언트, 데이터 직렬화 (서버 전용 ⚠️)
 - `@/lib/server/api` - API 응답 헬퍼, 서버 유틸리티 (서버 전용 ⚠️)
-- `@/lib/server/config` - 환경 변수 관리 (서버 전용 ⚠️)
+- `@/lib/env` - **타입 안전한 환경변수 관리** (Zod 검증, 빌드 시 검사)
 
 **개발 가이드라인:**
 
 1. **클라이언트 컴포넌트 (`'use client'`)** - `@/lib/client`만 사용!
+
    ```typescript
-   'use client'
-   
+   "use client";
+
    // ✅ 사용 가능
-   import { apiGet, apiPost, cn } from '@/lib/client'
-   import { useToast } from '@/hooks/use-toast'
-   
+   import { apiGet, apiPost, cn } from "@/lib/client";
+   import { useToast } from "@/hooks/use-toast";
+
    // ❌ 절대 금지 - Prisma 번들링 에러!
-   import { prisma } from '@/lib/server/database'
-   import { auth } from '@/lib/server/auth'
+   import { prisma } from "@/lib/server/database";
+   import { auth } from "@/lib/server/auth";
    ```
 
 2. **Server Components (기본)** - 모든 lib 모듈 사용 가능
+
    ```typescript
    // ✅ 모두 가능
-   import { apiGet } from '@/lib/client'
-   import { auth } from '@/lib/server/auth'
-   import { prisma } from '@/lib/server/database'
+   import { apiGet } from "@/lib/client";
+   import { auth } from "@/lib/server/auth";
+   import { prisma } from "@/lib/server/database";
    ```
 
 3. **Server Actions** - 모든 lib 모듈 사용 가능
+
    ```typescript
-   'use server'
-   
+   "use server";
+
    // ✅ 모두 가능
-   import { apiPost } from '@/lib/client'
-   import { auth } from '@/lib/server/auth'
-   import { prisma } from '@/lib/server/database'
-   import { revalidatePath } from 'next/cache'
+   import { apiPost } from "@/lib/client";
+   import { auth } from "@/lib/server/auth";
+   import { prisma } from "@/lib/server/database";
+   import { revalidatePath } from "next/cache";
    ```
 
 4. **API Routes** - 서버 모듈 + 응답 헬퍼
+
    ```typescript
-   import { NextRequest } from 'next/server'
-   
+   import { NextRequest } from "next/server";
+
    // ✅ 서버 전용 헬퍼 사용
-   import { apiResponse, errorResponse } from '@/lib/server/api'
-   import { withAuth } from '@/lib/server/api'
-   import { prisma } from '@/lib/server/database'
+   import { apiResponse, errorResponse } from "@/lib/server/api";
+   import { withAuth } from "@/lib/server/api";
+   import { prisma } from "@/lib/server/database";
    ```
 
 **🎯 간단한 규칙:**
+
 - `'use client'` 있음 → `@/lib/client`만!
 - `'use client'` 없음 → 모든 lib 사용 가능!
 
 ### 4. 개발자 경험
+
 - Hot Reload
 - TypeScript 지원
 - Tailwind CSS IntelliSense
 - Prisma Studio
 
 ### 4. 성능
+
 - Next.js 15 최적화
 - Server Components 활용
 - 이미지 최적화
@@ -508,6 +556,7 @@ MIT License
 ---
 
 **개발:**
+
 - Frontend: Next.js 15 + Auth.js v5 + Prisma
 - Backend: Spring Boot 3.5 + JPA + MySQL
 - Full-Stack: TypeScript + Java 21
