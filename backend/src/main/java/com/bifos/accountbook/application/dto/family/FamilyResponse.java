@@ -39,5 +39,15 @@ public class FamilyResponse {
                 .updatedAt(family.getUpdatedAt())
                 .build();
     }
+    
+    public static FamilyResponse fromWithMemberCount(Family family, int memberCount) {
+        return FamilyResponse.builder()
+                .uuid(family.getUuid())
+                .name(family.getName())
+                .createdAt(family.getCreatedAt())
+                .updatedAt(family.getUpdatedAt())
+                .memberCount(memberCount)
+                .build();
+    }
 }
 

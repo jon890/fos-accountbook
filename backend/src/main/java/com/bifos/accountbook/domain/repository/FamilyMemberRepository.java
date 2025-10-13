@@ -28,5 +28,8 @@ public interface FamilyMemberRepository extends JpaRepository<FamilyMember, Long
     List<FamilyMember> findAllByUserUuid(@Param("userUuid") String userUuid);
     
     boolean existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(UUID familyUuid, String userUuid);
+    
+    @Query("SELECT COUNT(fm) FROM FamilyMember fm WHERE fm.familyUuid = :familyUuid AND fm.deletedAt IS NULL")
+    int countByFamilyUuid(@Param("familyUuid") UUID familyUuid);
 }
 

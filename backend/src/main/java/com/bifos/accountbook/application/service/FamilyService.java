@@ -55,7 +55,8 @@ public class FamilyService {
         familyMemberRepository.save(member);
         log.info("Added owner to family: {}", family.getUuid());
 
-        return FamilyResponse.fromWithoutMembers(family);
+        // memberCount 포함해서 반환 (방금 생성했으므로 1명)
+        return FamilyResponse.fromWithMemberCount(family, 1);
     }
 
     /**
@@ -69,13 +70,18 @@ public class FamilyService {
         // 사용자가 속한 가족 멤버십 조회
         List<FamilyMember> memberships = familyMemberRepository.findAllByUserUuid(user.getUuid());
 
-        // 가족 정보 조회
+        // 가족 정보 조회 (memberCount 포함)
         return memberships.stream()
                 .map(FamilyMember::getFamilyUuid)
-                .map(familyRepository::findActiveByUuid)
-                .filter(opt -> opt.isPresent())
-                .map(opt -> opt.get())
-                .map(FamilyResponse::fromWithoutMembers)
+                .map(familyUuid -> {
+                    Family family = familyRepository.findActiveByUuid(familyUuid).orElse(null);
+                    if (family == null)
+                        return null;
+
+                    int memberCount = familyMemberRepository.countByFamilyUuid(familyUuid);
+                    return FamilyResponse.fromWithMemberCount(family, memberCount);
+                })
+                .filter(response -> response != null)
                 .collect(Collectors.toList());
     }
 
@@ -90,7 +96,8 @@ public class FamilyService {
         Family family = familyRepository.findActiveByUuid(familyUuid)
                 .orElseThrow(() -> new IllegalArgumentException("가족을 찾을 수 없습니다"));
 
-        return FamilyResponse.fromWithoutMembers(family);
+        int memberCount = familyMemberRepository.countByFamilyUuid(familyUuid);
+        return FamilyResponse.fromWithMemberCount(family, memberCount);
     }
 
     /**
@@ -109,7 +116,8 @@ public class FamilyService {
 
         log.info("Updated family: {} by user: {}", familyUuid, userId);
 
-        return FamilyResponse.fromWithoutMembers(family);
+        int memberCount = familyMemberRepository.countByFamilyUuid(familyUuid);
+        return FamilyResponse.fromWithMemberCount(family, memberCount);
     }
 
     /**
@@ -137,8 +145,7 @@ public class FamilyService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
 
         boolean isMember = familyMemberRepository.existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(
-                familyUuid, user.getUuid()
-        );
+                familyUuid, user.getUuid());
 
         if (!isMember) {
             throw new IllegalStateException("해당 가족에 접근할 권한이 없습니다");
@@ -160,4 +167,3 @@ public class FamilyService {
         }
     }
 }
-
