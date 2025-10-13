@@ -28,5 +28,8 @@ jwt:
   access-token-validity: 3600000   # 1시간
   refresh-token-validity: 604800000 # 7일
 
+nextauth:
+  secret: test-secret-key-for-jwt-token-generation-must-be-at-least-256-bits
+
 # 로깅 설정은 logback-test.xml에서 관리
 

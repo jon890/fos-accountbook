@@ -14,8 +14,7 @@ import org.springframework.test.context.ActiveProfiles;
  * 등의 문제를 조기에 발견할 수 있습니다.
  */
 @SpringBootTest
-@ActiveProfiles("test")
-class ApplicationContextTest {
+class ApplicationTest {
 
     /**
      * Spring Context가 정상적으로 로드되는지 확인

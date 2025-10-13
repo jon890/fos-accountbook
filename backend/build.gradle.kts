@@ -38,6 +38,9 @@ dependencies {
     // OpenAPI (Swagger)
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
     
+    // Jansi (Console Color Support for IntelliJ)
+    implementation("org.fusesource.jansi:jansi:2.4.1")
+    
     // Lombok
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")

@@ -2,8 +2,8 @@
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     
-    <!-- 테스트용 로그 패턴 (간결하게) -->
-    <property name="LOG_PATTERN" value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
+    <!-- 테스트용 로그 패턴 (간결하게, 색상 적용) -->
+    <property name="LOG_PATTERN" value="%clr(%d{HH:mm:ss.SSS}){cyan} %clr([%thread]){magenta} %clr(%-5level){highlight} %clr(%logger{36}){cyan} - %msg%n"/>
     
     <!-- Console Appender (테스트는 콘솔만 사용) -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
