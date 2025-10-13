@@ -1,25 +1,27 @@
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import type { NextAuthConfig } from "next-auth"
-import NextAuth from "next-auth"
-import Google from "next-auth/providers/google"
-import { prisma } from "@/lib/server/database/prisma"
-import { SignJWT, jwtVerify } from "jose"
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import type { NextAuthConfig } from "next-auth";
+import NextAuth from "next-auth";
+import Google from "next-auth/providers/google";
+import { prisma } from "@/lib/server/database/prisma";
+import { SignJWT, jwtVerify } from "jose";
+import { serverEnv } from "@/lib/env";
 
-const BACKEND_API_URL = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1";
+const BACKEND_API_URL = serverEnv.BACKEND_API_URL;
 
 /**
  * JWT Secret Key (백엔드와 동일한 키 사용)
  */
-const AUTH_SECRET = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
-if (!AUTH_SECRET) {
-  throw new Error("AUTH_SECRET is not defined");
-}
+const AUTH_SECRET = serverEnv.NEXTAUTH_SECRET;
 const encodedSecret = new TextEncoder().encode(AUTH_SECRET);
 
 /**
  * 백엔드 API에서 JWT 토큰 획득
  */
-async function getBackendJWT(user: { email?: string | null; name?: string | null; image?: string | null }) {
+async function getBackendJWT(user: {
+  email?: string | null;
+  name?: string | null;
+  image?: string | null;
+}) {
   try {
     const response = await fetch(`${BACKEND_API_URL}/auth/register`, {
       method: "POST",
@@ -34,12 +36,16 @@ async function getBackendJWT(user: { email?: string | null; name?: string | null
     });
 
     if (!response.ok) {
-      console.error("Failed to get backend JWT:", response.status, response.statusText);
+      console.error(
+        "Failed to get backend JWT:",
+        response.status,
+        response.statusText
+      );
       return null;
     }
 
     const data = await response.json();
-    
+
     // ApiSuccessResponse<AuthResponse> 형식에서 데이터 추출
     return data.data || data;
   } catch (error) {
@@ -83,14 +89,14 @@ export const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(prisma),
   providers: [
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: serverEnv.GOOGLE_CLIENT_ID,
+      clientSecret: serverEnv.GOOGLE_CLIENT_SECRET,
     }),
   ],
   jwt: {
     /**
      * 커스텀 JWT Encode: 암호화 없이 서명만 사용 (백엔드 호환)
-     * 
+     *
      * NextAuth v5는 기본적으로 JWT를 JWE(암호화)로 생성하지만,
      * 백엔드에서 JWS(서명된 JWT)만 검증할 수 있으므로 커스터마이징
      */
@@ -98,7 +104,7 @@ export const authConfig: NextAuthConfig = {
       if (!token) {
         throw new Error("Token is required");
       }
-      
+
       // HS256 알고리즘으로 JWT 생성 (암호화 없이 서명만)
       return await new SignJWT(token)
         .setProtectedHeader({ alg: "HS256" })
@@ -113,7 +119,7 @@ export const authConfig: NextAuthConfig = {
       if (!token) {
         return null;
       }
-      
+
       try {
         const { payload } = await jwtVerify(token, encodedSecret, {
           algorithms: ["HS256"],
@@ -139,23 +145,30 @@ export const authConfig: NextAuthConfig = {
         if (backendAuth) {
           token.accessToken = backendAuth.accessToken;
           token.refreshToken = backendAuth.refreshToken;
-          token.accessTokenExpires = Date.now() + (backendAuth.expiresIn || 86400) * 1000; // expiresIn은 초 단위
+          token.accessTokenExpires =
+            Date.now() + (backendAuth.expiresIn || 86400) * 1000; // expiresIn은 초 단위
         }
       }
 
       // 토큰이 아직 유효한 경우
-      if (token.accessTokenExpires && Date.now() < (token.accessTokenExpires as number)) {
+      if (
+        token.accessTokenExpires &&
+        Date.now() < (token.accessTokenExpires as number)
+      ) {
         return token;
       }
 
       // 토큰 만료 시 갱신
       if (token.refreshToken) {
-        const refreshedTokens = await refreshAccessToken(token.refreshToken as string);
-        
+        const refreshedTokens = await refreshAccessToken(
+          token.refreshToken as string
+        );
+
         if (refreshedTokens) {
           token.accessToken = refreshedTokens.accessToken;
           token.refreshToken = refreshedTokens.refreshToken;
-          token.accessTokenExpires = Date.now() + (refreshedTokens.expiresIn || 86400) * 1000;
+          token.accessTokenExpires =
+            Date.now() + (refreshedTokens.expiresIn || 86400) * 1000;
         }
       }
 
@@ -176,29 +189,31 @@ export const authConfig: NextAuthConfig = {
           // 이미 존재하는 사용자인지 확인
           const existingUser = await prisma.user.findUnique({
             where: { email: user.email! },
-            include: { accounts: true }
-          })
+            include: { accounts: true },
+          });
 
           if (existingUser) {
             // 이미 같은 제공자로 연결된 계정이 있는지 확인
             const existingAccount = existingUser.accounts.find(
-              acc => acc.provider === account.provider
-            )
-            
+              (acc) => acc.provider === account.provider
+            );
+
             if (!existingAccount) {
               // 새 계정을 기존 사용자와 연결
-              console.log(`Linking ${account.provider} account to existing user: ${user.email}`)
+              console.log(
+                `Linking ${account.provider} account to existing user: ${user.email}`
+              );
             }
           }
-          
-          return true
+
+          return true;
         } catch (error) {
-          console.error("OAuth sign-in error:", error)
-          return false
+          console.error("OAuth sign-in error:", error);
+          return false;
         }
       }
-      
-      return true
+
+      return true;
     },
   },
   pages: {
@@ -208,7 +223,7 @@ export const authConfig: NextAuthConfig = {
   session: {
     strategy: "jwt",
   },
-}
+};
 
 /**
  * Auth.js v5 exports
@@ -217,4 +232,4 @@ export const authConfig: NextAuthConfig = {
  * - signIn: 로그인 함수
  * - signOut: 로그아웃 함수
  */
-export const { handlers, auth, signIn, signOut } = NextAuth(authConfig)
+export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
