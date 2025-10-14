@@ -104,31 +104,62 @@ Spring Boot 앱의 **Variables 탭**에서 MySQL 서비스의 변수를 조합�
 | `JWT_REFRESH_EXPIRATION` | ⚪ 선택     | Refresh Token 만료 시간 (밀리초) | `604800000` (7일)                            |
 | `SWAGGER_ENABLED`        | ⚪ 선택     | Swagger UI 활성화                | `false` (프로덕션 권장)                      |
 
-### AUTH_SECRET 생성 방법 🔑
+### AUTH_SECRET 생성 및 설정 방법 🔑
 
-**✅ 권장**: NextAuth CLI 사용 (프론트엔드와 동일한 방법)
+**⚠️ 매우 중요**: 프론트엔드와 백엔드가 **동일한 SECRET 값**을 사용해야 합니다!
 
+#### 1단계: SECRET 생성
+
+**✅ 권장**: NextAuth CLI 사용
 ```bash
 cd /path/to/frontend-project
 npx auth secret
 ```
 
 **대안**: OpenSSL 사용
-
 ```bash
 openssl rand -base64 64 | tr -d '\n'
 ```
 
 **생성 예시**:
-
 ```
 pYM7yRFQGhtweUwSXOe7Jfp+Wqmrq0Nn6ibMx2tTg77jG4NKMkCgScMRD/NOAc4fWZPZepyi9ivu6DYPJGUl+Q==
 ```
 
-**⚠️ 중요**:
+#### 2단계: 환경변수 설정
 
-- 프론트엔드 `.env.local`의 `AUTH_SECRET`과 **동일한 값** 사용
-- 백엔드 Railway의 `AUTH_SECRET` 환경변수에 동일한 값 설정
+**프론트엔드 (Vercel)**:
+```bash
+# Vercel Dashboard → Settings → Environment Variables
+NEXTAUTH_SECRET=생성한SECRET값
+```
+
+**백엔드 (Railway)**:
+```bash
+# Railway Dashboard → Variables 탭
+AUTH_SECRET=생성한SECRET값  # ← 프론트엔드 NEXTAUTH_SECRET과 동일한 값!
+```
+
+**⚠️ 주의사항**:
+- 프론트엔드: `NEXTAUTH_SECRET` (이름 다름)
+- 백엔드: `AUTH_SECRET` (이름 다름)
+- **하지만 값은 동일해야 함!**
+
+#### 3단계: 검증
+
+백엔드 배포 후 로그 확인:
+```
+=================================================
+APPLICATION CONFIGURATION
+=================================================
+--- JWT & Auth ---
+AUTH_SECRET: ***SET*** (length: 88)
+jwt.secret: ***SET***
+nextauth.secret: ***SET***
+=================================================
+```
+
+`AUTH_SECRET`이 `❌ NOT SET`으로 표시되면 Railway 환경변수 설정을 확인하세요!
 
 ---
 

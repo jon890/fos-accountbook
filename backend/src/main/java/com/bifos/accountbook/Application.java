@@ -24,16 +24,13 @@ public class Application {
 
     @PostConstruct
     public void logDatabaseConfig() {
-        log.info("=================================================");
-        log.info("DATABASE CONFIGURATION (Railway Debug)");
-        log.info("=================================================");
-        log.info("Active Profile: {}", String.join(", ", env.getActiveProfiles()));
-        log.info("SPRING_DATASOURCE_URL: {}", env.getProperty("SPRING_DATASOURCE_URL"));
-        log.info("SPRING_DATASOURCE_USERNAME: {}", env.getProperty("SPRING_DATASOURCE_USERNAME"));
-        log.info("SPRING_DATASOURCE_PASSWORD: {}", env.getProperty("SPRING_DATASOURCE_PASSWORD") != null ? "***SET***" : "null");
-        log.info("Resolved Datasource URL: {}", env.getProperty("spring.datasource.url"));
-        log.info("Resolved Datasource Username: {}", env.getProperty("spring.datasource.username"));
-        log.info("=================================================");
+        log.info("--- JWT & Auth ---");
+        log.info("AUTH_SECRET: {}", env.getProperty("AUTH_SECRET"));
+        log.info("jwt.secret: {}", env.getProperty("jwt.secret"));
+        log.info("nextauth.secret: {}", env.getProperty("nextauth.secret") != null ? "***SET***" : "❌ NOT SET");
+
+        // CORS Configuration
+        log.info("--- CORS ---");
+        log.info("CORS Allowed Origins: {}", env.getProperty("cors.allowed-origins"));
     }
 }
-
