@@ -14,7 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
+import com.bifos.accountbook.domain.value.CustomUuid;
 
 @Slf4j
 @RestController
@@ -30,7 +30,7 @@ public class CategoryController {
     @PostMapping
     public ResponseEntity<ApiSuccessResponse<CategoryResponse>> createCategory(
             Authentication authentication,
-            @PathVariable UUID familyUuid,
+            @PathVariable String familyUuid,
             @Valid @RequestBody CreateCategoryRequest request
     ) {
         String userId = authentication.getName();
@@ -49,7 +49,7 @@ public class CategoryController {
     @GetMapping
     public ResponseEntity<ApiSuccessResponse<List<CategoryResponse>>> getFamilyCategories(
             Authentication authentication,
-            @PathVariable UUID familyUuid
+            @PathVariable String familyUuid
     ) {
         String userId = authentication.getName();
         log.info("Fetching categories for family: {} by user: {}", familyUuid, userId);
@@ -65,8 +65,8 @@ public class CategoryController {
     @GetMapping("/{categoryUuid}")
     public ResponseEntity<ApiSuccessResponse<CategoryResponse>> getCategory(
             Authentication authentication,
-            @PathVariable UUID familyUuid,
-            @PathVariable UUID categoryUuid
+            @PathVariable String familyUuid,
+            @PathVariable String categoryUuid
     ) {
         String userId = authentication.getName();
         log.info("Fetching category: {} by user: {}", categoryUuid, userId);
@@ -82,8 +82,8 @@ public class CategoryController {
     @PutMapping("/{categoryUuid}")
     public ResponseEntity<ApiSuccessResponse<CategoryResponse>> updateCategory(
             Authentication authentication,
-            @PathVariable UUID familyUuid,
-            @PathVariable UUID categoryUuid,
+            @PathVariable String familyUuid,
+            @PathVariable String categoryUuid,
             @Valid @RequestBody UpdateCategoryRequest request
     ) {
         String userId = authentication.getName();
@@ -100,8 +100,8 @@ public class CategoryController {
     @DeleteMapping("/{categoryUuid}")
     public ResponseEntity<ApiSuccessResponse<Void>> deleteCategory(
             Authentication authentication,
-            @PathVariable UUID familyUuid,
-            @PathVariable UUID categoryUuid
+            @PathVariable String familyUuid,
+            @PathVariable String categoryUuid
     ) {
         String userId = authentication.getName();
         log.info("Deleting category: {} by user: {}", categoryUuid, userId);

@@ -1,6 +1,7 @@
 package com.bifos.accountbook.domain.repository;
 
 import com.bifos.accountbook.domain.entity.FamilyMember;
+import com.bifos.accountbook.domain.value.CustomUuid;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -8,28 +9,25 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
 public interface FamilyMemberRepository extends JpaRepository<FamilyMember, Long> {
-    
-    Optional<FamilyMember> findByUuid(UUID uuid);
-    
+
+    Optional<FamilyMember> findByUuid(CustomUuid uuid);
+
     @Query("SELECT fm FROM FamilyMember fm WHERE fm.familyUuid = :familyUuid AND fm.userUuid = :userUuid AND fm.deletedAt IS NULL")
     Optional<FamilyMember> findByFamilyUuidAndUserUuid(
-            @Param("familyUuid") UUID familyUuid,
-            @Param("userUuid") String userUuid
-    );
-    
-    @Query("SELECT fm FROM FamilyMember fm WHERE fm.familyUuid = :familyUuid AND fm.deletedAt IS NULL")
-    List<FamilyMember> findAllByFamilyUuid(@Param("familyUuid") UUID familyUuid);
-    
-    @Query("SELECT fm FROM FamilyMember fm WHERE fm.userUuid = :userUuid AND fm.deletedAt IS NULL")
-    List<FamilyMember> findAllByUserUuid(@Param("userUuid") String userUuid);
-    
-    boolean existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(UUID familyUuid, String userUuid);
-    
-    @Query("SELECT COUNT(fm) FROM FamilyMember fm WHERE fm.familyUuid = :familyUuid AND fm.deletedAt IS NULL")
-    int countByFamilyUuid(@Param("familyUuid") UUID familyUuid);
-}
+            @Param("familyUuid") CustomUuid familyUuid,
+            @Param("userUuid") CustomUuid userUuid);
 
+    @Query("SELECT fm FROM FamilyMember fm WHERE fm.familyUuid = :familyUuid AND fm.deletedAt IS NULL")
+    List<FamilyMember> findAllByFamilyUuid(@Param("familyUuid") CustomUuid familyUuid);
+
+    @Query("SELECT fm FROM FamilyMember fm WHERE fm.userUuid = :userUuid AND fm.deletedAt IS NULL")
+    List<FamilyMember> findAllByUserUuid(@Param("userUuid") CustomUuid userUuid);
+
+    boolean existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(CustomUuid familyUuid, CustomUuid userUuid);
+
+    @Query("SELECT COUNT(fm) FROM FamilyMember fm WHERE fm.familyUuid = :familyUuid AND fm.deletedAt IS NULL")
+    int countByFamilyUuid(@Param("familyUuid") CustomUuid familyUuid);
+}

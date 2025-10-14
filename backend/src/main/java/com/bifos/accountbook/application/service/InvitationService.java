@@ -10,6 +10,7 @@ import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.repository.InvitationRepository;
 import com.bifos.accountbook.domain.repository.UserRepository;
+import com.bifos.accountbook.domain.value.CustomUuid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -30,7 +30,7 @@ public class InvitationService {
     private final FamilyRepository familyRepository;
     private final FamilyMemberRepository familyMemberRepository;
     private final UserRepository userRepository;
-    
+
     private static final String TOKEN_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     private static final int TOKEN_LENGTH = 32;
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -39,14 +39,16 @@ public class InvitationService {
      * 초대장 생성
      */
     @Transactional
-    public InvitationResponse createInvitation(String userId, UUID familyUuid, CreateInvitationRequest request) {
-        // 권한 확인 (가족 멤버만 초대 가능)
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
-        
-        validateFamilyAccess(user.getUuid(), familyUuid);
+    public InvitationResponse createInvitation(String userId, String familyUuid, CreateInvitationRequest request) {
+        CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
 
-        Family family = familyRepository.findActiveByUuid(familyUuid)
+        // 권한 확인 (가족 멤버만 초대 가능)
+        User user = userRepository.findById(Long.parseLong(userId))
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+
+        validateFamilyAccess(user.getUuid(), familyCustomUuid);
+
+        Family family = familyRepository.findActiveByUuid(familyCustomUuid)
                 .orElseThrow(() -> new IllegalArgumentException("가족을 찾을 수 없습니다"));
 
         // 초대장 생성
@@ -54,7 +56,7 @@ public class InvitationService {
         LocalDateTime expiresAt = LocalDateTime.now().plusHours(expirationHours);
 
         Invitation invitation = Invitation.builder()
-                .familyUuid(familyUuid)
+                .familyUuid(familyCustomUuid)
                 .inviterUserUuid(user.getUuid())
                 .token(generateToken())
                 .expiresAt(expiresAt)
@@ -70,17 +72,20 @@ public class InvitationService {
      * 가족의 활성 초대장 목록 조회
      */
     @Transactional(readOnly = true)
-    public List<InvitationResponse> getFamilyInvitations(String userId, UUID familyUuid) {
-        // 권한 확인
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
-        
-        validateFamilyAccess(user.getUuid(), familyUuid);
+    public List<InvitationResponse> getFamilyInvitations(String userId, String familyUuid) {
+        CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
 
-        Family family = familyRepository.findActiveByUuid(familyUuid)
+        // 권한 확인
+        User user = userRepository.findById(Long.parseLong(userId))
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+
+        validateFamilyAccess(user.getUuid(), familyCustomUuid);
+
+        Family family = familyRepository.findActiveByUuid(familyCustomUuid)
                 .orElseThrow(() -> new IllegalArgumentException("가족을 찾을 수 없습니다"));
 
-        List<Invitation> invitations = invitationRepository.findActiveByFamilyUuid(familyUuid, LocalDateTime.now());
+        List<Invitation> invitations = invitationRepository.findActiveByFamilyUuid(familyCustomUuid,
+                LocalDateTime.now());
 
         return invitations.stream()
                 .map(inv -> InvitationResponse.fromWithFamilyName(inv, family.getName()))
@@ -106,7 +111,7 @@ public class InvitationService {
      */
     @Transactional
     public void acceptInvitation(String userId, String token) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(Long.parseLong(userId))
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
 
         Invitation invitation = invitationRepository.findValidByToken(token, LocalDateTime.now())
@@ -114,8 +119,7 @@ public class InvitationService {
 
         // 이미 가족 멤버인지 확인
         boolean alreadyMember = familyMemberRepository.existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(
-                invitation.getFamilyUuid(), user.getUuid()
-        );
+                invitation.getFamilyUuid(), user.getUuid());
 
         if (alreadyMember) {
             throw new IllegalStateException("이미 가족 멤버입니다");
@@ -134,7 +138,7 @@ public class InvitationService {
         invitation.setStatus("ACCEPTED");
         invitationRepository.save(invitation);
 
-        log.info("User: {} accepted invitation: {} and joined family: {}", 
+        log.info("User: {} accepted invitation: {} and joined family: {}",
                 userId, invitation.getUuid(), invitation.getFamilyUuid());
     }
 
@@ -142,11 +146,13 @@ public class InvitationService {
      * 초대장 삭제/취소
      */
     @Transactional
-    public void deleteInvitation(String userId, UUID invitationUuid) {
-        User user = userRepository.findById(userId)
+    public void deleteInvitation(String userId, String invitationUuid) {
+        CustomUuid invitationCustomUuid = CustomUuid.from(invitationUuid);
+
+        User user = userRepository.findById(Long.parseLong(userId))
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
 
-        Invitation invitation = invitationRepository.findByUuid(invitationUuid)
+        Invitation invitation = invitationRepository.findByUuid(invitationCustomUuid)
                 .orElseThrow(() -> new IllegalArgumentException("초대장을 찾을 수 없습니다"));
 
         // 권한 확인 (초대장 생성자 또는 가족 owner만 삭제 가능)
@@ -170,10 +176,9 @@ public class InvitationService {
     /**
      * 가족 접근 권한 확인
      */
-    private void validateFamilyAccess(String userUuid, UUID familyUuid) {
+    private void validateFamilyAccess(CustomUuid userUuid, CustomUuid familyUuid) {
         boolean isMember = familyMemberRepository.existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(
-                familyUuid, userUuid
-        );
+                familyUuid, userUuid);
 
         if (!isMember) {
             throw new IllegalStateException("해당 가족에 접근할 권한이 없습니다");
@@ -183,7 +188,7 @@ public class InvitationService {
     /**
      * 초대장 삭제 권한 확인
      */
-    private void validateInvitationDeletePermission(String userUuid, Invitation invitation) {
+    private void validateInvitationDeletePermission(CustomUuid userUuid, Invitation invitation) {
         // 초대장 생성자인지 확인
         if (invitation.getInviterUserUuid().equals(userUuid)) {
             return;
@@ -191,12 +196,11 @@ public class InvitationService {
 
         // 가족 owner인지 확인
         FamilyMember membership = familyMemberRepository.findByFamilyUuidAndUserUuid(
-                invitation.getFamilyUuid(), userUuid
-        ).orElseThrow(() -> new IllegalStateException("해당 가족에 접근할 권한이 없습니다"));
+                        invitation.getFamilyUuid(), userUuid)
+                .orElseThrow(() -> new IllegalStateException("해당 가족에 접근할 권한이 없습니다"));
 
         if (!"owner".equals(membership.getRole())) {
             throw new IllegalStateException("초대장을 삭제할 권한이 없습니다");
         }
     }
 }
-

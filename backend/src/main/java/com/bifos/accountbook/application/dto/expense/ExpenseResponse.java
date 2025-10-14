@@ -8,17 +8,16 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ExpenseResponse {
-    
-    private UUID uuid;
-    private UUID familyUuid;
-    private UUID categoryUuid;
+
+    private String uuid;
+    private String familyUuid;
+    private String categoryUuid;
     private String categoryName;
     private String categoryColor;
     private BigDecimal amount;
@@ -26,12 +25,12 @@ public class ExpenseResponse {
     private LocalDateTime date;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    
+
     public static ExpenseResponse from(Expense expense) {
         return ExpenseResponse.builder()
-                .uuid(expense.getUuid())
-                .familyUuid(expense.getFamilyUuid())
-                .categoryUuid(expense.getCategoryUuid())
+                .uuid(expense.getUuid().toString())
+                .familyUuid(expense.getFamilyUuid().toString())
+                .categoryUuid(expense.getCategoryUuid().toString())
                 .categoryName(expense.getCategory() != null ? expense.getCategory().getName() : null)
                 .categoryColor(expense.getCategory() != null ? expense.getCategory().getColor() : null)
                 .amount(expense.getAmount())
@@ -41,12 +40,12 @@ public class ExpenseResponse {
                 .updatedAt(expense.getUpdatedAt())
                 .build();
     }
-    
+
     public static ExpenseResponse fromWithoutCategory(Expense expense) {
         return ExpenseResponse.builder()
-                .uuid(expense.getUuid())
-                .familyUuid(expense.getFamilyUuid())
-                .categoryUuid(expense.getCategoryUuid())
+                .uuid(expense.getUuid().toString())
+                .familyUuid(expense.getFamilyUuid().toString())
+                .categoryUuid(expense.getCategoryUuid().toString())
                 .amount(expense.getAmount())
                 .description(expense.getDescription())
                 .date(expense.getDate())

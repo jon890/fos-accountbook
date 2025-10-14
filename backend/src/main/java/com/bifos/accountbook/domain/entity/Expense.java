@@ -1,5 +1,6 @@
 package com.bifos.accountbook.domain.entity;
 
+import com.bifos.accountbook.domain.value.CustomUuid;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -8,12 +9,11 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "expenses", indexes = {
-    @Index(name = "idx_family_uuid_date", columnList = "family_uuid,date"),
-    @Index(name = "idx_category_uuid", columnList = "category_uuid")
+        @Index(name = "idx_family_uuid_date", columnList = "family_uuid,date"),
+        @Index(name = "idx_category_uuid", columnList = "category_uuid")
 })
 @EntityListeners(AuditingEntityListener.class)
 @Getter
@@ -27,17 +27,17 @@ public class Expense {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, columnDefinition = "BINARY(16)")
-    private UUID uuid;
+    @Column(nullable = false, unique = true, length = 36)
+    private CustomUuid uuid;
 
-    @Column(name = "family_uuid", nullable = false, columnDefinition = "BINARY(16)")
-    private UUID familyUuid;
+    @Column(name = "family_uuid", nullable = false, length = 36)
+    private CustomUuid familyUuid;
 
-    @Column(name = "category_uuid", nullable = false, columnDefinition = "BINARY(16)")
-    private UUID categoryUuid;
+    @Column(name = "category_uuid", nullable = false, length = 36)
+    private CustomUuid categoryUuid;
 
-    @Column(name = "user_uuid", nullable = false, columnDefinition = "VARCHAR(36)")
-    private String userUuid;
+    @Column(name = "user_uuid", nullable = false, length = 36)
+    private CustomUuid userUuid;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
@@ -75,7 +75,7 @@ public class Expense {
     @PrePersist
     public void prePersist() {
         if (uuid == null) {
-            uuid = UUID.randomUUID();
+            uuid = CustomUuid.generate();
         }
         if (date == null) {
             date = LocalDateTime.now();
@@ -83,4 +83,3 @@ public class Expense {
         // createdAt, updatedAt은 JPA Auditing이 자동 관리
     }
 }
-

@@ -1,5 +1,6 @@
 package com.bifos.accountbook.domain.entity;
 
+import com.bifos.accountbook.domain.value.CustomUuid;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -9,7 +10,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -22,16 +22,22 @@ import java.util.UUID;
 public class User {
 
     @Id
-    @Column(length = 191)
-    private String id; // NextAuth cuid
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @Column(nullable = false, unique = true, columnDefinition = "VARCHAR(36)")
-    private String uuid; // UUID 문자열 형식 (Auth.js 호환)
+    @Column(nullable = false, unique = true, length = 36)
+    private CustomUuid uuid;
+
+    @Column(nullable = false, length = 50)
+    private String provider; // OAuth provider (google, kakao, etc.)
+
+    @Column(name = "provider_id", nullable = false, length = 255)
+    private String providerId; // OAuth provider account ID
 
     @Column(length = 255)
     private String name;
 
-    @Column(nullable = false, unique = true, length = 255)
+    @Column(nullable = false, length = 255)
     private String email;
 
     // Auth.js Prisma Adapter가 camelCase 컬럼명을 사용하므로 통일
@@ -54,7 +60,7 @@ public class User {
 
     // NextAuth.js가 Account, Session 테이블을 관리하므로
     // 백엔드에서는 관계를 제거합니다.
-    
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<FamilyMember> familyMembers = new ArrayList<>();
@@ -62,9 +68,8 @@ public class User {
     @PrePersist
     public void prePersist() {
         if (uuid == null) {
-            uuid = UUID.randomUUID().toString(); // 문자열 형식으로 변환
+            uuid = CustomUuid.generate();
         }
         // createdAt, updatedAt은 JPA Auditing이 자동 관리
     }
 }
-

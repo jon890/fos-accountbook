@@ -7,16 +7,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class InvitationResponse {
-    
-    private UUID uuid;
-    private UUID familyUuid;
+
+    private String uuid;
+    private String familyUuid;
     private String familyName;
     private String token;
     private String status;
@@ -24,14 +23,14 @@ public class InvitationResponse {
     private LocalDateTime createdAt;
     private boolean isExpired;
     private boolean isUsed;
-    
+
     public static InvitationResponse from(Invitation invitation) {
         boolean isExpired = invitation.getExpiresAt().isBefore(LocalDateTime.now());
         boolean isUsed = "ACCEPTED".equals(invitation.getStatus());
-        
+
         return InvitationResponse.builder()
-                .uuid(invitation.getUuid())
-                .familyUuid(invitation.getFamilyUuid())
+                .uuid(invitation.getUuid().toString())
+                .familyUuid(invitation.getFamilyUuid().toString())
                 .token(invitation.getToken())
                 .status(invitation.getStatus())
                 .expiresAt(invitation.getExpiresAt())
@@ -40,7 +39,7 @@ public class InvitationResponse {
                 .isUsed(isUsed)
                 .build();
     }
-    
+
     public static InvitationResponse fromWithFamilyName(Invitation invitation, String familyName) {
         InvitationResponse response = from(invitation);
         return InvitationResponse.builder()
@@ -56,4 +55,3 @@ public class InvitationResponse {
                 .build();
     }
 }
-

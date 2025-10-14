@@ -1,18 +1,17 @@
 package com.bifos.accountbook.domain.entity;
 
+import com.bifos.accountbook.domain.value.CustomUuid;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "invitations", indexes = {
-    @Index(name = "idx_token", columnList = "token"),
-    @Index(name = "idx_family_uuid", columnList = "family_uuid")
+        @Index(name = "idx_token", columnList = "token"),
+        @Index(name = "idx_family_uuid", columnList = "family_uuid")
 })
 @EntityListeners(AuditingEntityListener.class)
 @Getter
@@ -26,14 +25,14 @@ public class Invitation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, columnDefinition = "BINARY(16)")
-    private UUID uuid;
+    @Column(nullable = false, unique = true, length = 36)
+    private CustomUuid uuid;
 
-    @Column(name = "family_uuid", nullable = false, columnDefinition = "BINARY(16)")
-    private UUID familyUuid;
+    @Column(name = "family_uuid", nullable = false, length = 36)
+    private CustomUuid familyUuid;
 
-    @Column(name = "inviter_user_uuid", nullable = false, columnDefinition = "VARCHAR(36)")
-    private String inviterUserUuid;
+    @Column(name = "inviter_user_uuid", nullable = false, length = 36)
+    private CustomUuid inviterUserUuid;
 
     @Column(nullable = false, unique = true, length = 255)
     private String token;
@@ -63,9 +62,8 @@ public class Invitation {
     @PrePersist
     public void prePersist() {
         if (uuid == null) {
-            uuid = UUID.randomUUID();
+            uuid = CustomUuid.generate();
         }
         // createdAt은 JPA Auditing이 자동 관리
     }
 }
-

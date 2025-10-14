@@ -23,26 +23,27 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
 
     /**
-     * 사용자 등록 (NextAuth에서 사용자 정보 전달)
+     * 사용자 등록 또는 로그인 (OAuth 로그인 시 사용)
      */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        // 이미 존재하는 사용자인지 확인
-        if (userRepository.existsByEmail(request.getEmail())) {
+        // provider + providerId로 기존 사용자 확인
+        if (userRepository.existsByProviderAndProviderId(request.getProvider(), request.getProviderId())) {
             // 이미 존재하면 로그인 처리
-            return loginExistingUser(request.getEmail());
+            return loginExistingUserByProvider(request.getProvider(), request.getProviderId());
         }
 
-        // 새 사용자 생성
+        // 새 사용자 생성 (ID는 AUTO_INCREMENT로 자동 생성)
         User user = User.builder()
-                .id(request.getId())
+                .provider(request.getProvider())
+                .providerId(request.getProviderId())
                 .email(request.getEmail())
                 .name(request.getName())
                 .image(request.getImage())
                 .build();
 
         user = userRepository.save(user);
-        log.info("Registered new user: {} ({})", user.getEmail(), user.getId());
+        log.info("Registered new user: {} ({}) - ID: {}", user.getProvider(), user.getEmail(), user.getId());
 
         return generateAuthResponse(user);
     }
@@ -63,10 +64,24 @@ public class AuthService {
     }
 
     /**
-     * 기존 사용자 로그인
+     * 기존 사용자 로그인 (이메일로 조회)
      */
     private AuthResponse loginExistingUser(String email) {
         User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+
+        if (user.getDeletedAt() != null) {
+            throw new IllegalStateException("삭제된 사용자입니다");
+        }
+
+        return generateAuthResponse(user);
+    }
+
+    /**
+     * 기존 사용자 로그인 (provider + providerId로 조회)
+     */
+    private AuthResponse loginExistingUserByProvider(String provider, String providerId) {
+        User user = userRepository.findByProviderAndProviderId(provider, providerId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
 
         if (user.getDeletedAt() != null) {
@@ -86,7 +101,7 @@ public class AuthService {
         }
 
         String userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(Long.parseLong(userId))
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
 
         if (user.getDeletedAt() != null) {
@@ -101,12 +116,13 @@ public class AuthService {
      */
     @Transactional(readOnly = true)
     public AuthResponse.UserInfo getCurrentUser(String userId) {
-        User user = userRepository.findById(userId)
+        Long id = Long.parseLong(userId);
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
 
         return AuthResponse.UserInfo.builder()
-                .id(user.getId())
-                .uuid(user.getUuid())
+                .id(user.getId().toString())
+                .uuid(user.getUuid().toString())
                 .email(user.getEmail())
                 .name(user.getName())
                 .image(user.getImage())
@@ -119,8 +135,8 @@ public class AuthService {
     private AuthResponse generateAuthResponse(User user) {
         var authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
 
-        String accessToken = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), authorities);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
+        String accessToken = jwtTokenProvider.generateToken(user.getId().toString(), user.getEmail(), authorities);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId().toString());
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
@@ -128,8 +144,8 @@ public class AuthService {
                 .tokenType("Bearer")
                 .expiresIn(86400L) // 24시간 (초 단위)
                 .user(AuthResponse.UserInfo.builder()
-                        .id(user.getId())
-                        .uuid(user.getUuid())
+                        .id(user.getId().toString())
+                        .uuid(user.getUuid().toString())
                         .email(user.getEmail())
                         .name(user.getName())
                         .image(user.getImage())
@@ -137,4 +153,3 @@ public class AuthService {
                 .build();
     }
 }
-

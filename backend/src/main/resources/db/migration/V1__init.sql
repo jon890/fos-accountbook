@@ -3,74 +3,43 @@
 -- =====================================================
 -- Flyway Migration V1: Initial Schema
 -- 
--- Auth.js 테이블과 비즈니스 테이블을 모두 생성합니다.
--- Auth.js Prisma Adapter는 camelCase 컬럼명을 사용합니다.
+-- 백엔드 전용 JWT 인증 방식 사용
+-- 모든 UUID는 VARCHAR(36) 문자열 형식 사용
+-- OAuth provider 기반 사용자 고유성 보장
 -- =====================================================
 
 -- =====================================================
--- Auth.js 인증 테이블
+-- Users 테이블
 -- =====================================================
+-- OAuth 기반 인증 사용자 관리
+-- provider + provider_id로 고유성 보장
 
--- Users 테이블 (Auth.js & 백엔드 공유)
 CREATE TABLE IF NOT EXISTS `users` (
-    `id` VARCHAR(191) NOT NULL PRIMARY KEY,
-    `uuid` BINARY(16) NOT NULL UNIQUE,
+    `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `uuid` VARCHAR(36) NOT NULL UNIQUE,
+    `provider` VARCHAR(50) NOT NULL COMMENT 'OAuth provider (google, kakao, etc.)',
+    `provider_id` VARCHAR(255) NOT NULL COMMENT 'OAuth provider account ID',
     `name` VARCHAR(255),
-    `email` VARCHAR(255) NOT NULL UNIQUE,
+    `email` VARCHAR(255) NOT NULL,
     `emailVerified` DATETIME(3),
     `image` VARCHAR(500),
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     `deletedAt` DATETIME(3),
+    UNIQUE KEY `unique_provider_account` (`provider`, `provider_id`),
     INDEX `idx_users_email` (`email`),
     INDEX `idx_users_uuid` (`uuid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Accounts 테이블 (Auth.js 전용)
-CREATE TABLE IF NOT EXISTS `accounts` (
-    `id` VARCHAR(191) NOT NULL PRIMARY KEY,
-    `userId` VARCHAR(191) NOT NULL,
-    `type` VARCHAR(100) NOT NULL,
-    `provider` VARCHAR(100) NOT NULL,
-    `providerAccountId` VARCHAR(255) NOT NULL,
-    `refresh_token` TEXT,
-    `access_token` TEXT,
-    `expires_at` INT,
-    `token_type` VARCHAR(100),
-    `scope` VARCHAR(500),
-    `id_token` TEXT,
-    `session_state` VARCHAR(500),
-    UNIQUE KEY `unique_provider_account` (`provider`, `providerAccountId`),
-    INDEX `idx_accounts_userId` (`userId`),
-    CONSTRAINT `fk_accounts_user` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Sessions 테이블 (Auth.js 전용)
-CREATE TABLE IF NOT EXISTS `sessions` (
-    `id` VARCHAR(191) NOT NULL PRIMARY KEY,
-    `sessionToken` VARCHAR(255) NOT NULL UNIQUE,
-    `userId` VARCHAR(191) NOT NULL,
-    `expires` DATETIME(3) NOT NULL,
-    INDEX `idx_sessions_userId` (`userId`),
-    CONSTRAINT `fk_sessions_user` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Verification Tokens 테이블 (Auth.js 전용)
-CREATE TABLE IF NOT EXISTS `verification_tokens` (
-    `identifier` VARCHAR(255) NOT NULL,
-    `token` VARCHAR(255) NOT NULL UNIQUE,
-    `expires` DATETIME(3) NOT NULL,
-    UNIQUE KEY `unique_identifier_token` (`identifier`, `token`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 -- =====================================================
+
 -- 비즈니스 테이블
 -- =====================================================
 
 -- Families 테이블
 CREATE TABLE IF NOT EXISTS `families` (
     `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `uuid` BINARY(16) NOT NULL UNIQUE,
+    `uuid` VARCHAR(36) NOT NULL UNIQUE,
     `name` VARCHAR(255) NOT NULL,
     `description` TEXT,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -82,9 +51,9 @@ CREATE TABLE IF NOT EXISTS `families` (
 -- Family Members 테이블
 CREATE TABLE IF NOT EXISTS `family_members` (
     `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `uuid` BINARY(16) NOT NULL UNIQUE,
-    `family_uuid` BINARY(16) NOT NULL,
-    `user_uuid` BINARY(16) NOT NULL,
+    `uuid` VARCHAR(36) NOT NULL UNIQUE,
+    `family_uuid` VARCHAR(36) NOT NULL,
+    `user_uuid` VARCHAR(36) NOT NULL,
     `role` VARCHAR(50) NOT NULL DEFAULT 'member',
     `joined_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `deleted_at` DATETIME(3),
@@ -98,8 +67,8 @@ CREATE TABLE IF NOT EXISTS `family_members` (
 -- Categories 테이블
 CREATE TABLE IF NOT EXISTS `categories` (
     `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `uuid` BINARY(16) NOT NULL UNIQUE,
-    `family_uuid` BINARY(16) NOT NULL,
+    `uuid` VARCHAR(36) NOT NULL UNIQUE,
+    `family_uuid` VARCHAR(36) NOT NULL,
     `name` VARCHAR(255) NOT NULL,
     `icon` VARCHAR(50),
     `color` VARCHAR(50),
@@ -113,10 +82,10 @@ CREATE TABLE IF NOT EXISTS `categories` (
 -- Expenses 테이블
 CREATE TABLE IF NOT EXISTS `expenses` (
     `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `uuid` BINARY(16) NOT NULL UNIQUE,
-    `family_uuid` BINARY(16) NOT NULL,
-    `category_uuid` BINARY(16) NOT NULL,
-    `user_uuid` BINARY(16) NOT NULL,
+    `uuid` VARCHAR(36) NOT NULL UNIQUE,
+    `family_uuid` VARCHAR(36) NOT NULL,
+    `category_uuid` VARCHAR(36) NOT NULL,
+    `user_uuid` VARCHAR(36) NOT NULL,
     `amount` DECIMAL(15, 2) NOT NULL,
     `description` TEXT,
     `date` DATETIME(3) NOT NULL,
@@ -135,9 +104,9 @@ CREATE TABLE IF NOT EXISTS `expenses` (
 -- Invitations 테이블
 CREATE TABLE IF NOT EXISTS `invitations` (
     `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `uuid` BINARY(16) NOT NULL UNIQUE,
-    `family_uuid` BINARY(16) NOT NULL,
-    `inviter_user_uuid` BINARY(16) NOT NULL,
+    `uuid` VARCHAR(36) NOT NULL UNIQUE,
+    `family_uuid` VARCHAR(36) NOT NULL,
+    `inviter_user_uuid` VARCHAR(36) NOT NULL,
     `token` VARCHAR(255) NOT NULL UNIQUE,
     `expires_at` DATETIME(3) NOT NULL,
     `status` VARCHAR(50) NOT NULL DEFAULT 'PENDING',
@@ -152,3 +121,10 @@ CREATE TABLE IF NOT EXISTS `invitations` (
     CONSTRAINT `fk_invitations_inviter` FOREIGN KEY (`inviter_user_uuid`) REFERENCES `users`(`uuid`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- =====================================================
+-- 완료
+-- =====================================================
+-- ✅ 모든 UUID는 VARCHAR(36) 문자열 형식
+-- ✅ Users 테이블: BIGINT AUTO_INCREMENT + OAuth provider 정보
+-- ✅ NextAuth 전용 테이블 없음 (JWT 인증 사용)
+-- ✅ 모든 비즈니스 테이블 생성 완료

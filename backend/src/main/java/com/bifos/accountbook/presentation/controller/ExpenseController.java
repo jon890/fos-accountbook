@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
+import com.bifos.accountbook.domain.value.CustomUuid;
 
 @Slf4j
 @RestController
@@ -30,7 +30,7 @@ public class ExpenseController {
     @PostMapping
     public ResponseEntity<ApiSuccessResponse<ExpenseResponse>> createExpense(
             Authentication authentication,
-            @PathVariable UUID familyUuid,
+            @PathVariable String familyUuid,
             @Valid @RequestBody CreateExpenseRequest request
     ) {
         String userId = authentication.getName();
@@ -49,7 +49,7 @@ public class ExpenseController {
     @GetMapping
     public ResponseEntity<ApiSuccessResponse<Page<ExpenseResponse>>> getFamilyExpenses(
             Authentication authentication,
-            @PathVariable UUID familyUuid,
+            @PathVariable String familyUuid,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
@@ -67,8 +67,8 @@ public class ExpenseController {
     @GetMapping("/{expenseUuid}")
     public ResponseEntity<ApiSuccessResponse<ExpenseResponse>> getExpense(
             Authentication authentication,
-            @PathVariable UUID familyUuid,
-            @PathVariable UUID expenseUuid
+            @PathVariable String familyUuid,
+            @PathVariable String expenseUuid
     ) {
         String userId = authentication.getName();
         log.info("Fetching expense: {} by user: {}", expenseUuid, userId);
@@ -84,8 +84,8 @@ public class ExpenseController {
     @PutMapping("/{expenseUuid}")
     public ResponseEntity<ApiSuccessResponse<ExpenseResponse>> updateExpense(
             Authentication authentication,
-            @PathVariable UUID familyUuid,
-            @PathVariable UUID expenseUuid,
+            @PathVariable String familyUuid,
+            @PathVariable String expenseUuid,
             @Valid @RequestBody UpdateExpenseRequest request
     ) {
         String userId = authentication.getName();
@@ -102,8 +102,8 @@ public class ExpenseController {
     @DeleteMapping("/{expenseUuid}")
     public ResponseEntity<ApiSuccessResponse<Void>> deleteExpense(
             Authentication authentication,
-            @PathVariable UUID familyUuid,
-            @PathVariable UUID expenseUuid
+            @PathVariable String familyUuid,
+            @PathVariable String expenseUuid
     ) {
         String userId = authentication.getName();
         log.info("Deleting expense: {} by user: {}", expenseUuid, userId);

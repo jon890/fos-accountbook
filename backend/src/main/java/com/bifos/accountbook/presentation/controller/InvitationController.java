@@ -14,7 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
+import com.bifos.accountbook.domain.value.CustomUuid;
 
 @Slf4j
 @RestController
@@ -30,7 +30,7 @@ public class InvitationController {
     @PostMapping("/families/{familyUuid}")
     public ResponseEntity<ApiSuccessResponse<InvitationResponse>> createInvitation(
             Authentication authentication,
-            @PathVariable UUID familyUuid,
+            @PathVariable String familyUuid,
             @Valid @RequestBody(required = false) CreateInvitationRequest request
     ) {
         String userId = authentication.getName();
@@ -53,7 +53,7 @@ public class InvitationController {
     @GetMapping("/families/{familyUuid}")
     public ResponseEntity<ApiSuccessResponse<List<InvitationResponse>>> getFamilyInvitations(
             Authentication authentication,
-            @PathVariable UUID familyUuid
+            @PathVariable String familyUuid
     ) {
         String userId = authentication.getName();
         log.info("Fetching invitations for family: {} by user: {}", familyUuid, userId);
@@ -99,7 +99,7 @@ public class InvitationController {
     @DeleteMapping("/{invitationUuid}")
     public ResponseEntity<ApiSuccessResponse<Void>> deleteInvitation(
             Authentication authentication,
-            @PathVariable UUID invitationUuid
+            @PathVariable String invitationUuid
     ) {
         String userId = authentication.getName();
         log.info("Deleting invitation: {} by user: {}", invitationUuid, userId);

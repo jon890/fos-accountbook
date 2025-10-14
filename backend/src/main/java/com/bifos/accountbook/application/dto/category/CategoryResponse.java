@@ -7,26 +7,25 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CategoryResponse {
-    
-    private UUID uuid;
-    private UUID familyUuid;
+
+    private String uuid;
+    private String familyUuid;
     private String name;
     private String color;
     private String icon;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    
+
     public static CategoryResponse from(Category category) {
         return CategoryResponse.builder()
-                .uuid(category.getUuid())
-                .familyUuid(category.getFamilyUuid())
+                .uuid(category.getUuid().toString())
+                .familyUuid(category.getFamilyUuid().toString())
                 .name(category.getName())
                 .color(category.getColor())
                 .icon(category.getIcon())
@@ -35,4 +34,3 @@ public class CategoryResponse {
                 .build();
     }
 }
-

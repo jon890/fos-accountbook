@@ -19,7 +19,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @Tag(name = "가족 (Family)", description = "가족 생성, 조회, 수정, 삭제 API")
 @Slf4j
@@ -37,8 +36,7 @@ public class FamilyController {
     @PostMapping
     public ResponseEntity<ApiSuccessResponse<FamilyResponse>> createFamily(
             Authentication authentication,
-            @Valid @RequestBody CreateFamilyRequest request
-    ) {
+            @Valid @RequestBody CreateFamilyRequest request) {
         String userId = authentication.getName();
         log.info("Creating family for user: {}", userId);
 
@@ -53,8 +51,7 @@ public class FamilyController {
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @GetMapping
     public ResponseEntity<ApiSuccessResponse<List<FamilyResponse>>> getUserFamilies(
-            Authentication authentication
-    ) {
+            Authentication authentication) {
         String userId = authentication.getName();
         log.info("Fetching families for user: {}", userId);
 
@@ -69,8 +66,7 @@ public class FamilyController {
     @GetMapping("/{familyUuid}")
     public ResponseEntity<ApiSuccessResponse<FamilyResponse>> getFamily(
             Authentication authentication,
-            @Parameter(description = "가족 UUID") @PathVariable UUID familyUuid
-    ) {
+            @Parameter(description = "가족 UUID") @PathVariable String familyUuid) {
         String userId = authentication.getName();
         log.info("Fetching family: {} for user: {}", familyUuid, userId);
 
@@ -85,9 +81,8 @@ public class FamilyController {
     @PutMapping("/{familyUuid}")
     public ResponseEntity<ApiSuccessResponse<FamilyResponse>> updateFamily(
             Authentication authentication,
-            @Parameter(description = "가족 UUID") @PathVariable UUID familyUuid,
-            @Valid @RequestBody UpdateFamilyRequest request
-    ) {
+            @Parameter(description = "가족 UUID") @PathVariable String familyUuid,
+            @Valid @RequestBody UpdateFamilyRequest request) {
         String userId = authentication.getName();
         log.info("Updating family: {} by user: {}", familyUuid, userId);
 
@@ -102,8 +97,7 @@ public class FamilyController {
     @DeleteMapping("/{familyUuid}")
     public ResponseEntity<ApiSuccessResponse<Void>> deleteFamily(
             Authentication authentication,
-            @Parameter(description = "가족 UUID") @PathVariable UUID familyUuid
-    ) {
+            @Parameter(description = "가족 UUID") @PathVariable String familyUuid) {
         String userId = authentication.getName();
         log.info("Deleting family: {} by user: {}", familyUuid, userId);
 
@@ -112,4 +106,3 @@ public class FamilyController {
         return ResponseEntity.ok(ApiSuccessResponse.of("가족이 삭제되었습니다", null));
     }
 }
-

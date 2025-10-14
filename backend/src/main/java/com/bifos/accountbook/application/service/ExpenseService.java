@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
+import com.bifos.accountbook.domain.value.CustomUuid;
 
 @Slf4j
 @Service
@@ -36,26 +36,29 @@ public class ExpenseService {
      * 지출 생성
      */
     @Transactional
-    public ExpenseResponse createExpense(String userId, UUID familyUuid, CreateExpenseRequest request) {
+    public ExpenseResponse createExpense(String userId, String familyUuid, CreateExpenseRequest request) {
+        CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
+        CustomUuid categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
+
         // 사용자 확인
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(Long.parseLong(userId))
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
-        
+
         // 권한 확인
-        validateFamilyAccess(userId, familyUuid);
+        validateFamilyAccess(userId, familyCustomUuid);
 
         // 카테고리 확인
-        Category category = categoryRepository.findActiveByUuid(request.getCategoryUuid())
+        Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
                 .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다"));
 
-        if (!category.getFamilyUuid().equals(familyUuid)) {
+        if (!category.getFamilyUuid().equals(familyCustomUuid)) {
             throw new IllegalArgumentException("해당 가족의 카테고리가 아닙니다");
         }
 
         // 지출 생성
         Expense expense = Expense.builder()
-                .familyUuid(familyUuid)
-                .categoryUuid(request.getCategoryUuid())
+                .familyUuid(familyCustomUuid)
+                .categoryUuid(categoryCustomUuid)
                 .userUuid(user.getUuid())
                 .amount(request.getAmount())
                 .description(request.getDescription())
@@ -72,12 +75,14 @@ public class ExpenseService {
      * 가족의 지출 목록 조회 (페이징)
      */
     @Transactional(readOnly = true)
-    public Page<ExpenseResponse> getFamilyExpenses(String userId, UUID familyUuid, int page, int size) {
+    public Page<ExpenseResponse> getFamilyExpenses(String userId, String familyUuid, int page, int size) {
+        CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
+
         // 권한 확인
-        validateFamilyAccess(userId, familyUuid);
+        validateFamilyAccess(userId, familyCustomUuid);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date"));
-        Page<Expense> expenses = expenseRepository.findAllByFamilyUuid(familyUuid, pageable);
+        Page<Expense> expenses = expenseRepository.findAllByFamilyUuid(familyCustomUuid, pageable);
 
         return expenses.map(ExpenseResponse::fromWithoutCategory);
     }
@@ -86,8 +91,10 @@ public class ExpenseService {
      * 지출 상세 조회
      */
     @Transactional(readOnly = true)
-    public ExpenseResponse getExpense(String userId, UUID expenseUuid) {
-        Expense expense = expenseRepository.findActiveByUuid(expenseUuid)
+    public ExpenseResponse getExpense(String userId, String expenseUuid) {
+        CustomUuid expenseCustomUuid = CustomUuid.from(expenseUuid);
+
+        Expense expense = expenseRepository.findActiveByUuid(expenseCustomUuid)
                 .orElseThrow(() -> new IllegalArgumentException("지출을 찾을 수 없습니다"));
 
         // 권한 확인
@@ -100,8 +107,10 @@ public class ExpenseService {
      * 지출 수정
      */
     @Transactional
-    public ExpenseResponse updateExpense(String userId, UUID expenseUuid, UpdateExpenseRequest request) {
-        Expense expense = expenseRepository.findActiveByUuid(expenseUuid)
+    public ExpenseResponse updateExpense(String userId, String expenseUuid, UpdateExpenseRequest request) {
+        CustomUuid expenseCustomUuid = CustomUuid.from(expenseUuid);
+
+        Expense expense = expenseRepository.findActiveByUuid(expenseCustomUuid)
                 .orElseThrow(() -> new IllegalArgumentException("지출을 찾을 수 없습니다"));
 
         // 권한 확인
@@ -109,14 +118,15 @@ public class ExpenseService {
 
         // 카테고리 변경
         if (request.getCategoryUuid() != null) {
-            Category category = categoryRepository.findActiveByUuid(request.getCategoryUuid())
+            CustomUuid categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
+            Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
                     .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다"));
 
             if (!category.getFamilyUuid().equals(expense.getFamilyUuid())) {
                 throw new IllegalArgumentException("해당 가족의 카테고리가 아닙니다");
             }
 
-            expense.setCategoryUuid(request.getCategoryUuid());
+            expense.setCategoryUuid(categoryCustomUuid);
         }
 
         // 금액 변경
@@ -144,8 +154,10 @@ public class ExpenseService {
      * 지출 삭제 (Soft Delete)
      */
     @Transactional
-    public void deleteExpense(String userId, UUID expenseUuid) {
-        Expense expense = expenseRepository.findActiveByUuid(expenseUuid)
+    public void deleteExpense(String userId, String expenseUuid) {
+        CustomUuid expenseCustomUuid = CustomUuid.from(expenseUuid);
+
+        Expense expense = expenseRepository.findActiveByUuid(expenseCustomUuid)
                 .orElseThrow(() -> new IllegalArgumentException("지출을 찾을 수 없습니다"));
 
         // 권한 확인
@@ -160,17 +172,15 @@ public class ExpenseService {
     /**
      * 가족 접근 권한 확인
      */
-    private void validateFamilyAccess(String userId, UUID familyUuid) {
-        User user = userRepository.findById(userId)
+    private void validateFamilyAccess(String userId, CustomUuid familyUuid) {
+        User user = userRepository.findById(Long.parseLong(userId))
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
 
         boolean isMember = familyMemberRepository.existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(
-                familyUuid, user.getUuid()
-        );
+                familyUuid, user.getUuid());
 
         if (!isMember) {
             throw new IllegalStateException("해당 가족에 접근할 권한이 없습니다");
         }
     }
 }
-

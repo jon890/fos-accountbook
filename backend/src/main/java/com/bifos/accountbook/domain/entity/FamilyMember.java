@@ -1,14 +1,14 @@
 package com.bifos.accountbook.domain.entity;
 
+import com.bifos.accountbook.domain.value.CustomUuid;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "family_members", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"family_uuid", "user_uuid"})
+        @UniqueConstraint(columnNames = { "family_uuid", "user_uuid" })
 })
 @Getter
 @Setter
@@ -21,14 +21,14 @@ public class FamilyMember {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, columnDefinition = "BINARY(16)")
-    private UUID uuid;
+    @Column(nullable = false, unique = true, length = 36)
+    private CustomUuid uuid;
 
-    @Column(name = "family_uuid", nullable = false, columnDefinition = "BINARY(16)")
-    private UUID familyUuid;
+    @Column(name = "family_uuid", nullable = false, length = 36)
+    private CustomUuid familyUuid;
 
-    @Column(name = "user_uuid", nullable = false, columnDefinition = "VARCHAR(36)")
-    private String userUuid;
+    @Column(name = "user_uuid", nullable = false, length = 36)
+    private CustomUuid userUuid;
 
     @Column(nullable = false, length = 20)
     @Builder.Default
@@ -52,11 +52,7 @@ public class FamilyMember {
     @PrePersist
     public void prePersist() {
         if (uuid == null) {
-            uuid = UUID.randomUUID();
-        }
-        if (joinedAt == null) {
-            joinedAt = LocalDateTime.now();
+            uuid = CustomUuid.generate();
         }
     }
 }
-

@@ -1,5 +1,6 @@
 package com.bifos.accountbook.domain.entity;
 
+import com.bifos.accountbook.domain.value.CustomUuid;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -9,7 +10,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "families")
@@ -25,8 +25,8 @@ public class Family {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, columnDefinition = "BINARY(16)")
-    private UUID uuid;
+    @Column(nullable = false, unique = true, length = 36)
+    private CustomUuid uuid;
 
     @Column(nullable = false, length = 100)
     private String name;
@@ -57,9 +57,8 @@ public class Family {
     @PrePersist
     public void prePersist() {
         if (uuid == null) {
-            uuid = UUID.randomUUID();
+            uuid = CustomUuid.generate();
         }
         // createdAt, updatedAt은 JPA Auditing이 자동 관리
     }
 }
-
