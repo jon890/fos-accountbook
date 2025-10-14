@@ -10,10 +10,11 @@ import { BackendAuthResponse } from "./types";
 /**
  * 백엔드 API에서 JWT 토큰 획득
  *
- * NextAuth 로그인 시 백엔드에 사용자를 등록하고 JWT 토큰을 발급받습니다.
+ * OAuth 로그인 시 백엔드에 사용자를 등록하고 JWT 토큰을 발급받습니다.
  */
 export async function getBackendJWT(user: {
-  id: string;
+  provider: string;
+  providerId: string;
   email?: string | null;
   name?: string | null;
   image?: string | null;
@@ -25,7 +26,8 @@ export async function getBackendJWT(user: {
       {
         method: "POST",
         body: JSON.stringify({
-          id: user.id, // NextAuth user.id 전달
+          provider: user.provider,
+          providerId: user.providerId,
           email: user.email,
           name: user.name,
           image: user.image,

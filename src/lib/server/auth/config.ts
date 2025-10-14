@@ -66,10 +66,11 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     async jwt({ token, user, account }) {
       // 초기 로그인 시
-      if (user && account && user.id) {
+      if (user && account && user.email) {
         // 백엔드에서 JWT 토큰 획득
         const backendAuth = await getBackendJWT({
-          id: user.id,
+          provider: account.provider, // OAuth provider (google, kakao, etc.)
+          providerId: account.providerAccountId, // OAuth provider account ID
           email: user.email,
           name: user.name,
           image: user.image,
@@ -119,14 +120,15 @@ export const authConfig: NextAuthConfig = {
       // OAuth 로그인 시 백엔드 인증 검증
       if (account?.provider === "google") {
         try {
-          if (!user.id) {
+          if (!user.email || !account.providerAccountId) {
             return false;
           }
 
           // 백엔드에서 JWT 토큰 획득 (로그인 시점에 검증)
           // 백엔드 register API는 이미 존재하는 사용자는 로그인 처리
           const backendAuth = await getBackendJWT({
-            id: user.id,
+            provider: account.provider,
+            providerId: account.providerAccountId,
             email: user.email,
             name: user.name,
             image: user.image,
