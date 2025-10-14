@@ -10,11 +10,11 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { apiPost } from "@/lib/client";
+import { apiPost } from "@/lib/client/api";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 
 export default function CreateFamilyPage() {
   const [familyName, setFamilyName] = useState("");
@@ -39,6 +39,7 @@ export default function CreateFamilyPage() {
       console.log("session", session);
       if (!token) {
         toast.error("인증 정보가 없습니다. 다시 로그인해주세요.");
+        router.push("/api/auth/signin");
         return;
       }
 

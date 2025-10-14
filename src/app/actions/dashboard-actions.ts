@@ -3,19 +3,24 @@
  * 백엔드 API를 호출하여 대시보드 데이터 조회
  */
 
-'use server'
+"use server";
 
-import { serverApiGet } from "@/lib/server/api/client"
-import { auth } from "@/lib/server/auth"
-import type { CategoryResponse, ExpenseResponse, FamilyResponse, PageResponse } from "@/types/api"
+import { serverApiGet } from "@/lib/server/api";
+import { auth } from "@/lib/server/auth";
+import type {
+  CategoryResponse,
+  ExpenseResponse,
+  FamilyResponse,
+  PageResponse,
+} from "@/types/api";
 
 export interface DashboardStats {
-  monthlyExpense: number
-  remainingBudget: number
-  familyMembers: number
-  budget: number
-  year: number
-  month: number
+  monthlyExpense: number;
+  remainingBudget: number;
+  familyMembers: number;
+  budget: number;
+  year: number;
+  month: number;
 }
 
 /**
@@ -23,46 +28,48 @@ export interface DashboardStats {
  */
 export async function getDashboardStats(): Promise<DashboardStats | null> {
   try {
-    const session = await auth()
-    
+    const session = await auth();
+
     if (!session?.user?.id) {
-      return null
+      return null;
     }
 
     // 사용자의 첫 번째 가족 정보 조회
-    const families = await serverApiGet<FamilyResponse[]>("/families")
-    
+    const families = await serverApiGet<FamilyResponse[]>("/families");
+
     if (!families || families.length === 0) {
-      return null
+      return null;
     }
 
-    const family = families[0]
+    const family = families[0];
 
     // 현재 연도와 월 계산
-    const now = new Date()
-    const year = now.getFullYear()
-    const month = now.getMonth() + 1
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
 
     // 이번 달 지출 목록 조회 (간단하게 전체 조회 후 필터링)
     const expenses = await serverApiGet<PageResponse<ExpenseResponse>>(
       `/families/${family.uuid}/expenses?page=0&size=1000`
-    )
+    );
 
     // 이번 달 지출만 필터링하고 합계 계산
     const monthlyExpense = expenses.content
-      .filter(expense => {
-        const expenseDate = new Date(expense.date)
-        return expenseDate.getFullYear() === year && 
-               expenseDate.getMonth() + 1 === month
+      .filter((expense) => {
+        const expenseDate = new Date(expense.date);
+        return (
+          expenseDate.getFullYear() === year &&
+          expenseDate.getMonth() + 1 === month
+        );
       })
-      .reduce((sum, expense) => sum + parseFloat(expense.amount), 0)
+      .reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
 
     // 가족 구성원 수
-    const familyMembers = family.memberCount || 0
+    const familyMembers = family.memberCount || 0;
 
     // 예산 정보 (추후 예산 기능 구현 시 실제 데이터로 대체)
-    const budget = 0
-    const remainingBudget = Math.max(0, budget - monthlyExpense)
+    const budget = 0;
+    const remainingBudget = Math.max(0, budget - monthlyExpense);
 
     return {
       monthlyExpense,
@@ -71,36 +78,36 @@ export async function getDashboardStats(): Promise<DashboardStats | null> {
       budget,
       year,
       month,
-    }
+    };
   } catch (error) {
-    console.error('Failed to load dashboard stats:', error)
-    return null
+    console.error("Failed to load dashboard stats:", error);
+    return null;
   }
 }
 
 /**
  * 가족 정보 존재 여부 확인
  */
-export async function checkUserFamily(): Promise<{ 
-  hasFamily: boolean
-  familyId?: string 
+export async function checkUserFamily(): Promise<{
+  hasFamily: boolean;
+  familyId?: string;
 }> {
   try {
-    const session = await auth()
-    
+    const session = await auth();
+
     if (!session?.user?.id) {
-      return { hasFamily: false }
+      return { hasFamily: false };
     }
 
-    const families = await serverApiGet<FamilyResponse[]>("/families")
-    
+    const families = await serverApiGet<FamilyResponse[]>("/families");
+
     return {
       hasFamily: families && families.length > 0,
-      familyId: families && families.length > 0 ? families[0].uuid : undefined
-    }
+      familyId: families && families.length > 0 ? families[0].uuid : undefined,
+    };
   } catch (error) {
-    console.error('Failed to check family:', error)
-    return { hasFamily: false }
+    console.error("Failed to check family:", error);
+    return { hasFamily: false };
   }
 }
 
@@ -108,51 +115,53 @@ export async function checkUserFamily(): Promise<{
  * 최근 지출 내역 조회 (최대 10개)
  */
 export interface RecentExpense {
-  id: string
-  uuid: string
-  amount: string
-  description: string | null
-  date: Date
+  id: string;
+  uuid: string;
+  amount: string;
+  description: string | null;
+  date: Date;
   category: {
-    id: string
-    name: string
-    color: string
-    icon: string
-  }
+    id: string;
+    name: string;
+    color: string;
+    icon: string;
+  };
 }
 
-export async function getRecentExpenses(limit: number = 10): Promise<RecentExpense[]> {
+export async function getRecentExpenses(
+  limit: number = 10
+): Promise<RecentExpense[]> {
   try {
-    const session = await auth()
-    
+    const session = await auth();
+
     if (!session?.user?.id) {
-      return []
+      return [];
     }
 
     // 사용자의 첫 번째 가족 정보 조회
-    const families = await serverApiGet<FamilyResponse[]>("/families")
-    
+    const families = await serverApiGet<FamilyResponse[]>("/families");
+
     if (!families || families.length === 0) {
-      return []
+      return [];
     }
 
-    const family = families[0]
+    const family = families[0];
 
     // 최근 지출 조회 (페이징)
     const expensesPage = await serverApiGet<PageResponse<ExpenseResponse>>(
       `/families/${family.uuid}/expenses?page=0&size=${limit}&sort=-date`
-    )
+    );
 
     // 카테고리 정보 조회
     const categories = await serverApiGet<CategoryResponse[]>(
       `/families/${family.uuid}/categories`
-    )
+    );
 
     // 카테고리 맵 생성
-    const categoryMap = new Map(categories.map(cat => [cat.uuid, cat]))
+    const categoryMap = new Map(categories.map((cat) => [cat.uuid, cat]));
 
-    return expensesPage.content.map(expense => {
-      const category = categoryMap.get(expense.categoryUuid)
+    return expensesPage.content.map((expense) => {
+      const category = categoryMap.get(expense.categoryUuid);
       return {
         id: expense.uuid, // UUID를 id로 사용
         uuid: expense.uuid,
@@ -161,15 +170,15 @@ export async function getRecentExpenses(limit: number = 10): Promise<RecentExpen
         date: new Date(expense.date),
         category: {
           id: expense.categoryUuid,
-          name: category?.name || 'Unknown',
-          color: category?.color || '#6366f1',
-          icon: category?.icon || '💰',
-        }
-      }
-    })
+          name: category?.name || "Unknown",
+          color: category?.color || "#6366f1",
+          icon: category?.icon || "💰",
+        },
+      };
+    });
   } catch (error) {
-    console.error('Failed to load recent expenses:', error)
-    return []
+    console.error("Failed to load recent expenses:", error);
+    return [];
   }
 }
 
@@ -178,29 +187,29 @@ export async function getRecentExpenses(limit: number = 10): Promise<RecentExpen
  */
 export async function getFamilyCategories(): Promise<CategoryResponse[]> {
   try {
-    const session = await auth()
-    
+    const session = await auth();
+
     if (!session?.user?.id) {
-      return []
+      return [];
     }
 
     // 사용자의 첫 번째 가족 정보 조회
-    const families = await serverApiGet<FamilyResponse[]>("/families")
-    
+    const families = await serverApiGet<FamilyResponse[]>("/families");
+
     if (!families || families.length === 0) {
-      return []
+      return [];
     }
 
-    const family = families[0]
+    const family = families[0];
 
     // 카테고리 목록 조회
     const categories = await serverApiGet<CategoryResponse[]>(
       `/families/${family.uuid}/categories`
-    )
+    );
 
-    return categories
+    return categories;
   } catch (error) {
-    console.error('Failed to load categories:', error)
-    return []
+    console.error("Failed to load categories:", error);
+    return [];
   }
 }

@@ -7,6 +7,7 @@
 
 import { serverEnv } from "@/lib/env/server.env";
 import { cookies } from "next/headers";
+import { ServerApiError, ApiResponse, ServerApiOptions } from "./types";
 
 const API_URL = serverEnv.BACKEND_API_URL;
 
@@ -34,45 +35,32 @@ async function getSessionToken(): Promise<string | null> {
 }
 
 /**
- * API 에러 클래스
- */
-export class ServerApiError extends Error {
-  constructor(
-    message: string,
-    public status?: number,
-    public errorData?: unknown
-  ) {
-    super(message);
-    this.name = "ServerApiError";
-  }
-}
-
-/**
  * 서버 사이드 API 호출 헬퍼 함수
  */
 export async function serverApiClient<T = unknown>(
   endpoint: string,
-  options: RequestInit = {}
+  options: ServerApiOptions = {}
 ): Promise<T> {
   const url = `${API_URL}${endpoint}`;
-
-  // 세션 토큰 가져오기
-  const sessionToken = await getSessionToken();
+  const { skipAuth = false, ...fetchOptions } = options;
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...((options.headers as Record<string, string>) || {}),
+    ...((fetchOptions.headers as Record<string, string>) || {}),
   };
 
-  // 세션 토큰이 있으면 Authorization 헤더에 추가
-  if (sessionToken) {
-    headers["Authorization"] = `Bearer ${sessionToken}`;
+  // 인증이 필요한 경우에만 세션 토큰 추가
+  if (!skipAuth) {
+    const sessionToken = await getSessionToken();
+    if (sessionToken) {
+      headers["Authorization"] = `Bearer ${sessionToken}`;
+    }
   }
 
   const response = await fetch(url, {
-    ...options,
+    ...fetchOptions,
     headers,
-    cache: options.cache || "no-store", // Server Components는 기본적으로 캐시하지 않음
+    cache: fetchOptions.cache || "no-store", // Server Components는 기본적으로 캐시하지 않음
   });
 
   if (!response.ok) {
@@ -87,16 +75,6 @@ export async function serverApiClient<T = unknown>(
   }
 
   return response.json();
-}
-
-/**
- * 백엔드 API 응답 타입
- */
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  error?: string;
 }
 
 /**

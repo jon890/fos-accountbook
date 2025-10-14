@@ -5,13 +5,13 @@
 
 "use server";
 
-import { apiDelete, ApiError, apiGet, apiPost } from "@/lib/client";
+import { apiDelete, ApiError, apiGet, apiPost } from "@/lib/client/api";
 import { auth } from "@/lib/server/auth";
 import type {
   AcceptInvitationRequest,
   CreateInvitationRequest,
   FamilyResponse,
-  InvitationResponse
+  InvitationResponse,
 } from "@/types/api";
 import { revalidatePath } from "next/cache";
 
@@ -43,10 +43,9 @@ export async function createInvitationLink(): Promise<{
     }
 
     // 사용자의 첫 번째 가족 정보 가져오기
-    const families = await apiGet<FamilyResponse[]>(
-      "/families",
-      { token: session.user.accessToken }
-    );
+    const families = await apiGet<FamilyResponse[]>("/families", {
+      token: session.user.accessToken,
+    });
 
     if (!families || families.length === 0) {
       return {
@@ -59,7 +58,7 @@ export async function createInvitationLink(): Promise<{
 
     // 초대장 생성 (24시간 유효)
     const requestBody: CreateInvitationRequest = {
-      expiresInHours: 24
+      expiresInHours: 24,
     };
 
     const invitation = await apiPost<InvitationResponse>(
@@ -116,10 +115,9 @@ export async function getActiveInvitations(): Promise<InvitationInfo[]> {
     }
 
     // 사용자의 첫 번째 가족 정보 가져오기
-    const families = await apiGet<FamilyResponse[]>(
-      "/families",
-      { token: session.user.accessToken }
-    );
+    const families = await apiGet<FamilyResponse[]>("/families", {
+      token: session.user.accessToken,
+    });
 
     if (!families || families.length === 0) {
       return [];
@@ -157,9 +155,7 @@ export async function getActiveInvitations(): Promise<InvitationInfo[]> {
 /**
  * 초대 링크 삭제 (취소)
  */
-export async function deleteInvitation(
-  invitationUuid: string
-): Promise<{
+export async function deleteInvitation(invitationUuid: string): Promise<{
   success: boolean;
   message: string;
 }> {
@@ -173,10 +169,9 @@ export async function deleteInvitation(
     }
 
     // 초대 취소 (DELETE)
-    await apiDelete(
-      `/invitations/${invitationUuid}`,
-      { token: session.user.accessToken }
-    );
+    await apiDelete(`/invitations/${invitationUuid}`, {
+      token: session.user.accessToken,
+    });
 
     revalidatePath("/");
 
@@ -202,9 +197,7 @@ export async function deleteInvitation(
 /**
  * 초대 수락
  */
-export async function acceptInvitation(
-  token: string
-): Promise<{
+export async function acceptInvitation(token: string): Promise<{
   success: boolean;
   message: string;
   familyUuid?: string;
@@ -220,14 +213,12 @@ export async function acceptInvitation(
 
     // 초대 수락
     const requestBody: AcceptInvitationRequest = {
-      token
+      token,
     };
 
-    await apiPost(
-      `/invitations/accept`,
-      requestBody,
-      { token: session.user.accessToken }
-    );
+    await apiPost(`/invitations/accept`, requestBody, {
+      token: session.user.accessToken,
+    });
 
     revalidatePath("/");
 
@@ -265,10 +256,17 @@ export async function getInvitationInfo(token: string): Promise<{
       `/invitations/token/${token}`
     );
 
-    if (!invitation || invitation.status === "EXPIRED" || invitation.status === "CANCELLED") {
+    if (
+      !invitation ||
+      invitation.status === "EXPIRED" ||
+      invitation.status === "CANCELLED"
+    ) {
       return {
         valid: false,
-        message: invitation.status === "EXPIRED" ? "만료된 초대장입니다" : "취소된 초대장입니다",
+        message:
+          invitation.status === "EXPIRED"
+            ? "만료된 초대장입니다"
+            : "취소된 초대장입니다",
       };
     }
 

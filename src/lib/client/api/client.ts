@@ -1,26 +1,13 @@
 /**
- * 백엔드 API 클라이언트
+ * 클라이언트 API 구현
  *
  * NextAuth 세션 토큰을 자동으로 포함하여 백엔드 API를 호출합니다.
  */
 
 import { clientEnv } from "@/lib/env";
+import { ApiError, ApiResponse, ApiOptions } from "./types";
 
 const API_URL = clientEnv.NEXT_PUBLIC_API_BASE_URL;
-
-/**
- * API 에러 클래스
- */
-export class ApiError extends Error {
-  constructor(
-    message: string,
-    public status?: number,
-    public errorData?: unknown
-  ) {
-    super(message);
-    this.name = "ApiError";
-  }
-}
 
 /**
  * 백엔드 API 호출 헬퍼 함수
@@ -54,24 +41,6 @@ export async function apiClient<T = unknown>(
   }
 
   return response.json();
-}
-
-/**
- * 백엔드 API 응답 타입
- */
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  error?: string;
-}
-
-/**
- * API 요청 옵션
- */
-export interface ApiOptions {
-  token?: string;
-  headers?: Record<string, string>;
 }
 
 /**

@@ -4,7 +4,7 @@ import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { apiGet } from "@/lib/client";
+import { apiGet } from "@/lib/client/api";
 import { ChevronRight, Plus, User, Users } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";

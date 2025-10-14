@@ -1,6 +1,6 @@
 "use server";
 
-import { apiDelete, ApiError, apiPost } from "@/lib/client";
+import { apiDelete, ApiError, apiPost } from "@/lib/client/api";
 import { auth } from "@/lib/server/auth";
 import type { CreateExpenseRequest, ExpenseResponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
@@ -91,7 +91,7 @@ export async function createExpenseAction(
     };
   } catch (error) {
     console.error("지출 추가 중 오류:", error);
-    
+
     if (error instanceof ApiError) {
       return {
         message: error.message || "지출 추가 중 오류가 발생했습니다.",
@@ -121,10 +121,9 @@ export async function deleteExpenseAction(
     }
 
     // 백엔드 API 호출
-    await apiDelete(
-      `/families/${familyUuid}/expenses/${expenseUuid}`,
-      { token: session.user.accessToken }
-    );
+    await apiDelete(`/families/${familyUuid}/expenses/${expenseUuid}`, {
+      token: session.user.accessToken,
+    });
 
     // 지출 페이지 및 대시보드 revalidate
     revalidatePath("/expenses");
@@ -136,7 +135,7 @@ export async function deleteExpenseAction(
     };
   } catch (error) {
     console.error("지출 삭제 중 오류:", error);
-    
+
     if (error instanceof ApiError) {
       return {
         success: false,

@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { apiGet } from "@/lib/client";
+import { apiGet } from "@/lib/client/api";
 import { auth } from "@/lib/server/auth";
 import type { ExpenseResponse, PageResponse } from "@/types/api";
 import { ExpensePagination } from "./ExpensePagination";
@@ -14,8 +14,8 @@ interface ExpenseListProps {
 }
 
 const formatDate = (date: Date | string) => {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+
   // Date 객체가 유효한지 확인
   if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
     return "유효하지 않은 날짜";
@@ -29,7 +29,7 @@ const formatDate = (date: Date | string) => {
 };
 
 const formatAmount = (amount: string | number) => {
-  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
   if (isNaN(numAmount)) {
     return "0원";
   }
@@ -58,7 +58,7 @@ export async function ExpenseList({
   // 백엔드 API로 지출 목록 조회
   const limit = 10;
   let queryParams = `page=${page - 1}&size=${limit}`; // 백엔드는 0-based index
-  
+
   if (categoryId) {
     queryParams += `&categoryId=${categoryId}`;
   }
@@ -88,7 +88,12 @@ export async function ExpenseList({
     );
   }
 
-  const { content: expenses, totalPages, totalElements, number: currentPage } = expensePage;
+  const {
+    content: expenses,
+    totalPages,
+    totalElements,
+    number: currentPage,
+  } = expensePage;
 
   if (expenses.length === 0) {
     return (
@@ -117,7 +122,9 @@ export async function ExpenseList({
                   <div
                     className="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
                     style={{
-                      backgroundColor: `${expense.categoryColor || '#6366f1'}20`,
+                      backgroundColor: `${
+                        expense.categoryColor || "#6366f1"
+                      }20`,
                     }}
                   >
                     💰
@@ -132,8 +139,10 @@ export async function ExpenseList({
                       <Badge
                         variant="secondary"
                         style={{
-                          backgroundColor: `${expense.categoryColor || '#6366f1'}20`,
-                          color: expense.categoryColor || '#6366f1',
+                          backgroundColor: `${
+                            expense.categoryColor || "#6366f1"
+                          }20`,
+                          color: expense.categoryColor || "#6366f1",
                         }}
                       >
                         {expense.categoryName || "기타"}

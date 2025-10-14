@@ -368,21 +368,28 @@ fos-accountbook/
 │   │   └── (features)/       # 기능별 컴포넌트
 │   ├── lib/                  # 유틸리티 및 설정 (client/server 명확히 분리) 📦
 │   │   ├── client/           # 클라이언트 안전 모듈 ✅
-│   │   │   ├── api.ts        # 백엔드 API 호출 함수
+│   │   │   ├── api/          # 백엔드 API 호출
+│   │   │   │   ├── types.ts      # API 타입 (ApiError, ApiResponse 등)
+│   │   │   │   ├── client.ts     # API 함수 (apiGet, apiPost 등)
+│   │   │   │   └── index.ts      # 통합 export
 │   │   │   ├── utils.ts      # Tailwind 병합 등 범용 함수
 │   │   │   └── index.ts      # 통합 export
-│   │   └── server/           # 서버 전용 모듈 ⚠️
-│   │       ├── api/          # API 응답 헬퍼
-│   │       │   ├── responses.ts
-│   │       │   ├── utils.ts
-│   │       │   └── index.ts
-│   │       ├── auth/         # NextAuth 설정
-│   │       │   ├── config.ts
-│   │       │   ├── backend-jwt.ts
-│   │       │   └── index.ts
-│   │       └── config/       # 환경 설정
-│   │           ├── env.ts
-│   │           └── index.ts
+│   │   ├── server/           # 서버 전용 모듈 ⚠️
+│   │   │   ├── api/          # 서버 API 클라이언트
+│   │   │   │   ├── types.ts        # 서버 API 타입
+│   │   │   │   ├── client.ts       # 서버 API 함수
+│   │   │   │   ├── backend-auth.ts # 백엔드 인증 API
+│   │   │   │   └── index.ts        # 통합 export
+│   │   │   ├── auth/         # NextAuth 설정
+│   │   │   │   ├── config.ts
+│   │   │   │   └── index.ts
+│   │   │   └── config/       # 환경 설정
+│   │   │       ├── env.ts
+│   │   │       └── index.ts
+│   │   └── env/              # 환경변수 관리
+│   │       ├── client.env.ts   # 클라이언트 환경변수
+│   │       ├── server.env.ts   # 서버 환경변수
+│   │       └── index.ts
 │   └── types/
 │       ├── api.ts            # 백엔드 API 타입
 │       └── next-auth.d.ts    # NextAuth 타입 확장
@@ -416,14 +423,14 @@ fos-accountbook/
 
 ```typescript
 // ✅ 클라이언트 안전 모듈 (브라우저에서 실행 가능)
-import { apiGet, apiPost, apiPut, apiDelete, ApiError } from "@/lib/client";
+import { apiGet, apiPost, apiPut, apiDelete, ApiError } from "@/lib/client/api";
 import { cn } from "@/lib/client";
 import { clientEnv } from "@/lib/env"; // 클라이언트 환경변수
 
 // ⚠️ 서버 전용 모듈 (Node.js 환경에서만 실행)
 import { auth, signIn, signOut, handlers } from "@/lib/server/auth";
-import { apiResponse, successResponse, errorResponse } from "@/lib/server/api";
-import { withAuth } from "@/lib/server/api";
+import { serverApiGet, serverApiPost, ServerApiError } from "@/lib/server/api";
+import { getBackendJWT, refreshAccessToken } from "@/lib/server/api";
 import { serverEnv } from "@/lib/env/server.env"; // 서버 환경변수 (직접 import)
 import { isDev, isProduction } from "@/lib/env"; // 환경 유틸리티
 ```
@@ -436,9 +443,14 @@ import { isDev, isProduction } from "@/lib/env"; // 환경 유틸리티
 
 **각 모듈의 역할:**
 
-- `@/lib/client` - 백엔드 API 호출, Tailwind 유틸리티 (클라이언트 안전 ✅)
-- `@/lib/server/auth` - NextAuth 설정, 백엔드 JWT 관리 (서버 전용 ⚠️)
-- `@/lib/server/api` - API 응답 헬퍼, 서버 유틸리티 (서버 전용 ⚠️)
+- `@/lib/client/api` - 클라이언트 사이드 백엔드 API 호출 (타입과 구현 분리 ✅)
+  - `types.ts` - ApiError, ApiResponse, ApiOptions 등 타입 정의
+  - `client.ts` - apiGet, apiPost, apiPut, apiDelete 등 구현
+- `@/lib/server/api` - 서버 사이드 백엔드 API 호출 (타입과 구현 분리 ⚠️)
+  - `types.ts` - ServerApiError, BackendAuthResponse 등 타입 정의
+  - `client.ts` - serverApiGet, serverApiPost 등 구현
+  - `backend-auth.ts` - 백엔드 인증 API (getBackendJWT, refreshAccessToken)
+- `@/lib/server/auth` - NextAuth 설정 (서버 전용 ⚠️)
 - `@/lib/env` - **타입 안전한 환경변수 관리** (Zod 검증, 빌드 시 검사)
 
 **개발 가이드라인:**
@@ -449,7 +461,8 @@ import { isDev, isProduction } from "@/lib/env"; // 환경 유틸리티
    "use client";
 
    // ✅ 사용 가능
-   import { apiGet, apiPost, cn } from "@/lib/client";
+   import { apiGet, apiPost } from "@/lib/client/api";
+   import { cn } from "@/lib/client";
    import { useToast } from "@/hooks/use-toast";
 
    // ❌ 절대 금지 - 서버 모듈을 클라이언트에서 사용 불가!
@@ -460,7 +473,7 @@ import { isDev, isProduction } from "@/lib/env"; // 환경 유틸리티
 
    ```typescript
    // ✅ 모두 가능
-   import { apiGet } from "@/lib/client";
+   import { serverApiGet } from "@/lib/server/api";
    import { auth } from "@/lib/server/auth";
    ```
 
@@ -470,19 +483,20 @@ import { isDev, isProduction } from "@/lib/env"; // 환경 유틸리티
    "use server";
 
    // ✅ 모두 가능
-   import { apiPost } from "@/lib/client";
+   import { apiPost } from "@/lib/client/api";
+   import { serverApiGet } from "@/lib/server/api";
    import { auth } from "@/lib/server/auth";
    import { revalidatePath } from "next/cache";
    ```
 
-4. **API Routes** - 서버 모듈 + 응답 헬퍼
+4. **API Routes** - 서버 모듈
 
    ```typescript
    import { NextRequest } from "next/server";
 
-   // ✅ 서버 전용 헬퍼 사용
-   import { apiResponse, errorResponse } from "@/lib/server/api";
-   import { withAuth } from "@/lib/server/api";
+   // ✅ 서버 전용 API 클라이언트
+   import { serverApiGet, ServerApiError } from "@/lib/server/api";
+   import { auth } from "@/lib/server/auth";
    ```
 
 **🎯 간단한 규칙:**

@@ -3,7 +3,7 @@ import { SignJWT, jwtVerify } from "jose";
 import type { NextAuthConfig } from "next-auth";
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
-import { getBackendJWT, refreshAccessToken } from "./backend-jwt";
+import { getBackendJWT, refreshAccessToken } from "../api/backend-auth";
 
 /**
  * JWT Secret Key (백엔드와 동일한 키 사용)
@@ -33,7 +33,7 @@ export const authConfig: NextAuthConfig = {
      * NextAuth v5는 기본적으로 JWT를 JWE(암호화)로 생성하지만,
      * 백엔드에서 JWS(서명된 JWT)만 검증할 수 있으므로 커스터마이징
      */
-    async encode({ token, secret }) {
+    async encode({ token }) {
       if (!token) {
         throw new Error("Token is required");
       }
@@ -48,7 +48,7 @@ export const authConfig: NextAuthConfig = {
     /**
      * 커스텀 JWT Decode: 서명 검증 후 페이로드 반환
      */
-    async decode({ token, secret }) {
+    async decode({ token }) {
       if (!token) {
         return null;
       }
@@ -58,21 +58,15 @@ export const authConfig: NextAuthConfig = {
           algorithms: ["HS256"],
         });
         return payload;
-      } catch (error) {
-        console.error("JWT decode error:", error);
+      } catch {
         return null;
       }
     },
   },
   callbacks: {
-    async jwt({ token, user, account, trigger }) {
+    async jwt({ token, user, account }) {
       // 초기 로그인 시
       if (user && account && user.id) {
-        console.log("🔐 JWT callback - 초기 로그인:", {
-          userId: user.id,
-          email: user.email,
-        });
-
         // 백엔드에서 JWT 토큰 획득
         const backendAuth = await getBackendJWT({
           id: user.id,
@@ -81,20 +75,11 @@ export const authConfig: NextAuthConfig = {
           image: user.image,
         });
 
-        console.log(
-          "🔑 백엔드 JWT 응답:",
-          backendAuth ? "성공" : "실패",
-          backendAuth
-        );
-
         if (backendAuth) {
           token.accessToken = backendAuth.accessToken;
           token.refreshToken = backendAuth.refreshToken;
           token.accessTokenExpires =
             Date.now() + (backendAuth.expiresIn || 86400) * 1000; // expiresIn은 초 단위
-          console.log("✅ JWT 토큰 설정 완료");
-        } else {
-          console.error("❌ 백엔드에서 JWT를 받아오지 못했습니다");
         }
       }
 
@@ -123,37 +108,20 @@ export const authConfig: NextAuthConfig = {
       return token;
     },
     async session({ session, token }) {
-      console.log("📋 Session callback - token:", {
-        sub: token.sub,
-        hasAccessToken: !!token.accessToken,
-        hasRefreshToken: !!token.refreshToken,
-      });
-
       if (session.user && token.sub) {
         session.user.id = token.sub;
         session.user.accessToken = token.accessToken as string | undefined;
         session.user.refreshToken = token.refreshToken as string | undefined;
-
-        console.log("📋 Session 설정 완료:", {
-          userId: session.user.id,
-          hasAccessToken: !!session.user.accessToken,
-        });
       }
       return session;
     },
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       // OAuth 로그인 시 백엔드 인증 검증
       if (account?.provider === "google") {
         try {
           if (!user.id) {
-            console.error("❌ User ID가 없습니다");
             return false;
           }
-
-          console.log("🔐 SignIn callback 시작:", {
-            userId: user.id,
-            email: user.email,
-          });
 
           // 백엔드에서 JWT 토큰 획득 (로그인 시점에 검증)
           // 백엔드 register API는 이미 존재하는 사용자는 로그인 처리
@@ -165,14 +133,11 @@ export const authConfig: NextAuthConfig = {
           });
 
           if (!backendAuth || !backendAuth.accessToken) {
-            console.error("❌ 백엔드 인증 실패 - 로그인 차단");
             return false; // 로그인 실패
           }
 
-          console.log("✅ 백엔드 인증 성공 - 로그인 허용");
           return true;
-        } catch (error) {
-          console.error("❌ OAuth sign-in error:", error);
+        } catch {
           return false;
         }
       }
