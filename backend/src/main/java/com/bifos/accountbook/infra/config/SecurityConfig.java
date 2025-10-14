@@ -1,5 +1,6 @@
 package com.bifos.accountbook.infra.config;
 
+import com.bifos.accountbook.infra.filter.RequestResponseLoggingFilter;
 import com.bifos.accountbook.infra.security.JwtAuthenticationFilter;
 import com.bifos.accountbook.infra.security.NextAuthTokenFilter;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -28,6 +30,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final NextAuthTokenFilter nextAuthTokenFilter;
     private final CorsProperties corsProperties;
+    private final RequestResponseLoggingFilter requestResponseLoggingFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -63,6 +66,8 @@ public class SecurityConfig {
                         // 나머지 요청은 인증 필요
                         .anyRequest().authenticated())
 
+                // 로깅 필터 추가 (가장 먼저 실행)
+                .addFilterBefore(requestResponseLoggingFilter, SecurityContextHolderFilter.class)
                 // NextAuth 세션 필터 추가 (JWT 필터보다 먼저 실행)
                 .addFilterBefore(nextAuthTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 // JWT 필터 추가

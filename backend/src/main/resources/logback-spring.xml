@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
-    
+
     <!-- 로그 파일 경로 -->
     <property name="LOG_FILE" value="logs/application"/>
-    
+
     <!-- 콘솔용 색상 패턴 -->
-    <property name="CONSOLE_LOG_PATTERN" value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){cyan} %clr([%thread]){magenta} %clr(%-5level){highlight} %clr(%logger{36}){cyan} - %msg%n"/>
-    
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){cyan} %clr([%thread]){magenta} %clr(%-5level){highlight} %clr(%logger{36}){cyan} - %msg%n"/>
+
     <!-- 파일용 일반 패턴 (색상 없음) -->
     <property name="FILE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
-    
+
     <!-- Console Appender (색상 적용) -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -18,7 +19,7 @@
             <charset>UTF-8</charset>
         </encoder>
     </appender>
-    
+
     <!-- File Appender (전체 로그) -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_FILE}.log</file>
@@ -32,7 +33,7 @@
             <totalSizeCap>1GB</totalSizeCap>
         </rollingPolicy>
     </appender>
-    
+
     <!-- Error Log File Appender -->
     <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_FILE}-error.log</file>
@@ -50,9 +51,9 @@
             <maxHistory>30</maxHistory>
         </rollingPolicy>
     </appender>
-    
+
     <!-- Spring Profile별 설정 -->
-    
+
     <!-- 로컬 개발 환경: 콘솔 + 파일 로깅 -->
     <springProfile name="local">
         <root level="INFO">
@@ -61,12 +62,12 @@
             <appender-ref ref="ERROR_FILE"/>
         </root>
         <logger name="com.bifos.accountbook" level="DEBUG"/>
-        <logger name="org.springframework.web" level="DEBUG"/>
-        <logger name="org.springframework.security" level="DEBUG"/>
+        <logger name="org.springframework.web" level="INFO"/>
+        <logger name="org.springframework.security" level="INFO"/>
     </springProfile>
-    
+
     <!-- 프로덕션 환경 (Railway, Docker 등): 콘솔만 (stdout/stderr) -->
-    <springProfile name="prod | production">
+    <springProfile name="prod">
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
         </root>
@@ -74,14 +75,6 @@
         <logger name="org.springframework.web" level="WARN"/>
         <logger name="org.springframework.security" level="WARN"/>
         <logger name="org.hibernate.SQL" level="WARN"/>
-    </springProfile>
-    
-    <!-- 기본 설정 (프로파일 없음): 콘솔만 -->
-    <springProfile name="default">
-        <root level="INFO">
-            <appender-ref ref="CONSOLE"/>
-        </root>
-        <logger name="com.bifos.accountbook" level="INFO"/>
     </springProfile>
 </configuration>
 
