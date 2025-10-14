@@ -8,9 +8,6 @@
 import { z } from "zod";
 
 const serverEnvSchema = z.object({
-  // Database
-  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
-
   // NextAuth
   NEXTAUTH_URL: z.string().url("NEXTAUTH_URL must be a valid URL"),
   NEXTAUTH_SECRET: z

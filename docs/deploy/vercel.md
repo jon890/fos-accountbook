@@ -10,7 +10,6 @@ Vercel 대시보드에서 다음 환경변수를 **반드시** 설정해야 합�
 
 | 환경변수                   | 설명                              | 예시 값                                   | 환경                             |
 | -------------------------- | --------------------------------- | ----------------------------------------- | -------------------------------- |
-| `DATABASE_URL`             | MySQL 데이터베이스 연결 문자열    | `mysql://user:pass@host:3306/db`          | Production, Preview, Development |
 | `NEXTAUTH_URL`             | 배포된 앱의 URL                   | `https://your-app.vercel.app`             | Production, Preview              |
 | `NEXTAUTH_SECRET`          | NextAuth 시크릿 (32자 이상)       | `openssl rand -base64 32` 실행 결과       | Production, Preview, Development |
 | `GOOGLE_CLIENT_ID`         | Google OAuth Client ID            | `xxx.apps.googleusercontent.com`          | Production, Preview, Development |

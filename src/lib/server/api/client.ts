@@ -5,8 +5,8 @@
  * NextAuth 세션 토큰을 쿠키에서 추출하여 Authorization 헤더에 포함합니다.
  */
 
-import { cookies } from "next/headers";
 import { serverEnv } from "@/lib/env/server.env";
+import { cookies } from "next/headers";
 
 const API_URL = serverEnv.BACKEND_API_URL;
 

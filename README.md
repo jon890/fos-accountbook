@@ -18,7 +18,7 @@
 - ✅ NextAuth.js를 통한 Google OAuth 인증
 - ✅ 사용자 인터페이스 (UI/UX)
 - ✅ 백엔드 API 호출
-- ✅ Prisma는 인증 테이블만 사용
+- ✅ JWT 세션 관리
 
 **백엔드 역할:**
 
@@ -31,9 +31,7 @@
 
 - **Framework**: Next.js 15 + React 19 + TypeScript
 - **Styling**: Tailwind CSS v3 + shadcn/ui
-- **Auth**: NextAuth.js (Google OAuth)
-- **Database**: MySQL (인증 테이블만)
-- **ORM**: Prisma (NextAuth 전용)
+- **Auth**: NextAuth.js (Google OAuth, JWT 세션)
 - **API Client**: Custom fetch-based client
 - **Package Manager**: pnpm
 
@@ -70,9 +68,6 @@ docker compose up -d
 `.env.local` 파일을 생성하고 다음 내용을 입력:
 
 ```bash
-# 데이터베이스 (MySQL - 백엔드와 동일한 DB 사용)
-DATABASE_URL="mysql://accountbook_user:accountbook_password@localhost:3306/accountbook"
-
 # NextAuth
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="your-nextauth-secret-change-in-production-must-be-at-least-32-characters"
@@ -99,19 +94,7 @@ BACKEND_API_URL="http://localhost:8080/api/v1"           # 서버 사이드용
    - `http://localhost:3000/api/auth/callback/google`
    - `https://your-domain.vercel.app/api/auth/callback/google` (배포 시)
 
-### 5. Prisma 설정
-
-```bash
-# Prisma Client 생성
-pnpm db:generate
-
-# 스키마 검증
-pnpm db:validate
-```
-
-**참고:** 백엔드 Spring Boot의 JPA가 모든 테이블을 자동으로 생성합니다.
-
-### 6. 개발 서버 실행
+### 5. 개발 서버 실행
 
 ```bash
 pnpm dev
@@ -119,23 +102,16 @@ pnpm dev
 
 브라우저에서 http://localhost:3000 접속
 
-## 🗄️ 데이터베이스 스키마
+## 🗄️ 데이터베이스 아키텍처
 
-프론트엔드는 **NextAuth 인증 테이블만** 관리합니다:
+프론트엔드는 **데이터베이스에 직접 접근하지 않습니다**:
 
-### 인증 테이블 (Prisma)
+### 데이터 접근 방식
 
-- ✅ `users` - 사용자 정보 (백엔드와 동기화)
-- ✅ `accounts` - OAuth 계정 정보
-- ✅ `sessions` - 세션 정보
-- ✅ `verification_tokens` - 이메일 인증 토큰
-
-### 비즈니스 테이블 (백엔드 전용)
-
-- ❌ `families`, `family_members` - 백엔드 API로 접근
-- ❌ `categories` - 백엔드 API로 접근
-- ❌ `expenses` - 백엔드 API로 접근
-- ❌ `invitations` - 백엔드 API로 접근
+- ✅ **모든 데이터는 백엔드 API를 통해서만 접근**
+- ✅ `users`, `families`, `categories`, `expenses`, `invitations` - 백엔드 API 사용
+- ✅ NextAuth는 JWT 세션만 관리 (DB 불필요)
+- ✅ 사용자 정보는 백엔드에서 단일 소스로 관리
 
 ## 📱 주요 기능
 
@@ -295,12 +271,6 @@ pnpm lint
 
 # 테스트
 pnpm test
-
-# Prisma (NextAuth 전용)
-pnpm db:generate      # Prisma Client 생성
-pnpm db:validate      # 스키마 검증
-
-# 참고: 테이블 생성은 백엔드(Spring Boot JPA)에서 자동 처리
 ```
 
 ## 🚀 배포
@@ -327,9 +297,6 @@ pnpm db:validate      # 스키마 검증
 
 ```bash
 # ⚠️ Vercel Dashboard → Settings → Environment Variables에서 설정!
-
-# 데이터베이스
-DATABASE_URL="mysql://..."  # 프로덕션 MySQL
 
 # NextAuth
 NEXTAUTH_URL="https://your-domain.vercel.app"
@@ -411,12 +378,7 @@ fos-accountbook/
 │   │       │   └── index.ts
 │   │       ├── auth/         # NextAuth 설정
 │   │       │   ├── config.ts
-│   │       │   ├── utils.ts
-│   │       │   └── index.ts
-│   │       ├── database/     # Prisma 클라이언트
-│   │       │   ├── prisma.ts
-│   │       │   ├── serialization.ts
-│   │       │   ├── utils.ts
+│   │       │   ├── backend-jwt.ts
 │   │       │   └── index.ts
 │   │       └── config/       # 환경 설정
 │   │           ├── env.ts
@@ -424,8 +386,6 @@ fos-accountbook/
 │   └── types/
 │       ├── api.ts            # 백엔드 API 타입
 │       └── next-auth.d.ts    # NextAuth 타입 확장
-├── prisma/
-│   └── schema.prisma         # Prisma Schema (NextAuth 전용)
 └── public/                   # 정적 파일
 ```
 
@@ -448,7 +408,7 @@ fos-accountbook/
 
 - TypeScript 엄격 모드
 - 백엔드 API 타입 정의
-- Prisma 타입 생성
+- Zod 환경변수 검증
 
 ### 3. lib 폴더 사용법 📦
 
@@ -462,9 +422,8 @@ import { clientEnv } from "@/lib/env"; // 클라이언트 환경변수
 
 // ⚠️ 서버 전용 모듈 (Node.js 환경에서만 실행)
 import { auth, signIn, signOut, handlers } from "@/lib/server/auth";
-import { prisma } from "@/lib/server/database";
 import { apiResponse, successResponse, errorResponse } from "@/lib/server/api";
-import { withAuth, handlePrismaError } from "@/lib/server/api";
+import { withAuth } from "@/lib/server/api";
 import { serverEnv } from "@/lib/env/server.env"; // 서버 환경변수 (직접 import)
 import { isDev, isProduction } from "@/lib/env"; // 환경 유틸리티
 ```
@@ -478,8 +437,7 @@ import { isDev, isProduction } from "@/lib/env"; // 환경 유틸리티
 **각 모듈의 역할:**
 
 - `@/lib/client` - 백엔드 API 호출, Tailwind 유틸리티 (클라이언트 안전 ✅)
-- `@/lib/server/auth` - NextAuth 설정, 인증 유틸리티 (서버 전용 ⚠️)
-- `@/lib/server/database` - Prisma 클라이언트, 데이터 직렬화 (서버 전용 ⚠️)
+- `@/lib/server/auth` - NextAuth 설정, 백엔드 JWT 관리 (서버 전용 ⚠️)
 - `@/lib/server/api` - API 응답 헬퍼, 서버 유틸리티 (서버 전용 ⚠️)
 - `@/lib/env` - **타입 안전한 환경변수 관리** (Zod 검증, 빌드 시 검사)
 
@@ -494,8 +452,7 @@ import { isDev, isProduction } from "@/lib/env"; // 환경 유틸리티
    import { apiGet, apiPost, cn } from "@/lib/client";
    import { useToast } from "@/hooks/use-toast";
 
-   // ❌ 절대 금지 - Prisma 번들링 에러!
-   import { prisma } from "@/lib/server/database";
+   // ❌ 절대 금지 - 서버 모듈을 클라이언트에서 사용 불가!
    import { auth } from "@/lib/server/auth";
    ```
 
@@ -505,7 +462,6 @@ import { isDev, isProduction } from "@/lib/env"; // 환경 유틸리티
    // ✅ 모두 가능
    import { apiGet } from "@/lib/client";
    import { auth } from "@/lib/server/auth";
-   import { prisma } from "@/lib/server/database";
    ```
 
 3. **Server Actions** - 모든 lib 모듈 사용 가능
@@ -516,7 +472,6 @@ import { isDev, isProduction } from "@/lib/env"; // 환경 유틸리티
    // ✅ 모두 가능
    import { apiPost } from "@/lib/client";
    import { auth } from "@/lib/server/auth";
-   import { prisma } from "@/lib/server/database";
    import { revalidatePath } from "next/cache";
    ```
 
@@ -528,7 +483,6 @@ import { isDev, isProduction } from "@/lib/env"; // 환경 유틸리티
    // ✅ 서버 전용 헬퍼 사용
    import { apiResponse, errorResponse } from "@/lib/server/api";
    import { withAuth } from "@/lib/server/api";
-   import { prisma } from "@/lib/server/database";
    ```
 
 **🎯 간단한 규칙:**
@@ -541,7 +495,7 @@ import { isDev, isProduction } from "@/lib/env"; // 환경 유틸리티
 - Hot Reload
 - TypeScript 지원
 - Tailwind CSS IntelliSense
-- Prisma Studio
+- 타입 안전한 환경변수
 
 ### 4. 성능
 
@@ -557,6 +511,6 @@ MIT License
 
 **개발:**
 
-- Frontend: Next.js 15 + Auth.js v5 + Prisma
+- Frontend: Next.js 15 + Auth.js v5 (JWT 세션)
 - Backend: Spring Boot 3.5 + JPA + MySQL
 - Full-Stack: TypeScript + Java 21

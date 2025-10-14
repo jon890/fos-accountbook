@@ -15,7 +15,7 @@ const customJestConfig = {
     '^@/helpers/(.*)$': '<rootDir>/src/__tests__/helpers/$1',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(@auth/prisma-adapter|@auth/core)/)',
+    'node_modules/(?!(@auth/core)/)',
   ],
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
