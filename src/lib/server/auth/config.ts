@@ -8,9 +8,34 @@ import { getBackendJWT, refreshAccessToken } from "../api/backend-auth";
 
 /**
  * JWT Secret Key (백엔드와 동일한 키 사용)
+ * 키가 짧으면 64바이트로 패딩하여 HS512 호환성 보장
  */
 const AUTH_SECRET = serverEnv.NEXTAUTH_SECRET;
-const encodedSecret = new TextEncoder().encode(AUTH_SECRET);
+
+/**
+ * 시크릿 키를 HS512에 안전한 길이(64바이트)로 패딩
+ */
+function padSecretKey(secret: string): Uint8Array {
+  const keyBytes = new TextEncoder().encode(secret);
+
+  // HS512는 최소 64바이트 필요
+  if (keyBytes.length < 64) {
+    console.warn(
+      `JWT secret key is too short (${keyBytes.length} bytes). Padding to 64 bytes for HS512 compatibility.`
+    );
+
+    // 키를 64바이트로 패딩 (반복)
+    const paddedKey = new Uint8Array(64);
+    for (let i = 0; i < 64; i++) {
+      paddedKey[i] = keyBytes[i % keyBytes.length];
+    }
+    return paddedKey;
+  }
+
+  return keyBytes;
+}
+
+const encodedSecret = padSecretKey(AUTH_SECRET);
 
 /**
  * 백엔드 JWT 토큰에서 user UUID 추출
