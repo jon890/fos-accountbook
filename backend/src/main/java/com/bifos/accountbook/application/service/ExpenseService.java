@@ -173,7 +173,7 @@ public class ExpenseService {
      * 가족 접근 권한 확인
      */
     private void validateFamilyAccess(String userId, CustomUuid familyUuid) {
-        User user = userRepository.findById(Long.parseLong(userId))
+        User user = userRepository.findById(Long.   parseLong(userId))
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
 
         boolean isMember = familyMemberRepository.existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(

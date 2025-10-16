@@ -29,8 +29,8 @@ public class InvitationResponse {
         boolean isUsed = "ACCEPTED".equals(invitation.getStatus());
 
         return InvitationResponse.builder()
-                .uuid(invitation.getUuid().toString())
-                .familyUuid(invitation.getFamilyUuid().toString())
+                .uuid(invitation.getUuid().getValue())
+                .familyUuid(invitation.getFamilyUuid().getValue())
                 .token(invitation.getToken())
                 .status(invitation.getStatus())
                 .expiresAt(invitation.getExpiresAt())

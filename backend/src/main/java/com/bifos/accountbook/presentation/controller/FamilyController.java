@@ -5,6 +5,7 @@ import com.bifos.accountbook.application.dto.family.CreateFamilyRequest;
 import com.bifos.accountbook.application.dto.family.FamilyResponse;
 import com.bifos.accountbook.application.dto.family.UpdateFamilyRequest;
 import com.bifos.accountbook.application.service.FamilyService;
+import com.bifos.accountbook.domain.value.CustomUuid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -35,12 +36,12 @@ public class FamilyController {
     @ApiResponse(responseCode = "401", description = "인증 실패")
     @PostMapping
     public ResponseEntity<ApiSuccessResponse<FamilyResponse>> createFamily(
+            // todo authentication을 위한 추상화 클래스 및 ArgumentResolver 작성
             Authentication authentication,
             @Valid @RequestBody CreateFamilyRequest request) {
-        String userId = authentication.getName();
-        log.info("Creating family for user: {}", userId);
+        String userUuid = authentication.getName();
 
-        FamilyResponse response = familyService.createFamily(userId, request);
+        FamilyResponse response = familyService.createFamily(CustomUuid.from(userUuid), request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -52,10 +53,9 @@ public class FamilyController {
     @GetMapping
     public ResponseEntity<ApiSuccessResponse<List<FamilyResponse>>> getUserFamilies(
             Authentication authentication) {
-        String userId = authentication.getName();
-        log.info("Fetching families for user: {}", userId);
+        String userUuid = authentication.getName();
 
-        List<FamilyResponse> families = familyService.getUserFamilies(userId);
+        List<FamilyResponse> families = familyService.getUserFamilies(CustomUuid.from(userUuid));
 
         return ResponseEntity.ok(ApiSuccessResponse.of(families));
     }

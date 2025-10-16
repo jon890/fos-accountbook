@@ -1,20 +1,28 @@
 package com.bifos.accountbook.presentation.controller;
 
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.bifos.accountbook.application.dto.ApiSuccessResponse;
 import com.bifos.accountbook.application.dto.expense.CreateExpenseRequest;
 import com.bifos.accountbook.application.dto.expense.ExpenseResponse;
 import com.bifos.accountbook.application.dto.expense.UpdateExpenseRequest;
 import com.bifos.accountbook.application.service.ExpenseService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
-
-import com.bifos.accountbook.domain.value.CustomUuid;
 
 @Slf4j
 @RestController
@@ -31,8 +39,7 @@ public class ExpenseController {
     public ResponseEntity<ApiSuccessResponse<ExpenseResponse>> createExpense(
             Authentication authentication,
             @PathVariable String familyUuid,
-            @Valid @RequestBody CreateExpenseRequest request
-    ) {
+            @Valid @RequestBody CreateExpenseRequest request) {
         String userId = authentication.getName();
         log.info("Creating expense in family: {} by user: {}", familyUuid, userId);
 
@@ -51,8 +58,7 @@ public class ExpenseController {
             Authentication authentication,
             @PathVariable String familyUuid,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ) {
+            @RequestParam(defaultValue = "20") int size) {
         String userId = authentication.getName();
         log.info("Fetching expenses for family: {} (page: {}, size: {}) by user: {}", familyUuid, page, size, userId);
 
@@ -68,8 +74,7 @@ public class ExpenseController {
     public ResponseEntity<ApiSuccessResponse<ExpenseResponse>> getExpense(
             Authentication authentication,
             @PathVariable String familyUuid,
-            @PathVariable String expenseUuid
-    ) {
+            @PathVariable String expenseUuid) {
         String userId = authentication.getName();
         log.info("Fetching expense: {} by user: {}", expenseUuid, userId);
 
@@ -86,8 +91,7 @@ public class ExpenseController {
             Authentication authentication,
             @PathVariable String familyUuid,
             @PathVariable String expenseUuid,
-            @Valid @RequestBody UpdateExpenseRequest request
-    ) {
+            @Valid @RequestBody UpdateExpenseRequest request) {
         String userId = authentication.getName();
         log.info("Updating expense: {} by user: {}", expenseUuid, userId);
 
@@ -103,8 +107,7 @@ public class ExpenseController {
     public ResponseEntity<ApiSuccessResponse<Void>> deleteExpense(
             Authentication authentication,
             @PathVariable String familyUuid,
-            @PathVariable String expenseUuid
-    ) {
+            @PathVariable String expenseUuid) {
         String userId = authentication.getName();
         log.info("Deleting expense: {} by user: {}", expenseUuid, userId);
 
@@ -113,4 +116,3 @@ public class ExpenseController {
         return ResponseEntity.ok(ApiSuccessResponse.of("지출이 삭제되었습니다", null));
     }
 }
-

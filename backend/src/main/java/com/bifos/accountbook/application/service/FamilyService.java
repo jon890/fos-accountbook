@@ -10,7 +10,6 @@ import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.repository.UserRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -33,9 +33,9 @@ public class FamilyService {
      * 가족 생성 (생성자를 owner로 자동 추가)
      */
     @Transactional
-    public FamilyResponse createFamily(String userId, CreateFamilyRequest request) {
+    public FamilyResponse createFamily(CustomUuid userUuid, CreateFamilyRequest request) {
         // 사용자 조회
-        User user = userRepository.findById(Long.parseLong(userId))
+        User user = userRepository.findByUuid(userUuid)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
 
         // 가족 생성
@@ -44,7 +44,6 @@ public class FamilyService {
                 .build();
 
         family = familyRepository.save(family);
-        log.info("Created family: {} by user: {}", family.getUuid(), userId);
 
         // 생성자를 owner로 추가
         FamilyMember member = FamilyMember.builder()
@@ -64,8 +63,8 @@ public class FamilyService {
      * 사용자가 속한 가족 목록 조회
      */
     @Transactional(readOnly = true)
-    public List<FamilyResponse> getUserFamilies(String userId) {
-        User user = userRepository.findById(Long.parseLong(userId))
+    public List<FamilyResponse> getUserFamilies(CustomUuid userUuid) {
+        User user = userRepository.findByUuid(userUuid)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
 
         // 사용자가 속한 가족 멤버십 조회
@@ -82,7 +81,7 @@ public class FamilyService {
                     int memberCount = familyMemberRepository.countByFamilyUuid(familyUuid);
                     return FamilyResponse.fromWithMemberCount(family, memberCount);
                 })
-                .filter(response -> response != null)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 

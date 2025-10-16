@@ -24,8 +24,8 @@ public class CategoryResponse {
 
     public static CategoryResponse from(Category category) {
         return CategoryResponse.builder()
-                .uuid(category.getUuid().toString())
-                .familyUuid(category.getFamilyUuid().toString())
+                .uuid(category.getUuid().getValue())
+                .familyUuid(category.getFamilyUuid().getValue())
                 .name(category.getName())
                 .color(category.getColor())
                 .icon(category.getIcon())

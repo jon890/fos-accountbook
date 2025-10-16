@@ -2,6 +2,7 @@ package com.bifos.accountbook.infra.security;
 
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.UserRepository;
+import com.bifos.accountbook.domain.value.CustomUuid;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -36,39 +37,55 @@ public class NextAuthTokenFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
-
+            FilterChain filterChain) throws ServletException, IOException {
         try {
-            // 1. NextAuth 세션 토큰 추출
+            // 1. Request에서 NextAuth 세션 토큰 추출
             String token = extractTokenFromRequest(request);
-
-            if (token != null && nextAuthTokenProvider.validateToken(token)) {
-                // 2. 토큰에서 사용자 이메일 추출
-                String userEmail = nextAuthTokenProvider.getEmailFromToken(token);
-
-                if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    // 3. 사용자 조회
-                    User user = userRepository.findByEmail(userEmail)
-                            .orElse(null);
-
-                    if (user != null) {
-                        // 4. Spring Security Authentication 설정
-                        UsernamePasswordAuthenticationToken authentication =
-                                new UsernamePasswordAuthenticationToken(
-                                        user.getId(), // Principal: user ID
-                                        null,
-                                        Collections.emptyList()
-                                );
-                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                        log.debug("NextAuth 세션 검증 성공: user={}", userEmail);
-                    }
-                }
+            if (token == null) {
+                filterChain.doFilter(request, response);
+                return;
             }
+
+            // 2. 토큰 검증
+            if (!nextAuthTokenProvider.validateToken(token)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // 3. 이미 인증된 경우 스킵
+            if (SecurityContextHolder.getContext().getAuthentication() != null) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // 4. 토큰에서 사용자 UUID 추출
+            String userUuid = nextAuthTokenProvider.getUserUuidFromToken(token);
+            if (userUuid == null) {
+                log.warn("NextAuth 토큰에서 userUuid를 추출할 수 없습니다");
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // 5. 사용자 UUID로 사용자 조회
+            User user = userRepository.findByUuid(CustomUuid.from(userUuid))
+                    .orElse(null);
+            if (user == null) {
+                log.warn("사용자를 찾을 수 없습니다: userUuid={}", userUuid);
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // 6. Spring Security Authentication 설정
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    user.getUuid().getValue(), // Principal: user UUID (내부 ID 노출 방지)
+                    null,
+                    Collections.emptyList());
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            log.debug("NextAuth 세션 검증 성공: userUuid={}", userUuid);
         } catch (Exception e) {
-            log.debug("NextAuth 토큰 검증 실패: {}", e.getMessage());
+            log.error("NextAuth 토큰 검증 중 오류 발생", e);
         }
 
         filterChain.doFilter(request, response);
@@ -99,16 +116,9 @@ public class NextAuthTokenFilter extends OncePerRequestFilter {
                         "__Secure-authjs.session-token".equals(cookie.getName())) {
                     return cookie.getValue();
                 }
-                
-                // 하위 호환: NextAuth v4
-                if ("next-auth.session-token".equals(cookie.getName()) ||
-                        "__Secure-next-auth.session-token".equals(cookie.getName())) {
-                    return cookie.getValue();
-                }
             }
         }
 
         return null;
     }
 }
-

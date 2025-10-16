@@ -28,9 +28,9 @@ public class ExpenseResponse {
 
     public static ExpenseResponse from(Expense expense) {
         return ExpenseResponse.builder()
-                .uuid(expense.getUuid().toString())
-                .familyUuid(expense.getFamilyUuid().toString())
-                .categoryUuid(expense.getCategoryUuid().toString())
+                .uuid(expense.getUuid().getValue())
+                .familyUuid(expense.getFamilyUuid().getValue())
+                .categoryUuid(expense.getCategoryUuid().getValue())
                 .categoryName(expense.getCategory() != null ? expense.getCategory().getName() : null)
                 .categoryColor(expense.getCategory() != null ? expense.getCategory().getColor() : null)
                 .amount(expense.getAmount())
@@ -44,8 +44,8 @@ public class ExpenseResponse {
     public static ExpenseResponse fromWithoutCategory(Expense expense) {
         return ExpenseResponse.builder()
                 .uuid(expense.getUuid().toString())
-                .familyUuid(expense.getFamilyUuid().toString())
-                .categoryUuid(expense.getCategoryUuid().toString())
+                .familyUuid(expense.getFamilyUuid().getValue())
+                .categoryUuid(expense.getCategoryUuid().getValue())
                 .amount(expense.getAmount())
                 .description(expense.getDescription())
                 .date(expense.getDate())

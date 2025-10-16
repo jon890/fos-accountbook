@@ -33,7 +33,7 @@ public class GlobalExceptionHandler {
                     String fieldName = ((FieldError) error).getField();
                     String errorMessage = error.getDefaultMessage();
                     Object rejectedValue = ((FieldError) error).getRejectedValue();
-                    
+
                     return ApiErrorResponse.ErrorDetails.builder()
                             .code("VALIDATION_ERROR")
                             .field(fieldName)
@@ -59,7 +59,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
-                .body(ApiErrorResponse.of("인증에 실패했습니다.", 
+                .body(ApiErrorResponse.of("인증에 실패했습니다.",
                         ApiErrorResponse.ErrorDetails.builder()
                                 .code("AUTHENTICATION_FAILED")
                                 .build()));
@@ -75,7 +75,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
-                .body(ApiErrorResponse.of("접근 권한이 없습니다.", 
+                .body(ApiErrorResponse.of("접근 권한이 없습니다.",
                         ApiErrorResponse.ErrorDetails.builder()
                                 .code("ACCESS_DENIED")
                                 .build()));
@@ -87,11 +87,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiErrorResponse> handleIllegalArgumentException(
             IllegalArgumentException ex, WebRequest request) {
-        log.warn("Illegal argument: {}", ex.getMessage());
+        log.error("Illegal argument: {}", ex.getMessage(), ex);
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ApiErrorResponse.of(ex.getMessage(), 
+                .body(ApiErrorResponse.of(ex.getMessage(),
                         ApiErrorResponse.ErrorDetails.builder()
                                 .code("INVALID_ARGUMENT")
                                 .build()));
@@ -107,7 +107,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
-                .body(ApiErrorResponse.of(ex.getMessage(), 
+                .body(ApiErrorResponse.of(ex.getMessage(),
                         ApiErrorResponse.ErrorDetails.builder()
                                 .code("INVALID_STATE")
                                 .build()));
@@ -123,7 +123,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiErrorResponse.of("서버 오류가 발생했습니다.", 
+                .body(ApiErrorResponse.of("서버 오류가 발생했습니다.",
                         ApiErrorResponse.ErrorDetails.builder()
                                 .code("INTERNAL_SERVER_ERROR")
                                 .build()));

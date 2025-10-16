@@ -8,7 +8,7 @@ import java.util.UUID;
 
 /**
  * Custom UUID Value Object
- * 
+ * <p>
  * DB에는 VARCHAR(36)으로 저장되지만, 애플리케이션에서는 타입 안전한 객체로 사용
  * 불변 객체로 설계되어 안전성 보장
  */
@@ -43,13 +43,5 @@ public class CustomUuid implements Serializable {
      */
     public static CustomUuid from(String value) {
         return new CustomUuid(value);
-    }
-
-    /**
-     * 문자열로 변환
-     */
-    @Override
-    public String toString() {
-        return value;
     }
 }

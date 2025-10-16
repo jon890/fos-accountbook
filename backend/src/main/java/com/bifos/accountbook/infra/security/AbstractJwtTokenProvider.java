@@ -112,5 +112,7 @@ public abstract class AbstractJwtTokenProvider {
         Claims claims = getClaimsFromToken(token);
         return claims != null ? claims.get("name", String.class) : null;
     }
+
+
 }
 

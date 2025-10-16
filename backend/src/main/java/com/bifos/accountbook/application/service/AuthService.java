@@ -5,6 +5,7 @@ import com.bifos.accountbook.application.dto.auth.LoginRequest;
 import com.bifos.accountbook.application.dto.auth.RegisterRequest;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.UserRepository;
+import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.infra.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -64,20 +65,6 @@ public class AuthService {
     }
 
     /**
-     * 기존 사용자 로그인 (이메일로 조회)
-     */
-    private AuthResponse loginExistingUser(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
-
-        if (user.getDeletedAt() != null) {
-            throw new IllegalStateException("삭제된 사용자입니다");
-        }
-
-        return generateAuthResponse(user);
-    }
-
-    /**
      * 기존 사용자 로그인 (provider + providerId로 조회)
      */
     private AuthResponse loginExistingUserByProvider(String provider, String providerId) {
@@ -100,8 +87,12 @@ public class AuthService {
             throw new IllegalArgumentException("유효하지 않은 refresh 토큰입니다");
         }
 
-        String userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
-        User user = userRepository.findById(Long.parseLong(userId))
+        String userUuid = jwtTokenProvider.getUserIdFromToken(refreshToken);
+        if (userUuid == null) {
+            throw new IllegalArgumentException("토큰에서 사용자 UUID를 추출할 수 없습니다");
+        }
+
+        User user = userRepository.findByUuid(CustomUuid.from(userUuid))
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
 
         if (user.getDeletedAt() != null) {
@@ -112,17 +103,16 @@ public class AuthService {
     }
 
     /**
-     * 현재 사용자 정보 조회
+     * 현재 사용자 정보 조회 (UUID 기반)
      */
     @Transactional(readOnly = true)
-    public AuthResponse.UserInfo getCurrentUser(String userId) {
-        Long id = Long.parseLong(userId);
-        User user = userRepository.findById(id)
+    public AuthResponse.UserInfo getCurrentUser(String userUuid) {
+        User user = userRepository.findByUuid(CustomUuid.from(userUuid))
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
 
         return AuthResponse.UserInfo.builder()
                 .id(user.getId().toString())
-                .uuid(user.getUuid().toString())
+                .uuid(user.getUuid().getValue())
                 .email(user.getEmail())
                 .name(user.getName())
                 .image(user.getImage())
@@ -131,12 +121,15 @@ public class AuthService {
 
     /**
      * JWT 토큰 및 사용자 정보 응답 생성
+     * 
+     * JWT의 sub (subject)에는 user.uuid를 사용하여 내부 ID 노출을 방지합니다.
      */
     private AuthResponse generateAuthResponse(User user) {
         var authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
 
-        String accessToken = jwtTokenProvider.generateToken(user.getId().toString(), user.getEmail(), authorities);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId().toString());
+        String userUuid = user.getUuid().getValue();
+        String accessToken = jwtTokenProvider.generateToken(userUuid, user.getEmail(), authorities);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(userUuid);
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
@@ -145,7 +138,7 @@ public class AuthService {
                 .expiresIn(86400L) // 24시간 (초 단위)
                 .user(AuthResponse.UserInfo.builder()
                         .id(user.getId().toString())
-                        .uuid(user.getUuid().toString())
+                        .uuid(userUuid)
                         .email(user.getEmail())
                         .name(user.getName())
                         .image(user.getImage())

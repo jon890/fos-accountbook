@@ -22,26 +22,17 @@ public class FamilyResponse {
 
     public static FamilyResponse from(Family family) {
         return FamilyResponse.builder()
-                .uuid(family.getUuid().toString())
+                .uuid(family.getUuid().getValue())
                 .name(family.getName())
                 .createdAt(family.getCreatedAt())
                 .updatedAt(family.getUpdatedAt())
                 .memberCount(family.getMembers() != null ? family.getMembers().size() : 0)
                 .build();
     }
-
-    public static FamilyResponse fromWithoutMembers(Family family) {
-        return FamilyResponse.builder()
-                .uuid(family.getUuid().toString())
-                .name(family.getName())
-                .createdAt(family.getCreatedAt())
-                .updatedAt(family.getUpdatedAt())
-                .build();
-    }
-
+    
     public static FamilyResponse fromWithMemberCount(Family family, int memberCount) {
         return FamilyResponse.builder()
-                .uuid(family.getUuid().toString())
+                .uuid(family.getUuid().getValue())
                 .name(family.getName())
                 .createdAt(family.getCreatedAt())
                 .updatedAt(family.getUpdatedAt())

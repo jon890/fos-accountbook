@@ -21,11 +21,11 @@ public class ApiErrorResponse {
 
     @Builder.Default
     private boolean success = false;
-    
+
     private String message;
     private ErrorDetails error;
     private List<ErrorDetails> errors;  // 여러 에러를 담을 수 있도록 (validation 에러 등)
-    
+
     @Builder.Default
     private LocalDateTime timestamp = LocalDateTime.now();
 
