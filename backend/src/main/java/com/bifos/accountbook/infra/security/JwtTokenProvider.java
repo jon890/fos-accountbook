@@ -35,7 +35,7 @@ public class JwtTokenProvider extends AbstractJwtTokenProvider {
     }
 
     /**
-     * JWT 토큰 생성
+     * JWT 토큰 생성 (HS512 알고리즘 사용)
      */
     public String generateToken(String userId, String email, Collection<? extends GrantedAuthority> authorities) {
         Date now = new Date();
@@ -51,12 +51,12 @@ public class JwtTokenProvider extends AbstractJwtTokenProvider {
                 .claim("roles", roles)
                 .issuedAt(now)
                 .expiration(expiryDate)
-                .signWith(getSigningKey())
+                .signWith(getSigningKey(), Jwts.SIG.HS512) // HS512 명시적 지정
                 .compact();
     }
 
     /**
-     * Refresh 토큰 생성
+     * Refresh 토큰 생성 (HS512 알고리즘 사용)
      */
     public String generateRefreshToken(String userId) {
         Date now = new Date();
@@ -66,7 +66,7 @@ public class JwtTokenProvider extends AbstractJwtTokenProvider {
                 .subject(userId)
                 .issuedAt(now)
                 .expiration(expiryDate)
-                .signWith(getSigningKey())
+                .signWith(getSigningKey(), Jwts.SIG.HS512) // HS512 명시적 지정
                 .compact();
     }
 
@@ -103,4 +103,3 @@ public class JwtTokenProvider extends AbstractJwtTokenProvider {
         return new UsernamePasswordAuthenticationToken(userId, null, authorities);
     }
 }
-
