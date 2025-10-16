@@ -5,8 +5,15 @@
 
 "use server";
 
-import { apiDelete, ApiError, apiGet, apiPost } from "@/lib/client/api";
+import { serverEnv } from "@/lib/env/server.env";
+import { serverApiClient, ServerApiError } from "@/lib/server/api/client";
 import { auth } from "@/lib/server/auth";
+import type {
+  CreateInvitationResult,
+  InvitationActionResult,
+  InvitationInfo,
+  InvitationInfoResult,
+} from "@/types/actions";
 import type {
   AcceptInvitationRequest,
   CreateInvitationRequest,
@@ -15,27 +22,13 @@ import type {
 } from "@/types/api";
 import { revalidatePath } from "next/cache";
 
-export interface InvitationInfo {
-  uuid: string;
-  token: string;
-  expiresAt: Date;
-  createdAt: Date;
-  isExpired: boolean;
-  isUsed: boolean;
-  inviteUrl: string;
-}
-
 /**
  * 초대 링크 생성
  */
-export async function createInvitationLink(): Promise<{
-  success: boolean;
-  invitation?: InvitationInfo;
-  message: string;
-}> {
+export async function createInvitationLink(): Promise<CreateInvitationResult> {
   try {
     const session = await auth();
-    if (!session?.user?.id || !session?.user?.accessToken) {
+    if (!session?.user?.id) {
       return {
         success: false,
         message: "로그인이 필요합니다",
@@ -43,9 +36,11 @@ export async function createInvitationLink(): Promise<{
     }
 
     // 사용자의 첫 번째 가족 정보 가져오기
-    const families = await apiGet<FamilyResponse[]>("/families", {
-      token: session.user.accessToken,
-    });
+    const familiesResponse = await serverApiClient<{ data: FamilyResponse[] }>(
+      "/families",
+      { method: "GET" }
+    );
+    const families = familiesResponse.data;
 
     if (!families || families.length === 0) {
       return {
@@ -61,15 +56,16 @@ export async function createInvitationLink(): Promise<{
       expiresInHours: 24,
     };
 
-    const invitation = await apiPost<InvitationResponse>(
-      `/invitations/families/${family.uuid}`,
-      requestBody,
-      { token: session.user.accessToken }
-    );
+    const invitationResponse = await serverApiClient<{
+      data: InvitationResponse;
+    }>(`/invitations/families/${family.uuid}`, {
+      method: "POST",
+      body: JSON.stringify(requestBody),
+    });
+    const invitation = invitationResponse.data;
 
     // 초대 링크 URL 생성
-    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-    const inviteUrl = `${baseUrl}/invite/${invitation.token}`;
+    const inviteUrl = `${serverEnv.NEXTAUTH_URL}/invite/${invitation.token}`;
 
     const now = new Date();
     const expiresAt = new Date(invitation.expiresAt);
@@ -91,7 +87,7 @@ export async function createInvitationLink(): Promise<{
     };
   } catch (error) {
     console.error("Failed to create invitation:", error);
-    if (error instanceof ApiError) {
+    if (error instanceof ServerApiError) {
       return {
         success: false,
         message: error.message,
@@ -110,14 +106,16 @@ export async function createInvitationLink(): Promise<{
 export async function getActiveInvitations(): Promise<InvitationInfo[]> {
   try {
     const session = await auth();
-    if (!session?.user?.id || !session?.user?.accessToken) {
+    if (!session?.user?.id) {
       return [];
     }
 
     // 사용자의 첫 번째 가족 정보 가져오기
-    const families = await apiGet<FamilyResponse[]>("/families", {
-      token: session.user.accessToken,
-    });
+    const familiesResponse = await serverApiClient<{ data: FamilyResponse[] }>(
+      "/families",
+      { method: "GET" }
+    );
+    const families = familiesResponse.data;
 
     if (!families || families.length === 0) {
       return [];
@@ -126,12 +124,11 @@ export async function getActiveInvitations(): Promise<InvitationInfo[]> {
     const family = families[0];
 
     // 활성 초대 목록 조회
-    const invitations = await apiGet<InvitationResponse[]>(
-      `/invitations/families/${family.uuid}`,
-      { token: session.user.accessToken }
-    );
+    const invitationsResponse = await serverApiClient<{
+      data: InvitationResponse[];
+    }>(`/invitations/families/${family.uuid}`, { method: "GET" });
+    const invitations = invitationsResponse.data;
 
-    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
     const now = new Date();
 
     return invitations.map((inv) => {
@@ -143,7 +140,7 @@ export async function getActiveInvitations(): Promise<InvitationInfo[]> {
         createdAt: new Date(inv.createdAt),
         isExpired: now > expiresAt || inv.status === "EXPIRED",
         isUsed: inv.status === "ACCEPTED",
-        inviteUrl: `${baseUrl}/invite/${inv.token}`,
+        inviteUrl: `${serverEnv.NEXTAUTH_URL}/invite/${inv.token}`,
       };
     });
   } catch (error) {
@@ -155,13 +152,12 @@ export async function getActiveInvitations(): Promise<InvitationInfo[]> {
 /**
  * 초대 링크 삭제 (취소)
  */
-export async function deleteInvitation(invitationUuid: string): Promise<{
-  success: boolean;
-  message: string;
-}> {
+export async function deleteInvitation(
+  invitationUuid: string
+): Promise<InvitationActionResult> {
   try {
     const session = await auth();
-    if (!session?.user?.id || !session?.user?.accessToken) {
+    if (!session?.user?.id) {
       return {
         success: false,
         message: "로그인이 필요합니다",
@@ -169,8 +165,8 @@ export async function deleteInvitation(invitationUuid: string): Promise<{
     }
 
     // 초대 취소 (DELETE)
-    await apiDelete(`/invitations/${invitationUuid}`, {
-      token: session.user.accessToken,
+    await serverApiClient(`/invitations/${invitationUuid}`, {
+      method: "DELETE",
     });
 
     revalidatePath("/");
@@ -181,7 +177,7 @@ export async function deleteInvitation(invitationUuid: string): Promise<{
     };
   } catch (error) {
     console.error("Failed to delete invitation:", error);
-    if (error instanceof ApiError) {
+    if (error instanceof ServerApiError) {
       return {
         success: false,
         message: error.message,
@@ -197,14 +193,12 @@ export async function deleteInvitation(invitationUuid: string): Promise<{
 /**
  * 초대 수락
  */
-export async function acceptInvitation(token: string): Promise<{
-  success: boolean;
-  message: string;
-  familyUuid?: string;
-}> {
+export async function acceptInvitation(
+  token: string
+): Promise<InvitationActionResult> {
   try {
     const session = await auth();
-    if (!session?.user?.id || !session?.user?.accessToken) {
+    if (!session?.user?.id) {
       return {
         success: false,
         message: "로그인이 필요합니다",
@@ -216,8 +210,9 @@ export async function acceptInvitation(token: string): Promise<{
       token,
     };
 
-    await apiPost(`/invitations/accept`, requestBody, {
-      token: session.user.accessToken,
+    await serverApiClient(`/invitations/accept`, {
+      method: "POST",
+      body: JSON.stringify(requestBody),
     });
 
     revalidatePath("/");
@@ -228,7 +223,7 @@ export async function acceptInvitation(token: string): Promise<{
     };
   } catch (error) {
     console.error("Failed to accept invitation:", error);
-    if (error instanceof ApiError) {
+    if (error instanceof ServerApiError) {
       return {
         success: false,
         message: error.message,
@@ -244,17 +239,18 @@ export async function acceptInvitation(token: string): Promise<{
 /**
  * 초대 정보 조회 (토큰으로)
  */
-export async function getInvitationInfo(token: string): Promise<{
-  valid: boolean;
-  familyName?: string;
-  expiresAt?: Date;
-  message?: string;
-}> {
+export async function getInvitationInfo(
+  token: string
+): Promise<InvitationInfoResult> {
   try {
     // 초대 정보 조회 (인증 불필요 - 백엔드에서 공개 엔드포인트로 설정됨)
-    const invitation = await apiGet<InvitationResponse>(
-      `/invitations/token/${token}`
-    );
+    const invitationResponse = await serverApiClient<{
+      data: InvitationResponse;
+    }>(`/invitations/token/${token}`, {
+      method: "GET",
+      skipAuth: true, // 공개 API
+    });
+    const invitation = invitationResponse.data;
 
     if (
       !invitation ||

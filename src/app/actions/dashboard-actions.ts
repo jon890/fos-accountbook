@@ -13,15 +13,11 @@ import type {
   FamilyResponse,
   PageResponse,
 } from "@/types/api";
-
-export interface DashboardStats {
-  monthlyExpense: number;
-  remainingBudget: number;
-  familyMembers: number;
-  budget: number;
-  year: number;
-  month: number;
-}
+import type {
+  DashboardStats,
+  RecentExpense,
+  CheckUserFamilyResult,
+} from "@/types/actions";
 
 /**
  * 대시보드 통계 데이터 조회
@@ -88,10 +84,7 @@ export async function getDashboardStats(): Promise<DashboardStats | null> {
 /**
  * 가족 정보 존재 여부 확인
  */
-export async function checkUserFamily(): Promise<{
-  hasFamily: boolean;
-  familyId?: string;
-}> {
+export async function checkUserFamily(): Promise<CheckUserFamilyResult> {
   try {
     const session = await auth();
 
@@ -114,20 +107,6 @@ export async function checkUserFamily(): Promise<{
 /**
  * 최근 지출 내역 조회 (최대 10개)
  */
-export interface RecentExpense {
-  id: string;
-  uuid: string;
-  amount: string;
-  description: string | null;
-  date: Date;
-  category: {
-    id: string;
-    name: string;
-    color: string;
-    icon: string;
-  };
-}
-
 export async function getRecentExpenses(
   limit: number = 10
 ): Promise<RecentExpense[]> {

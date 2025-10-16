@@ -1,8 +1,13 @@
 "use server";
 
-import { apiDelete, ApiError, apiPost } from "@/lib/client/api";
 import { auth } from "@/lib/server/auth";
+import { serverApiClient, ServerApiError } from "@/lib/server/api/client";
 import type { CreateExpenseRequest, ExpenseResponse } from "@/types/api";
+import type {
+  CreateExpenseFormState,
+  GetExpensesParams,
+  GetExpensesResult,
+} from "@/types/actions";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -15,17 +20,6 @@ const createExpenseSchema = z.object({
   date: z.string().optional(),
 });
 
-export type CreateExpenseFormState = {
-  errors?: {
-    amount?: string[];
-    description?: string[];
-    categoryId?: string[];
-    date?: string[];
-  };
-  message?: string;
-  success?: boolean;
-};
-
 export async function createExpenseAction(
   prevState: CreateExpenseFormState,
   formData: FormData
@@ -33,7 +27,7 @@ export async function createExpenseAction(
   try {
     // 인증 확인
     const session = await auth();
-    if (!session?.user?.id || !session?.user?.accessToken) {
+    if (!session?.user?.id) {
       redirect("/api/auth/signin");
     }
 
@@ -67,7 +61,7 @@ export async function createExpenseAction(
 
     const { amount, description, categoryId, date } = validatedFields.data;
 
-    // 백엔드 API 호출
+    // 백엔드 API 호출 (HTTP-only 쿠키에서 자동으로 Access Token 전달)
     const requestBody: CreateExpenseRequest = {
       categoryUuid: categoryId,
       amount,
@@ -75,10 +69,12 @@ export async function createExpenseAction(
       date: date ? new Date(date).toISOString() : new Date().toISOString(),
     };
 
-    await apiPost<ExpenseResponse>(
+    await serverApiClient<{ data: ExpenseResponse }>(
       `/families/${familyUuid}/expenses`,
-      requestBody,
-      { token: session.user.accessToken }
+      {
+        method: "POST",
+        body: JSON.stringify(requestBody),
+      }
     );
 
     // 지출 페이지 및 대시보드 revalidate
@@ -92,7 +88,7 @@ export async function createExpenseAction(
   } catch (error) {
     console.error("지출 추가 중 오류:", error);
 
-    if (error instanceof ApiError) {
+    if (error instanceof ServerApiError) {
       return {
         message: error.message || "지출 추가 중 오류가 발생했습니다.",
         success: false,
@@ -116,13 +112,13 @@ export async function deleteExpenseAction(
   try {
     // 인증 확인
     const session = await auth();
-    if (!session?.user?.id || !session?.user?.accessToken) {
+    if (!session?.user?.id) {
       redirect("/api/auth/signin");
     }
 
-    // 백엔드 API 호출
-    await apiDelete(`/families/${familyUuid}/expenses/${expenseUuid}`, {
-      token: session.user.accessToken,
+    // 백엔드 API 호출 (HTTP-only 쿠키에서 자동으로 Access Token 전달)
+    await serverApiClient(`/families/${familyUuid}/expenses/${expenseUuid}`, {
+      method: "DELETE",
     });
 
     // 지출 페이지 및 대시보드 revalidate
@@ -136,7 +132,7 @@ export async function deleteExpenseAction(
   } catch (error) {
     console.error("지출 삭제 중 오류:", error);
 
-    if (error instanceof ApiError) {
+    if (error instanceof ServerApiError) {
       return {
         success: false,
         message: error.message || "지출 삭제에 실패했습니다.",
@@ -146,6 +142,72 @@ export async function deleteExpenseAction(
     return {
       success: false,
       message: "지출 삭제 중 오류가 발생했습니다.",
+    };
+  }
+}
+
+/**
+ * 지출 목록 조회 Server Action
+ */
+export async function getExpenses(
+  params: GetExpensesParams
+): Promise<GetExpensesResult> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        message: "로그인이 필요합니다.",
+      };
+    }
+
+    const { familyId, categoryId, startDate, endDate, page = 1 } = params;
+    const limit = 10;
+    let queryParams = `page=${page - 1}&size=${limit}`;
+
+    if (categoryId) {
+      queryParams += `&categoryId=${categoryId}`;
+    }
+    if (startDate) {
+      queryParams += `&startDate=${startDate}`;
+    }
+    if (endDate) {
+      queryParams += `&endDate=${endDate}`;
+    }
+
+    const response = await serverApiClient<{
+      data: {
+        content: ExpenseResponse[];
+        totalPages: number;
+        totalElements: number;
+        number: number;
+      };
+    }>(`/families/${familyId}/expenses?${queryParams}`, {
+      method: "GET",
+    });
+
+    return {
+      success: true,
+      data: {
+        expenses: response.data.content,
+        totalPages: response.data.totalPages,
+        totalElements: response.data.totalElements,
+        currentPage: response.data.number,
+      },
+    };
+  } catch (error) {
+    console.error("지출 조회 중 오류:", error);
+
+    if (error instanceof ServerApiError) {
+      return {
+        success: false,
+        message: error.message || "지출 조회에 실패했습니다.",
+      };
+    }
+
+    return {
+      success: false,
+      message: "지출 조회 중 오류가 발생했습니다.",
     };
   }
 }

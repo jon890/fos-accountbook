@@ -1,8 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { apiGet } from "@/lib/client/api";
-import { auth } from "@/lib/server/auth";
-import type { ExpenseResponse, PageResponse } from "@/types/api";
+import { getExpenses } from "@/app/actions/expense-actions";
 import { ExpensePagination } from "./ExpensePagination";
 
 interface ExpenseListProps {
@@ -43,57 +41,29 @@ export async function ExpenseList({
   endDate,
   page = 1,
 }: ExpenseListProps) {
-  const session = await auth();
+  // Server Action으로 지출 목록 조회
+  const result = await getExpenses({
+    familyId,
+    categoryId,
+    startDate,
+    endDate,
+    page,
+  });
 
-  if (!session?.user?.accessToken) {
-    return (
-      <Card>
-        <CardContent className="py-8">
-          <p className="text-center text-gray-500">로그인이 필요합니다.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // 백엔드 API로 지출 목록 조회
-  const limit = 10;
-  let queryParams = `page=${page - 1}&size=${limit}`; // 백엔드는 0-based index
-
-  if (categoryId) {
-    queryParams += `&categoryId=${categoryId}`;
-  }
-  if (startDate) {
-    queryParams += `&startDate=${startDate}`;
-  }
-  if (endDate) {
-    queryParams += `&endDate=${endDate}`;
-  }
-
-  let expensePage: PageResponse<ExpenseResponse>;
-  try {
-    expensePage = await apiGet<PageResponse<ExpenseResponse>>(
-      `/families/${familyId}/expenses?${queryParams}`,
-      { token: session.user.accessToken }
-    );
-  } catch (error) {
-    console.error("Failed to fetch expenses:", error);
+  if (!result.success || !result.data) {
     return (
       <Card>
         <CardContent className="py-8">
           <p className="text-center text-gray-500">
-            지출 내역을 불러오는데 실패했습니다.
+            {result.message || "지출 내역을 불러오는데 실패했습니다."}
           </p>
         </CardContent>
       </Card>
     );
   }
 
-  const {
-    content: expenses,
-    totalPages,
-    totalElements,
-    number: currentPage,
-  } = expensePage;
+  const { expenses, totalPages, totalElements, currentPage } = result.data;
+  const limit = 10;
 
   if (expenses.length === 0) {
     return (

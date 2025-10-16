@@ -4,7 +4,9 @@
 
 "use client";
 
-import { useState, useEffect, useActionState } from "react";
+import { getFamilyCategories } from "@/app/actions/dashboard-actions";
+import { createExpenseAction } from "@/app/actions/expense-actions";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -12,16 +14,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
-import {
-  createExpenseAction,
-  type CreateExpenseFormState,
-} from "@/app/actions/expense-actions";
-import { getFamilyCategories } from "@/app/actions/dashboard-actions";
+import type { CreateExpenseFormState } from "@/types/actions";
 import type { CategoryResponse } from "@/types/api";
+import { Loader2 } from "lucide-react";
+import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface AddExpenseDialogProps {
@@ -35,7 +33,10 @@ const initialState: CreateExpenseFormState = {
   success: false,
 };
 
-export function AddExpenseDialog({ open, onOpenChange }: AddExpenseDialogProps) {
+export function AddExpenseDialog({
+  open,
+  onOpenChange,
+}: AddExpenseDialogProps) {
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [state, formAction] = useActionState(createExpenseAction, initialState);
@@ -76,9 +77,7 @@ export function AddExpenseDialog({ open, onOpenChange }: AddExpenseDialogProps) 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>지출 추가</DialogTitle>
-          <DialogDescription>
-            새로운 지출 내역을 추가합니다
-          </DialogDescription>
+          <DialogDescription>새로운 지출 내역을 추가합니다</DialogDescription>
         </DialogHeader>
 
         <form action={formAction} className="space-y-4">

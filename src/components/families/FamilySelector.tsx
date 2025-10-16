@@ -1,38 +1,14 @@
 "use client";
 
+import { getFamilies } from "@/app/actions/family-actions";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { apiGet } from "@/lib/client/api";
+import type { Family } from "@/types/actions";
 import { ChevronRight, Plus, User, Users } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
-
-interface Family {
-  id: string;
-  name: string;
-  members: Array<{
-    id: string;
-    role: string;
-    user: {
-      id: string;
-      name: string;
-      email: string;
-      image: string | null;
-    };
-  }>;
-  categories: Array<{
-    id: string;
-    name: string;
-    color: string;
-    icon: string;
-  }>;
-  _count: {
-    expenses: number;
-  };
-}
 
 interface FamilySelectorProps {
   onFamilySelect: (family: Family) => void;
@@ -46,25 +22,22 @@ export function FamilySelector({
   const [families, setFamilies] = useState<Family[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { data: session } = useSession();
 
   useEffect(() => {
-    if (session?.user?.accessToken) {
-      fetchFamilies();
-    }
-  }, [session]);
+    fetchFamilies();
+  }, []);
 
   const fetchFamilies = async () => {
     try {
       setLoading(true);
-      const token = session?.user?.accessToken;
-      if (!token) {
-        setError("인증 정보가 없습니다. 다시 로그인해주세요.");
+      const result = await getFamilies();
+
+      if (!result.success || !result.data) {
+        setError(result.message || "가족 목록을 불러오는데 실패했습니다.");
         return;
       }
 
-      const data = await apiGet<Family[]>("/families", { token });
-      setFamilies(data);
+      setFamilies(result.data);
       setError(null);
     } catch (err) {
       setError(
@@ -124,7 +97,7 @@ export function FamilySelector({
               </h2>
               {families.map((family) => (
                 <Card
-                  key={family.id}
+                  key={family.uuid}
                   className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-blue-200"
                   onClick={() => onFamilySelect(family)}
                 >
@@ -136,45 +109,49 @@ export function FamilySelector({
                             {family.name}
                           </h3>
                           <Badge variant="secondary" className="text-xs">
-                            {family.members.length}명
+                            {family.members?.length || 0}명
                           </Badge>
                         </div>
 
                         <div className="flex items-center gap-4 text-sm text-gray-600">
                           <span className="flex items-center gap-1">
                             <Users className="w-4 h-4" />
-                            구성원 {family.members.length}명
+                            구성원 {family.members?.length || 0}명
                           </span>
-                          <span>지출 {family._count.expenses}건</span>
-                          <span>카테고리 {family.categories.length}개</span>
+                          <span>지출 {family.expenseCount || 0}건</span>
+                          <span>
+                            카테고리 {family.categories?.length || 0}개
+                          </span>
                         </div>
 
                         {/* 구성원 미리보기 */}
-                        <div className="flex items-center gap-2 mt-3">
-                          {family.members.slice(0, 3).map((member) => (
-                            <div
-                              key={member.id}
-                              className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-medium text-gray-700 overflow-hidden"
-                            >
-                              {member.user.image ? (
-                                <Image
-                                  src={member.user.image}
-                                  alt={member.user.name || ""}
-                                  width={32}
-                                  height={32}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                member.user.name?.charAt(0) || "U"
-                              )}
-                            </div>
-                          ))}
-                          {family.members.length > 3 && (
-                            <span className="text-xs text-gray-500">
-                              +{family.members.length - 3}
-                            </span>
-                          )}
-                        </div>
+                        {family.members && family.members.length > 0 && (
+                          <div className="flex items-center gap-2 mt-3">
+                            {family.members.slice(0, 3).map((member) => (
+                              <div
+                                key={member.uuid}
+                                className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-medium text-gray-700 overflow-hidden"
+                              >
+                                {member.userImage ? (
+                                  <Image
+                                    src={member.userImage}
+                                    alt={member.userName || ""}
+                                    width={32}
+                                    height={32}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  member.userName?.charAt(0) || "U"
+                                )}
+                              </div>
+                            ))}
+                            {family.members.length > 3 && (
+                              <span className="text-xs text-gray-500">
+                                +{family.members.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       <ChevronRight className="w-5 h-5 text-gray-400" />

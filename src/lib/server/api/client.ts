@@ -2,35 +2,27 @@
  * Server-side API Client
  *
  * Server Components와 Server Actions에서 백엔드 API를 호출할 때 사용합니다.
- * NextAuth 세션 토큰을 쿠키에서 추출하여 Authorization 헤더에 포함합니다.
+ * 백엔드 Access Token을 HTTP-only 쿠키에서 추출하여 Authorization 헤더에 포함합니다.
  */
 
 import { serverEnv } from "@/lib/env/server.env";
 import { cookies } from "next/headers";
-import { ServerApiError, ApiResponse, ServerApiOptions } from "./types";
+import type { ApiResponse, ServerApiOptions } from "./types";
+import { ServerApiError } from "./types";
+
+// ServerApiError를 re-export하여 다른 파일에서 사용 가능하도록 함
+export { ServerApiError };
 
 const API_URL = serverEnv.BACKEND_API_URL;
 
 /**
- * 서버 사이드에서 NextAuth 세션 토큰 추출
+ * 서버 사이드에서 백엔드 Access Token 추출
+ *
+ * HTTP-only 쿠키에 저장된 백엔드 JWT 토큰을 가져옵니다.
  */
-async function getSessionToken(): Promise<string | null> {
+async function getBackendAccessToken(): Promise<string | null> {
   const cookieStore = await cookies();
-
-  // Auth.js v5
-  let token = cookieStore.get("authjs.session-token")?.value;
-  if (!token) {
-    token = cookieStore.get("__Secure-authjs.session-token")?.value;
-  }
-
-  // 하위 호환: NextAuth v4
-  if (!token) {
-    token = cookieStore.get("next-auth.session-token")?.value;
-  }
-  if (!token) {
-    token = cookieStore.get("__Secure-next-auth.session-token")?.value;
-  }
-
+  const token = cookieStore.get("backend_access_token")?.value;
   return token || null;
 }
 
@@ -49,11 +41,11 @@ export async function serverApiClient<T = unknown>(
     ...((fetchOptions.headers as Record<string, string>) || {}),
   };
 
-  // 인증이 필요한 경우에만 세션 토큰 추가
+  // 인증이 필요한 경우 백엔드 Access Token 추가
   if (!skipAuth) {
-    const sessionToken = await getSessionToken();
-    if (sessionToken) {
-      headers["Authorization"] = `Bearer ${sessionToken}`;
+    const accessToken = await getBackendAccessToken();
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
     }
   }
 

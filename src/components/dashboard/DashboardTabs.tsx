@@ -1,25 +1,40 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { CreditCard, BarChart3 } from "lucide-react"
-import { QuickActions } from "./QuickActions"
-import { RecentActivity } from "./RecentActivity"
-import type { RecentExpense } from "@/app/actions/dashboard-actions"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { RecentExpense } from "@/types/actions";
+import { BarChart3, CreditCard } from "lucide-react";
+import { QuickActions } from "./QuickActions";
+import { RecentActivity } from "./RecentActivity";
 
 interface DashboardTabsProps {
-  recentExpenses: RecentExpense[]
+  recentExpenses: RecentExpense[];
 }
 
 export function DashboardTabs({ recentExpenses }: DashboardTabsProps) {
   return (
     <Tabs defaultValue="overview" className="mb-8">
       <TabsList className="grid w-full grid-cols-3 mb-6 bg-white/60 backdrop-blur-sm">
-        <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+        <TabsTrigger
+          value="overview"
+          className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+        >
           개요
         </TabsTrigger>
-        <TabsTrigger value="expenses" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+        <TabsTrigger
+          value="expenses"
+          className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+        >
           지출 내역
         </TabsTrigger>
-        <TabsTrigger value="analytics" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+        <TabsTrigger
+          value="analytics"
+          className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+        >
           분석
         </TabsTrigger>
       </TabsList>
@@ -59,5 +74,5 @@ export function DashboardTabs({ recentExpenses }: DashboardTabsProps) {
         </Card>
       </TabsContent>
     </Tabs>
-  )
+  );
 }

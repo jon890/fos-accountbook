@@ -4,7 +4,12 @@
 
 "use client";
 
-import { useState } from "react";
+import {
+  createInvitationLink,
+  deleteInvitation,
+  getActiveInvitations,
+} from "@/app/actions/invitation-actions";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -12,24 +17,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import {
-  UserPlus,
-  Link as LinkIcon,
-  Copy,
-  Trash2,
-  Loader2,
-  Check,
-} from "lucide-react";
-import {
-  createInvitationLink,
-  getActiveInvitations,
-  deleteInvitation,
-  type InvitationInfo,
-} from "@/app/actions/invitation-actions";
-import { toast } from "sonner";
+import type { InvitationInfo } from "@/types/actions";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import {
+  Check,
+  Copy,
+  Link as LinkIcon,
+  Loader2,
+  Trash2,
+  UserPlus,
+} from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface InviteFamilyDialogProps {
   open: boolean;
@@ -66,9 +66,12 @@ export function InviteFamilyDialog({
       if (result.success && result.invitation) {
         toast.success(result.message);
         await loadInvitations();
-        
+
         // 자동으로 클립보드에 복사
-        await copyToClipboard(result.invitation.inviteUrl, result.invitation.token);
+        await copyToClipboard(
+          result.invitation.inviteUrl,
+          result.invitation.token
+        );
       } else {
         toast.error(result.message);
       }
@@ -84,7 +87,7 @@ export function InviteFamilyDialog({
       await navigator.clipboard.writeText(url);
       setCopiedToken(token);
       toast.success("초대 링크가 복사되었습니다!");
-      
+
       // 2초 후 복사 상태 초기화
       setTimeout(() => {
         setCopiedToken(null);
@@ -97,7 +100,7 @@ export function InviteFamilyDialog({
   const handleDeleteInvitation = async (uuid: string) => {
     try {
       const result = await deleteInvitation(uuid);
-      
+
       if (result.success) {
         toast.success(result.message);
         await loadInvitations();
@@ -136,8 +139,7 @@ export function InviteFamilyDialog({
               </>
             ) : (
               <>
-                <LinkIcon className="w-4 h-4 mr-2" />
-                새 초대 링크 생성
+                <LinkIcon className="w-4 h-4 mr-2" />새 초대 링크 생성
               </>
             )}
           </Button>
@@ -148,7 +150,7 @@ export function InviteFamilyDialog({
               <h4 className="text-sm font-semibold text-gray-700">
                 활성 초대 링크
               </h4>
-              
+
               {invitations.map((invitation) => (
                 <div
                   key={invitation.uuid}
@@ -157,7 +159,12 @@ export function InviteFamilyDialog({
                   <div className="flex items-center gap-2">
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-gray-500 mb-1">
-                        만료: {format(new Date(invitation.expiresAt), "M월 d일 HH:mm", { locale: ko })}
+                        만료:{" "}
+                        {format(
+                          new Date(invitation.expiresAt),
+                          "M월 d일 HH:mm",
+                          { locale: ko }
+                        )}
                       </p>
                       <div className="w-full overflow-hidden">
                         <p className="text-xs font-mono text-gray-700 truncate">
@@ -165,13 +172,16 @@ export function InviteFamilyDialog({
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() =>
-                          copyToClipboard(invitation.inviteUrl, invitation.token)
+                          copyToClipboard(
+                            invitation.inviteUrl,
+                            invitation.token
+                          )
                         }
                         className="h-8 w-8 p-0"
                       >
@@ -181,7 +191,7 @@ export function InviteFamilyDialog({
                           <Copy className="w-4 h-4" />
                         )}
                       </Button>
-                      
+
                       <Button
                         size="sm"
                         variant="ghost"
@@ -200,7 +210,8 @@ export function InviteFamilyDialog({
           {/* 안내 메시지 */}
           <div className="bg-blue-50 rounded-lg p-3">
             <p className="text-sm text-blue-900">
-              💡 초대 링크를 여자친구에게 공유하면 함께 가계부를 관리할 수 있습니다!
+              💡 초대 링크를 여자친구에게 공유하면 함께 가계부를 관리할 수
+              있습니다!
             </p>
           </div>
         </div>

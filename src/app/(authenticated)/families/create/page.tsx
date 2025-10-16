@@ -10,8 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { apiPost } from "@/lib/client/api";
-import { useSession } from "next-auth/react";
+import { createFamily } from "@/app/actions/family-actions";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -21,7 +20,6 @@ export default function CreateFamilyPage() {
   const [familyType, setFamilyType] = useState<"personal" | "family">("family");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { data: session } = useSession();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,29 +32,16 @@ export default function CreateFamilyPage() {
     setIsLoading(true);
 
     try {
-      // NextAuth 세션에서 토큰 추출하여 Authorization 헤더로 전송
-      const token = session?.user?.accessToken;
-      console.log("session", session);
-      if (!token) {
-        toast.error("인증 정보가 없습니다. 다시 로그인해주세요.");
-        router.push("/api/auth/signin");
-        return;
-      }
-
-      await apiPost(
-        "/families",
-        {
-          name: familyName.trim(),
-          description: familyType === "personal" ? "개인 가계부" : undefined,
-        },
-        { token }
-      );
+      // Server Action 호출 (백엔드 Access Token은 서버의 HTTP-only 쿠키에서 자동 전달)
+      await createFamily({
+        name: familyName.trim(),
+        description: familyType === "personal" ? "개인 가계부" : undefined,
+      });
 
       toast.success("가족이 성공적으로 생성되었습니다!");
 
       // 생성 후 홈페이지로 이동
       router.push("/");
-      router.refresh(); // 데이터 새로고침
     } catch (error) {
       console.error("Family creation error:", error);
       toast.error(
