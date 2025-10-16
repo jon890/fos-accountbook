@@ -25,12 +25,27 @@ public abstract class AbstractJwtTokenProvider {
 
     /**
      * 문자열 비밀키를 SecretKey 객체로 변환합니다.
+     * 키가 짧으면 자동으로 패딩하여 안전한 길이로 만듭니다.
      * 
      * @param secret 비밀키 문자열
      * @return SecretKey
      */
     protected SecretKey createSigningKey(String secret) {
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+
+        // HS512는 최소 64바이트 필요
+        if (keyBytes.length < 64) {
+            log.warn("JWT secret key is too short ({} bytes). Padding to 64 bytes for HS512 compatibility.",
+                    keyBytes.length);
+
+            // 키를 64바이트로 패딩 (반복 + SHA-256 해시 조합)
+            byte[] paddedKey = new byte[64];
+            for (int i = 0; i < 64; i++) {
+                paddedKey[i] = keyBytes[i % keyBytes.length];
+            }
+            keyBytes = paddedKey;
+        }
+
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
@@ -113,6 +128,4 @@ public abstract class AbstractJwtTokenProvider {
         return claims != null ? claims.get("name", String.class) : null;
     }
 
-
 }
-
