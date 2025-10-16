@@ -28,9 +28,10 @@ public class FamilyService {
     private final FamilyRepository familyRepository;
     private final FamilyMemberRepository familyMemberRepository;
     private final UserRepository userRepository;
+    private final CategoryService categoryService;
 
     /**
-     * 가족 생성 (생성자를 owner로 자동 추가)
+     * 가족 생성 (생성자를 owner로 자동 추가 + 기본 카테고리 생성)
      */
     @Transactional
     public FamilyResponse createFamily(CustomUuid userUuid, CreateFamilyRequest request) {
@@ -54,6 +55,9 @@ public class FamilyService {
 
         familyMemberRepository.save(member);
         log.info("Added owner to family: {}", family.getUuid());
+
+        // 기본 카테고리 생성 (CategoryService에 위임)
+        categoryService.createDefaultCategoriesForFamily(family.getUuid());
 
         // memberCount 포함해서 반환 (방금 생성했으므로 1명)
         return FamilyResponse.fromWithMemberCount(family, 1);

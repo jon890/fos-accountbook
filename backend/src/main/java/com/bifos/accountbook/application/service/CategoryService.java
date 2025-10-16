@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -145,6 +146,38 @@ public class CategoryService {
     }
 
     /**
+     * 가족 생성 시 기본 카테고리 자동 생성
+     * FamilyService에서 호출됨 (권한 검증 불필요 - 가족 생성 시점)
+     */
+    @Transactional
+    public void createDefaultCategoriesForFamily(CustomUuid familyUuid) {
+        List<DefaultCategory> defaultCategories = Arrays.asList(
+                new DefaultCategory("식비", "#ef4444", "🍚"),
+                new DefaultCategory("카페", "#f59e0b", "☕"),
+                new DefaultCategory("간식", "#ec4899", "🍰"),
+                new DefaultCategory("생활비", "#10b981", "🏠"),
+                new DefaultCategory("교통비", "#3b82f6", "🚗"),
+                new DefaultCategory("쇼핑", "#8b5cf6", "🛍️"),
+                new DefaultCategory("의료", "#06b6d4", "💊"),
+                new DefaultCategory("문화생활", "#f43f5e", "🎬"),
+                new DefaultCategory("교육", "#14b8a6", "📚"),
+                new DefaultCategory("기타", "#6b7280", "📦"));
+
+        for (DefaultCategory defaultCategory : defaultCategories) {
+            Category category = Category.builder()
+                    .familyUuid(familyUuid)
+                    .name(defaultCategory.name)
+                    .color(defaultCategory.color)
+                    .icon(defaultCategory.icon)
+                    .build();
+
+            categoryRepository.save(category);
+        }
+
+        log.info("Created {} default categories for family: {}", defaultCategories.size(), familyUuid);
+    }
+
+    /**
      * 가족 접근 권한 확인
      */
     private void validateFamilyAccess(CustomUuid userUuid, CustomUuid familyUuid) {
@@ -153,6 +186,21 @@ public class CategoryService {
 
         if (!isMember) {
             throw new IllegalStateException("해당 가족에 접근할 권한이 없습니다");
+        }
+    }
+
+    /**
+     * 기본 카테고리 정보를 담는 내부 클래스
+     */
+    private static class DefaultCategory {
+        String name;
+        String color;
+        String icon;
+
+        DefaultCategory(String name, String color, String icon) {
+            this.name = name;
+            this.color = color;
+            this.icon = icon;
         }
     }
 }
