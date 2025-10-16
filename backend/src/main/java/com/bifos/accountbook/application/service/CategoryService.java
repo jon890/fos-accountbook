@@ -4,7 +4,6 @@ import com.bifos.accountbook.application.dto.category.CategoryResponse;
 import com.bifos.accountbook.application.dto.category.CreateCategoryRequest;
 import com.bifos.accountbook.application.dto.category.UpdateCategoryRequest;
 import com.bifos.accountbook.domain.entity.Category;
-import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.UserRepository;

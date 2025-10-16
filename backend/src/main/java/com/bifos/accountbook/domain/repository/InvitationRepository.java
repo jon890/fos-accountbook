@@ -2,29 +2,44 @@ package com.bifos.accountbook.domain.repository;
 
 import com.bifos.accountbook.domain.entity.Invitation;
 import com.bifos.accountbook.domain.value.CustomUuid;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
-public interface InvitationRepository extends JpaRepository<Invitation, Long> {
+/**
+ * 초대 Repository 인터페이스
+ * JPA에 의존하지 않는 순수 도메인 레이어 인터페이스
+ */
+public interface InvitationRepository {
 
-        Optional<Invitation> findByToken(String token);
+    /**
+     * 초대 저장
+     */
+    Invitation save(Invitation invitation);
 
-        Optional<Invitation> findByUuid(CustomUuid uuid);
+    /**
+     * 토큰으로 초대 조회
+     */
+    Optional<Invitation> findByToken(String token);
 
-        @Query("SELECT i FROM Invitation i WHERE i.familyUuid = :familyUuid AND i.status = 'PENDING' AND i.expiresAt > :now AND i.deletedAt IS NULL")
-        List<Invitation> findActiveByFamilyUuid(
-                        @Param("familyUuid") CustomUuid familyUuid,
-                        @Param("now") LocalDateTime now);
+    /**
+     * UUID로 초대 조회
+     */
+    Optional<Invitation> findByUuid(CustomUuid uuid);
 
-        @Query("SELECT i FROM Invitation i WHERE i.token = :token AND i.status = 'PENDING' AND i.expiresAt > :now AND i.deletedAt IS NULL")
-        Optional<Invitation> findValidByToken(
-                        @Param("token") String token,
-                        @Param("now") LocalDateTime now);
+    /**
+     * 가족 UUID로 활성 초대 목록 조회
+     */
+    List<Invitation> findActiveByFamilyUuid(CustomUuid familyUuid, LocalDateTime now);
+
+    /**
+     * 토큰으로 유효한 초대 조회
+     */
+    Optional<Invitation> findValidByToken(String token, LocalDateTime now);
+
+    /**
+     * 초대 삭제
+     */
+    void delete(Invitation invitation);
 }
