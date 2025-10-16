@@ -5,16 +5,16 @@ import com.bifos.accountbook.application.dto.invitation.AcceptInvitationRequest;
 import com.bifos.accountbook.application.dto.invitation.CreateInvitationRequest;
 import com.bifos.accountbook.application.dto.invitation.InvitationResponse;
 import com.bifos.accountbook.application.service.InvitationService;
+import com.bifos.accountbook.presentation.annotation.LoginUser;
+import com.bifos.accountbook.presentation.dto.LoginUserDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import com.bifos.accountbook.domain.value.CustomUuid;
 
 @Slf4j
 @RestController
@@ -29,18 +29,16 @@ public class InvitationController {
      */
     @PostMapping("/families/{familyUuid}")
     public ResponseEntity<ApiSuccessResponse<InvitationResponse>> createInvitation(
-            Authentication authentication,
+            @LoginUser LoginUserDto loginUser,
             @PathVariable String familyUuid,
-            @Valid @RequestBody(required = false) CreateInvitationRequest request
-    ) {
-        String userId = authentication.getName();
-        log.info("Creating invitation for family: {} by user: {}", familyUuid, userId);
+            @Valid @RequestBody(required = false) CreateInvitationRequest request) {
+        log.info("Creating invitation for family: {} by user: {}", familyUuid, loginUser.getUserUuid());
 
         if (request == null) {
             request = new CreateInvitationRequest(72); // 기본 3일
         }
 
-        InvitationResponse response = invitationService.createInvitation(userId, familyUuid, request);
+        InvitationResponse response = invitationService.createInvitation(loginUser.getUserUuid(), familyUuid, request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -52,13 +50,12 @@ public class InvitationController {
      */
     @GetMapping("/families/{familyUuid}")
     public ResponseEntity<ApiSuccessResponse<List<InvitationResponse>>> getFamilyInvitations(
-            Authentication authentication,
-            @PathVariable String familyUuid
-    ) {
-        String userId = authentication.getName();
-        log.info("Fetching invitations for family: {} by user: {}", familyUuid, userId);
+            @LoginUser LoginUserDto loginUser,
+            @PathVariable String familyUuid) {
+        log.info("Fetching invitations for family: {} by user: {}", familyUuid, loginUser.getUserUuid());
 
-        List<InvitationResponse> invitations = invitationService.getFamilyInvitations(userId, familyUuid);
+        List<InvitationResponse> invitations = invitationService.getFamilyInvitations(loginUser.getUserUuid(),
+                familyUuid);
 
         return ResponseEntity.ok(ApiSuccessResponse.of(invitations));
     }
@@ -68,8 +65,7 @@ public class InvitationController {
      */
     @GetMapping("/token/{token}")
     public ResponseEntity<ApiSuccessResponse<InvitationResponse>> getInvitationByToken(
-            @PathVariable String token
-    ) {
+            @PathVariable String token) {
         log.info("Fetching invitation by token: {}", token);
 
         InvitationResponse invitation = invitationService.getInvitationByToken(token);
@@ -82,13 +78,11 @@ public class InvitationController {
      */
     @PostMapping("/accept")
     public ResponseEntity<ApiSuccessResponse<Void>> acceptInvitation(
-            Authentication authentication,
-            @Valid @RequestBody AcceptInvitationRequest request
-    ) {
-        String userId = authentication.getName();
-        log.info("User: {} accepting invitation with token: {}", userId, request.getToken());
+            @LoginUser LoginUserDto loginUser,
+            @Valid @RequestBody AcceptInvitationRequest request) {
+        log.info("User: {} accepting invitation with token: {}", loginUser.getUserUuid(), request.getToken());
 
-        invitationService.acceptInvitation(userId, request.getToken());
+        invitationService.acceptInvitation(loginUser.getUserUuid(), request.getToken());
 
         return ResponseEntity.ok(ApiSuccessResponse.of("초대를 수락했습니다. 가족에 가입되었습니다.", null));
     }
@@ -98,15 +92,12 @@ public class InvitationController {
      */
     @DeleteMapping("/{invitationUuid}")
     public ResponseEntity<ApiSuccessResponse<Void>> deleteInvitation(
-            Authentication authentication,
-            @PathVariable String invitationUuid
-    ) {
-        String userId = authentication.getName();
-        log.info("Deleting invitation: {} by user: {}", invitationUuid, userId);
+            @LoginUser LoginUserDto loginUser,
+            @PathVariable String invitationUuid) {
+        log.info("Deleting invitation: {} by user: {}", invitationUuid, loginUser.getUserUuid());
 
-        invitationService.deleteInvitation(userId, invitationUuid);
+        invitationService.deleteInvitation(loginUser.getUserUuid(), invitationUuid);
 
         return ResponseEntity.ok(ApiSuccessResponse.of("초대장이 삭제되었습니다", null));
     }
 }
-

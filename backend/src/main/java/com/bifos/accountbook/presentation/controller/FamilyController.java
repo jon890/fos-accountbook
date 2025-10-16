@@ -6,6 +6,8 @@ import com.bifos.accountbook.application.dto.family.FamilyResponse;
 import com.bifos.accountbook.application.dto.family.UpdateFamilyRequest;
 import com.bifos.accountbook.application.service.FamilyService;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.presentation.annotation.LoginUser;
+import com.bifos.accountbook.presentation.dto.LoginUserDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -16,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,12 +37,9 @@ public class FamilyController {
     @ApiResponse(responseCode = "401", description = "인증 실패")
     @PostMapping
     public ResponseEntity<ApiSuccessResponse<FamilyResponse>> createFamily(
-            // todo authentication을 위한 추상화 클래스 및 ArgumentResolver 작성
-            Authentication authentication,
+            @LoginUser LoginUserDto loginUser,
             @Valid @RequestBody CreateFamilyRequest request) {
-        String userUuid = authentication.getName();
-
-        FamilyResponse response = familyService.createFamily(CustomUuid.from(userUuid), request);
+        FamilyResponse response = familyService.createFamily(loginUser.getUserUuid(), request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -52,10 +50,8 @@ public class FamilyController {
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @GetMapping
     public ResponseEntity<ApiSuccessResponse<List<FamilyResponse>>> getUserFamilies(
-            Authentication authentication) {
-        String userUuid = authentication.getName();
-
-        List<FamilyResponse> families = familyService.getUserFamilies(CustomUuid.from(userUuid));
+            @LoginUser LoginUserDto loginUser) {
+        List<FamilyResponse> families = familyService.getUserFamilies(loginUser.getUserUuid());
 
         return ResponseEntity.ok(ApiSuccessResponse.of(families));
     }
@@ -65,12 +61,11 @@ public class FamilyController {
     @ApiResponse(responseCode = "404", description = "가족을 찾을 수 없음")
     @GetMapping("/{familyUuid}")
     public ResponseEntity<ApiSuccessResponse<FamilyResponse>> getFamily(
-            Authentication authentication,
+            @LoginUser LoginUserDto loginUser,
             @Parameter(description = "가족 UUID") @PathVariable String familyUuid) {
-        String userId = authentication.getName();
-        log.info("Fetching family: {} for user: {}", familyUuid, userId);
+        log.info("Fetching family: {} for user: {}", familyUuid, loginUser.getUserUuid());
 
-        FamilyResponse family = familyService.getFamily(userId, familyUuid);
+        FamilyResponse family = familyService.getFamily(loginUser.getUserUuid(), familyUuid);
 
         return ResponseEntity.ok(ApiSuccessResponse.of(family));
     }
@@ -80,13 +75,12 @@ public class FamilyController {
     @ApiResponse(responseCode = "403", description = "권한 없음")
     @PutMapping("/{familyUuid}")
     public ResponseEntity<ApiSuccessResponse<FamilyResponse>> updateFamily(
-            Authentication authentication,
+            @LoginUser LoginUserDto loginUser,
             @Parameter(description = "가족 UUID") @PathVariable String familyUuid,
             @Valid @RequestBody UpdateFamilyRequest request) {
-        String userId = authentication.getName();
-        log.info("Updating family: {} by user: {}", familyUuid, userId);
+        log.info("Updating family: {} by user: {}", familyUuid, loginUser.getUserUuid());
 
-        FamilyResponse response = familyService.updateFamily(userId, familyUuid, request);
+        FamilyResponse response = familyService.updateFamily(loginUser.getUserUuid(), familyUuid, request);
 
         return ResponseEntity.ok(ApiSuccessResponse.of("가족 정보가 수정되었습니다", response));
     }
@@ -96,12 +90,11 @@ public class FamilyController {
     @ApiResponse(responseCode = "403", description = "권한 없음")
     @DeleteMapping("/{familyUuid}")
     public ResponseEntity<ApiSuccessResponse<Void>> deleteFamily(
-            Authentication authentication,
+            @LoginUser LoginUserDto loginUser,
             @Parameter(description = "가족 UUID") @PathVariable String familyUuid) {
-        String userId = authentication.getName();
-        log.info("Deleting family: {} by user: {}", familyUuid, userId);
+        log.info("Deleting family: {} by user: {}", familyUuid, loginUser.getUserUuid());
 
-        familyService.deleteFamily(userId, familyUuid);
+        familyService.deleteFamily(loginUser.getUserUuid(), familyUuid);
 
         return ResponseEntity.ok(ApiSuccessResponse.of("가족이 삭제되었습니다", null));
     }

@@ -31,11 +31,11 @@ public class CategoryService {
      * 카테고리 생성
      */
     @Transactional
-    public CategoryResponse createCategory(String userId, String familyUuid, CreateCategoryRequest request) {
+    public CategoryResponse createCategory(CustomUuid userUuid, String familyUuid, CreateCategoryRequest request) {
         CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
 
         // 권한 확인
-        validateFamilyAccess(userId, familyCustomUuid);
+        validateFamilyAccess(userUuid, familyCustomUuid);
 
         // 중복 확인
         categoryRepository.findByFamilyUuidAndName(familyCustomUuid, request.getName())
@@ -52,7 +52,7 @@ public class CategoryService {
                 .build();
 
         category = categoryRepository.save(category);
-        log.info("Created category: {} in family: {} by user: {}", category.getUuid(), familyUuid, userId);
+        log.info("Created category: {} in family: {} by user: {}", category.getUuid(), familyUuid, userUuid);
 
         return CategoryResponse.from(category);
     }
@@ -61,11 +61,11 @@ public class CategoryService {
      * 가족의 카테고리 목록 조회
      */
     @Transactional(readOnly = true)
-    public List<CategoryResponse> getFamilyCategories(String userId, String familyUuid) {
+    public List<CategoryResponse> getFamilyCategories(CustomUuid userUuid, String familyUuid) {
         CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
 
         // 권한 확인
-        validateFamilyAccess(userId, familyCustomUuid);
+        validateFamilyAccess(userUuid, familyCustomUuid);
 
         List<Category> categories = categoryRepository.findAllByFamilyUuid(familyCustomUuid);
 
@@ -78,14 +78,14 @@ public class CategoryService {
      * 카테고리 상세 조회
      */
     @Transactional(readOnly = true)
-    public CategoryResponse getCategory(String userId, String categoryUuid) {
+    public CategoryResponse getCategory(CustomUuid userUuid, String categoryUuid) {
         CustomUuid categoryCustomUuid = CustomUuid.from(categoryUuid);
 
         Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
                 .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다"));
 
         // 권한 확인
-        validateFamilyAccess(userId, category.getFamilyUuid());
+        validateFamilyAccess(userUuid, category.getFamilyUuid());
 
         return CategoryResponse.from(category);
     }
@@ -94,14 +94,14 @@ public class CategoryService {
      * 카테고리 수정
      */
     @Transactional
-    public CategoryResponse updateCategory(String userId, String categoryUuid, UpdateCategoryRequest request) {
+    public CategoryResponse updateCategory(CustomUuid userUuid, String categoryUuid, UpdateCategoryRequest request) {
         CustomUuid categoryCustomUuid = CustomUuid.from(categoryUuid);
 
         Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
                 .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다"));
 
         // 권한 확인
-        validateFamilyAccess(userId, category.getFamilyUuid());
+        validateFamilyAccess(userUuid, category.getFamilyUuid());
 
         // 이름 변경 시 중복 확인
         if (request.getName() != null && !request.getName().equals(category.getName())) {
@@ -121,7 +121,7 @@ public class CategoryService {
         }
 
         category = categoryRepository.save(category);
-        log.info("Updated category: {} by user: {}", categoryUuid, userId);
+        log.info("Updated category: {} by user: {}", categoryUuid, userUuid);
 
         return CategoryResponse.from(category);
     }
@@ -130,30 +130,27 @@ public class CategoryService {
      * 카테고리 삭제 (Soft Delete)
      */
     @Transactional
-    public void deleteCategory(String userId, String categoryUuid) {
+    public void deleteCategory(CustomUuid userUuid, String categoryUuid) {
         CustomUuid categoryCustomUuid = CustomUuid.from(categoryUuid);
 
         Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
                 .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다"));
 
         // 권한 확인
-        validateFamilyAccess(userId, category.getFamilyUuid());
+        validateFamilyAccess(userUuid, category.getFamilyUuid());
 
         category.setDeletedAt(LocalDateTime.now());
         categoryRepository.save(category);
 
-        log.info("Deleted category: {} by user: {}", categoryUuid, userId);
+        log.info("Deleted category: {} by user: {}", categoryUuid, userUuid);
     }
 
     /**
      * 가족 접근 권한 확인
      */
-    private void validateFamilyAccess(String userId, CustomUuid familyUuid) {
-        User user = userRepository.findById(Long.parseLong(userId))
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
-
+    private void validateFamilyAccess(CustomUuid userUuid, CustomUuid familyUuid) {
         boolean isMember = familyMemberRepository.existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(
-                familyUuid, user.getUuid());
+                familyUuid, userUuid);
 
         if (!isMember) {
             throw new IllegalStateException("해당 가족에 접근할 권한이 없습니다");

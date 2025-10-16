@@ -5,16 +5,16 @@ import com.bifos.accountbook.application.dto.category.CategoryResponse;
 import com.bifos.accountbook.application.dto.category.CreateCategoryRequest;
 import com.bifos.accountbook.application.dto.category.UpdateCategoryRequest;
 import com.bifos.accountbook.application.service.CategoryService;
+import com.bifos.accountbook.presentation.annotation.LoginUser;
+import com.bifos.accountbook.presentation.dto.LoginUserDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import com.bifos.accountbook.domain.value.CustomUuid;
 
 @Slf4j
 @RestController
@@ -29,14 +29,12 @@ public class CategoryController {
      */
     @PostMapping
     public ResponseEntity<ApiSuccessResponse<CategoryResponse>> createCategory(
-            Authentication authentication,
+            @LoginUser LoginUserDto loginUser,
             @PathVariable String familyUuid,
-            @Valid @RequestBody CreateCategoryRequest request
-    ) {
-        String userId = authentication.getName();
-        log.info("Creating category in family: {} by user: {}", familyUuid, userId);
+            @Valid @RequestBody CreateCategoryRequest request) {
+        log.info("Creating category in family: {} by user: {}", familyUuid, loginUser.getUserUuid());
 
-        CategoryResponse response = categoryService.createCategory(userId, familyUuid, request);
+        CategoryResponse response = categoryService.createCategory(loginUser.getUserUuid(), familyUuid, request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -48,13 +46,11 @@ public class CategoryController {
      */
     @GetMapping
     public ResponseEntity<ApiSuccessResponse<List<CategoryResponse>>> getFamilyCategories(
-            Authentication authentication,
-            @PathVariable String familyUuid
-    ) {
-        String userId = authentication.getName();
-        log.info("Fetching categories for family: {} by user: {}", familyUuid, userId);
+            @LoginUser LoginUserDto loginUser,
+            @PathVariable String familyUuid) {
+        log.info("Fetching categories for family: {} by user: {}", familyUuid, loginUser.getUserUuid());
 
-        List<CategoryResponse> categories = categoryService.getFamilyCategories(userId, familyUuid);
+        List<CategoryResponse> categories = categoryService.getFamilyCategories(loginUser.getUserUuid(), familyUuid);
 
         return ResponseEntity.ok(ApiSuccessResponse.of(categories));
     }
@@ -64,14 +60,12 @@ public class CategoryController {
      */
     @GetMapping("/{categoryUuid}")
     public ResponseEntity<ApiSuccessResponse<CategoryResponse>> getCategory(
-            Authentication authentication,
+            @LoginUser LoginUserDto loginUser,
             @PathVariable String familyUuid,
-            @PathVariable String categoryUuid
-    ) {
-        String userId = authentication.getName();
-        log.info("Fetching category: {} by user: {}", categoryUuid, userId);
+            @PathVariable String categoryUuid) {
+        log.info("Fetching category: {} by user: {}", categoryUuid, loginUser.getUserUuid());
 
-        CategoryResponse category = categoryService.getCategory(userId, categoryUuid);
+        CategoryResponse category = categoryService.getCategory(loginUser.getUserUuid(), categoryUuid);
 
         return ResponseEntity.ok(ApiSuccessResponse.of(category));
     }
@@ -81,15 +75,13 @@ public class CategoryController {
      */
     @PutMapping("/{categoryUuid}")
     public ResponseEntity<ApiSuccessResponse<CategoryResponse>> updateCategory(
-            Authentication authentication,
+            @LoginUser LoginUserDto loginUser,
             @PathVariable String familyUuid,
             @PathVariable String categoryUuid,
-            @Valid @RequestBody UpdateCategoryRequest request
-    ) {
-        String userId = authentication.getName();
-        log.info("Updating category: {} by user: {}", categoryUuid, userId);
+            @Valid @RequestBody UpdateCategoryRequest request) {
+        log.info("Updating category: {} by user: {}", categoryUuid, loginUser.getUserUuid());
 
-        CategoryResponse response = categoryService.updateCategory(userId, categoryUuid, request);
+        CategoryResponse response = categoryService.updateCategory(loginUser.getUserUuid(), categoryUuid, request);
 
         return ResponseEntity.ok(ApiSuccessResponse.of("카테고리가 수정되었습니다", response));
     }
@@ -99,16 +91,13 @@ public class CategoryController {
      */
     @DeleteMapping("/{categoryUuid}")
     public ResponseEntity<ApiSuccessResponse<Void>> deleteCategory(
-            Authentication authentication,
+            @LoginUser LoginUserDto loginUser,
             @PathVariable String familyUuid,
-            @PathVariable String categoryUuid
-    ) {
-        String userId = authentication.getName();
-        log.info("Deleting category: {} by user: {}", categoryUuid, userId);
+            @PathVariable String categoryUuid) {
+        log.info("Deleting category: {} by user: {}", categoryUuid, loginUser.getUserUuid());
 
-        categoryService.deleteCategory(userId, categoryUuid);
+        categoryService.deleteCategory(loginUser.getUserUuid(), categoryUuid);
 
         return ResponseEntity.ok(ApiSuccessResponse.of("카테고리가 삭제되었습니다", null));
     }
 }
-
