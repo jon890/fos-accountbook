@@ -207,7 +207,7 @@ public class ExpenseService {
             expense.setDate(request.getDate());
         }
 
-        expense = expenseRepository.save(expense);
+        // 더티 체킹으로 자동 업데이트
         log.info("Updated expense: {} by user: {}", expenseUuid, userUuid);
 
         return ExpenseResponse.fromWithoutCategory(expense);
@@ -228,7 +228,7 @@ public class ExpenseService {
         familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
 
         expense.setDeletedAt(LocalDateTime.now());
-        expenseRepository.save(expense);
+        // 더티 체킹으로 자동 업데이트
 
         log.info("Deleted expense: {} by user: {}", expenseUuid, userUuid);
     }

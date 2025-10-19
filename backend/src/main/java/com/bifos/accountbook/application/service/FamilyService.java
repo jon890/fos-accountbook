@@ -127,9 +127,6 @@ public class FamilyService {
                         .addParameter("familyUuid", familyUuid));
 
         family.setName(request.getName());
-        family = familyRepository.save(family);
-
-        log.info("Updated family: {} by user: {}", familyUuid, userUuid);
 
         int memberCount = familyMemberRepository.countByFamilyUuid(familyCustomUuid);
         return FamilyResponse.fromWithMemberCount(family, memberCount);
@@ -150,7 +147,7 @@ public class FamilyService {
                         .addParameter("familyUuid", familyUuid));
 
         family.setDeletedAt(LocalDateTime.now());
-        familyRepository.save(family);
+        // 더티 체킹으로 자동 업데이트
 
         log.info("Deleted family: {} by user: {}", familyUuid, userUuid);
     }

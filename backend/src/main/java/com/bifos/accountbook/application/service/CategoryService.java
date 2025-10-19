@@ -104,7 +104,7 @@ public class CategoryService {
 
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
-ㅇ
+
         // 이름 변경 시 중복 확인
         if (request.getName() != null && !request.getName().equals(category.getName())) {
             final String familyUuidStr = category.getFamilyUuid().toString(); // final 변수 생성
@@ -125,9 +125,6 @@ public class CategoryService {
             category.setIcon(request.getIcon());
         }
 
-        category = categoryRepository.save(category);
-        log.info("Updated category: {} by user: {}", categoryUuid, userUuid);
-
         return CategoryResponse.from(category);
     }
 
@@ -146,7 +143,6 @@ public class CategoryService {
         familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
 
         category.setDeletedAt(LocalDateTime.now());
-        categoryRepository.save(category);
 
         log.info("Deleted category: {} by user: {}", categoryUuid, userUuid);
     }
@@ -179,8 +175,6 @@ public class CategoryService {
 
             categoryRepository.save(category);
         }
-
-        log.info("Created {} default categories for family: {}", defaultCategories.size(), familyUuid);
     }
 
     /**
