@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 interface AddExpenseFormProps {
   categories: CategoryResponse[];
+  familyUuid: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -24,6 +25,7 @@ const initialState: CreateExpenseFormState = {
 
 export function AddExpenseForm({
   categories,
+  familyUuid,
   onSuccess,
   onCancel,
 }: AddExpenseFormProps) {
@@ -50,6 +52,8 @@ export function AddExpenseForm({
       </CardHeader>
       <CardContent>
         <form action={formAction} className="space-y-4">
+          {/* familyUuid hidden input */}
+          <input type="hidden" name="familyUuid" value={familyUuid} />
           {/* 금액 입력 */}
           <div className="space-y-2">
             <Label htmlFor="amount">금액 *</Label>

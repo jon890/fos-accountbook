@@ -7,7 +7,7 @@ import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { serverApiGet } from "@/lib/server/api";
 import { auth } from "@/lib/server/auth";
-import type { FamilyResponse } from "@/types/api";
+import type { CategoryResponse, FamilyResponse } from "@/types/api";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -69,6 +69,18 @@ export default async function ExpensesPage({
 
   const family = families[0]; // 첫 번째 가족 사용
 
+  // 카테고리 목록 조회
+  let categories: CategoryResponse[] = [];
+  try {
+    categories = await serverApiGet<CategoryResponse[]>(
+      `/families/${family.uuid}/categories`
+    );
+  } catch (error) {
+    console.error("Failed to fetch categories:", error);
+    // 카테고리가 없어도 페이지는 표시
+    categories = [];
+  }
+
   return (
     <div
       className="min-h-screen"
@@ -85,12 +97,12 @@ export default async function ExpensesPage({
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">지출 관리</h1>
 
-          <ExpensePageClient categories={family.categories || []} />
+          <ExpensePageClient categories={categories} familyUuid={family.uuid} />
         </div>
 
         {/* 필터 섹션 */}
         <div className="mb-6">
-          <ExpenseFilters categories={family.categories || []} />
+          <ExpenseFilters categories={categories} />
         </div>
 
         {/* 지출 목록 */}

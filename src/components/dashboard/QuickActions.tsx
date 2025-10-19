@@ -1,32 +1,34 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Card, CardContent } from "@/components/ui/card"
-import { Plus, Settings, UserPlus } from "lucide-react"
-import { InviteFamilyDialog } from "./InviteFamilyDialog"
+import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
+import { Card, CardContent } from "@/components/ui/card";
+import { Plus, Settings, UserPlus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { InviteFamilyDialog } from "./InviteFamilyDialog";
 
 export function QuickActions() {
-  const router = useRouter()
-  const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
+  const router = useRouter();
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [addExpenseDialogOpen, setAddExpenseDialogOpen] = useState(false);
 
   const handleAddExpenseClick = () => {
-    router.push('/expenses')
-  }
+    setAddExpenseDialogOpen(true);
+  };
 
   const handleCategoryClick = () => {
     // TODO: 카테고리 관리 페이지로 이동
-    console.log('카테고리 관리 (미구현)')
-  }
+    console.log("카테고리 관리 (미구현)");
+  };
 
   const handleInviteClick = () => {
-    setInviteDialogOpen(true)
-  }
+    setInviteDialogOpen(true);
+  };
 
   return (
     <>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <Card 
+        <Card
           className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
           onClick={handleAddExpenseClick}
         >
@@ -43,7 +45,7 @@ export function QuickActions() {
           </CardContent>
         </Card>
 
-        <Card 
+        <Card
           className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
           onClick={handleInviteClick}
         >
@@ -60,7 +62,7 @@ export function QuickActions() {
           </CardContent>
         </Card>
 
-        <Card 
+        <Card
           className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
           onClick={handleCategoryClick}
         >
@@ -78,10 +80,15 @@ export function QuickActions() {
         </Card>
       </div>
 
-      <InviteFamilyDialog 
-        open={inviteDialogOpen} 
-        onOpenChange={setInviteDialogOpen} 
+      <InviteFamilyDialog
+        open={inviteDialogOpen}
+        onOpenChange={setInviteDialogOpen}
+      />
+
+      <AddExpenseDialog
+        open={addExpenseDialogOpen}
+        onOpenChange={setAddExpenseDialogOpen}
       />
     </>
-  )
+  );
 }

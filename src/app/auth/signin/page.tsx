@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { signIn } from "@/lib/server/auth";
 
 /**
@@ -9,10 +15,11 @@ import { signIn } from "@/lib/server/auth";
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: { callbackUrl?: string; error?: string };
+  searchParams: Promise<{ callbackUrl?: string; error?: string }>;
 }) {
-  const callbackUrl = searchParams.callbackUrl || "/";
-  const error = searchParams.error;
+  const params = await searchParams;
+  const callbackUrl = params.callbackUrl || "/";
+  const error = params.error;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -26,9 +33,7 @@ export default async function SignInPage({
         <CardContent className="space-y-4">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              <p className="text-sm font-medium">
-                {getErrorMessage(error)}
-              </p>
+              <p className="text-sm font-medium">{getErrorMessage(error)}</p>
             </div>
           )}
 
@@ -99,4 +104,3 @@ function getErrorMessage(error: string): string {
       return "알 수 없는 오류가 발생했습니다. 다시 시도해주세요.";
   }
 }
-

@@ -38,22 +38,27 @@ export function AddExpenseDialog({
   onOpenChange,
 }: AddExpenseDialogProps) {
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
+  const [familyUuid, setFamilyUuid] = useState<string>("");
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [state, formAction] = useActionState(createExpenseAction, initialState);
 
-  // 다이얼로그가 열릴 때 카테고리 로드
+  // 다이얼로그가 열릴 때 카테고리와 가족 정보 로드
   const handleOpenChange = async (newOpen: boolean) => {
     onOpenChange(newOpen);
     if (newOpen && categories.length === 0) {
-      await loadCategories();
+      await loadData();
     }
   };
 
-  const loadCategories = async () => {
+  const loadData = async () => {
     setIsLoadingCategories(true);
     try {
       const data = await getFamilyCategories();
       setCategories(data);
+      // 첫 번째 카테고리의 familyUuid 사용
+      if (data.length > 0) {
+        setFamilyUuid(data[0].familyUuid);
+      }
     } catch (error) {
       toast.error("카테고리를 불러오는데 실패했습니다");
     } finally {
@@ -81,6 +86,9 @@ export function AddExpenseDialog({
         </DialogHeader>
 
         <form action={formAction} className="space-y-4">
+          {/* familyUuid hidden input */}
+          <input type="hidden" name="familyUuid" value={familyUuid} />
+
           {/* 금액 입력 */}
           <div className="space-y-2">
             <Label htmlFor="amount">금액 *</Label>

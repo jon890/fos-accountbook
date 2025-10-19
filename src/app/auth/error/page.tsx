@@ -1,18 +1,26 @@
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
+import Link from "next/link";
 
 /**
  * 인증 에러 페이지
  * Auth.js에서 발생한 에러를 표시
  */
-export default function AuthErrorPage({
+export default async function AuthErrorPage({
   searchParams,
 }: {
-  searchParams: { error?: string };
+  searchParams: Promise<{ error?: string }>;
 }) {
-  const error = searchParams.error;
+  const params = await searchParams;
+  const error = params.error;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-100 p-4">
@@ -95,4 +103,3 @@ function getErrorMessage(error?: string): string {
       return "알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
   }
 }
-
