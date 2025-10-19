@@ -57,5 +57,14 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
             CustomUuid categoryUuid) {
         return jpaRepository.findByFamilyUuidAndCategoryUuid(familyUuid, categoryUuid);
     }
-}
 
+    @Override
+    public Page<Expense> findByFamilyUuidWithFilters(
+            CustomUuid familyUuid,
+            CustomUuid categoryUuid,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            Pageable pageable) {
+        return jpaRepository.findByFamilyUuidWithFilters(familyUuid, categoryUuid, startDate, endDate, pageable);
+    }
+}

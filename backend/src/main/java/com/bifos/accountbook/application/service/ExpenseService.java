@@ -2,6 +2,7 @@ package com.bifos.accountbook.application.service;
 
 import com.bifos.accountbook.application.dto.expense.CreateExpenseRequest;
 import com.bifos.accountbook.application.dto.expense.ExpenseResponse;
+import com.bifos.accountbook.application.dto.expense.ExpenseSearchRequest;
 import com.bifos.accountbook.application.dto.expense.UpdateExpenseRequest;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Expense;
@@ -76,13 +77,64 @@ public class ExpenseService {
      */
     @Transactional(readOnly = true)
     public Page<ExpenseResponse> getFamilyExpenses(CustomUuid userUuid, String familyUuid, int page, int size) {
+        ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
+                .page(page)
+                .size(size)
+                .build();
+        return getFamilyExpenses(userUuid, familyUuid, searchRequest);
+    }
+
+    /**
+     * 가족의 지출 목록 조회 (페이징 + 필터링)
+     */
+    @Transactional(readOnly = true)
+    public Page<ExpenseResponse> getFamilyExpenses(
+            CustomUuid userUuid,
+            String familyUuid,
+            ExpenseSearchRequest searchRequest) {
         CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
 
         // 권한 확인
         validateFamilyAccess(userUuid, familyCustomUuid);
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date"));
-        Page<Expense> expenses = expenseRepository.findAllByFamilyUuid(familyCustomUuid, pageable);
+        // 필터 파라미터 변환
+        CustomUuid categoryUuid = null;
+        if (searchRequest.getCategoryId() != null && !searchRequest.getCategoryId().isEmpty()) {
+            categoryUuid = CustomUuid.from(searchRequest.getCategoryId());
+        }
+
+        LocalDateTime startDateTime = null;
+        if (searchRequest.getStartDate() != null && !searchRequest.getStartDate().isEmpty()) {
+            try {
+                startDateTime = LocalDateTime.parse(searchRequest.getStartDate() + "T00:00:00");
+            } catch (Exception e) {
+                log.warn("Invalid startDate format: {}", searchRequest.getStartDate());
+            }
+        }
+
+        LocalDateTime endDateTime = null;
+        if (searchRequest.getEndDate() != null && !searchRequest.getEndDate().isEmpty()) {
+            try {
+                endDateTime = LocalDateTime.parse(searchRequest.getEndDate() + "T23:59:59");
+            } catch (Exception e) {
+                log.warn("Invalid endDate format: {}", searchRequest.getEndDate());
+            }
+        }
+
+        // 페이징 설정
+        Pageable pageable = PageRequest.of(
+                searchRequest.getPage(),
+                searchRequest.getSize(),
+                Sort.by(Sort.Direction.DESC, "date"));
+
+        // 필터링이 있으면 필터링 메서드 사용, 없으면 기본 메서드 사용
+        Page<Expense> expenses;
+        if (categoryUuid != null || startDateTime != null || endDateTime != null) {
+            expenses = expenseRepository.findByFamilyUuidWithFilters(
+                    familyCustomUuid, categoryUuid, startDateTime, endDateTime, pageable);
+        } else {
+            expenses = expenseRepository.findAllByFamilyUuid(familyCustomUuid, pageable);
+        }
 
         return expenses.map(ExpenseResponse::fromWithoutCategory);
     }
