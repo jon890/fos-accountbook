@@ -3,10 +3,11 @@ package com.bifos.accountbook.application.service;
 import com.bifos.accountbook.application.dto.category.CategoryResponse;
 import com.bifos.accountbook.application.dto.category.CreateCategoryRequest;
 import com.bifos.accountbook.application.dto.category.UpdateCategoryRequest;
+import com.bifos.accountbook.common.exception.BusinessException;
+import com.bifos.accountbook.common.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
-import com.bifos.accountbook.domain.repository.UserRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -25,7 +25,6 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final FamilyMemberRepository familyMemberRepository;
-    private final UserRepository userRepository;
 
     /**
      * 카테고리 생성
@@ -40,7 +39,9 @@ public class CategoryService {
         // 중복 확인
         categoryRepository.findByFamilyUuidAndName(familyCustomUuid, request.getName())
                 .ifPresent(c -> {
-                    throw new IllegalStateException("이미 존재하는 카테고리 이름입니다");
+                    throw new BusinessException(ErrorCode.CATEGORY_ALREADY_EXISTS)
+                            .addParameter("familyUuid", familyCustomUuid.toString())
+                            .addParameter("categoryName", request.getName());
                 });
 
         // 카테고리 생성
@@ -52,7 +53,6 @@ public class CategoryService {
                 .build();
 
         category = categoryRepository.save(category);
-        log.info("Created category: {} in family: {} by user: {}", category.getUuid(), familyUuid, userUuid);
 
         return CategoryResponse.from(category);
     }
@@ -71,7 +71,7 @@ public class CategoryService {
 
         return categories.stream()
                 .map(CategoryResponse::from)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -82,7 +82,8 @@ public class CategoryService {
         CustomUuid categoryCustomUuid = CustomUuid.from(categoryUuid);
 
         Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
-                .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
+                        .addParameter("categoryUuid", categoryCustomUuid.toString()));
 
         // 권한 확인
         validateFamilyAccess(userUuid, category.getFamilyUuid());
@@ -98,16 +99,20 @@ public class CategoryService {
         CustomUuid categoryCustomUuid = CustomUuid.from(categoryUuid);
 
         Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
-                .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
+                        .addParameter("categoryUuid", categoryCustomUuid.toString()));
 
         // 권한 확인
         validateFamilyAccess(userUuid, category.getFamilyUuid());
 
         // 이름 변경 시 중복 확인
         if (request.getName() != null && !request.getName().equals(category.getName())) {
+            final String familyUuidStr = category.getFamilyUuid().toString(); // final 변수 생성
             categoryRepository.findByFamilyUuidAndName(category.getFamilyUuid(), request.getName())
                     .ifPresent(c -> {
-                        throw new IllegalStateException("이미 존재하는 카테고리 이름입니다");
+                        throw new BusinessException(ErrorCode.CATEGORY_ALREADY_EXISTS)
+                                .addParameter("familyUuid", familyUuidStr)
+                                .addParameter("categoryName", request.getName());
                     });
             category.setName(request.getName());
         }
@@ -134,7 +139,8 @@ public class CategoryService {
         CustomUuid categoryCustomUuid = CustomUuid.from(categoryUuid);
 
         Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
-                .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
+                        .addParameter("categoryUuid", categoryCustomUuid.toString()));
 
         // 권한 확인
         validateFamilyAccess(userUuid, category.getFamilyUuid());
@@ -185,7 +191,9 @@ public class CategoryService {
                 familyUuid, userUuid);
 
         if (!isMember) {
-            throw new IllegalStateException("해당 가족에 접근할 권한이 없습니다");
+            throw new BusinessException(ErrorCode.NOT_FAMILY_MEMBER)
+                    .addParameter("userUuid", userUuid.toString())
+                    .addParameter("familyUuid", familyUuid.toString());
         }
     }
 

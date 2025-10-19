@@ -3,6 +3,8 @@ package com.bifos.accountbook.application.service;
 import com.bifos.accountbook.application.dto.auth.AuthResponse;
 import com.bifos.accountbook.application.dto.auth.LoginRequest;
 import com.bifos.accountbook.application.dto.auth.RegisterRequest;
+import com.bifos.accountbook.common.exception.BusinessException;
+import com.bifos.accountbook.common.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.UserRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
@@ -58,7 +60,8 @@ public class AuthService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
 
         if (user.getDeletedAt() != null) {
-            throw new IllegalStateException("삭제된 사용자입니다");
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND, "삭제된 사용자입니다")
+                    .addParameter("userUuid", user.getUuid().toString());
         }
 
         return generateAuthResponse(user);
@@ -72,7 +75,8 @@ public class AuthService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
 
         if (user.getDeletedAt() != null) {
-            throw new IllegalStateException("삭제된 사용자입니다");
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND, "삭제된 사용자입니다")
+                    .addParameter("userUuid", user.getUuid().toString());
         }
 
         return generateAuthResponse(user);
@@ -84,19 +88,21 @@ public class AuthService {
     @Transactional(readOnly = true)
     public AuthResponse refreshToken(String refreshToken) {
         if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new IllegalArgumentException("유효하지 않은 refresh 토큰입니다");
+            throw new BusinessException(ErrorCode.INVALID_TOKEN, "유효하지 않은 refresh 토큰입니다");
         }
 
         String userUuid = jwtTokenProvider.getUserIdFromToken(refreshToken);
         if (userUuid == null) {
-            throw new IllegalArgumentException("토큰에서 사용자 UUID를 추출할 수 없습니다");
+            throw new BusinessException(ErrorCode.INVALID_TOKEN, "토큰에서 사용자 UUID를 추출할 수 없습니다");
         }
 
         User user = userRepository.findByUuid(CustomUuid.from(userUuid))
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
+                        .addParameter("userUuid", userUuid));
 
         if (user.getDeletedAt() != null) {
-            throw new IllegalStateException("삭제된 사용자입니다");
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND, "삭제된 사용자입니다")
+                    .addParameter("userUuid", user.getUuid().toString());
         }
 
         return generateAuthResponse(user);

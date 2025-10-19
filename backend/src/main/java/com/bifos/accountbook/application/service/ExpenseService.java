@@ -4,6 +4,8 @@ import com.bifos.accountbook.application.dto.expense.CreateExpenseRequest;
 import com.bifos.accountbook.application.dto.expense.ExpenseResponse;
 import com.bifos.accountbook.application.dto.expense.ExpenseSearchRequest;
 import com.bifos.accountbook.application.dto.expense.UpdateExpenseRequest;
+import com.bifos.accountbook.common.exception.BusinessException;
+import com.bifos.accountbook.common.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Expense;
 import com.bifos.accountbook.domain.entity.User;
@@ -43,17 +45,21 @@ public class ExpenseService {
 
         // 사용자 확인
         User user = userRepository.findByUuid(userUuid)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
+                        .addParameter("userUuid", userUuid.toString()));
 
         // 권한 확인
         validateFamilyAccess(userUuid, familyCustomUuid);
 
         // 카테고리 확인
         Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
-                .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
+                        .addParameter("categoryUuid", categoryCustomUuid.toString()));
 
         if (!category.getFamilyUuid().equals(familyCustomUuid)) {
-            throw new IllegalArgumentException("해당 가족의 카테고리가 아닙니다");
+            throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 가족의 카테고리가 아닙니다")
+                    .addParameter("categoryFamilyUuid", category.getFamilyUuid().toString())
+                    .addParameter("requestFamilyUuid", familyCustomUuid.toString());
         }
 
         // 지출 생성
@@ -147,7 +153,8 @@ public class ExpenseService {
         CustomUuid expenseCustomUuid = CustomUuid.from(expenseUuid);
 
         Expense expense = expenseRepository.findActiveByUuid(expenseCustomUuid)
-                .orElseThrow(() -> new IllegalArgumentException("지출을 찾을 수 없습니다"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_NOT_FOUND)
+                        .addParameter("expenseUuid", expenseCustomUuid.toString()));
 
         // 권한 확인
         validateFamilyAccess(userUuid, expense.getFamilyUuid());
@@ -163,7 +170,8 @@ public class ExpenseService {
         CustomUuid expenseCustomUuid = CustomUuid.from(expenseUuid);
 
         Expense expense = expenseRepository.findActiveByUuid(expenseCustomUuid)
-                .orElseThrow(() -> new IllegalArgumentException("지출을 찾을 수 없습니다"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_NOT_FOUND)
+                        .addParameter("expenseUuid", expenseCustomUuid.toString()));
 
         // 권한 확인
         validateFamilyAccess(userUuid, expense.getFamilyUuid());
@@ -172,10 +180,13 @@ public class ExpenseService {
         if (request.getCategoryUuid() != null) {
             CustomUuid categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
             Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
-                    .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다"));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
+                            .addParameter("categoryUuid", categoryCustomUuid.toString()));
 
             if (!category.getFamilyUuid().equals(expense.getFamilyUuid())) {
-                throw new IllegalArgumentException("해당 가족의 카테고리가 아닙니다");
+                throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 가족의 카테고리가 아닙니다")
+                        .addParameter("categoryFamilyUuid", category.getFamilyUuid().toString())
+                        .addParameter("expenseFamilyUuid", expense.getFamilyUuid().toString());
             }
 
             expense.setCategoryUuid(categoryCustomUuid);
@@ -210,7 +221,8 @@ public class ExpenseService {
         CustomUuid expenseCustomUuid = CustomUuid.from(expenseUuid);
 
         Expense expense = expenseRepository.findActiveByUuid(expenseCustomUuid)
-                .orElseThrow(() -> new IllegalArgumentException("지출을 찾을 수 없습니다"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_NOT_FOUND)
+                        .addParameter("expenseUuid", expenseCustomUuid.toString()));
 
         // 권한 확인
         validateFamilyAccess(userUuid, expense.getFamilyUuid());
@@ -229,7 +241,9 @@ public class ExpenseService {
                 familyUuid, userUuid);
 
         if (!isMember) {
-            throw new IllegalStateException("해당 가족에 접근할 권한이 없습니다");
+            throw new BusinessException(ErrorCode.NOT_FAMILY_MEMBER)
+                    .addParameter("userUuid", userUuid.toString())
+                    .addParameter("familyUuid", familyUuid.toString());
         }
     }
 }

@@ -2,6 +2,8 @@ package com.bifos.accountbook.application.service;
 
 import com.bifos.accountbook.application.dto.invitation.CreateInvitationRequest;
 import com.bifos.accountbook.application.dto.invitation.InvitationResponse;
+import com.bifos.accountbook.common.exception.BusinessException;
+import com.bifos.accountbook.common.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.Family;
 import com.bifos.accountbook.domain.entity.FamilyMember;
 import com.bifos.accountbook.domain.entity.Invitation;
@@ -121,7 +123,9 @@ public class InvitationService {
                                 invitation.getFamilyUuid(), user.getUuid());
 
                 if (alreadyMember) {
-                        throw new IllegalStateException("이미 가족 멤버입니다");
+                        throw new BusinessException(ErrorCode.ALREADY_FAMILY_MEMBER)
+                                        .addParameter("userUuid", userUuid.toString())
+                                        .addParameter("familyUuid", invitation.getFamilyUuid().toString());
                 }
 
                 // 가족 멤버로 추가
@@ -180,7 +184,9 @@ public class InvitationService {
                                 familyUuid, userUuid);
 
                 if (!isMember) {
-                        throw new IllegalStateException("해당 가족에 접근할 권한이 없습니다");
+                        throw new BusinessException(ErrorCode.NOT_FAMILY_MEMBER)
+                                        .addParameter("userUuid", userUuid.toString())
+                                        .addParameter("familyUuid", familyUuid.toString());
                 }
         }
 
@@ -196,10 +202,15 @@ public class InvitationService {
                 // 가족 owner인지 확인
                 FamilyMember membership = familyMemberRepository.findByFamilyUuidAndUserUuid(
                                 invitation.getFamilyUuid(), userUuid)
-                                .orElseThrow(() -> new IllegalStateException("해당 가족에 접근할 권한이 없습니다"));
+                                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FAMILY_MEMBER)
+                                                .addParameter("userUuid", userUuid.toString())
+                                                .addParameter("familyUuid", invitation.getFamilyUuid().toString()));
 
                 if (!"owner".equals(membership.getRole())) {
-                        throw new IllegalStateException("초대장을 삭제할 권한이 없습니다");
+                        throw new BusinessException(ErrorCode.FORBIDDEN, "초대장을 삭제할 권한이 없습니다")
+                                        .addParameter("userUuid", userUuid.toString())
+                                        .addParameter("familyUuid", invitation.getFamilyUuid().toString())
+                                        .addParameter("role", membership.getRole());
                 }
         }
 }
