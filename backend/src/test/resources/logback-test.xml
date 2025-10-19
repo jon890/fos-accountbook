@@ -26,10 +26,13 @@
     <logger name="org.springframework.web" level="INFO"/>
     <logger name="org.springframework.security" level="INFO"/>
     
-    <!-- Hibernate SQL 로그 (필요시 주석 해제) -->
-    <logger name="org.hibernate.SQL" level="DEBUG"/>
-    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE"/>
-    <logger name="org.hibernate.orm.jdbc.bind" level="TRACE"/>
+    <!-- Hibernate SQL 로그 (p6spy 사용으로 비활성화) -->
+    <logger name="org.hibernate.SQL" level="OFF"/>
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="OFF"/>
+    <logger name="org.hibernate.orm.jdbc.bind" level="OFF"/>
+    
+    <!-- P6Spy SQL 로깅 -->
+    <logger name="p6spy" level="INFO"/>
     
     <!-- HikariCP 로그는 WARN으로 (너무 많은 로그 방지) -->
     <logger name="com.zaxxer.hikari" level="WARN"/>

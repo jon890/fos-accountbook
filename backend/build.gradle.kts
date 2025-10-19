@@ -30,6 +30,9 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-mysql")
     
+    // SQL Logging (DataSource Proxy)
+    implementation("com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.2")
+    
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.12.5")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.5")
@@ -37,9 +40,6 @@ dependencies {
     
     // OpenAPI (Swagger)
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
-    
-    // Jansi (Console Color Support for IntelliJ)
-    implementation("org.fusesource.jansi:jansi:2.4.1")
     
     // Lombok
     compileOnly("org.projectlombok:lombok")

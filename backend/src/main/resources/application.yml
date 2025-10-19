@@ -86,4 +86,13 @@ cors:
     - Authorization
   allow-credentials: true
   max-age: 3600
+
+# P6Spy SQL 로깅 설정 (DataSource Proxy)
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: true
+      multiline: true
+      logging: slf4j
+      
 # 로깅은 logback-spring.xml에서 Profile별로 관리

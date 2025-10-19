@@ -13,10 +13,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop  # 테스트 시 자동으로 스키마 생성/삭제
-    show-sql: true
     properties:
       hibernate:
-        format_sql: true
         dialect: org.hibernate.dialect.H2Dialect
 
   flyway:

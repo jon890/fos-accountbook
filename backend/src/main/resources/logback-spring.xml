@@ -64,6 +64,12 @@
         <logger name="com.bifos.accountbook" level="DEBUG"/>
         <logger name="org.springframework.web" level="INFO"/>
         <logger name="org.springframework.security" level="INFO"/>
+        <!-- Hibernate SQL 로그 비활성화 (p6spy 사용) -->
+        <logger name="org.hibernate.SQL" level="OFF"/>
+        <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="OFF"/>
+        <logger name="org.hibernate.orm.jdbc.bind" level="OFF"/>
+        <!-- P6Spy SQL 로깅 -->
+        <logger name="p6spy" level="INFO"/>
     </springProfile>
 
     <!-- 프로덕션 환경 (Railway, Docker 등): 콘솔만 (stdout/stderr) -->
@@ -74,7 +80,9 @@
         <logger name="com.bifos.accountbook" level="INFO"/>
         <logger name="org.springframework.web" level="WARN"/>
         <logger name="org.springframework.security" level="WARN"/>
-        <logger name="org.hibernate.SQL" level="WARN"/>
+        <!-- p6spy SQL 로깅 -->
+
+        <logger name="p6spy" level="WARN"/>
     </springProfile>
 </configuration>
 
