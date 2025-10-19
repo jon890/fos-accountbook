@@ -24,7 +24,7 @@ import java.util.List;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
-    private final FamilyMemberRepository familyMemberRepository;
+    private final FamilyValidationService familyValidationService; // 가족 검증 로직
 
     /**
      * 카테고리 생성
@@ -34,7 +34,7 @@ public class CategoryService {
         CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
 
         // 권한 확인
-        validateFamilyAccess(userUuid, familyCustomUuid);
+        familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
         // 중복 확인
         categoryRepository.findByFamilyUuidAndName(familyCustomUuid, request.getName())
@@ -65,7 +65,7 @@ public class CategoryService {
         CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
 
         // 권한 확인
-        validateFamilyAccess(userUuid, familyCustomUuid);
+        familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
         List<Category> categories = categoryRepository.findAllByFamilyUuid(familyCustomUuid);
 
@@ -86,7 +86,7 @@ public class CategoryService {
                         .addParameter("categoryUuid", categoryCustomUuid.toString()));
 
         // 권한 확인
-        validateFamilyAccess(userUuid, category.getFamilyUuid());
+        familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
 
         return CategoryResponse.from(category);
     }
@@ -103,8 +103,8 @@ public class CategoryService {
                         .addParameter("categoryUuid", categoryCustomUuid.toString()));
 
         // 권한 확인
-        validateFamilyAccess(userUuid, category.getFamilyUuid());
-
+        familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
+ㅇ
         // 이름 변경 시 중복 확인
         if (request.getName() != null && !request.getName().equals(category.getName())) {
             final String familyUuidStr = category.getFamilyUuid().toString(); // final 변수 생성
@@ -143,7 +143,7 @@ public class CategoryService {
                         .addParameter("categoryUuid", categoryCustomUuid.toString()));
 
         // 권한 확인
-        validateFamilyAccess(userUuid, category.getFamilyUuid());
+        familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
 
         category.setDeletedAt(LocalDateTime.now());
         categoryRepository.save(category);
@@ -181,20 +181,6 @@ public class CategoryService {
         }
 
         log.info("Created {} default categories for family: {}", defaultCategories.size(), familyUuid);
-    }
-
-    /**
-     * 가족 접근 권한 확인
-     */
-    private void validateFamilyAccess(CustomUuid userUuid, CustomUuid familyUuid) {
-        boolean isMember = familyMemberRepository.existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(
-                familyUuid, userUuid);
-
-        if (!isMember) {
-            throw new BusinessException(ErrorCode.NOT_FAMILY_MEMBER)
-                    .addParameter("userUuid", userUuid.toString())
-                    .addParameter("familyUuid", familyUuid.toString());
-        }
     }
 
     /**

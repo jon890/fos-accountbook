@@ -31,6 +31,7 @@ public class FamilyService {
     private final FamilyMemberRepository familyMemberRepository;
     private final UserRepository userRepository;
     private final CategoryService categoryService;
+    private final FamilyValidationService familyValidationService;
 
     /**
      * 가족 생성 (생성자를 owner로 자동 추가 + 기본 카테고리 생성)
@@ -156,32 +157,17 @@ public class FamilyService {
 
     /**
      * 가족 접근 권한 확인
+     * FamilyValidationService로 위임
      */
     private void validateFamilyAccess(CustomUuid userUuid, CustomUuid familyUuid) {
-        boolean isMember = familyMemberRepository.existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(
-                familyUuid, userUuid);
-
-        if (!isMember) {
-            throw new BusinessException(ErrorCode.NOT_FAMILY_MEMBER)
-                    .addParameter("userUuid", userUuid.toString())
-                    .addParameter("familyUuid", familyUuid.toString());
-        }
+        familyValidationService.validateFamilyAccess(userUuid, familyUuid);
     }
 
     /**
      * 가족 소유자 권한 확인
+     * FamilyValidationService로 위임
      */
     private void validateFamilyOwner(CustomUuid userUuid, CustomUuid familyUuid) {
-        FamilyMember membership = familyMemberRepository.findByFamilyUuidAndUserUuid(familyUuid, userUuid)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FAMILY_MEMBER)
-                        .addParameter("userUuid", userUuid.toString())
-                        .addParameter("familyUuid", familyUuid.toString()));
-
-        if (!"owner".equals(membership.getRole())) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "가족 소유자만 이 작업을 수행할 수 있습니다")
-                    .addParameter("userUuid", userUuid.toString())
-                    .addParameter("familyUuid", familyUuid.toString())
-                    .addParameter("role", membership.getRole());
-        }
+        familyValidationService.validateFamilyOwner(userUuid, familyUuid);
     }
 }

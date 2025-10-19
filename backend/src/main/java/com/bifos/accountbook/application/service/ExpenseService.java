@@ -32,8 +32,8 @@ public class ExpenseService {
 
     private final ExpenseRepository expenseRepository;
     private final CategoryRepository categoryRepository;
-    private final FamilyMemberRepository familyMemberRepository;
     private final UserRepository userRepository;
+    private final FamilyValidationService familyValidationService; // 가족 검증 로직
 
     /**
      * 지출 생성
@@ -49,7 +49,7 @@ public class ExpenseService {
                         .addParameter("userUuid", userUuid.toString()));
 
         // 권한 확인
-        validateFamilyAccess(userUuid, familyCustomUuid);
+        familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
         // 카테고리 확인
         Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
@@ -101,7 +101,7 @@ public class ExpenseService {
         CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
 
         // 권한 확인
-        validateFamilyAccess(userUuid, familyCustomUuid);
+        familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
         // 필터 파라미터 변환
         CustomUuid categoryUuid = null;
@@ -157,7 +157,7 @@ public class ExpenseService {
                         .addParameter("expenseUuid", expenseCustomUuid.toString()));
 
         // 권한 확인
-        validateFamilyAccess(userUuid, expense.getFamilyUuid());
+        familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
 
         return ExpenseResponse.fromWithoutCategory(expense);
     }
@@ -174,7 +174,7 @@ public class ExpenseService {
                         .addParameter("expenseUuid", expenseCustomUuid.toString()));
 
         // 권한 확인
-        validateFamilyAccess(userUuid, expense.getFamilyUuid());
+        familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
 
         // 카테고리 변경
         if (request.getCategoryUuid() != null) {
@@ -225,25 +225,11 @@ public class ExpenseService {
                         .addParameter("expenseUuid", expenseCustomUuid.toString()));
 
         // 권한 확인
-        validateFamilyAccess(userUuid, expense.getFamilyUuid());
+        familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
 
         expense.setDeletedAt(LocalDateTime.now());
         expenseRepository.save(expense);
 
         log.info("Deleted expense: {} by user: {}", expenseUuid, userUuid);
-    }
-
-    /**
-     * 가족 접근 권한 확인
-     */
-    private void validateFamilyAccess(CustomUuid userUuid, CustomUuid familyUuid) {
-        boolean isMember = familyMemberRepository.existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(
-                familyUuid, userUuid);
-
-        if (!isMember) {
-            throw new BusinessException(ErrorCode.NOT_FAMILY_MEMBER)
-                    .addParameter("userUuid", userUuid.toString())
-                    .addParameter("familyUuid", familyUuid.toString());
-        }
     }
 }
