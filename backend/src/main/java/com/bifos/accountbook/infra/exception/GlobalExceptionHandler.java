@@ -1,7 +1,11 @@
 package com.bifos.accountbook.infra.exception;
 
 import com.bifos.accountbook.application.dto.ApiErrorResponse;
+import com.bifos.accountbook.common.exception.BusinessException;
+import com.bifos.accountbook.common.exception.ErrorResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -12,13 +16,75 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private final Environment environment;
+
+    public GlobalExceptionHandler(Environment environment) {
+        this.environment = environment;
+    }
+
+    /**
+     * BusinessException 처리
+     * 커스텀 비즈니스 예외 처리
+     */
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorResponse> handleBusinessException(
+            BusinessException e,
+            HttpServletRequest request) {
+
+        log.error("BusinessException occurred: code={}, message={}, parameters={}",
+                e.getErrorCode().getCode(),
+                e.getMessage(),
+                e.getParameters(),
+                e);
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(java.time.LocalDateTime.now())
+                .status(e.getErrorCode().getStatusCode())
+                .code(e.getErrorCode().getCode())
+                .message(e.getMessage())
+                .path(request.getRequestURI())
+                .parameters(e.getParameters().isEmpty() ? null : e.getParameters())
+                .debugInfo(isDebugMode() && !e.getDebugInfo().isEmpty() ? e.getDebugInfo() : null)
+                .build();
+
+        return ResponseEntity
+                .status(e.getErrorCode().getHttpStatus())
+                .body(errorResponse);
+    }
+
+    /**
+     * 타입 불일치 예외 처리
+     * Request Parameter 타입이 맞지 않을 때 발생
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiErrorResponse> handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException ex, WebRequest request) {
+        log.error("Type mismatch: parameter={}, requiredType={}, providedValue={}",
+                ex.getName(),
+                ex.getRequiredType(),
+                ex.getValue(),
+                ex);
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiErrorResponse.of(
+                        String.format("'%s' 파라미터의 타입이 올바르지 않습니다", ex.getName()),
+                        ApiErrorResponse.ErrorDetails.builder()
+                                .code("INVALID_TYPE")
+                                .field(ex.getName())
+                                .rejectedValue(ex.getValue())
+                                .build()));
+    }
 
     /**
      * Validation 예외 처리
@@ -42,7 +108,7 @@ public class GlobalExceptionHandler {
                 })
                 .collect(Collectors.toList());
 
-        log.warn("Validation error: {} errors", errorDetails.size());
+        log.error("Validation error: {} errors, details: {}", errorDetails.size(), errorDetails, ex);
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -55,7 +121,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({AuthenticationException.class, BadCredentialsException.class})
     public ResponseEntity<ApiErrorResponse> handleAuthenticationException(
             AuthenticationException ex, WebRequest request) {
-        log.warn("Authentication error: {}", ex.getMessage());
+        log.error("Authentication error: {}", ex.getMessage(), ex);
 
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
@@ -71,7 +137,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiErrorResponse> handleAccessDeniedException(
             AccessDeniedException ex, WebRequest request) {
-        log.warn("Access denied: {}", ex.getMessage());
+        log.error("Access denied: {}", ex.getMessage(), ex);
 
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
@@ -103,7 +169,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ApiErrorResponse> handleIllegalStateException(
             IllegalStateException ex, WebRequest request) {
-        log.warn("Illegal state: {}", ex.getMessage());
+        log.error("Illegal state: {}", ex.getMessage(), ex);
 
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
@@ -128,5 +194,14 @@ public class GlobalExceptionHandler {
                                 .code("INTERNAL_SERVER_ERROR")
                                 .build()));
     }
-}
 
+    /**
+     * 디버그 모드 확인
+     * local, dev 프로파일에서는 디버그 정보 포함
+     */
+    private boolean isDebugMode() {
+        return Arrays.asList(environment.getActiveProfiles()).contains("local") ||
+                Arrays.asList(environment.getActiveProfiles()).contains("dev") ||
+                Arrays.asList(environment.getActiveProfiles()).contains("test");
+    }
+}

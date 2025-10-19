@@ -3,6 +3,8 @@ package com.bifos.accountbook.application.service;
 import com.bifos.accountbook.application.dto.family.CreateFamilyRequest;
 import com.bifos.accountbook.application.dto.family.FamilyResponse;
 import com.bifos.accountbook.application.dto.family.UpdateFamilyRequest;
+import com.bifos.accountbook.common.exception.BusinessException;
+import com.bifos.accountbook.common.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.Family;
 import com.bifos.accountbook.domain.entity.FamilyMember;
 import com.bifos.accountbook.domain.entity.User;
@@ -37,7 +39,8 @@ public class FamilyService {
     public FamilyResponse createFamily(CustomUuid userUuid, CreateFamilyRequest request) {
         // 사용자 조회
         User user = userRepository.findByUuid(userUuid)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
+                        .addParameter("userUuid", userUuid.toString()));
 
         // 가족 생성
         Family family = Family.builder()
@@ -69,7 +72,8 @@ public class FamilyService {
     @Transactional(readOnly = true)
     public List<FamilyResponse> getUserFamilies(CustomUuid userUuid) {
         User user = userRepository.findByUuid(userUuid)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
+                        .addParameter("userUuid", userUuid.toString()));
 
         // 사용자가 속한 가족 멤버십 조회
         List<FamilyMember> memberships = familyMemberRepository.findAllByUserUuid(user.getUuid());
@@ -100,7 +104,8 @@ public class FamilyService {
         validateFamilyAccess(userUuid, familyCustomUuid);
 
         Family family = familyRepository.findActiveByUuid(familyCustomUuid)
-                .orElseThrow(() -> new IllegalArgumentException("가족을 찾을 수 없습니다"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
+                        .addParameter("familyUuid", familyUuid));
 
         int memberCount = familyMemberRepository.countByFamilyUuid(familyCustomUuid);
         return FamilyResponse.fromWithMemberCount(family, memberCount);
@@ -117,7 +122,8 @@ public class FamilyService {
         validateFamilyOwner(userUuid, familyCustomUuid);
 
         Family family = familyRepository.findActiveByUuid(familyCustomUuid)
-                .orElseThrow(() -> new IllegalArgumentException("가족을 찾을 수 없습니다"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
+                        .addParameter("familyUuid", familyUuid));
 
         family.setName(request.getName());
         family = familyRepository.save(family);
@@ -139,7 +145,8 @@ public class FamilyService {
         validateFamilyOwner(userUuid, familyCustomUuid);
 
         Family family = familyRepository.findActiveByUuid(familyCustomUuid)
-                .orElseThrow(() -> new IllegalArgumentException("가족을 찾을 수 없습니다"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
+                        .addParameter("familyUuid", familyUuid));
 
         family.setDeletedAt(LocalDateTime.now());
         familyRepository.save(family);
@@ -155,7 +162,9 @@ public class FamilyService {
                 familyUuid, userUuid);
 
         if (!isMember) {
-            throw new IllegalStateException("해당 가족에 접근할 권한이 없습니다");
+            throw new BusinessException(ErrorCode.NOT_FAMILY_MEMBER)
+                    .addParameter("userUuid", userUuid.toString())
+                    .addParameter("familyUuid", familyUuid.toString());
         }
     }
 
@@ -164,10 +173,15 @@ public class FamilyService {
      */
     private void validateFamilyOwner(CustomUuid userUuid, CustomUuid familyUuid) {
         FamilyMember membership = familyMemberRepository.findByFamilyUuidAndUserUuid(familyUuid, userUuid)
-                .orElseThrow(() -> new IllegalStateException("해당 가족에 접근할 권한이 없습니다"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FAMILY_MEMBER)
+                        .addParameter("userUuid", userUuid.toString())
+                        .addParameter("familyUuid", familyUuid.toString()));
 
         if (!"owner".equals(membership.getRole())) {
-            throw new IllegalStateException("가족 소유자만 이 작업을 수행할 수 있습니다");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "가족 소유자만 이 작업을 수행할 수 있습니다")
+                    .addParameter("userUuid", userUuid.toString())
+                    .addParameter("familyUuid", familyUuid.toString())
+                    .addParameter("role", membership.getRole());
         }
     }
 }
