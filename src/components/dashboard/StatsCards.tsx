@@ -11,6 +11,7 @@ import {
 
 interface StatsData {
   monthlyExpense: number;
+  monthlyIncome: number;
   remainingBudget: number;
   familyMembers: number;
 }
@@ -21,7 +22,7 @@ interface StatsCardsProps {
 
 export function StatsCards({ data }: StatsCardsProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-8">
       {/* Monthly Expense Card */}
       <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white border-0 shadow-xl">
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
@@ -47,8 +48,33 @@ export function StatsCards({ data }: StatsCardsProps) {
         </CardContent>
       </Card>
 
-      {/* Remaining Budget Card */}
+      {/* Monthly Income Card */}
       <Card className="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-green-600 to-green-700 text-white border-0 shadow-xl">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+        <CardContent className="relative p-4 md:p-6">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <div className="p-2 md:p-3 bg-white/20 rounded-xl md:rounded-2xl backdrop-blur-sm">
+              <TrendingUp className="w-4 h-4 md:w-6 md:h-6" />
+            </div>
+            <ArrowUpRight className="w-4 h-4 md:w-5 md:h-5 text-green-200" />
+          </div>
+          <div>
+            <p className="text-green-100 text-xs md:text-sm font-medium mb-0.5 md:mb-1">
+              이번 달 수입
+            </p>
+            <p className="text-xl md:text-3xl font-bold mb-1.5 md:mb-2">
+              ₩{data.monthlyIncome.toLocaleString()}
+            </p>
+            <p className="text-[10px] md:text-xs text-green-200">
+              순수익: ₩
+              {(data.monthlyIncome - data.monthlyExpense).toLocaleString()}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Remaining Budget Card */}
+      <Card className="relative overflow-hidden bg-gradient-to-br from-amber-500 via-orange-600 to-orange-700 text-white border-0 shadow-xl">
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
         <CardContent className="relative p-4 md:p-6">
           <div className="flex items-center justify-between mb-3 md:mb-4">
@@ -58,7 +84,7 @@ export function StatsCards({ data }: StatsCardsProps) {
             <ArrowDownRight className="w-4 h-4 md:w-5 md:h-5 text-green-200" />
           </div>
           <div>
-            <p className="text-green-100 text-xs md:text-sm font-medium mb-0.5 md:mb-1">
+            <p className="text-orange-100 text-xs md:text-sm font-medium mb-0.5 md:mb-1">
               예산 남은 금액
             </p>
             <p className="text-xl md:text-3xl font-bold mb-1.5 md:mb-2">
@@ -69,7 +95,7 @@ export function StatsCards({ data }: StatsCardsProps) {
                 value={100}
                 className="flex-1 h-1.5 md:h-2 bg-white/20"
               />
-              <span className="text-[10px] md:text-xs text-green-200">
+              <span className="text-[10px] md:text-xs text-orange-200">
                 100%
               </span>
             </div>

@@ -231,6 +231,46 @@ export interface UpdateExpenseRequest {
 }
 
 // ============================
+// 수입 (Income)
+// ============================
+
+/**
+ * 수입 응답
+ */
+export interface IncomeResponse {
+  uuid: string;
+  familyUuid: string;
+  categoryUuid: string;
+  categoryName?: string;
+  categoryColor?: string;
+  amount: string; // BigDecimal은 문자열로 전송
+  description?: string;
+  date: string; // ISO 8601 형식
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * 수입 생성 요청
+ */
+export interface CreateIncomeRequest {
+  categoryUuid: string;
+  amount: number;
+  description?: string;
+  date: string; // ISO 8601 형식 (YYYY-MM-DDTHH:mm:ss)
+}
+
+/**
+ * 수입 수정 요청
+ */
+export interface UpdateIncomeRequest {
+  categoryUuid?: string;
+  amount?: number;
+  description?: string;
+  date?: string;
+}
+
+// ============================
 // 초대 (Invitation)
 // ============================
 
@@ -280,4 +320,3 @@ export interface DashboardStats {
     percentage: number;
   }[];
 }
-

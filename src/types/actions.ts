@@ -7,6 +7,7 @@
  */
 export interface DashboardStats {
   monthlyExpense: number;
+  monthlyIncome: number;
   remainingBudget: number;
   familyMembers: number;
   budget: number;

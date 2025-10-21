@@ -39,6 +39,7 @@ export default async function HomePage() {
   // 기본값 설정 (데이터를 가져오지 못한 경우)
   const statsData = stats || {
     monthlyExpense: 0,
+    monthlyIncome: 0,
     remainingBudget: 0,
     familyMembers: 0,
     budget: 0,

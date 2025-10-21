@@ -10,6 +10,7 @@ import { auth } from "@/lib/server/auth";
 import type {
   CategoryResponse,
   ExpenseResponse,
+  IncomeResponse,
   FamilyResponse,
   PageResponse,
 } from "@/types/api";
@@ -60,6 +61,22 @@ export async function getDashboardStats(): Promise<DashboardStats | null> {
       })
       .reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
 
+    // 이번 달 수입 목록 조회
+    const incomes = await serverApiGet<PageResponse<IncomeResponse>>(
+      `/families/${family.uuid}/incomes?page=0&size=1000`
+    );
+
+    // 이번 달 수입만 필터링하고 합계 계산
+    const monthlyIncome = incomes.content
+      .filter((income) => {
+        const incomeDate = new Date(income.date);
+        return (
+          incomeDate.getFullYear() === year &&
+          incomeDate.getMonth() + 1 === month
+        );
+      })
+      .reduce((sum, income) => sum + parseFloat(income.amount), 0);
+
     // 가족 구성원 수
     const familyMembers = family.memberCount || 0;
 
@@ -69,6 +86,7 @@ export async function getDashboardStats(): Promise<DashboardStats | null> {
 
     return {
       monthlyExpense,
+      monthlyIncome,
       remainingBudget,
       familyMembers,
       budget,

@@ -1,0 +1,144 @@
+"use server";
+
+import { auth } from "@/lib/server/auth";
+import { serverApiClient } from "@/lib/server/api/client";
+import type { CreateIncomeRequest, IncomeResponse } from "@/types/api";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+
+export interface CreateIncomeFormState {
+  message?: string;
+  errors?: {
+    amount?: string[];
+    description?: string[];
+    categoryId?: string[];
+    date?: string[];
+  };
+  success: boolean;
+}
+
+const createIncomeSchema = z.object({
+  amount: z.number().positive("금액은 0보다 커야 합니다"),
+  description: z.string().optional(),
+  categoryId: z.string().min(1, "카테고리를 선택해주세요"),
+  date: z.string().optional(),
+});
+
+export async function createIncomeAction(
+  prevState: CreateIncomeFormState,
+  formData: FormData
+): Promise<CreateIncomeFormState> {
+  try {
+    // 인증 확인
+    const session = await auth();
+    if (!session?.user?.id) {
+      redirect("/api/auth/signin");
+    }
+
+    // familyUuid 가져오기
+    const familyUuid = formData.get("familyUuid")?.toString();
+    if (!familyUuid) {
+      return {
+        message: "가족 정보를 찾을 수 없습니다. 먼저 가족을 생성해주세요.",
+        success: false,
+      };
+    }
+
+    // 폼 데이터 파싱
+    const rawData = {
+      amount: Number(formData.get("amount")),
+      description: formData.get("description")?.toString(),
+      categoryId: formData.get("categoryId")?.toString(),
+      date: formData.get("date")?.toString(),
+    };
+
+    // 데이터 검증
+    const validatedFields = createIncomeSchema.safeParse(rawData);
+
+    if (!validatedFields.success) {
+      return {
+        errors: validatedFields.error.flatten().fieldErrors,
+        message: "입력값을 확인해주세요.",
+        success: false,
+      };
+    }
+
+    const { amount, description, categoryId, date } = validatedFields.data;
+
+    // 백엔드 API 호출
+    const requestBody: CreateIncomeRequest = {
+      categoryUuid: categoryId,
+      amount,
+      description,
+      date: date ? new Date(date).toISOString() : new Date().toISOString(),
+    };
+
+    await serverApiClient<{ data: IncomeResponse }>(
+      `/families/${familyUuid}/incomes`,
+      {
+        method: "POST",
+        body: JSON.stringify(requestBody),
+      }
+    );
+
+    // 페이지 revalidate
+    revalidatePath("/incomes");
+    revalidatePath("/");
+
+    return {
+      message: "수입이 성공적으로 추가되었습니다.",
+      success: true,
+    };
+  } catch (error) {
+    console.error("수입 추가 중 오류:", error);
+
+    return {
+      message:
+        error instanceof Error
+          ? error.message
+          : "수입 추가에 실패했습니다. 다시 시도해주세요.",
+      success: false,
+    };
+  }
+}
+
+/**
+ * 수입 삭제 Server Action
+ */
+export async function deleteIncomeAction(
+  familyUuid: string,
+  incomeUuid: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    // 인증 확인
+    const session = await auth();
+    if (!session?.user?.id) {
+      redirect("/api/auth/signin");
+    }
+
+    // 백엔드 API 호출
+    await serverApiClient(`/families/${familyUuid}/incomes/${incomeUuid}`, {
+      method: "DELETE",
+    });
+
+    // 페이지 revalidate
+    revalidatePath("/incomes");
+    revalidatePath("/");
+
+    return {
+      success: true,
+      message: "수입이 성공적으로 삭제되었습니다.",
+    };
+  } catch (error) {
+    console.error("수입 삭제 중 오류:", error);
+
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "수입 삭제에 실패했습니다. 다시 시도해주세요.",
+    };
+  }
+}
