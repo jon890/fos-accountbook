@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { updateCategoryAction } from "@/app/actions/category-actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,9 +11,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { updateCategoryAction } from "@/app/actions/category-actions";
-import { toast } from "sonner";
 import type { CategoryResponse } from "@/types/api";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface EditCategoryDialogProps {
   open: boolean;

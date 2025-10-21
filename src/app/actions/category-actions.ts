@@ -84,6 +84,7 @@ export async function updateCategoryAction(
 
     revalidatePath("/");
     revalidatePath("/expenses");
+    revalidatePath("/categories");
 
     return {
       success: true,
@@ -109,6 +110,7 @@ export async function deleteCategoryAction(categoryUuid: string) {
 
     revalidatePath("/");
     revalidatePath("/expenses");
+    revalidatePath("/categories");
 
     return {
       success: true,

@@ -1,12 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import type { CategoryResponse } from "@/types/api";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Edit2, Trash2 } from "lucide-react";
 import { deleteCategoryAction } from "@/app/actions/category-actions";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,6 +11,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import type { CategoryResponse } from "@/types/api";
+import { Edit2, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface CategoryListProps {
   categories: CategoryResponse[];
