@@ -81,10 +81,21 @@ export function BottomNavigation() {
             {/* 설정 */}
             <Button
               variant="ghost"
-              className="flex flex-col items-center space-y-0.5 md:space-y-1 h-auto py-1.5 md:py-2 text-gray-500"
+              className={cn(
+                "flex flex-col items-center space-y-0.5 md:space-y-1 h-auto py-1.5 md:py-2",
+                isActive("/settings") ? "text-blue-600" : "text-gray-500"
+              )}
+              onClick={() => router.push("/settings")}
             >
               <Settings className="w-4.5 h-4.5 md:w-5 md:h-5" />
-              <span className="text-[10px] md:text-xs">설정</span>
+              <span
+                className={cn(
+                  "text-[10px] md:text-xs",
+                  isActive("/settings") && "font-medium"
+                )}
+              >
+                설정
+              </span>
             </Button>
           </div>
         </div>

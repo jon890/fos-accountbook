@@ -2,9 +2,10 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Bell, LogOut, Wallet } from "lucide-react";
+import { LogOut, Wallet } from "lucide-react";
 import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
+import { FamilySelectorDropdown } from "@/components/families/FamilySelectorDropdown";
 
 interface HeaderProps {
   session: Session;
@@ -29,14 +30,7 @@ export function Header({ session }: HeaderProps) {
           </div>
 
           <div className="flex items-center space-x-1.5 md:space-x-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="relative h-8 w-8 md:h-9 md:w-9 p-0"
-            >
-              <Bell className="w-4 h-4 md:w-5 md:h-5" />
-              <div className="absolute -top-0.5 -right-0.5 md:-top-1 md:-right-1 w-2 h-2 md:w-3 md:h-3 bg-red-500 rounded-full"></div>
-            </Button>
+            <FamilySelectorDropdown />
             <Avatar className="w-8 h-8 md:w-9 md:h-9 ring-2 ring-blue-100">
               <AvatarImage src={session.user?.image || ""} />
               <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold text-xs md:text-sm">
