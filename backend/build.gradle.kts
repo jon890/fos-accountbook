@@ -1,7 +1,7 @@
 plugins {
     id("java")
-    id("org.springframework.boot") version "3.5.0"
-    id("io.spring.dependency-management") version "1.1.6"
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.spring.dependency.management)
 }
 
 group = "com.bifos"
@@ -19,37 +19,31 @@ repositories {
 }
 
 dependencies {
-    // Spring Boot Starters
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
+    // Spring Boot Starters (Bundle 사용)
+    implementation(libs.bundles.spring.boot.starters)
     
     // Database
-    runtimeOnly("com.mysql:mysql-connector-j")
-    implementation("org.flywaydb:flyway-core")
-    implementation("org.flywaydb:flyway-mysql")
+    runtimeOnly(libs.mysql.connector.j)
+    implementation(libs.bundles.flyway)
     
     // SQL Logging (DataSource Proxy)
-    implementation("com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.2")
+    implementation(libs.p6spy.spring.boot.starter)
     
-    // JWT
-    implementation("io.jsonwebtoken:jjwt-api:0.12.5")
-    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.5")
-    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.5")
+    // JWT (Bundle 사용)
+    implementation(libs.jjwt.api)
+    runtimeOnly(libs.bundles.jwt)
     
     // OpenAPI (Swagger)
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
+    implementation(libs.springdoc.openapi.starter.webmvc.ui)
     
     // Lombok
-    compileOnly("org.projectlombok:lombok")
-    annotationProcessor("org.projectlombok:lombok")
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
     
-    // Test
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.springframework.security:spring-security-test")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testRuntimeOnly("com.h2database:h2")
+    // Test (Bundle 사용)
+    testImplementation(libs.bundles.testing)
+    testRuntimeOnly(libs.junit.platform.launcher)
+    testRuntimeOnly(libs.h2.database)
 }
 
 tasks.test {

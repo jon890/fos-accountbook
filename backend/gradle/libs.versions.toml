@@ -1,0 +1,86 @@
+[versions]
+# Java
+java = "21"
+
+# Spring Boot & Framework
+spring-boot = "3.5.0"
+spring-dependency-management = "1.1.6"
+
+# Database
+mysql-connector = "9.1.0"
+flyway = "11.0.0"
+h2 = "2.3.232"
+
+# Security & JWT
+jjwt = "0.12.5"
+
+# Logging & Monitoring
+p6spy = "1.9.2"
+
+# API Documentation
+springdoc-openapi = "2.7.0"
+
+# Utilities
+lombok = "1.18.34"
+
+# Testing
+# JUnit 버전은 Spring Boot가 자동 관리
+
+[libraries]
+# Spring Boot Starters
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
+spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+
+# Database
+mysql-connector-j = { module = "com.mysql:mysql-connector-j", version.ref = "mysql-connector" }
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
+flyway-mysql = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway" }
+
+# SQL Logging
+p6spy-spring-boot-starter = { module = "com.github.gavlyukovskiy:p6spy-spring-boot-starter", version.ref = "p6spy" }
+
+# JWT
+jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
+jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
+jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
+
+# OpenAPI (Swagger)
+springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi" }
+
+# Lombok
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+
+# Testing
+spring-security-test = { module = "org.springframework.security:spring-security-test" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+h2-database = { module = "com.h2database:h2", version.ref = "h2" }
+
+[bundles]
+# JWT 관련 라이브러리 번들
+jwt = ["jjwt-api", "jjwt-impl", "jjwt-jackson"]
+
+# Flyway 관련 라이브러리 번들
+flyway = ["flyway-core", "flyway-mysql"]
+
+# Spring Boot Starters 번들
+spring-boot-starters = [
+    "spring-boot-starter-web",
+    "spring-boot-starter-data-jpa",
+    "spring-boot-starter-security",
+    "spring-boot-starter-validation"
+]
+
+# 테스트 관련 라이브러리 번들
+testing = [
+    "spring-boot-starter-test",
+    "spring-security-test"
+]
+
+[plugins]
+# Spring Boot & Framework
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
+

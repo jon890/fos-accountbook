@@ -24,7 +24,7 @@ Spring Boot 3.5 + Java 21 기반 가계부 애플리케이션 백엔드 API 서�
 
 - **Language**: Java 21
 - **Framework**: Spring Boot 3.5.0
-- **Build Tool**: Gradle 8.x
+- **Build Tool**: Gradle 8.x (Version Catalogs 사용)
 - **Database**: MySQL 8.0+
 
 ### Libraries
@@ -80,6 +80,37 @@ infra/            # 기술적 구현 (Config, Security, Exception)
 - UUID 기반 관계 설정
 - Soft Delete 패턴 (`deleted_at` 컬럼)
 - Flyway 마이그레이션으로 스키마 버전 관리
+
+### Gradle Version Catalogs
+
+의존성 버전을 중앙 집중식으로 관리하기 위해 Gradle Version Catalogs를 사용합니다.
+
+**장점**:
+- 🎯 중앙 집중식 버전 관리 - 모든 버전을 한 곳에서 관리
+- 🔒 타입 안전성 - IDE 자동완성 및 컴파일 타임 검증
+- 📦 번들 관리 - 관련 라이브러리를 그룹으로 관리
+- 🚀 멀티모듈 대응 - 향후 멀티모듈 전환 시 유리
+
+**파일 구조**:
+```
+gradle/
+├── libs.versions.toml    # Version Catalog 정의
+└── README.md            # 상세 사용법
+```
+
+**사용 예시** (build.gradle.kts):
+```kotlin
+dependencies {
+    // 개별 라이브러리
+    implementation(libs.springdoc.openapi.starter.webmvc.ui)
+    
+    // 번들 사용
+    implementation(libs.bundles.spring.boot.starters)
+    runtimeOnly(libs.bundles.jwt)
+}
+```
+
+**상세 가이드**: [gradle/README.md](gradle/README.md)
 
 ### Spring Profiles
 
@@ -332,6 +363,9 @@ fos-accountbook-backend/
 │   │       ├── logback-spring.xml            # 로깅 설정
 │   │       └── db/migration/                 # Flyway 마이그레이션
 │   └── test/                                  # 테스트 코드
+├── gradle/                                    # Gradle 설정
+│   ├── libs.versions.toml                    # Version Catalog
+│   └── README.md                             # Version Catalog 가이드
 ├── docs/                                      # 문서
 │   └── deploy/
 │       └── railway.md                        # Railway 배포 가이드
@@ -388,5 +422,5 @@ This project is licensed under the MIT License.
 
 ---
 
-**마지막 업데이트**: 2025-10-10  
+**마지막 업데이트**: 2025-10-21  
 **버전**: 1.0.0
