@@ -35,6 +35,7 @@ export async function serverApiClient<T = unknown>(
 ): Promise<T> {
   const url = `${API_URL}${endpoint}`;
   const { skipAuth = false, ...fetchOptions } = options;
+  const method = fetchOptions.method || "GET";
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -49,24 +50,56 @@ export async function serverApiClient<T = unknown>(
     }
   }
 
-  const response = await fetch(url, {
-    ...fetchOptions,
-    headers,
-    cache: fetchOptions.cache || "no-store", // Server Components는 기본적으로 캐시하지 않음
-  });
+  try {
+    const response = await fetch(url, {
+      ...fetchOptions,
+      headers,
+      cache: fetchOptions.cache || "no-store", // Server Components는 기본적으로 캐시하지 않음
+    });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => null);
-    throw new ServerApiError(
-      errorData?.message ||
-        errorData?.error ||
-        `API 오류: ${response.status} ${response.statusText}`,
-      response.status,
-      errorData
-    );
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+
+      // 상세한 에러 로깅
+      console.error("❌ Server API Error:", {
+        endpoint,
+        url,
+        method,
+        status: response.status,
+        statusText: response.statusText,
+        errorData: errorData
+          ? JSON.stringify(errorData, null, 2)
+          : "No error data",
+        hasAuth: !skipAuth,
+      });
+
+      throw new ServerApiError(
+        errorData?.message ||
+          errorData?.error ||
+          `API 오류: ${response.status} ${response.statusText}`,
+        response.status,
+        errorData
+      );
+    }
+
+    return response.json();
+  } catch (error) {
+    // fetch 자체가 실패한 경우 (네트워크 오류 등)
+    if (error instanceof ServerApiError) {
+      throw error; // 이미 처리된 에러는 그대로 throw
+    }
+
+    // 네트워크 오류나 기타 예상치 못한 오류
+    console.error("❌ Server API Network Error:", {
+      endpoint,
+      url,
+      method,
+      error: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
+
+    throw error;
   }
-
-  return response.json();
 }
 
 /**

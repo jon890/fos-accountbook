@@ -1,0 +1,156 @@
+"use client";
+
+import { useState } from "react";
+import type { CategoryResponse } from "@/types/api";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Edit2, Trash2 } from "lucide-react";
+import { deleteCategoryAction } from "@/app/actions/category-actions";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+interface CategoryListProps {
+  categories: CategoryResponse[];
+  onEdit: (category: CategoryResponse) => void;
+  onDelete: (categoryUuid: string) => void;
+}
+
+export function CategoryList({
+  categories,
+  onEdit,
+  onDelete,
+}: CategoryListProps) {
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] =
+    useState<CategoryResponse | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteClick = (category: CategoryResponse) => {
+    setCategoryToDelete(category);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!categoryToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const result = await deleteCategoryAction(categoryToDelete.uuid);
+
+      if (result.success) {
+        toast.success(result.message);
+        onDelete(categoryToDelete.uuid);
+        setDeleteConfirmOpen(false);
+        setCategoryToDelete(null);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error("카테고리 삭제 중 오류가 발생했습니다");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  if (categories.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-12">
+          <div className="text-center text-gray-500">
+            <p className="text-lg mb-2">등록된 카테고리가 없습니다</p>
+            <p className="text-sm">카테고리를 추가해주세요</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {categories.map((category) => (
+          <Card
+            key={category.uuid}
+            className="hover:shadow-md transition-shadow"
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3 flex-1">
+                  <div
+                    className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl"
+                    style={{ backgroundColor: category.color + "20" }}
+                  >
+                    {category.icon}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">
+                      {category.name}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div
+                        className="w-4 h-4 rounded"
+                        style={{ backgroundColor: category.color }}
+                      />
+                      <span className="text-xs text-gray-500">
+                        {category.color}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEdit(category)}
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteClick(category)}
+                  >
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>카테고리 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
+              정말로{" "}
+              <span className="font-semibold">{categoryToDelete?.name}</span>{" "}
+              카테고리를 삭제하시겠습니까?
+              <br />이 작업은 되돌릴 수 없습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {isDeleting ? "삭제 중..." : "삭제"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}

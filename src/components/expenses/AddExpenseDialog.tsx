@@ -39,16 +39,13 @@ export function AddExpenseDialog({
 }: AddExpenseDialogProps) {
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [familyUuid, setFamilyUuid] = useState<string>("");
-  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [state, formAction] = useActionState(createExpenseAction, initialState);
 
-  // 다이얼로그가 열릴 때 카테고리와 가족 정보 로드
-  const handleOpenChange = async (newOpen: boolean) => {
-    onOpenChange(newOpen);
-    if (newOpen && categories.length === 0) {
-      await loadData();
-    }
-  };
+  // 컴포넌트 마운트 시 즉시 카테고리 로드
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const loadData = async () => {
     setIsLoadingCategories(true);
@@ -60,6 +57,7 @@ export function AddExpenseDialog({
         setFamilyUuid(data[0].familyUuid);
       }
     } catch (error) {
+      console.error("Failed to load categories:", error);
       toast.error("카테고리를 불러오는데 실패했습니다");
     } finally {
       setIsLoadingCategories(false);
@@ -78,7 +76,7 @@ export function AddExpenseDialog({
   }, [state, onOpenChange]);
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>지출 추가</DialogTitle>

@@ -17,8 +17,7 @@ export function QuickActions() {
   };
 
   const handleCategoryClick = () => {
-    // TODO: 카테고리 관리 페이지로 이동
-    console.log("카테고리 관리 (미구현)");
+    router.push("/categories");
   };
 
   const handleInviteClick = () => {
