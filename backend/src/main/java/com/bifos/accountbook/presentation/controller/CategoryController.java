@@ -1,6 +1,6 @@
 package com.bifos.accountbook.presentation.controller;
 
-import com.bifos.accountbook.application.dto.ApiSuccessResponse;
+import com.bifos.accountbook.presentation.dto.ApiSuccessResponse;
 import com.bifos.accountbook.application.dto.category.CategoryResponse;
 import com.bifos.accountbook.application.dto.category.CreateCategoryRequest;
 import com.bifos.accountbook.application.dto.category.UpdateCategoryRequest;

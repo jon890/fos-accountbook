@@ -1,6 +1,6 @@
 package com.bifos.accountbook.presentation.controller;
 
-import com.bifos.accountbook.application.dto.ApiSuccessResponse;
+import com.bifos.accountbook.presentation.dto.ApiSuccessResponse;
 import com.bifos.accountbook.application.dto.expense.CreateExpenseRequest;
 import com.bifos.accountbook.application.dto.expense.ExpenseResponse;
 import com.bifos.accountbook.application.dto.expense.ExpenseSearchRequest;

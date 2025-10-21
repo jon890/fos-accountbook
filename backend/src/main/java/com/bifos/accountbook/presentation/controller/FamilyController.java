@@ -1,11 +1,10 @@
 package com.bifos.accountbook.presentation.controller;
 
-import com.bifos.accountbook.application.dto.ApiSuccessResponse;
+import com.bifos.accountbook.presentation.dto.ApiSuccessResponse;
 import com.bifos.accountbook.application.dto.family.CreateFamilyRequest;
 import com.bifos.accountbook.application.dto.family.FamilyResponse;
 import com.bifos.accountbook.application.dto.family.UpdateFamilyRequest;
 import com.bifos.accountbook.application.service.FamilyService;
-import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.presentation.annotation.LoginUser;
 import com.bifos.accountbook.presentation.dto.LoginUserDto;
 import io.swagger.v3.oas.annotations.Operation;

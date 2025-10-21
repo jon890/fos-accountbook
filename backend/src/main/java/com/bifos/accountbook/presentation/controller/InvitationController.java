@@ -1,6 +1,6 @@
 package com.bifos.accountbook.presentation.controller;
 
-import com.bifos.accountbook.application.dto.ApiSuccessResponse;
+import com.bifos.accountbook.presentation.dto.ApiSuccessResponse;
 import com.bifos.accountbook.application.dto.invitation.AcceptInvitationRequest;
 import com.bifos.accountbook.application.dto.invitation.CreateInvitationRequest;
 import com.bifos.accountbook.application.dto.invitation.InvitationResponse;

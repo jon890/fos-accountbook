@@ -64,6 +64,14 @@ public enum ErrorCode {
     EXPENSE_ALREADY_EXISTS(HttpStatus.CONFLICT, "E004", "이미 존재하는 지출입니다"),
 
     // ============================================
+    // Income Errors (6500~6599)
+    // ============================================
+    INCOME_NOT_FOUND(HttpStatus.NOT_FOUND, "IC001", "수입을 찾을 수 없습니다"),
+    INVALID_INCOME_AMOUNT(HttpStatus.BAD_REQUEST, "IC002", "수입 금액이 올바르지 않습니다"),
+    INVALID_INCOME_DATE(HttpStatus.BAD_REQUEST, "IC003", "수입 날짜가 올바르지 않습니다"),
+    INCOME_ALREADY_EXISTS(HttpStatus.CONFLICT, "IC004", "이미 존재하는 수입입니다"),
+
+    // ============================================
     // Invitation Errors (7000~7999)
     // ============================================
     INVITATION_NOT_FOUND(HttpStatus.NOT_FOUND, "I001", "초대장을 찾을 수 없습니다"),

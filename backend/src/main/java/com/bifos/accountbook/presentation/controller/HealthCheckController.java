@@ -1,6 +1,6 @@
 package com.bifos.accountbook.presentation.controller;
 
-import com.bifos.accountbook.application.dto.ApiSuccessResponse;
+import com.bifos.accountbook.presentation.dto.ApiSuccessResponse;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.ResponseEntity;

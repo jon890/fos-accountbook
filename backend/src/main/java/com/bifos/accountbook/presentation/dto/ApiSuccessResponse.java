@@ -1,4 +1,4 @@
-package com.bifos.accountbook.application.dto;
+package com.bifos.accountbook.presentation.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
