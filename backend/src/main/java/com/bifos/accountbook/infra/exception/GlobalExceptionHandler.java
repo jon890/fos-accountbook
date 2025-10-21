@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -161,50 +162,50 @@ public class GlobalExceptionHandler {
                                 .build()));
     }
 
-        /**
-         * IllegalStateException 처리
-         */
-        @ExceptionHandler(IllegalStateException.class)
-        public ResponseEntity<ApiErrorResponse> handleIllegalStateException(
-                        IllegalStateException ex, WebRequest request) {
-                log.error("Illegal state: {}", ex.getMessage(), ex);
+    /**
+     * IllegalStateException 처리
+     */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiErrorResponse> handleIllegalStateException(
+            IllegalStateException ex, WebRequest request) {
+        log.error("Illegal state: {}", ex.getMessage(), ex);
 
-                return ResponseEntity
-                                .status(HttpStatus.CONFLICT)
-                                .body(ApiErrorResponse.of(ex.getMessage(),
-                                                ApiErrorResponse.ErrorDetails.builder()
-                                                                .code("INVALID_STATE")
-                                                                .build()));
-        }
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiErrorResponse.of(ex.getMessage(),
+                        ApiErrorResponse.ErrorDetails.builder()
+                                .code("INVALID_STATE")
+                                .build()));
+    }
 
-        /**
-         * NoResourceFoundException 처리
-         * 요청한 리소스를 찾을 수 없을 때 발생
-         */
-        @ExceptionHandler(NoResourceFoundException.class)
-        public ResponseEntity<ApiErrorResponse> handleNoResourceFoundException(
-                        NoResourceFoundException ex, HttpServletRequest request) {
-                log.error("Resource not found: path={}, method={}", 
-                                request.getRequestURI(), 
-                                request.getMethod(), 
-                                ex);
+    /**
+     * NoResourceFoundException 처리
+     * 요청한 리소스를 찾을 수 없을 때 발생
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleNoResourceFoundException(
+            NoResourceFoundException ex, HttpServletRequest request) {
+        log.error("Resource not found: path={}, method={}",
+                request.getRequestURI(),
+                request.getMethod(),
+                ex);
 
-                String message = String.format("요청한 리소스를 찾을 수 없습니다: %s", 
-                                request.getRequestURI());
+        String message = String.format("요청한 리소스를 찾을 수 없습니다: %s",
+                request.getRequestURI());
 
-                return ResponseEntity
-                                .status(HttpStatus.NOT_FOUND)
-                                .body(ApiErrorResponse.of(message,
-                                                ApiErrorResponse.ErrorDetails.builder()
-                                                                .code("RESOURCE_NOT_FOUND")
-                                                                .field("path")
-                                                                .rejectedValue(request.getRequestURI())
-                                                                .build()));
-        }
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiErrorResponse.of(message,
+                        ApiErrorResponse.ErrorDetails.builder()
+                                .code("RESOURCE_NOT_FOUND")
+                                .field("path")
+                                .rejectedValue(request.getRequestURI())
+                                .build()));
+    }
 
-        /**
-         * 그 외 모든 예외 처리
-         */
+    /**
+     * 그 외 모든 예외 처리
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGlobalException(
             Exception ex, WebRequest request) {
