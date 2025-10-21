@@ -18,7 +18,6 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/families/{familyUuid}/categories")
 @RequiredArgsConstructor
 public class CategoryController {
 
@@ -27,7 +26,7 @@ public class CategoryController {
     /**
      * 카테고리 생성
      */
-    @PostMapping
+    @PostMapping("/families/{familyUuid}/categories")
     public ResponseEntity<ApiSuccessResponse<CategoryResponse>> createCategory(
             @LoginUser LoginUserDto loginUser,
             @PathVariable String familyUuid,
@@ -44,7 +43,7 @@ public class CategoryController {
     /**
      * 가족의 카테고리 목록 조회
      */
-    @GetMapping
+    @GetMapping("/families/{familyUuid}/categories")
     public ResponseEntity<ApiSuccessResponse<List<CategoryResponse>>> getFamilyCategories(
             @LoginUser LoginUserDto loginUser,
             @PathVariable String familyUuid) {
@@ -58,10 +57,9 @@ public class CategoryController {
     /**
      * 카테고리 상세 조회
      */
-    @GetMapping("/{categoryUuid}")
+    @GetMapping("/categories/{categoryUuid}")
     public ResponseEntity<ApiSuccessResponse<CategoryResponse>> getCategory(
             @LoginUser LoginUserDto loginUser,
-            @PathVariable String familyUuid,
             @PathVariable String categoryUuid) {
         log.info("Fetching category: {} by user: {}", categoryUuid, loginUser.getUserUuid());
 
@@ -73,10 +71,9 @@ public class CategoryController {
     /**
      * 카테고리 수정
      */
-    @PutMapping("/{categoryUuid}")
+    @PutMapping("/categories/{categoryUuid}")
     public ResponseEntity<ApiSuccessResponse<CategoryResponse>> updateCategory(
             @LoginUser LoginUserDto loginUser,
-            @PathVariable String familyUuid,
             @PathVariable String categoryUuid,
             @Valid @RequestBody UpdateCategoryRequest request) {
         log.info("Updating category: {} by user: {}", categoryUuid, loginUser.getUserUuid());
@@ -89,10 +86,9 @@ public class CategoryController {
     /**
      * 카테고리 삭제
      */
-    @DeleteMapping("/{categoryUuid}")
+    @DeleteMapping("/categories/{categoryUuid}")
     public ResponseEntity<ApiSuccessResponse<Void>> deleteCategory(
             @LoginUser LoginUserDto loginUser,
-            @PathVariable String familyUuid,
             @PathVariable String categoryUuid) {
         log.info("Deleting category: {} by user: {}", categoryUuid, loginUser.getUserUuid());
 
