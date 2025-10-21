@@ -1,9 +1,9 @@
 "use client";
 
-import { Header } from "./Header";
-import { BottomNavigation } from "./BottomNavigation";
 import { Session } from "next-auth";
 import { useSession } from "next-auth/react";
+import { BottomNavigation } from "./BottomNavigation";
+import { Header } from "./Header";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -25,7 +25,7 @@ export function AppLayout({ children, initialSession }: AppLayoutProps) {
     >
       <Header session={currentSession} />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 md:py-6 pb-20 md:pb-24">
         {children}
       </main>
 

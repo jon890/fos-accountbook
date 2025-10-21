@@ -17,29 +17,29 @@ interface DashboardTabsProps {
 
 export function DashboardTabs({ recentExpenses }: DashboardTabsProps) {
   return (
-    <Tabs defaultValue="overview" className="mb-8">
-      <TabsList className="grid w-full grid-cols-3 mb-6 bg-white/60 backdrop-blur-sm">
+    <Tabs defaultValue="overview" className="mb-4 md:mb-8">
+      <TabsList className="grid w-full grid-cols-3 mb-4 md:mb-6 bg-white/60 backdrop-blur-sm">
         <TabsTrigger
           value="overview"
-          className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+          className="data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs md:text-sm"
         >
           개요
         </TabsTrigger>
         <TabsTrigger
           value="expenses"
-          className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+          className="data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs md:text-sm"
         >
           지출 내역
         </TabsTrigger>
         <TabsTrigger
           value="analytics"
-          className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+          className="data-[state=active]:bg-white data-[state=active]:shadow-sm text-xs md:text-sm"
         >
           분석
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="overview" className="space-y-6">
+      <TabsContent value="overview" className="space-y-4 md:space-y-6">
         <QuickActions />
         <RecentActivity expenses={recentExpenses} />
       </TabsContent>
