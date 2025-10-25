@@ -18,6 +18,8 @@ import { useState } from "react";
 
 interface ExpenseFiltersProps {
   categories: CategoryResponse[];
+  defaultStartDate?: string;
+  defaultEndDate?: string;
 }
 
 const PAGE_SIZE_OPTIONS = [
@@ -26,7 +28,11 @@ const PAGE_SIZE_OPTIONS = [
   { value: 100, label: "100개씩" },
 ];
 
-export function ExpenseFilters({ categories }: ExpenseFiltersProps) {
+export function ExpenseFilters({
+  categories,
+  defaultStartDate,
+  defaultEndDate,
+}: ExpenseFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -34,9 +40,11 @@ export function ExpenseFilters({ categories }: ExpenseFiltersProps) {
     searchParams.get("categoryId") || "all"
   );
   const [startDate, setStartDate] = useState(
-    searchParams.get("startDate") || ""
+    searchParams.get("startDate") || defaultStartDate || ""
   );
-  const [endDate, setEndDate] = useState(searchParams.get("endDate") || "");
+  const [endDate, setEndDate] = useState(
+    searchParams.get("endDate") || defaultEndDate || ""
+  );
   const [pageSize, setPageSize] = useState(
     Number(searchParams.get("limit")) || 25
   );

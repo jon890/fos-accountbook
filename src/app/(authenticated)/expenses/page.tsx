@@ -1,4 +1,6 @@
+import { getExpensesAction } from "@/app/actions/expense/get-expenses-action";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import { CategoryExpenseSummary } from "@/components/expenses/CategoryExpenseSummary";
 import { ExpenseFilters } from "@/components/expenses/ExpenseFilters";
 import { ExpenseList } from "@/components/expenses/ExpenseList";
 import { ExpensePageClient } from "@/components/expenses/ExpensePageClient";
@@ -35,16 +37,37 @@ async function ExpenseListWrapper({
   const page = parseInt(searchParams.page || "1", 10);
   const limit = parseInt(searchParams.limit || "25", 10);
 
+  // 카테고리 통계용 전체 데이터 조회 (페이징 없이)
+  const statsResult = await getExpensesAction({
+    familyId,
+    categoryId: searchParams.categoryId,
+    startDate: searchParams.startDate,
+    endDate: searchParams.endDate,
+    page: 1,
+    limit: 1000, // 통계를 위해 많은 데이터 가져오기
+  });
+
   return (
-    <ExpenseList
-      familyId={familyId}
-      categories={categories}
-      categoryId={searchParams.categoryId}
-      startDate={searchParams.startDate}
-      endDate={searchParams.endDate}
-      page={page}
-      limit={limit}
-    />
+    <div className="space-y-6">
+      {/* 카테고리별 지출 통계 */}
+      {statsResult.success && statsResult.data.expenses.length > 0 && (
+        <CategoryExpenseSummary
+          expenses={statsResult.data.expenses}
+          categories={categories}
+        />
+      )}
+
+      {/* 지출 목록 */}
+      <ExpenseList
+        familyId={familyId}
+        categories={categories}
+        categoryId={searchParams.categoryId}
+        startDate={searchParams.startDate}
+        endDate={searchParams.endDate}
+        page={page}
+        limit={limit}
+      />
+    </div>
   );
 }
 
@@ -52,6 +75,22 @@ export default async function ExpensesPage({
   searchParams,
 }: ExpensesPageProps) {
   const resolvedSearchParams = await searchParams;
+
+  // 기본값: 현재 달의 시작일과 종료일
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  const defaultStartDate = new Date(currentYear, currentMonth, 1)
+    .toISOString()
+    .split("T")[0];
+  const defaultEndDate = new Date(currentYear, currentMonth + 1, 0)
+    .toISOString()
+    .split("T")[0];
+
+  // 쿼리 파라미터가 없으면 기본값 사용
+  const startDate = resolvedSearchParams.startDate || defaultStartDate;
+  const endDate = resolvedSearchParams.endDate || defaultEndDate;
 
   // 백엔드 API에서 가족 정보 조회 (Server-side API 호출)
   let families: FamilyResponse[];
@@ -91,7 +130,11 @@ export default async function ExpensesPage({
 
       {/* 필터 섹션 */}
       <div className="mb-6">
-        <ExpenseFilters categories={categories} />
+        <ExpenseFilters
+          categories={categories}
+          defaultStartDate={startDate}
+          defaultEndDate={endDate}
+        />
       </div>
 
       {/* 지출 목록 */}
@@ -107,7 +150,11 @@ export default async function ExpensesPage({
         <ExpenseListWrapper
           familyId={family.uuid}
           categories={categories}
-          searchParams={resolvedSearchParams}
+          searchParams={{
+            ...resolvedSearchParams,
+            startDate,
+            endDate,
+          }}
         />
       </Suspense>
     </>
