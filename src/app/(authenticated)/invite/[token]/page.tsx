@@ -3,9 +3,7 @@
  * /invite/[token] 경로로 접속
  */
 
-import {
-  getInvitationInfo
-} from "@/app/actions/invitation-actions";
+import { getInvitationInfoAction } from "@/app/actions/invitation/get-invitation-info-action";
 import { InvitePageClient } from "@/components/invite/InvitePageClient";
 import { auth } from "@/lib/server/auth";
 import { redirect } from "next/navigation";
@@ -23,22 +21,24 @@ export default async function InvitePage({ params }: InvitePageProps) {
   const session = await auth();
   if (!session) {
     // Layout에서 이미 체크했으니 도달하지 않음
-    redirect(`/auth/signin?callbackUrl=${encodeURIComponent(`/invite/${token}`)}`);
+    redirect(
+      `/auth/signin?callbackUrl=${encodeURIComponent(`/invite/${token}`)}`
+    );
   }
 
   // 초대 정보 조회
-  const invitationInfo = await getInvitationInfo(token);
+  const result = await getInvitationInfoAction(token);
 
   // 유효하지 않은 초대인 경우 대시보드로 리다이렉트
-  if (!invitationInfo.valid) {
+  if (!result.success || !result.data.valid) {
     redirect("/?error=invalid_invitation");
   }
 
   return (
     <InvitePageClient
       token={token}
-      familyName={invitationInfo.familyName || ""}
-      expiresAt={invitationInfo.expiresAt!}
+      familyName={result.data.familyName || ""}
+      expiresAt={result.data.expiresAt!}
     />
   );
 }

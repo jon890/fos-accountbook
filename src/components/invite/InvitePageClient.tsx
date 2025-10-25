@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Users, Clock, UserPlus, Loader2 } from "lucide-react";
-import { acceptInvitation } from "@/app/actions/invitation-actions";
+import { acceptInvitationAction } from "@/app/actions/invitation/accept-invitation-action";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { toast } from "sonner";
@@ -38,14 +38,14 @@ export function InvitePageClient({
     setIsAccepting(true);
 
     try {
-      const result = await acceptInvitation(token);
+      const result = await acceptInvitationAction(token);
 
       if (result.success) {
-        toast.success(result.message);
+        toast.success("초대를 수락했습니다");
         // 성공 시 대시보드로 이동
         router.push("/");
       } else {
-        toast.error(result.message);
+        toast.error(result.error.message);
       }
     } catch (error) {
       toast.error("초대 수락 중 오류가 발생했습니다");
@@ -109,8 +109,8 @@ export function InvitePageClient({
           <div className="bg-gray-50 rounded-2xl p-4">
             <p className="text-sm text-gray-700 leading-relaxed">
               초대를 수락하면{" "}
-              <span className="font-semibold text-blue-600">{familyName}</span>의
-              구성원이 되어 함께 가계부를 작성하고 관리할 수 있습니다.
+              <span className="font-semibold text-blue-600">{familyName}</span>
+              의 구성원이 되어 함께 가계부를 작성하고 관리할 수 있습니다.
             </p>
           </div>
 

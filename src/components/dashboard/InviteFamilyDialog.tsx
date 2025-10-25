@@ -4,11 +4,9 @@
 
 "use client";
 
-import {
-  createInvitationLink,
-  deleteInvitation,
-  getActiveInvitations,
-} from "@/app/actions/invitation-actions";
+import { createInvitationLinkAction } from "@/app/actions/invitation/create-invitation-link-action";
+import { deleteInvitationAction } from "@/app/actions/invitation/delete-invitation-action";
+import { getActiveInvitationsAction } from "@/app/actions/invitation/get-active-invitations-action";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -53,27 +51,27 @@ export function InviteFamilyDialog({
   };
 
   const loadInvitations = async () => {
-    const activeInvitations = await getActiveInvitations();
-    setInvitations(activeInvitations);
+    const result = await getActiveInvitationsAction();
+    if (result.success) {
+      setInvitations(result.data);
+    } else {
+      toast.error(result.error.message);
+    }
   };
 
   const handleCreateInvitation = async () => {
     setIsCreating(true);
     try {
-      const result = await createInvitationLink();
-      console.log(result);
+      const result = await createInvitationLinkAction();
 
-      if (result.success && result.invitation) {
-        toast.success(result.message);
+      if (result.success) {
+        toast.success("초대 링크가 생성되었습니다");
         await loadInvitations();
 
         // 자동으로 클립보드에 복사
-        await copyToClipboard(
-          result.invitation.inviteUrl,
-          result.invitation.token
-        );
+        await copyToClipboard(result.data.inviteUrl, result.data.token);
       } else {
-        toast.error(result.message);
+        toast.error(result.error.message);
       }
     } catch (error) {
       toast.error("초대 링크 생성에 실패했습니다");
@@ -99,13 +97,13 @@ export function InviteFamilyDialog({
 
   const handleDeleteInvitation = async (uuid: string) => {
     try {
-      const result = await deleteInvitation(uuid);
+      const result = await deleteInvitationAction(uuid);
 
       if (result.success) {
-        toast.success(result.message);
+        toast.success("초대가 삭제되었습니다");
         await loadInvitations();
       } else {
-        toast.error(result.message);
+        toast.error(result.error.message);
       }
     } catch {
       toast.error("초대 삭제에 실패했습니다");
