@@ -49,6 +49,7 @@ export interface GetExpensesParams {
   startDate?: string;
   endDate?: string;
   page?: number;
+  limit?: number;
 }
 
 export interface GetExpensesResult {

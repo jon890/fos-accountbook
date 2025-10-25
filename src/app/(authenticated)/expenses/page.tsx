@@ -16,6 +16,7 @@ interface SearchParams {
   startDate?: string;
   endDate?: string;
   page?: string;
+  limit?: string;
 }
 
 interface ExpensesPageProps {
@@ -32,6 +33,7 @@ async function ExpenseListWrapper({
   searchParams: SearchParams;
 }) {
   const page = parseInt(searchParams.page || "1", 10);
+  const limit = parseInt(searchParams.limit || "25", 10);
 
   return (
     <ExpenseList
@@ -41,6 +43,7 @@ async function ExpenseListWrapper({
       startDate={searchParams.startDate}
       endDate={searchParams.endDate}
       page={page}
+      limit={limit}
     />
   );
 }

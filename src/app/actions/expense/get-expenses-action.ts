@@ -38,14 +38,22 @@ export async function getExpensesAction(
       throw ActionError.familyNotSelected();
     }
 
-    const { categoryId, startDate, endDate, page = 1 } = params;
+    const { categoryId, startDate, endDate, page = 1, limit = 25 } = params;
 
     // 페이지 검증
     if (page < 1) {
       throw ActionError.invalidInput("page", page, "1 이상이어야 합니다");
     }
 
-    const limit = 10;
+    // limit 검증
+    if (limit < 1 || limit > 100) {
+      throw ActionError.invalidInput(
+        "limit",
+        limit,
+        "1에서 100 사이여야 합니다"
+      );
+    }
+
     let queryParams = `page=${page - 1}&size=${limit}`;
 
     if (categoryId) {

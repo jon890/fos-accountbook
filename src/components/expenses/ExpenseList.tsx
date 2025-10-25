@@ -1,8 +1,8 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { getExpensesAction } from "@/app/actions/expense/get-expenses-action";
+import { Card, CardContent } from "@/components/ui/card";
+import type { CategoryResponse } from "@/types/api";
 import { ExpenseItem } from "./ExpenseItem";
 import { ExpensePagination } from "./ExpensePagination";
-import type { CategoryResponse } from "@/types/api";
 
 interface ExpenseListProps {
   familyId: string;
@@ -11,6 +11,7 @@ interface ExpenseListProps {
   startDate?: string;
   endDate?: string;
   page?: number;
+  limit?: number;
 }
 
 export async function ExpenseList({
@@ -20,6 +21,7 @@ export async function ExpenseList({
   startDate,
   endDate,
   page = 1,
+  limit = 25,
 }: ExpenseListProps) {
   // Server Action으로 지출 목록 조회
   const result = await getExpensesAction({
@@ -28,6 +30,7 @@ export async function ExpenseList({
     startDate,
     endDate,
     page,
+    limit,
   });
 
   if (!result.success) {
@@ -43,7 +46,6 @@ export async function ExpenseList({
   }
 
   const { expenses, totalPages, totalElements, currentPage } = result.data;
-  const limit = 10;
 
   if (expenses.length === 0) {
     return (
