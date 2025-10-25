@@ -26,6 +26,7 @@ Thumbs.db
 .gitattributes
 
 # Gradle wrapper (not needed with gradle image)
+# Note: gradle/ directory including libs.versions.toml is needed for Version Catalogs
 gradlew
 gradlew.bat
 gradle/wrapper/*.jar

@@ -5,8 +5,9 @@ FROM gradle:8.14-jdk21-alpine AS builder
 
 WORKDIR /app
 
-# Copy gradle config files
+# Copy gradle config files (including Version Catalog)
 COPY build.gradle.kts settings.gradle.kts ./
+COPY gradle ./gradle
 
 # Download dependencies (this layer will be cached)
 RUN gradle dependencies --no-daemon || true
