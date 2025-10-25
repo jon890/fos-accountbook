@@ -1,6 +1,6 @@
 "use client";
 
-import { createExpenseAction } from "@/app/actions/expense-actions";
+import { createExpenseAction } from "@/app/actions/expense/create-expense-action";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";

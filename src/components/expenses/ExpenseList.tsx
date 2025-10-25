@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { getExpenses } from "@/app/actions/expense-actions";
+import { getExpensesAction } from "@/app/actions/expense/get-expenses-action";
 import { ExpensePagination } from "./ExpensePagination";
 
 interface ExpenseListProps {
@@ -42,7 +42,7 @@ export async function ExpenseList({
   page = 1,
 }: ExpenseListProps) {
   // Server Action으로 지출 목록 조회
-  const result = await getExpenses({
+  const result = await getExpensesAction({
     familyId,
     categoryId,
     startDate,
@@ -50,12 +50,12 @@ export async function ExpenseList({
     page,
   });
 
-  if (!result.success || !result.data) {
+  if (!result.success) {
     return (
       <Card>
         <CardContent className="py-8">
           <p className="text-center text-gray-500">
-            {result.message || "지출 내역을 불러오는데 실패했습니다."}
+            {result.error.message || "지출 내역을 불러오는데 실패했습니다."}
           </p>
         </CardContent>
       </Card>
