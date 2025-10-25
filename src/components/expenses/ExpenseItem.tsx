@@ -25,6 +25,9 @@ export function ExpenseItem({
   const IconComponent = getCategoryIcon(category.icon);
   const dateObj = typeof date === "string" ? new Date(date) : date;
 
+  // Lucide 아이콘으로 매핑이 없으면 이모지를 그대로 사용
+  const useEmoji = !IconComponent;
+
   return (
     <div
       key={uuid}
@@ -37,9 +40,15 @@ export function ExpenseItem({
             backgroundColor: `${category.color}20`,
           }}
         >
-          <div style={{ color: category.color }}>
-            <IconComponent className="w-5 h-5 md:w-6 md:h-6" />
-          </div>
+          {useEmoji ? (
+            <span className="text-xl md:text-2xl">{category.icon}</span>
+          ) : (
+            <div style={{ color: category.color }}>
+              {IconComponent && (
+                <IconComponent className="w-5 h-5 md:w-6 md:h-6" />
+              )}
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-1.5 md:space-x-2 mb-0.5 md:mb-1">
