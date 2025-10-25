@@ -5,6 +5,7 @@
 "use client";
 
 import { getFamilyCategoriesAction } from "@/app/actions/category/get-categories-action";
+import type { CreateIncomeFormState } from "@/app/actions/income-actions";
 import { createIncomeAction } from "@/app/actions/income-actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +17,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { CreateIncomeFormState } from "@/app/actions/income-actions";
 import type { CategoryResponse } from "@/types/api";
 import { Loader2 } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
@@ -47,11 +47,16 @@ export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
   const loadData = async () => {
     setIsLoadingCategories(true);
     try {
-      const data = await getFamilyCategoriesAction();
-      setCategories(data);
-      // 첫 번째 카테고리의 familyUuid 사용
-      if (data.length > 0) {
-        setFamilyUuid(data[0].familyUuid);
+      const result = await getFamilyCategoriesAction();
+      if (result.success) {
+        setCategories(result.data);
+        // 첫 번째 카테고리의 familyUuid 사용
+        if (result.data.length > 0) {
+          setFamilyUuid(result.data[0].familyUuid);
+        }
+      } else {
+        console.error("Failed to load categories:", result.error);
+        toast.error(result.error.message);
       }
     } catch (error) {
       console.error("Failed to load categories:", error);

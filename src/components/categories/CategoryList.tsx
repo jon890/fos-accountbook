@@ -47,12 +47,12 @@ export function CategoryList({
       const result = await deleteCategoryAction(categoryToDelete.uuid);
 
       if (result.success) {
-        toast.success(result.message);
+        toast.success("카테고리가 삭제되었습니다");
         onDelete(categoryToDelete.uuid);
         setDeleteConfirmOpen(false);
         setCategoryToDelete(null);
       } else {
-        toast.error(result.message);
+        toast.error(result.error.message);
       }
     } catch (error) {
       toast.error("카테고리 삭제 중 오류가 발생했습니다");

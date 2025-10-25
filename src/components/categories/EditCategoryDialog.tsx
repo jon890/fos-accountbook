@@ -109,12 +109,12 @@ export function EditCategoryDialog({
         icon,
       });
 
-      if (result.success && result.data) {
-        toast.success(result.message);
+      if (result.success) {
+        toast.success("카테고리가 수정되었습니다");
         onSuccess(result.data);
         onOpenChange(false);
       } else {
-        toast.error(result.message);
+        toast.error(result.error.message);
       }
     } catch (error) {
       toast.error("카테고리 수정 중 오류가 발생했습니다");

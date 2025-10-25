@@ -28,13 +28,10 @@ export default async function CategoriesPage() {
   }
 
   // 선택된 가족의 카테고리 목록 조회
-  let categories: CategoryResponse[] = [];
-  try {
-    categories = await getFamilyCategoriesAction();
-  } catch (error) {
-    console.error("Failed to fetch categories:", error);
-    categories = [];
-  }
+  const categoriesResult = await getFamilyCategoriesAction();
+  const categories: CategoryResponse[] = categoriesResult.success
+    ? categoriesResult.data
+    : [];
 
   return (
     <div className="container mx-auto py-6 px-4 max-w-4xl">

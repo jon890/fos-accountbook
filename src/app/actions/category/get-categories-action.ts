@@ -5,33 +5,41 @@
 "use server";
 
 import { serverApiGet } from "@/lib/server/api";
+import {
+  ActionError,
+  handleActionError,
+  successResult,
+  type ActionResult,
+} from "@/lib/errors";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
-import type { CategoryResponse, FamilyResponse } from "@/types/api";
+import { auth } from "@/lib/server/auth";
+import type { CategoryResponse } from "@/types/api";
 
 export async function getFamilyCategoriesAction(
   familyUuid?: string
-): Promise<CategoryResponse[]> {
+): Promise<ActionResult<CategoryResponse[]>> {
   try {
+    // 인증 확인
+    const session = await auth();
+    if (!session?.user?.id) {
+      throw ActionError.unauthorized();
+    }
+
     // familyUuid가 없으면 쿠키에서 가져오기
-    let selectedFamilyUuid = familyUuid || (await getSelectedFamilyUuid());
+    const selectedFamilyUuid = familyUuid || (await getSelectedFamilyUuid());
 
-    // 선택된 가족이 없으면 첫 번째 가족 사용 (쿠키에 저장하지 않음)
+    // 선택된 가족이 없으면 에러
     if (!selectedFamilyUuid) {
-      const families = await serverApiGet<FamilyResponse[]>("/families");
-
-      if (!families || families.length === 0) {
-        throw new Error("가족 정보를 찾을 수 없습니다");
-      }
-
-      selectedFamilyUuid = families[0].uuid;
+      throw ActionError.familyNotSelected();
     }
 
     const categories = await serverApiGet<CategoryResponse[]>(
       `/families/${selectedFamilyUuid}/categories`
     );
-    return categories;
+
+    return successResult(categories);
   } catch (error) {
     console.error("Failed to fetch categories:", error);
-    throw new Error("카테고리 목록을 불러오는데 실패했습니다");
+    return handleActionError(error, "카테고리 목록을 불러오는데 실패했습니다");
   }
 }

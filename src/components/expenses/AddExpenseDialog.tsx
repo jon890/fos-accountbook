@@ -50,11 +50,16 @@ export function AddExpenseDialog({
   const loadData = async () => {
     setIsLoadingCategories(true);
     try {
-      const data = await getFamilyCategoriesAction();
-      setCategories(data);
-      // 첫 번째 카테고리의 familyUuid 사용
-      if (data.length > 0) {
-        setFamilyUuid(data[0].familyUuid);
+      const result = await getFamilyCategoriesAction();
+      if (result.success) {
+        setCategories(result.data);
+        // 첫 번째 카테고리의 familyUuid 사용
+        if (result.data.length > 0) {
+          setFamilyUuid(result.data[0].familyUuid);
+        }
+      } else {
+        console.error("Failed to load categories:", result.error);
+        toast.error(result.error.message);
       }
     } catch (error) {
       console.error("Failed to load categories:", error);

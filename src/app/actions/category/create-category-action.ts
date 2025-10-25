@@ -4,9 +4,16 @@
 
 "use server";
 
-import { serverApiGet, serverApiPost } from "@/lib/server/api";
+import { serverApiPost } from "@/lib/server/api";
+import {
+  ActionError,
+  handleActionError,
+  successResult,
+  type ActionResult,
+} from "@/lib/errors";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
-import type { CategoryResponse, FamilyResponse } from "@/types/api";
+import { auth } from "@/lib/server/auth";
+import type { CategoryResponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 
 export async function createCategoryAction(
@@ -16,20 +23,29 @@ export async function createCategoryAction(
     color?: string;
     icon?: string;
   }
-) {
+): Promise<ActionResult<CategoryResponse>> {
   try {
+    // 인증 확인
+    const session = await auth();
+    if (!session?.user?.id) {
+      throw ActionError.unauthorized();
+    }
+
     // familyUuid가 없으면 쿠키에서 가져오기
-    let selectedFamilyUuid = familyUuid || (await getSelectedFamilyUuid());
+    const selectedFamilyUuid = familyUuid || (await getSelectedFamilyUuid());
 
-    // 선택된 가족이 없으면 첫 번째 가족 사용 (쿠키에 저장하지 않음)
+    // 선택된 가족이 없으면 에러
     if (!selectedFamilyUuid) {
-      const families = await serverApiGet<FamilyResponse[]>("/families");
+      throw ActionError.familyNotSelected();
+    }
 
-      if (!families || families.length === 0) {
-        throw new Error("가족 정보를 찾을 수 없습니다");
-      }
-
-      selectedFamilyUuid = families[0].uuid;
+    // 입력값 검증
+    if (!data.name || data.name.trim().length === 0) {
+      throw ActionError.invalidInput(
+        "카테고리 이름",
+        data.name,
+        "이름은 필수입니다"
+      );
     }
 
     const category = await serverApiPost<CategoryResponse>(
@@ -39,18 +55,11 @@ export async function createCategoryAction(
 
     revalidatePath("/");
     revalidatePath("/expenses");
+    revalidatePath("/categories");
 
-    return {
-      success: true,
-      message: "카테고리가 생성되었습니다",
-      data: category,
-    };
+    return successResult(category);
   } catch (error) {
     console.error("Failed to create category:", error);
-    return {
-      success: false,
-      message:
-        error instanceof Error ? error.message : "카테고리 생성에 실패했습니다",
-    };
+    return handleActionError(error, "카테고리 생성에 실패했습니다");
   }
 }
