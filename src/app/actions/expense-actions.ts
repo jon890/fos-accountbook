@@ -1,13 +1,19 @@
 "use server";
 
-import { auth } from "@/lib/server/auth";
+import { serverApiGet } from "@/lib/server/api";
 import { serverApiClient, ServerApiError } from "@/lib/server/api/client";
-import type { CreateExpenseRequest, ExpenseResponse } from "@/types/api";
+import { auth } from "@/lib/server/auth";
+import { getSelectedFamilyUuid } from "@/lib/server/cookies";
 import type {
   CreateExpenseFormState,
   GetExpensesParams,
   GetExpensesResult,
 } from "@/types/actions";
+import type {
+  CreateExpenseRequest,
+  ExpenseResponse,
+  FamilyResponse,
+} from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -31,13 +37,21 @@ export async function createExpenseAction(
       redirect("/api/auth/signin");
     }
 
-    // familyUuid 가져오기 (폼 데이터 또는 첫 번째 가족 사용)
-    const familyUuid = formData.get("familyUuid")?.toString();
+    // 선택된 가족 UUID 가져오기
+    let familyUuid = await getSelectedFamilyUuid();
+
+    // 선택된 가족이 없으면 첫 번째 가족 사용 (쿠키에 저장하지 않음)
     if (!familyUuid) {
-      return {
-        message: "가족 정보를 찾을 수 없습니다. 먼저 가족을 생성해주세요.",
-        success: false,
-      };
+      const families = await serverApiGet<FamilyResponse[]>("/families");
+
+      if (!families || families.length === 0) {
+        return {
+          message: "가족 정보를 찾을 수 없습니다. 먼저 가족을 생성해주세요.",
+          success: false,
+        };
+      }
+
+      familyUuid = families[0].uuid;
     }
 
     // 폼 데이터 파싱
@@ -161,7 +175,24 @@ export async function getExpenses(
       };
     }
 
-    const { familyId, categoryId, startDate, endDate, page = 1 } = params;
+    // 선택된 가족 UUID 가져오기
+    let familyId = await getSelectedFamilyUuid();
+
+    // 선택된 가족이 없으면 첫 번째 가족 사용 (쿠키에 저장하지 않음)
+    if (!familyId) {
+      const families = await serverApiGet<FamilyResponse[]>("/families");
+
+      if (!families || families.length === 0) {
+        return {
+          success: false,
+          message: "가족 정보를 찾을 수 없습니다.",
+        };
+      }
+
+      familyId = families[0].uuid;
+    }
+
+    const { categoryId, startDate, endDate, page = 1 } = params;
     const limit = 10;
     let queryParams = `page=${page - 1}&size=${limit}`;
 

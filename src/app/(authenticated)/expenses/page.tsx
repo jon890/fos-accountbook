@@ -8,6 +8,9 @@ import type { CategoryResponse, FamilyResponse } from "@/types/api";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
+// 쿠키를 사용하므로 동적 렌더링 필요
+export const dynamic = "force-dynamic";
+
 interface SearchParams {
   categoryId?: string;
   startDate?: string;

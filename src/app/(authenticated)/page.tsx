@@ -14,6 +14,9 @@ import {
   getRecentExpenses,
 } from "../actions/dashboard-actions";
 
+// 쿠키를 사용하므로 동적 렌더링 필요
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   // Layout에서 이미 인증 체크 완료 ✅
   const session = await auth();

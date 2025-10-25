@@ -1,6 +1,6 @@
 "use client";
 
-import { getFamilies } from "@/app/actions/family-actions";
+import { getFamilies, selectFamily } from "@/app/actions/family-actions";
 import {
   Select,
   SelectContent,
@@ -13,17 +13,11 @@ import { Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-const SELECTED_FAMILY_KEY = "selected_family_uuid";
-
 export function FamilySelectorDropdown() {
   const router = useRouter();
   const [families, setFamilies] = useState<Family[]>([]);
   const [selectedFamily, setSelectedFamily] = useState<string>("");
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchFamilies();
-  }, []);
 
   const fetchFamilies = async () => {
     try {
@@ -33,16 +27,9 @@ export function FamilySelectorDropdown() {
       if (result.success && result.data) {
         setFamilies(result.data);
 
-        // localStorage에서 선택된 가족 가져오기
-        const savedFamily = localStorage.getItem(SELECTED_FAMILY_KEY);
-
-        if (savedFamily && result.data.some((f) => f.uuid === savedFamily)) {
-          setSelectedFamily(savedFamily);
-        } else if (result.data.length > 0) {
-          // 저장된 가족이 없거나 유효하지 않으면 첫 번째 가족 선택
-          const firstFamily = result.data[0].uuid;
-          setSelectedFamily(firstFamily);
-          localStorage.setItem(SELECTED_FAMILY_KEY, firstFamily);
+        // 첫 번째 가족을 기본 선택으로 표시 (서버에서 쿠키로 관리됨)
+        if (result.data.length > 0 && !selectedFamily) {
+          setSelectedFamily(result.data[0].uuid);
         }
       }
     } catch (err) {
@@ -52,12 +39,25 @@ export function FamilySelectorDropdown() {
     }
   };
 
-  const handleFamilyChange = (familyUuid: string) => {
+  useEffect(() => {
+    fetchFamilies();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleFamilyChange = async (familyUuid: string) => {
     setSelectedFamily(familyUuid);
-    // localStorage에 저장
-    localStorage.setItem(SELECTED_FAMILY_KEY, familyUuid);
-    // 페이지 새로고침하여 선택된 가족의 데이터 표시
-    router.refresh();
+
+    // Server Action을 통해 쿠키에 저장
+    const result = await selectFamily(familyUuid);
+
+    if (result.success) {
+      // 페이지 새로고침하여 선택된 가족의 데이터 표시
+      router.refresh();
+    } else {
+      console.error("Failed to select family:", result.message);
+      // 실패 시 이전 선택으로 롤백
+      fetchFamilies();
+    }
   };
 
   if (loading) {

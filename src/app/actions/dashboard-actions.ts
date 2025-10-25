@@ -7,18 +7,19 @@
 
 import { serverApiGet } from "@/lib/server/api";
 import { auth } from "@/lib/server/auth";
+import { getSelectedFamilyUuid } from "@/lib/server/cookies";
+import type {
+  CheckUserFamilyResult,
+  DashboardStats,
+  RecentExpense,
+} from "@/types/actions";
 import type {
   CategoryResponse,
   ExpenseResponse,
-  IncomeResponse,
   FamilyResponse,
+  IncomeResponse,
   PageResponse,
 } from "@/types/api";
-import type {
-  DashboardStats,
-  RecentExpense,
-  CheckUserFamilyResult,
-} from "@/types/actions";
 
 /**
  * 대시보드 통계 데이터 조회
@@ -31,14 +32,24 @@ export async function getDashboardStats(): Promise<DashboardStats | null> {
       return null;
     }
 
-    // 사용자의 첫 번째 가족 정보 조회
-    const families = await serverApiGet<FamilyResponse[]>("/families");
+    // 선택된 가족 UUID 가져오기
+    let selectedFamilyUuid = await getSelectedFamilyUuid();
 
-    if (!families || families.length === 0) {
-      return null;
+    // 선택된 가족이 없으면 첫 번째 가족 사용 (쿠키에 저장하지 않음)
+    if (!selectedFamilyUuid) {
+      const families = await serverApiGet<FamilyResponse[]>("/families");
+
+      if (!families || families.length === 0) {
+        return null;
+      }
+
+      selectedFamilyUuid = families[0].uuid;
     }
 
-    const family = families[0];
+    // 선택된 가족 정보 조회
+    const family = await serverApiGet<FamilyResponse>(
+      `/families/${selectedFamilyUuid}`
+    );
 
     // 현재 연도와 월 계산
     const now = new Date();
@@ -112,9 +123,19 @@ export async function checkUserFamily(): Promise<CheckUserFamilyResult> {
 
     const families = await serverApiGet<FamilyResponse[]>("/families");
 
+    if (!families || families.length === 0) {
+      return { hasFamily: false };
+    }
+
+    // 선택된 가족 UUID 가져오기 (쿠키에서 읽기만)
+    let selectedFamilyUuid = await getSelectedFamilyUuid();
+    if (!selectedFamilyUuid) {
+      selectedFamilyUuid = families[0].uuid;
+    }
+
     return {
-      hasFamily: families && families.length > 0,
-      familyId: families && families.length > 0 ? families[0].uuid : undefined,
+      hasFamily: true,
+      familyId: selectedFamilyUuid,
     };
   } catch (error) {
     console.error("Failed to check family:", error);
@@ -135,23 +156,28 @@ export async function getRecentExpenses(
       return [];
     }
 
-    // 사용자의 첫 번째 가족 정보 조회
-    const families = await serverApiGet<FamilyResponse[]>("/families");
+    // 선택된 가족 UUID 가져오기
+    let selectedFamilyUuid = await getSelectedFamilyUuid();
 
-    if (!families || families.length === 0) {
-      return [];
+    // 선택된 가족이 없으면 첫 번째 가족 사용 (쿠키에 저장하지 않음)
+    if (!selectedFamilyUuid) {
+      const families = await serverApiGet<FamilyResponse[]>("/families");
+
+      if (!families || families.length === 0) {
+        return [];
+      }
+
+      selectedFamilyUuid = families[0].uuid;
     }
-
-    const family = families[0];
 
     // 최근 지출 조회 (페이징)
     const expensesPage = await serverApiGet<PageResponse<ExpenseResponse>>(
-      `/families/${family.uuid}/expenses?page=0&size=${limit}&sort=-date`
+      `/families/${selectedFamilyUuid}/expenses?page=0&size=${limit}&sort=-date`
     );
 
     // 카테고리 정보 조회
     const categories = await serverApiGet<CategoryResponse[]>(
-      `/families/${family.uuid}/categories`
+      `/families/${selectedFamilyUuid}/categories`
     );
 
     // 카테고리 맵 생성
@@ -190,18 +216,23 @@ export async function getFamilyCategories(): Promise<CategoryResponse[]> {
       return [];
     }
 
-    // 사용자의 첫 번째 가족 정보 조회
-    const families = await serverApiGet<FamilyResponse[]>("/families");
+    // 선택된 가족 UUID 가져오기
+    let selectedFamilyUuid = await getSelectedFamilyUuid();
 
-    if (!families || families.length === 0) {
-      return [];
+    // 선택된 가족이 없으면 첫 번째 가족 사용 (쿠키에 저장하지 않음)
+    if (!selectedFamilyUuid) {
+      const families = await serverApiGet<FamilyResponse[]>("/families");
+
+      if (!families || families.length === 0) {
+        return [];
+      }
+
+      selectedFamilyUuid = families[0].uuid;
     }
-
-    const family = families[0];
 
     // 카테고리 목록 조회
     const categories = await serverApiGet<CategoryResponse[]>(
-      `/families/${family.uuid}/categories`
+      `/families/${selectedFamilyUuid}/categories`
     );
 
     return categories;

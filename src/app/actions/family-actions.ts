@@ -2,6 +2,7 @@
 
 import { serverApiClient } from "@/lib/server/api/client";
 import { auth } from "@/lib/server/auth";
+import { setSelectedFamilyUuid } from "@/lib/server/cookies";
 import type {
   CreateFamilyData,
   CreateFamilyResult,
@@ -80,4 +81,55 @@ export async function getFamilyById(familyUuid: string): Promise<Family> {
   });
 
   return result.data;
+}
+
+/**
+ * 선택된 가족 설정 Server Action
+ * 쿠키에 가족 UUID를 저장하고 페이지를 새로고침
+ */
+export async function selectFamily(
+  familyUuid: string
+): Promise<{ success: boolean; message?: string }> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        message: "로그인이 필요합니다.",
+      };
+    }
+
+    // 가족이 존재하는지 확인
+    const families = await getFamilies();
+    if (!families.success || !families.data) {
+      return {
+        success: false,
+        message: "가족 목록을 불러오는데 실패했습니다.",
+      };
+    }
+
+    const familyExists = families.data.some((f) => f.uuid === familyUuid);
+    if (!familyExists) {
+      return {
+        success: false,
+        message: "선택한 가족을 찾을 수 없습니다.",
+      };
+    }
+
+    // 쿠키에 선택된 가족 UUID 저장
+    await setSelectedFamilyUuid(familyUuid);
+
+    // 모든 페이지 재검증
+    revalidatePath("/", "layout");
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error("Failed to select family:", error);
+    return {
+      success: false,
+      message: "가족 선택에 실패했습니다.",
+    };
+  }
 }

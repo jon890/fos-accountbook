@@ -10,18 +10,33 @@ import {
   serverApiPost,
   serverApiPut,
 } from "@/lib/server/api";
-import type { CategoryResponse } from "@/types/api";
+import { getSelectedFamilyUuid } from "@/lib/server/cookies";
+import type { CategoryResponse, FamilyResponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 
 /**
  * 가족의 카테고리 목록 조회
  */
 export async function getFamilyCategoriesAction(
-  familyUuid: string
+  familyUuid?: string
 ): Promise<CategoryResponse[]> {
   try {
+    // familyUuid가 없으면 쿠키에서 가져오기
+    let selectedFamilyUuid = familyUuid || (await getSelectedFamilyUuid());
+
+    // 선택된 가족이 없으면 첫 번째 가족 사용 (쿠키에 저장하지 않음)
+    if (!selectedFamilyUuid) {
+      const families = await serverApiGet<FamilyResponse[]>("/families");
+
+      if (!families || families.length === 0) {
+        throw new Error("가족 정보를 찾을 수 없습니다");
+      }
+
+      selectedFamilyUuid = families[0].uuid;
+    }
+
     const categories = await serverApiGet<CategoryResponse[]>(
-      `/families/${familyUuid}/categories`
+      `/families/${selectedFamilyUuid}/categories`
     );
     return categories;
   } catch (error) {
@@ -34,7 +49,7 @@ export async function getFamilyCategoriesAction(
  * 카테고리 생성
  */
 export async function createCategoryAction(
-  familyUuid: string,
+  familyUuid: string | null,
   data: {
     name: string;
     color?: string;
@@ -42,8 +57,22 @@ export async function createCategoryAction(
   }
 ) {
   try {
+    // familyUuid가 없으면 쿠키에서 가져오기
+    let selectedFamilyUuid = familyUuid || (await getSelectedFamilyUuid());
+
+    // 선택된 가족이 없으면 첫 번째 가족 사용 (쿠키에 저장하지 않음)
+    if (!selectedFamilyUuid) {
+      const families = await serverApiGet<FamilyResponse[]>("/families");
+
+      if (!families || families.length === 0) {
+        throw new Error("가족 정보를 찾을 수 없습니다");
+      }
+
+      selectedFamilyUuid = families[0].uuid;
+    }
+
     const category = await serverApiPost<CategoryResponse>(
-      `/families/${familyUuid}/categories`,
+      `/families/${selectedFamilyUuid}/categories`,
       data
     );
 
