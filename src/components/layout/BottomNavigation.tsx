@@ -3,9 +3,35 @@
 import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { LucideIcon } from "lucide-react";
 import { BarChart3, CreditCard, Home, Plus, Settings } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+
+interface NavButtonProps {
+  icon: LucideIcon;
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+}
+
+function NavButton({ icon: Icon, label, isActive, onClick }: NavButtonProps) {
+  return (
+    <Button
+      variant="ghost"
+      className={cn(
+        "flex flex-col items-center space-y-0.5 md:space-y-1 h-auto py-1.5 md:py-2",
+        isActive ? "text-blue-600" : "text-gray-500"
+      )}
+      onClick={onClick}
+    >
+      <Icon className="w-4.5 h-4.5 md:w-5 md:h-5" />
+      <span className={cn("text-[10px] md:text-xs", isActive && "font-medium")}>
+        {label}
+      </span>
+    </Button>
+  );
+}
 
 export function BottomNavigation() {
   const router = useRouter();
@@ -14,39 +40,30 @@ export function BottomNavigation() {
 
   const isActive = (path: string) => pathname === path;
 
+  const handleAnalyticsClick = () => {
+    alert("분석 기능은 준비 중입니다.");
+  };
+
   return (
     <>
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-gray-200/50 safe-area-pb">
         <div className="max-w-7xl mx-auto px-2 md:px-4">
           <div className="flex justify-around items-center h-14 md:h-16">
             {/* 홈 */}
-            <Button
-              variant="ghost"
-              className={cn(
-                "flex flex-col items-center space-y-0.5 md:space-y-1 h-auto py-1.5 md:py-2",
-                isActive("/") ? "text-blue-600" : "text-gray-500"
-              )}
+            <NavButton
+              icon={Home}
+              label="홈"
+              isActive={isActive("/")}
               onClick={() => router.push("/")}
-            >
-              <Home className="w-4.5 h-4.5 md:w-5 md:h-5" />
-              <span
-                className={cn(
-                  "text-[10px] md:text-xs",
-                  isActive("/") && "font-medium"
-                )}
-              >
-                홈
-              </span>
-            </Button>
+            />
 
-            {/* 분석 */}
-            <Button
-              variant="ghost"
-              className="flex flex-col items-center space-y-0.5 md:space-y-1 h-auto py-1.5 md:py-2 text-gray-500"
-            >
-              <BarChart3 className="w-4.5 h-4.5 md:w-5 md:h-5" />
-              <span className="text-[10px] md:text-xs">분석</span>
-            </Button>
+            {/* 내역 */}
+            <NavButton
+              icon={CreditCard}
+              label="내역"
+              isActive={isActive("/expenses")}
+              onClick={() => router.push("/expenses")}
+            />
 
             {/* 지출 추가 */}
             <div className="relative -mt-4 md:-mt-6">
@@ -58,45 +75,21 @@ export function BottomNavigation() {
               </Button>
             </div>
 
-            {/* 내역 */}
-            <Button
-              variant="ghost"
-              className={cn(
-                "flex flex-col items-center space-y-0.5 md:space-y-1 h-auto py-1.5 md:py-2",
-                isActive("/expenses") ? "text-blue-600" : "text-gray-500"
-              )}
-              onClick={() => router.push("/expenses")}
-            >
-              <CreditCard className="w-4.5 h-4.5 md:w-5 md:h-5" />
-              <span
-                className={cn(
-                  "text-[10px] md:text-xs",
-                  isActive("/expenses") && "font-medium"
-                )}
-              >
-                내역
-              </span>
-            </Button>
+            {/* 분석 */}
+            <NavButton
+              icon={BarChart3}
+              label="분석"
+              isActive={false}
+              onClick={handleAnalyticsClick}
+            />
 
             {/* 설정 */}
-            <Button
-              variant="ghost"
-              className={cn(
-                "flex flex-col items-center space-y-0.5 md:space-y-1 h-auto py-1.5 md:py-2",
-                isActive("/settings") ? "text-blue-600" : "text-gray-500"
-              )}
+            <NavButton
+              icon={Settings}
+              label="설정"
+              isActive={isActive("/settings")}
               onClick={() => router.push("/settings")}
-            >
-              <Settings className="w-4.5 h-4.5 md:w-5 md:h-5" />
-              <span
-                className={cn(
-                  "text-[10px] md:text-xs",
-                  isActive("/settings") && "font-medium"
-                )}
-              >
-                설정
-              </span>
-            </Button>
+            />
           </div>
         </div>
       </div>
