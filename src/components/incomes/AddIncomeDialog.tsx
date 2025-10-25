@@ -4,7 +4,7 @@
 
 "use client";
 
-import { getFamilyCategoriesAction } from "@/app/actions/category-actions";
+import { getFamilyCategoriesAction } from "@/app/actions/category/get-categories-action";
 import { createIncomeAction } from "@/app/actions/income-actions";
 import { Button } from "@/components/ui/button";
 import {

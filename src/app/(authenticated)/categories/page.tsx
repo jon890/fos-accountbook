@@ -2,7 +2,7 @@
  * 카테고리 관리 페이지 - Server Component
  */
 
-import { getFamilyCategoriesAction } from "@/app/actions/category-actions";
+import { getFamilyCategoriesAction } from "@/app/actions/category/get-categories-action";
 import { checkUserFamily } from "@/app/actions/family-actions";
 import { CategoryPageClient } from "@/components/categories/CategoryPageClient";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";

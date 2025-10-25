@@ -1,6 +1,6 @@
 "use client";
 
-import { updateCategoryAction } from "@/app/actions/category-actions";
+import { updateCategoryAction } from "@/app/actions/category/update-category-action";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

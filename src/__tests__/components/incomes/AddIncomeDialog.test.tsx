@@ -2,12 +2,12 @@
  * AddIncomeDialog 컴포넌트 테스트
  */
 
-import { getFamilyCategoriesAction } from "@/app/actions/category-actions";
+import { getFamilyCategoriesAction } from "@/app/actions/category/get-categories-action";
 import { AddIncomeDialog } from "@/components/incomes/AddIncomeDialog";
 import { render, screen, waitFor } from "@testing-library/react";
 
 // Mock modules
-jest.mock("@/app/actions/category-actions");
+jest.mock("@/app/actions/category/get-categories-action");
 jest.mock("@/app/actions/income-actions");
 jest.mock("sonner", () => ({
   toast: {

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createCategoryAction } from "@/app/actions/category-actions";
+import { createCategoryAction } from "@/app/actions/category/create-category-action";
 import { toast } from "sonner";
 import type { CategoryResponse } from "@/types/api";
 
