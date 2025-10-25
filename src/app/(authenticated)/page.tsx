@@ -3,10 +3,8 @@
  * Next.js 15 Server Component 패턴 사용
  */
 
-import {
-  getDashboardStats,
-  getRecentExpenses,
-} from "@/app/actions/dashboard-actions";
+import { getDashboardStatsAction } from "@/app/actions/dashboard/get-dashboard-stats-action";
+import { getRecentExpensesAction } from "@/app/actions/dashboard/get-recent-expenses-action";
 import { checkUserFamily } from "@/app/actions/family-actions";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
 import { StatsCards } from "@/components/dashboard/StatsCards";
@@ -34,21 +32,27 @@ export default async function HomePage() {
   }
 
   // 대시보드 데이터 병렬로 가져오기
-  const [stats, recentExpenses] = await Promise.all([
-    getDashboardStats(),
-    getRecentExpenses(10),
+  const [statsResult, recentExpensesResult] = await Promise.all([
+    getDashboardStatsAction(),
+    getRecentExpensesAction(10),
   ]);
 
   // 기본값 설정 (데이터를 가져오지 못한 경우)
-  const statsData = stats || {
-    monthlyExpense: 0,
-    monthlyIncome: 0,
-    remainingBudget: 0,
-    familyMembers: 0,
-    budget: 0,
-    year: new Date().getFullYear(),
-    month: new Date().getMonth() + 1,
-  };
+  const statsData = statsResult.success
+    ? statsResult.data
+    : {
+        monthlyExpense: 0,
+        monthlyIncome: 0,
+        remainingBudget: 0,
+        familyMembers: 0,
+        budget: 0,
+        year: new Date().getFullYear(),
+        month: new Date().getMonth() + 1,
+      };
+
+  const recentExpenses = recentExpensesResult.success
+    ? recentExpensesResult.data
+    : [];
 
   return (
     <DashboardClient recentExpenses={recentExpenses}>
