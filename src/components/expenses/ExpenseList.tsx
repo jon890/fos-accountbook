@@ -1,41 +1,21 @@
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getExpensesAction } from "@/app/actions/expense/get-expenses-action";
+import { ExpenseItem } from "./ExpenseItem";
 import { ExpensePagination } from "./ExpensePagination";
+import type { CategoryResponse } from "@/types/api";
 
 interface ExpenseListProps {
   familyId: string;
+  categories: CategoryResponse[];
   categoryId?: string;
   startDate?: string;
   endDate?: string;
   page?: number;
 }
 
-const formatDate = (date: Date | string) => {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-
-  // Date 객체가 유효한지 확인
-  if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
-    return "유효하지 않은 날짜";
-  }
-
-  return dateObj.toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-};
-
-const formatAmount = (amount: string | number) => {
-  const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
-  if (isNaN(numAmount)) {
-    return "0원";
-  }
-  return numAmount.toLocaleString() + "원";
-};
-
 export async function ExpenseList({
   familyId,
+  categories,
   categoryId,
   startDate,
   endDate,
@@ -52,9 +32,9 @@ export async function ExpenseList({
 
   if (!result.success) {
     return (
-      <Card>
+      <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
         <CardContent className="py-8">
-          <p className="text-center text-gray-500">
+          <p className="text-center text-gray-500 text-sm md:text-base">
             {result.error.message || "지출 내역을 불러오는데 실패했습니다."}
           </p>
         </CardContent>
@@ -67,9 +47,9 @@ export async function ExpenseList({
 
   if (expenses.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-8">
-          <p className="text-center text-gray-500">
+      <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
+        <CardContent className="py-10 md:py-16">
+          <p className="text-center text-gray-500 text-sm md:text-base">
             아직 지출 내역이 없습니다. 첫 번째 지출을 추가해보세요!
           </p>
         </CardContent>
@@ -77,64 +57,35 @@ export async function ExpenseList({
     );
   }
 
+  // 카테고리 매핑 (UUID로 검색)
+  const categoryMap = new Map(categories.map((cat) => [cat.uuid, cat]));
+
   return (
-    <div className="space-y-4">
-      <div className="space-y-3">
-        {expenses.map((expense) => (
-          <Card
-            key={expense.uuid}
-            className="hover:shadow-md transition-shadow duration-200"
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3 flex-1">
-                  {/* 카테고리 아이콘 */}
-                  <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
-                    style={{
-                      backgroundColor: `${
-                        expense.categoryColor || "#6366f1"
-                      }20`,
-                    }}
-                  >
-                    💰
-                  </div>
-
-                  {/* 지출 정보 */}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-gray-900">
-                        {expense.description || "지출"}
-                      </h3>
-                      <Badge
-                        variant="secondary"
-                        style={{
-                          backgroundColor: `${
-                            expense.categoryColor || "#6366f1"
-                          }20`,
-                          color: expense.categoryColor || "#6366f1",
-                        }}
-                      >
-                        {expense.categoryName || "기타"}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {formatDate(expense.date)}
-                    </p>
-                  </div>
-
-                  {/* 금액 */}
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-gray-900">
-                      {formatAmount(expense.amount)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+    <div className="space-y-3 md:space-y-4">
+      <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
+        <CardContent className="p-3 md:p-6">
+          <div className="space-y-2 md:space-y-3">
+            {expenses.map((expense) => {
+              const category = categoryMap.get(expense.categoryUuid);
+              return (
+                <ExpenseItem
+                  key={expense.uuid}
+                  uuid={expense.uuid}
+                  amount={expense.amount}
+                  description={expense.description}
+                  date={expense.date}
+                  category={{
+                    name: category?.name || expense.categoryName || "기타",
+                    color:
+                      category?.color || expense.categoryColor || "#6366f1",
+                    icon: category?.icon || "default",
+                  }}
+                />
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* 페이지네이션 */}
       {totalPages > 1 && (

@@ -7,45 +7,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ExpenseItem } from "@/components/expenses/ExpenseItem";
 import type { RecentExpense } from "@/types/actions";
-import { format } from "date-fns";
-import { ko } from "date-fns/locale";
-import {
-  Car,
-  Coffee,
-  Gift,
-  Heart,
-  Home,
-  Plus,
-  ShoppingBag,
-  Utensils,
-  Wallet,
-} from "lucide-react";
+import { Plus, Wallet } from "lucide-react";
 import Link from "next/link";
 
 interface RecentActivityProps {
   expenses: RecentExpense[];
-}
-
-// 카테고리 아이콘 매핑
-const categoryIcons: Record<
-  string,
-  React.ComponentType<{ className?: string }>
-> = {
-  shopping: ShoppingBag,
-  food: Utensils,
-  coffee: Coffee,
-  home: Home,
-  transport: Car,
-  health: Heart,
-  gift: Gift,
-  default: Wallet,
-};
-
-function getCategoryIcon(iconName: string) {
-  const IconComponent =
-    categoryIcons[iconName.toLowerCase()] || categoryIcons.default;
-  return IconComponent;
 }
 
 export function RecentActivity({ expenses }: RecentActivityProps) {
@@ -86,56 +54,16 @@ export function RecentActivity({ expenses }: RecentActivityProps) {
           </div>
         ) : (
           <div className="space-y-2 md:space-y-3">
-            {expenses.map((expense) => {
-              const IconComponent = getCategoryIcon(expense.category.icon);
-              return (
-                <div
-                  key={expense.uuid}
-                  className="flex items-center justify-between p-3 md:p-4 rounded-xl md:rounded-2xl bg-gradient-to-r from-gray-50 to-white border border-gray-100 hover:shadow-md transition-all duration-200"
-                >
-                  <div className="flex items-center space-x-2.5 md:space-x-4 flex-1">
-                    <div
-                      className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center shadow-sm"
-                      style={{
-                        backgroundColor: `${expense.category.color}20`,
-                      }}
-                    >
-                      <div style={{ color: expense.category.color }}>
-                        <IconComponent className="w-5 h-5 md:w-6 md:h-6" />
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-1.5 md:space-x-2 mb-0.5 md:mb-1">
-                        <h4 className="font-semibold text-gray-900 text-sm md:text-base truncate">
-                          {expense.description || expense.category.name}
-                        </h4>
-                        <Badge
-                          variant="secondary"
-                          className="text-[10px] md:text-xs px-1.5 py-0 shrink-0"
-                          style={{
-                            backgroundColor: `${expense.category.color}15`,
-                            color: expense.category.color,
-                            border: "none",
-                          }}
-                        >
-                          {expense.category.name}
-                        </Badge>
-                      </div>
-                      <p className="text-xs md:text-sm text-gray-500">
-                        {format(new Date(expense.date), "M월 d일 (E) HH:mm", {
-                          locale: ko,
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right ml-2">
-                    <p className="text-sm md:text-lg font-bold text-gray-900 whitespace-nowrap">
-                      -₩{Number(expense.amount).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+            {expenses.map((expense) => (
+              <ExpenseItem
+                key={expense.uuid}
+                uuid={expense.uuid}
+                amount={expense.amount}
+                description={expense.description}
+                date={expense.date}
+                category={expense.category}
+              />
+            ))}
 
             {expenses.length >= 10 && (
               <div className="pt-3 md:pt-4">

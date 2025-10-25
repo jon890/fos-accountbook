@@ -24,9 +24,11 @@ interface ExpensesPageProps {
 
 async function ExpenseListWrapper({
   familyId,
+  categories,
   searchParams,
 }: {
   familyId: string;
+  categories: CategoryResponse[];
   searchParams: SearchParams;
 }) {
   const page = parseInt(searchParams.page || "1", 10);
@@ -34,6 +36,7 @@ async function ExpenseListWrapper({
   return (
     <ExpenseList
       familyId={familyId}
+      categories={categories}
       categoryId={searchParams.categoryId}
       startDate={searchParams.startDate}
       endDate={searchParams.endDate}
@@ -100,6 +103,7 @@ export default async function ExpensesPage({
       >
         <ExpenseListWrapper
           familyId={family.uuid}
+          categories={categories}
           searchParams={resolvedSearchParams}
         />
       </Suspense>
