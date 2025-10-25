@@ -46,11 +46,11 @@ export async function getExpensesAction(
     }
 
     // limit 검증
-    if (limit < 1 || limit > 100) {
+    if (limit < 1 || limit > 1000) {
       throw ActionError.invalidInput(
         "limit",
         limit,
-        "1에서 100 사이여야 합니다"
+        "1에서 1000 사이여야 합니다"
       );
     }
 
