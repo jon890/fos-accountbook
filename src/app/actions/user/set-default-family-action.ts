@@ -11,19 +11,15 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api";
-import { auth } from "@/lib/server/auth";
+import { requireAuthOrRedirect } from "@/lib/server/auth-helpers";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 export async function setDefaultFamilyAction(
   familyUuid: string
 ): Promise<ActionResult<void>> {
   try {
     // 인증 확인
-    const session = await auth();
-    if (!session?.user?.id) {
-      redirect("/api/auth/signin");
-    }
+    await requireAuthOrRedirect();
 
     // UUID 검증
     if (!familyUuid || familyUuid.trim().length === 0) {

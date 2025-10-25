@@ -14,6 +14,8 @@ export async function checkUserFamilyAction(): Promise<{
   familyId?: string;
 }> {
   try {
+    // 이 함수는 인증 체크를 직접 수행 (requireAuth를 사용하지 않음)
+    // 인증되지 않았을 때 에러를 던지지 않고 hasFamily: false를 반환
     const session = await auth();
 
     if (!session?.user?.id) {

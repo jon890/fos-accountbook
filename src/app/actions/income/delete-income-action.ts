@@ -4,16 +4,15 @@
 
 "use server";
 
-import { auth } from "@/lib/server/auth";
-import { serverApiClient } from "@/lib/server/api/client";
 import {
   ActionError,
   handleActionError,
   successResult,
   type ActionResult,
 } from "@/lib/errors";
+import { serverApiClient } from "@/lib/server/api/client";
+import { requireAuthOrRedirect } from "@/lib/server/auth-helpers";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 export async function deleteIncomeAction(
   familyUuid: string,
@@ -21,10 +20,7 @@ export async function deleteIncomeAction(
 ): Promise<ActionResult<void>> {
   try {
     // 인증 확인
-    const session = await auth();
-    if (!session?.user?.id) {
-      redirect("/api/auth/signin");
-    }
+    await requireAuthOrRedirect();
 
     // UUID 검증
     if (!familyUuid) {

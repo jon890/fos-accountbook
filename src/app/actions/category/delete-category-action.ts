@@ -4,14 +4,14 @@
 
 "use server";
 
-import { serverApiDelete } from "@/lib/server/api";
 import {
   ActionError,
   handleActionError,
   successResult,
   type ActionResult,
 } from "@/lib/errors";
-import { auth } from "@/lib/server/auth";
+import { serverApiDelete } from "@/lib/server/api";
+import { requireAuth } from "@/lib/server/auth-helpers";
 import { revalidatePath } from "next/cache";
 
 export async function deleteCategoryAction(
@@ -19,10 +19,7 @@ export async function deleteCategoryAction(
 ): Promise<ActionResult<void>> {
   try {
     // 인증 확인
-    const session = await auth();
-    if (!session?.user?.id) {
-      throw ActionError.unauthorized();
-    }
+    await requireAuth();
 
     // UUID 검증
     if (!categoryUuid) {

@@ -5,13 +5,12 @@
 
 "use server";
 
-import { auth } from "@/lib/server/auth";
 import {
-  ActionError,
   handleActionError,
   successResult,
   type ActionResult,
 } from "@/lib/errors";
+import { requireAuth } from "@/lib/server/auth-helpers";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
 
 export async function getSelectedFamilyAction(): Promise<
@@ -19,10 +18,7 @@ export async function getSelectedFamilyAction(): Promise<
 > {
   try {
     // 인증 확인
-    const session = await auth();
-    if (!session?.user?.id) {
-      throw ActionError.unauthorized();
-    }
+    await requireAuth();
 
     const selectedFamilyUuid = await getSelectedFamilyUuid();
 

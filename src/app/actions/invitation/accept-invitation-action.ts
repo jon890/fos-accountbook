@@ -4,14 +4,14 @@
 
 "use server";
 
-import { serverApiClient } from "@/lib/server/api/client";
-import { auth } from "@/lib/server/auth";
 import {
   ActionError,
   handleActionError,
   successResult,
   type ActionResult,
 } from "@/lib/errors";
+import { serverApiClient } from "@/lib/server/api/client";
+import { requireAuth } from "@/lib/server/auth-helpers";
 import type { AcceptInvitationRequest } from "@/types/api";
 import { revalidatePath } from "next/cache";
 
@@ -20,10 +20,7 @@ export async function acceptInvitationAction(
 ): Promise<ActionResult<void>> {
   try {
     // 인증 확인
-    const session = await auth();
-    if (!session?.user?.id) {
-      throw ActionError.unauthorized();
-    }
+    await requireAuth();
 
     // 토큰 검증
     if (!token || token.trim().length === 0) {

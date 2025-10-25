@@ -4,14 +4,14 @@
 
 "use server";
 
-import { serverApiClient } from "@/lib/server/api/client";
-import { auth } from "@/lib/server/auth";
 import {
   ActionError,
   handleActionError,
   successResult,
   type ActionResult,
 } from "@/lib/errors";
+import { serverApiClient } from "@/lib/server/api/client";
+import { requireAuth } from "@/lib/server/auth-helpers";
 import type { CreateFamilyData, CreateFamilyResult } from "@/types/actions";
 import { revalidatePath } from "next/cache";
 
@@ -20,10 +20,7 @@ export async function createFamilyAction(
 ): Promise<ActionResult<CreateFamilyResult>> {
   try {
     // 인증 확인
-    const session = await auth();
-    if (!session?.user?.id) {
-      throw ActionError.unauthorized();
-    }
+    await requireAuth();
 
     // 입력값 검증
     if (!data.name || data.name.trim().length === 0) {

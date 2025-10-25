@@ -4,13 +4,12 @@
 
 "use server";
 
-import { auth } from "@/lib/server/auth";
-import { serverApiClient } from "@/lib/server/api/client";
 import { ActionError } from "@/lib/errors";
+import { serverApiClient } from "@/lib/server/api/client";
+import { requireAuthOrRedirect } from "@/lib/server/auth-helpers";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
 import type { CreateIncomeRequest, IncomeResponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 
 export interface CreateIncomeFormState {
@@ -37,10 +36,7 @@ export async function createIncomeAction(
 ): Promise<CreateIncomeFormState> {
   try {
     // 인증 확인
-    const session = await auth();
-    if (!session?.user?.id) {
-      redirect("/api/auth/signin");
-    }
+    await requireAuthOrRedirect();
 
     // familyUuid 가져오기 (폼에서 전달되거나 쿠키에서)
     let familyUuid = formData.get("familyUuid")?.toString();

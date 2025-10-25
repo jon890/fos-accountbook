@@ -4,14 +4,14 @@
 
 "use server";
 
-import { serverApiPut } from "@/lib/server/api";
 import {
   ActionError,
   handleActionError,
   successResult,
   type ActionResult,
 } from "@/lib/errors";
-import { auth } from "@/lib/server/auth";
+import { serverApiPut } from "@/lib/server/api";
+import { requireAuth } from "@/lib/server/auth-helpers";
 import type { CategoryResponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 
@@ -25,10 +25,7 @@ export async function updateCategoryAction(
 ): Promise<ActionResult<CategoryResponse>> {
   try {
     // 인증 확인
-    const session = await auth();
-    if (!session?.user?.id) {
-      throw ActionError.unauthorized();
-    }
+    await requireAuth();
 
     // UUID 검증
     if (!categoryUuid) {

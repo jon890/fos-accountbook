@@ -4,14 +4,14 @@
 
 "use server";
 
-import { serverApiGet } from "@/lib/server/api";
-import { auth } from "@/lib/server/auth";
 import {
   ActionError,
   handleActionError,
   successResult,
   type ActionResult,
 } from "@/lib/errors";
+import { serverApiGet } from "@/lib/server/api";
+import { requireAuth } from "@/lib/server/auth-helpers";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
 import type { RecentExpense } from "@/types/actions";
 import type {
@@ -25,10 +25,7 @@ export async function getRecentExpensesAction(
 ): Promise<ActionResult<RecentExpense[]>> {
   try {
     // 인증 확인
-    const session = await auth();
-    if (!session?.user?.id) {
-      throw ActionError.unauthorized();
-    }
+    await requireAuth();
 
     // limit 검증
     if (limit < 1 || limit > 100) {

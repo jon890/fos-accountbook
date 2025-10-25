@@ -5,14 +5,14 @@
 "use server";
 
 import { serverEnv } from "@/lib/env/server.env";
-import { serverApiClient } from "@/lib/server/api/client";
-import { auth } from "@/lib/server/auth";
 import {
   ActionError,
   handleActionError,
   successResult,
   type ActionResult,
 } from "@/lib/errors";
+import { serverApiClient } from "@/lib/server/api/client";
+import { requireAuth } from "@/lib/server/auth-helpers";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
 import type { InvitationInfo } from "@/types/actions";
 import type {
@@ -26,10 +26,7 @@ export async function createInvitationLinkAction(): Promise<
 > {
   try {
     // 인증 확인
-    const session = await auth();
-    if (!session?.user?.id) {
-      throw ActionError.unauthorized();
-    }
+    await requireAuth();
 
     // 선택된 가족 UUID 가져오기
     let familyUuid = await getSelectedFamilyUuid();

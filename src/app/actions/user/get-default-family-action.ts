@@ -10,18 +10,14 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api";
-import { auth } from "@/lib/server/auth";
-import { redirect } from "next/navigation";
+import { requireAuthOrRedirect } from "@/lib/server/auth-helpers";
 
 export async function getDefaultFamilyAction(): Promise<
   ActionResult<string | null>
 > {
   try {
     // 인증 확인
-    const session = await auth();
-    if (!session?.user?.id) {
-      redirect("/api/auth/signin");
-    }
+    await requireAuthOrRedirect();
 
     const response = await serverApiClient<{ defaultFamilyUuid: string }>(
       "/users/me/default-family"

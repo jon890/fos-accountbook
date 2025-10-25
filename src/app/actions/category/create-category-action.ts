@@ -4,15 +4,15 @@
 
 "use server";
 
-import { serverApiPost } from "@/lib/server/api";
 import {
   ActionError,
   handleActionError,
   successResult,
   type ActionResult,
 } from "@/lib/errors";
+import { serverApiPost } from "@/lib/server/api";
+import { requireAuth } from "@/lib/server/auth-helpers";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
-import { auth } from "@/lib/server/auth";
 import type { CategoryResponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 
@@ -26,10 +26,7 @@ export async function createCategoryAction(
 ): Promise<ActionResult<CategoryResponse>> {
   try {
     // 인증 확인
-    const session = await auth();
-    if (!session?.user?.id) {
-      throw ActionError.unauthorized();
-    }
+    await requireAuth();
 
     // familyUuid가 없으면 쿠키에서 가져오기
     const selectedFamilyUuid = familyUuid || (await getSelectedFamilyUuid());

@@ -4,14 +4,13 @@
 
 "use server";
 
-import { serverApiClient } from "@/lib/server/api/client";
-import { auth } from "@/lib/server/auth";
 import { ActionError } from "@/lib/errors";
+import { serverApiClient } from "@/lib/server/api/client";
+import { requireAuthOrRedirect } from "@/lib/server/auth-helpers";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
 import type { CreateExpenseFormState } from "@/types/actions";
 import type { CreateExpenseRequest, ExpenseResponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 
 // 지출 생성 스키마
@@ -28,10 +27,7 @@ export async function createExpenseAction(
 ): Promise<CreateExpenseFormState> {
   try {
     // 인증 확인
-    const session = await auth();
-    if (!session?.user?.id) {
-      redirect("/api/auth/signin");
-    }
+    await requireAuthOrRedirect();
 
     // 선택된 가족 UUID 가져오기
     const familyUuid = await getSelectedFamilyUuid();

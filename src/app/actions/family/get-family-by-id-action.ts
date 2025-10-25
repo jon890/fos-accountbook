@@ -4,14 +4,14 @@
 
 "use server";
 
-import { serverApiClient } from "@/lib/server/api/client";
-import { auth } from "@/lib/server/auth";
 import {
   ActionError,
   handleActionError,
   successResult,
   type ActionResult,
 } from "@/lib/errors";
+import { serverApiClient } from "@/lib/server/api/client";
+import { requireAuth } from "@/lib/server/auth-helpers";
 import type { Family } from "@/types/actions";
 
 export async function getFamilyByIdAction(
@@ -19,10 +19,7 @@ export async function getFamilyByIdAction(
 ): Promise<ActionResult<Family>> {
   try {
     // 인증 확인
-    const session = await auth();
-    if (!session?.user?.id) {
-      throw ActionError.unauthorized();
-    }
+    await requireAuth();
 
     // UUID 검증
     if (!familyUuid || familyUuid.trim().length === 0) {

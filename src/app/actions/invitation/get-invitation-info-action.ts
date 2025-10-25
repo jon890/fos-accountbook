@@ -4,13 +4,13 @@
 
 "use server";
 
-import { serverApiClient } from "@/lib/server/api/client";
 import {
   ActionError,
   handleActionError,
   successResult,
   type ActionResult,
 } from "@/lib/errors";
+import { serverApiClient } from "@/lib/server/api/client";
 import type { InvitationResponse } from "@/types/api";
 
 export interface InvitationInfoData {
@@ -24,7 +24,7 @@ export async function getInvitationInfoAction(
   token: string
 ): Promise<ActionResult<InvitationInfoData>> {
   try {
-    // 토큰 검증
+    // 토큰 검증 (이 함수는 공개 API이므로 인증 불필요)
     if (!token || token.trim().length === 0) {
       throw ActionError.invalidInput("초대 토큰", token, "토큰은 필수입니다");
     }

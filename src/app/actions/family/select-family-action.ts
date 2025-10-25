@@ -5,13 +5,13 @@
 
 "use server";
 
-import { auth } from "@/lib/server/auth";
 import {
   ActionError,
   handleActionError,
   successResult,
   type ActionResult,
 } from "@/lib/errors";
+import { requireAuth } from "@/lib/server/auth-helpers";
 import { setSelectedFamilyUuid } from "@/lib/server/cookies";
 import { getFamiliesAction } from "./get-families-action";
 import { revalidatePath } from "next/cache";
@@ -21,10 +21,7 @@ export async function selectFamilyAction(
 ): Promise<ActionResult<void>> {
   try {
     // 인증 확인
-    const session = await auth();
-    if (!session?.user?.id) {
-      throw ActionError.unauthorized();
-    }
+    await requireAuth();
 
     // UUID 검증
     if (!familyUuid || familyUuid.trim().length === 0) {
