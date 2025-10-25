@@ -9,7 +9,9 @@ import org.springframework.core.env.Environment;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @Slf4j
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+        org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
+})
 @EnableJpaAuditing
 @ConfigurationPropertiesScan
 @RequiredArgsConstructor
