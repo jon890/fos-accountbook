@@ -2,10 +2,8 @@
  * Income Actions 통합 테스트
  */
 
-import {
-  createIncomeAction,
-  deleteIncomeAction,
-} from "@/app/actions/income-actions";
+import { createIncomeAction } from "@/app/actions/income/create-income-action";
+import { deleteIncomeAction } from "@/app/actions/income/delete-income-action";
 import { serverApiClient } from "@/lib/server/api/client";
 import { auth } from "@/lib/server/auth";
 

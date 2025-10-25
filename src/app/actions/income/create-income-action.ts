@@ -1,7 +1,13 @@
+/**
+ * 수입 생성 Server Action
+ */
+
 "use server";
 
 import { auth } from "@/lib/server/auth";
 import { serverApiClient } from "@/lib/server/api/client";
+import { ActionError } from "@/lib/errors";
+import { getSelectedFamilyUuid } from "@/lib/server/cookies";
 import type { CreateIncomeRequest, IncomeResponse } from "@/types/api";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -36,13 +42,18 @@ export async function createIncomeAction(
       redirect("/api/auth/signin");
     }
 
-    // familyUuid 가져오기
-    const familyUuid = formData.get("familyUuid")?.toString();
+    // familyUuid 가져오기 (폼에서 전달되거나 쿠키에서)
+    let familyUuid = formData.get("familyUuid")?.toString();
+
+    // 폼에서 전달되지 않았다면 쿠키에서 가져오기
     if (!familyUuid) {
-      return {
-        message: "가족 정보를 찾을 수 없습니다. 먼저 가족을 생성해주세요.",
-        success: false,
-      };
+      const selectedUuid = await getSelectedFamilyUuid();
+      familyUuid = selectedUuid || undefined;
+    }
+
+    // 선택된 가족이 없으면 에러
+    if (!familyUuid) {
+      throw ActionError.familyNotSelected();
     }
 
     // 폼 데이터 파싱
@@ -93,52 +104,20 @@ export async function createIncomeAction(
   } catch (error) {
     console.error("수입 추가 중 오류:", error);
 
+    // ActionError 처리
+    if (error instanceof ActionError) {
+      return {
+        message: error.message,
+        success: false,
+      };
+    }
+
     return {
       message:
         error instanceof Error
           ? error.message
           : "수입 추가에 실패했습니다. 다시 시도해주세요.",
       success: false,
-    };
-  }
-}
-
-/**
- * 수입 삭제 Server Action
- */
-export async function deleteIncomeAction(
-  familyUuid: string,
-  incomeUuid: string
-): Promise<{ success: boolean; message: string }> {
-  try {
-    // 인증 확인
-    const session = await auth();
-    if (!session?.user?.id) {
-      redirect("/api/auth/signin");
-    }
-
-    // 백엔드 API 호출
-    await serverApiClient(`/families/${familyUuid}/incomes/${incomeUuid}`, {
-      method: "DELETE",
-    });
-
-    // 페이지 revalidate
-    revalidatePath("/incomes");
-    revalidatePath("/");
-
-    return {
-      success: true,
-      message: "수입이 성공적으로 삭제되었습니다.",
-    };
-  } catch (error) {
-    console.error("수입 삭제 중 오류:", error);
-
-    return {
-      success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "수입 삭제에 실패했습니다. 다시 시도해주세요.",
     };
   }
 }
