@@ -5,7 +5,7 @@
 
 import { getDashboardStatsAction } from "@/app/actions/dashboard/get-dashboard-stats-action";
 import { getRecentExpensesAction } from "@/app/actions/dashboard/get-recent-expenses-action";
-import { checkUserFamily } from "@/app/actions/family-actions";
+import { checkUserFamilyAction } from "@/app/actions/family/check-user-family-action";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { WelcomeSection } from "@/components/dashboard/WelcomeSection";
@@ -24,7 +24,7 @@ export default async function HomePage() {
   }
 
   // 가족 정보 확인
-  const { hasFamily } = await checkUserFamily();
+  const { hasFamily } = await checkUserFamilyAction();
 
   // 가족이 없으면 생성 페이지로 리다이렉트
   if (!hasFamily) {

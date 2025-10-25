@@ -1,4 +1,4 @@
-import { getFamilies } from "@/app/actions/family-actions";
+import { getFamiliesAction } from "@/app/actions/family/get-families-action";
 import { SettingsPageClient } from "@/components/settings/SettingsPageClient";
 import { redirect } from "next/navigation";
 
@@ -6,9 +6,9 @@ import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const familiesResult = await getFamilies();
+  const familiesResult = await getFamiliesAction();
 
-  if (!familiesResult.success || !familiesResult.data) {
+  if (!familiesResult.success) {
     redirect("/families/create");
   }
 

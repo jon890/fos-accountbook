@@ -1,10 +1,8 @@
 "use client";
 
-import {
-  getFamilies,
-  getSelectedFamily,
-  selectFamily,
-} from "@/app/actions/family-actions";
+import { getFamiliesAction } from "@/app/actions/family/get-families-action";
+import { getSelectedFamilyAction } from "@/app/actions/family/get-selected-family-action";
+import { selectFamilyAction } from "@/app/actions/family/select-family-action";
 import {
   Select,
   SelectContent,
@@ -29,8 +27,8 @@ export function FamilySelectorDropdown() {
 
       // 가족 목록과 선택된 가족을 병렬로 가져오기
       const [familiesResult, selectedFamilyResult] = await Promise.all([
-        getFamilies(),
-        getSelectedFamily(),
+        getFamiliesAction(),
+        getSelectedFamilyAction(),
       ]);
 
       if (familiesResult.success && familiesResult.data) {
@@ -39,12 +37,10 @@ export function FamilySelectorDropdown() {
         // 쿠키에 저장된 선택된 가족이 있으면 사용
         if (
           selectedFamilyResult.success &&
-          selectedFamilyResult.familyUuid &&
-          familiesResult.data.some(
-            (f) => f.uuid === selectedFamilyResult.familyUuid
-          )
+          selectedFamilyResult.data &&
+          familiesResult.data.some((f) => f.uuid === selectedFamilyResult.data)
         ) {
-          setSelectedFamily(selectedFamilyResult.familyUuid);
+          setSelectedFamily(selectedFamilyResult.data);
         } else if (familiesResult.data.length > 0) {
           // 쿠키에 없거나 유효하지 않으면 첫 번째 가족 선택
           setSelectedFamily(familiesResult.data[0].uuid);
@@ -66,13 +62,13 @@ export function FamilySelectorDropdown() {
     setSelectedFamily(familyUuid);
 
     // Server Action을 통해 쿠키에 저장
-    const result = await selectFamily(familyUuid);
+    const result = await selectFamilyAction(familyUuid);
 
     if (result.success) {
       // 페이지 새로고침하여 선택된 가족의 데이터 표시
       router.refresh();
     } else {
-      console.error("Failed to select family:", result.message);
+      console.error("Failed to select family:", result.error.message);
       // 실패 시 이전 선택으로 롤백
       loadInitialData();
     }

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createFamily } from "@/app/actions/family-actions";
+import { createFamilyAction } from "@/app/actions/family/create-family-action";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -33,15 +33,18 @@ export default function CreateFamilyPage() {
 
     try {
       // Server Action 호출 (백엔드 Access Token은 서버의 HTTP-only 쿠키에서 자동 전달)
-      await createFamily({
+      const result = await createFamilyAction({
         name: familyName.trim(),
         description: familyType === "personal" ? "개인 가계부" : undefined,
       });
 
-      toast.success("가족이 성공적으로 생성되었습니다!");
-
-      // 생성 후 홈페이지로 이동
-      router.push("/");
+      if (result.success) {
+        toast.success("가족이 성공적으로 생성되었습니다!");
+        // 생성 후 홈페이지로 이동
+        router.push("/");
+      } else {
+        toast.error(result.error.message);
+      }
     } catch (error) {
       console.error("Family creation error:", error);
       toast.error(

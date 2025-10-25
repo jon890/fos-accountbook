@@ -1,6 +1,6 @@
 "use client";
 
-import { getFamilies } from "@/app/actions/family-actions";
+import { getFamiliesAction } from "@/app/actions/family/get-families-action";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,10 +30,12 @@ export function FamilySelector({
   const fetchFamilies = async () => {
     try {
       setLoading(true);
-      const result = await getFamilies();
+      const result = await getFamiliesAction();
 
-      if (!result.success || !result.data) {
-        setError(result.message || "가족 목록을 불러오는데 실패했습니다.");
+      if (!result.success) {
+        setError(
+          result.error.message || "가족 목록을 불러오는데 실패했습니다."
+        );
         return;
       }
 

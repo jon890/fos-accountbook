@@ -3,7 +3,7 @@
  */
 
 import { getFamilyCategoriesAction } from "@/app/actions/category/get-categories-action";
-import { checkUserFamily } from "@/app/actions/family-actions";
+import { checkUserFamilyAction } from "@/app/actions/family/check-user-family-action";
 import { CategoryPageClient } from "@/components/categories/CategoryPageClient";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
 import type { CategoryResponse } from "@/types/api";
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 export default async function CategoriesPage() {
   // 가족 존재 여부 확인
-  const { hasFamily } = await checkUserFamily();
+  const { hasFamily } = await checkUserFamilyAction();
 
   if (!hasFamily) {
     redirect("/families/create");

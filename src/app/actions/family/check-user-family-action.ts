@@ -1,0 +1,47 @@
+/**
+ * 가족 정보 존재 여부 확인 Server Action
+ * 여러 페이지에서 공통으로 사용되는 유틸리티 함수
+ */
+
+"use server";
+
+import { auth } from "@/lib/server/auth";
+import { getSelectedFamilyUuid } from "@/lib/server/cookies";
+import { getFamiliesAction } from "./get-families-action";
+
+export async function checkUserFamilyAction(): Promise<{
+  hasFamily: boolean;
+  familyId?: string;
+}> {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return { hasFamily: false };
+    }
+
+    const familiesResult = await getFamiliesAction();
+
+    if (
+      !familiesResult.success ||
+      !familiesResult.data ||
+      familiesResult.data.length === 0
+    ) {
+      return { hasFamily: false };
+    }
+
+    // 선택된 가족 UUID 가져오기 (쿠키에서 읽기만)
+    let selectedFamilyUuid = await getSelectedFamilyUuid();
+    if (!selectedFamilyUuid) {
+      selectedFamilyUuid = familiesResult.data[0].uuid;
+    }
+
+    return {
+      hasFamily: true,
+      familyId: selectedFamilyUuid,
+    };
+  } catch (error) {
+    console.error("Failed to check family:", error);
+    return { hasFamily: false };
+  }
+}
