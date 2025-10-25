@@ -1,6 +1,6 @@
 "use client";
 
-import { setDefaultFamily } from "@/app/actions/user-actions";
+import { setDefaultFamilyAction } from "@/app/actions/user/set-default-family-action";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -29,10 +29,15 @@ export function SettingsPageClient({ families }: SettingsPageClientProps) {
 
     try {
       setIsSaving(true);
-      await setDefaultFamily(selectedFamily);
-      setCurrentDefaultFamily(selectedFamily);
-      toast.success("기본 가족이 설정되었습니다");
-      router.refresh();
+      const result = await setDefaultFamilyAction(selectedFamily);
+
+      if (result.success) {
+        setCurrentDefaultFamily(selectedFamily);
+        toast.success("기본 가족이 설정되었습니다");
+        router.refresh();
+      } else {
+        toast.error(result.error.message);
+      }
     } catch (error) {
       console.error("Failed to set default family:", error);
       toast.error("기본 가족 설정에 실패했습니다");
