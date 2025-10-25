@@ -2,7 +2,10 @@
 
 import { serverApiClient } from "@/lib/server/api/client";
 import { auth } from "@/lib/server/auth";
-import { setSelectedFamilyUuid } from "@/lib/server/cookies";
+import {
+  getSelectedFamilyUuid,
+  setSelectedFamilyUuid,
+} from "@/lib/server/cookies";
 import type {
   CreateFamilyData,
   CreateFamilyResult,
@@ -131,5 +134,42 @@ export async function selectFamily(
       success: false,
       message: "가족 선택에 실패했습니다.",
     };
+  }
+}
+
+/**
+ * 가족 정보 존재 여부 확인
+ * 여러 페이지에서 공통으로 사용되는 유틸리티 함수
+ */
+export async function checkUserFamily(): Promise<{
+  hasFamily: boolean;
+  familyId?: string;
+}> {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return { hasFamily: false };
+    }
+
+    const families = await getFamilies();
+
+    if (!families.success || !families.data || families.data.length === 0) {
+      return { hasFamily: false };
+    }
+
+    // 선택된 가족 UUID 가져오기 (쿠키에서 읽기만)
+    let selectedFamilyUuid = await getSelectedFamilyUuid();
+    if (!selectedFamilyUuid) {
+      selectedFamilyUuid = families.data[0].uuid;
+    }
+
+    return {
+      hasFamily: true,
+      familyId: selectedFamilyUuid,
+    };
+  } catch (error) {
+    console.error("Failed to check family:", error);
+    return { hasFamily: false };
   }
 }

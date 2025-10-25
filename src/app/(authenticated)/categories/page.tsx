@@ -3,7 +3,7 @@
  */
 
 import { getFamilyCategoriesAction } from "@/app/actions/category-actions";
-import { checkUserFamily } from "@/app/actions/dashboard-actions";
+import { checkUserFamily } from "@/app/actions/family-actions";
 import { CategoryPageClient } from "@/components/categories/CategoryPageClient";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
 import type { CategoryResponse } from "@/types/api";

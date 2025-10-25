@@ -4,8 +4,8 @@
 
 "use client";
 
+import { getFamilyCategoriesAction } from "@/app/actions/category-actions";
 import { createIncomeAction } from "@/app/actions/income-actions";
-import { getFamilyCategories } from "@/app/actions/dashboard-actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -47,7 +47,7 @@ export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
   const loadData = async () => {
     setIsLoadingCategories(true);
     try {
-      const data = await getFamilyCategories();
+      const data = await getFamilyCategoriesAction();
       setCategories(data);
       // 첫 번째 카테고리의 familyUuid 사용
       if (data.length > 0) {

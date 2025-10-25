@@ -4,7 +4,7 @@
 
 "use client";
 
-import { getFamilyCategories } from "@/app/actions/dashboard-actions";
+import { getFamilyCategoriesAction } from "@/app/actions/category-actions";
 import { createExpenseAction } from "@/app/actions/expense-actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,7 +50,7 @@ export function AddExpenseDialog({
   const loadData = async () => {
     setIsLoadingCategories(true);
     try {
-      const data = await getFamilyCategories();
+      const data = await getFamilyCategoriesAction();
       setCategories(data);
       // 첫 번째 카테고리의 familyUuid 사용
       if (data.length > 0) {

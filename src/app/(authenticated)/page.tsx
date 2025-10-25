@@ -3,16 +3,16 @@
  * Next.js 15 Server Component 패턴 사용
  */
 
+import {
+  getDashboardStats,
+  getRecentExpenses,
+} from "@/app/actions/dashboard-actions";
+import { checkUserFamily } from "@/app/actions/family-actions";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { WelcomeSection } from "@/components/dashboard/WelcomeSection";
 import { auth } from "@/lib/server/auth";
 import { redirect } from "next/navigation";
-import {
-  checkUserFamily,
-  getDashboardStats,
-  getRecentExpenses,
-} from "../actions/dashboard-actions";
 
 // 쿠키를 사용하므로 동적 렌더링 필요
 export const dynamic = "force-dynamic";

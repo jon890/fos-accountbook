@@ -1,6 +1,6 @@
 /**
  * Dashboard Server Actions
- * 백엔드 API를 호출하여 대시보드 데이터 조회
+ * 대시보드 페이지 전용 데이터 조회
  */
 
 "use server";
@@ -8,11 +8,7 @@
 import { serverApiGet } from "@/lib/server/api";
 import { auth } from "@/lib/server/auth";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
-import type {
-  CheckUserFamilyResult,
-  DashboardStats,
-  RecentExpense,
-} from "@/types/actions";
+import type { DashboardStats, RecentExpense } from "@/types/actions";
 import type {
   CategoryResponse,
   ExpenseResponse,
@@ -111,40 +107,7 @@ export async function getDashboardStats(): Promise<DashboardStats | null> {
 }
 
 /**
- * 가족 정보 존재 여부 확인
- */
-export async function checkUserFamily(): Promise<CheckUserFamilyResult> {
-  try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return { hasFamily: false };
-    }
-
-    const families = await serverApiGet<FamilyResponse[]>("/families");
-
-    if (!families || families.length === 0) {
-      return { hasFamily: false };
-    }
-
-    // 선택된 가족 UUID 가져오기 (쿠키에서 읽기만)
-    let selectedFamilyUuid = await getSelectedFamilyUuid();
-    if (!selectedFamilyUuid) {
-      selectedFamilyUuid = families[0].uuid;
-    }
-
-    return {
-      hasFamily: true,
-      familyId: selectedFamilyUuid,
-    };
-  } catch (error) {
-    console.error("Failed to check family:", error);
-    return { hasFamily: false };
-  }
-}
-
-/**
- * 최근 지출 내역 조회 (최대 10개)
+ * 최근 지출 내역 조회 (대시보드용, 최대 10개)
  */
 export async function getRecentExpenses(
   limit: number = 10
@@ -201,43 +164,6 @@ export async function getRecentExpenses(
     });
   } catch (error) {
     console.error("Failed to load recent expenses:", error);
-    return [];
-  }
-}
-
-/**
- * 가족의 카테고리 목록 조회
- */
-export async function getFamilyCategories(): Promise<CategoryResponse[]> {
-  try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return [];
-    }
-
-    // 선택된 가족 UUID 가져오기
-    let selectedFamilyUuid = await getSelectedFamilyUuid();
-
-    // 선택된 가족이 없으면 첫 번째 가족 사용 (쿠키에 저장하지 않음)
-    if (!selectedFamilyUuid) {
-      const families = await serverApiGet<FamilyResponse[]>("/families");
-
-      if (!families || families.length === 0) {
-        return [];
-      }
-
-      selectedFamilyUuid = families[0].uuid;
-    }
-
-    // 카테고리 목록 조회
-    const categories = await serverApiGet<CategoryResponse[]>(
-      `/families/${selectedFamilyUuid}/categories`
-    );
-
-    return categories;
-  } catch (error) {
-    console.error("Failed to load categories:", error);
     return [];
   }
 }
