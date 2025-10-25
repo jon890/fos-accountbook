@@ -16,9 +16,10 @@ jest.mock("sonner", () => ({
   },
 }));
 
-const mockGetFamilyCategories = getFamilyCategoriesAction as jest.MockedFunction<
-  typeof getFamilyCategoriesAction
->;
+const mockGetFamilyCategories =
+  getFamilyCategoriesAction as jest.MockedFunction<
+    typeof getFamilyCategoriesAction
+  >;
 
 describe("AddIncomeDialog", () => {
   const mockOnOpenChange = jest.fn();

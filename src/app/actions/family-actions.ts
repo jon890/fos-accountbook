@@ -173,3 +173,30 @@ export async function checkUserFamily(): Promise<{
     return { hasFamily: false };
   }
 }
+
+/**
+ * 현재 선택된 가족 UUID 가져오기
+ * 클라이언트 컴포넌트에서 호출 가능한 Server Action
+ */
+export async function getSelectedFamily(): Promise<{
+  success: boolean;
+  familyUuid?: string;
+}> {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return { success: false };
+    }
+
+    const selectedFamilyUuid = await getSelectedFamilyUuid();
+
+    return {
+      success: true,
+      familyUuid: selectedFamilyUuid || undefined,
+    };
+  } catch (error) {
+    console.error("Failed to get selected family:", error);
+    return { success: false };
+  }
+}

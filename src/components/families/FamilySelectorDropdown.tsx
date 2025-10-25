@@ -1,6 +1,10 @@
 "use client";
 
-import { getFamilies, selectFamily } from "@/app/actions/family-actions";
+import {
+  getFamilies,
+  getSelectedFamily,
+  selectFamily,
+} from "@/app/actions/family-actions";
 import {
   Select,
   SelectContent,
@@ -19,28 +23,42 @@ export function FamilySelectorDropdown() {
   const [selectedFamily, setSelectedFamily] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
-  const fetchFamilies = async () => {
+  const loadInitialData = async () => {
     try {
       setLoading(true);
-      const result = await getFamilies();
 
-      if (result.success && result.data) {
-        setFamilies(result.data);
+      // 가족 목록과 선택된 가족을 병렬로 가져오기
+      const [familiesResult, selectedFamilyResult] = await Promise.all([
+        getFamilies(),
+        getSelectedFamily(),
+      ]);
 
-        // 첫 번째 가족을 기본 선택으로 표시 (서버에서 쿠키로 관리됨)
-        if (result.data.length > 0 && !selectedFamily) {
-          setSelectedFamily(result.data[0].uuid);
+      if (familiesResult.success && familiesResult.data) {
+        setFamilies(familiesResult.data);
+
+        // 쿠키에 저장된 선택된 가족이 있으면 사용
+        if (
+          selectedFamilyResult.success &&
+          selectedFamilyResult.familyUuid &&
+          familiesResult.data.some(
+            (f) => f.uuid === selectedFamilyResult.familyUuid
+          )
+        ) {
+          setSelectedFamily(selectedFamilyResult.familyUuid);
+        } else if (familiesResult.data.length > 0) {
+          // 쿠키에 없거나 유효하지 않으면 첫 번째 가족 선택
+          setSelectedFamily(familiesResult.data[0].uuid);
         }
       }
     } catch (err) {
-      console.error("Failed to fetch families:", err);
+      console.error("Failed to load initial data:", err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchFamilies();
+    loadInitialData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -56,7 +74,7 @@ export function FamilySelectorDropdown() {
     } else {
       console.error("Failed to select family:", result.message);
       // 실패 시 이전 선택으로 롤백
-      fetchFamilies();
+      loadInitialData();
     }
   };
 
