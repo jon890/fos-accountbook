@@ -50,10 +50,14 @@ export function ExpenseItem({
   return (
     <div
       key={uuid}
-      className="p-2.5 md:p-4 rounded-xl md:rounded-2xl bg-gradient-to-r from-gray-50 to-white border border-gray-100 hover:shadow-md transition-all duration-200 group"
+      className={`p-2.5 md:p-4 rounded-xl md:rounded-2xl bg-gradient-to-r ${
+        isExpanded
+          ? "from-blue-50 to-white border-blue-200"
+          : "from-gray-50 to-white border-gray-100"
+      } hover:shadow-md transition-all duration-300 group`}
     >
       {/* 메인 컨텐츠 */}
-      <div 
+      <div
         className="flex items-center justify-between md:cursor-default cursor-pointer"
         onClick={(e) => {
           // 모바일에서만 클릭 이벤트 처리
@@ -141,36 +145,46 @@ export function ExpenseItem({
       </div>
 
       {/* 모바일: 클릭 시 아래에 버튼 표시 */}
-      {(onEdit || onDelete) && isExpanded && (
-        <div className="md:hidden flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-100 animate-in slide-in-from-top-1">
-          {onEdit && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit();
-              }}
-              className="flex-1 h-7 text-xs gap-1"
-            >
-              <Pencil className="h-3 w-3" />
-              수정
-            </Button>
-          )}
-          {onDelete && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              className="flex-1 h-7 text-xs gap-1 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
-            >
-              <Trash2 className="h-3 w-3" />
-              삭제
-            </Button>
-          )}
+      {(onEdit || onDelete) && (
+        <div
+          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+            isExpanded ? "max-h-20 opacity-100 mt-2" : "max-h-0 opacity-0 mt-0"
+          }`}
+        >
+          <div
+            className={`flex items-center gap-1.5 pt-2 border-t ${
+              isExpanded ? "border-blue-200" : "border-gray-100"
+            } transition-colors duration-300`}
+          >
+            {onEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit();
+                }}
+                className="flex-1 h-7 text-xs gap-1 transform transition-transform duration-300 hover:scale-105"
+              >
+                <Pencil className="h-3 w-3" />
+                수정
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className="flex-1 h-7 text-xs gap-1 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200 transform transition-transform duration-300 hover:scale-105"
+              >
+                <Trash2 className="h-3 w-3" />
+                삭제
+              </Button>
+            )}
+          </div>
         </div>
       )}
     </div>
