@@ -5,18 +5,18 @@ on:
     branches:
       - main
     paths:
-      - 'src/**'
-      - 'build.gradle.kts'
-      - 'settings.gradle.kts'
-      - '.github/workflows/backend-ci.yml'
+      - "src/**"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - ".github/workflows/backend-ci.yml"
   pull_request:
     branches:
       - main
     paths:
-      - 'src/**'
-      - 'build.gradle.kts'
-      - 'settings.gradle.kts'
-      - '.github/workflows/backend-ci.yml'
+      - "src/**"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - ".github/workflows/backend-ci.yml"
 
 jobs:
   test-and-build:
@@ -29,12 +29,13 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
-          cache: 'gradle'
+          distribution: "temurin"
+          java-version: "21"
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: wrapper
 
       - name: Run tests with Gradle
         run: ./gradlew test --no-daemon
@@ -55,4 +56,3 @@ jobs:
         with:
           name: test-report
           path: build/reports/tests/test/**/*
-
