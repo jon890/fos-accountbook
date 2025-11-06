@@ -2,6 +2,21 @@
  * Expense Actions 타입 정의
  */
 
+import type { ExpenseResponse } from "@/types/api";
+
+/**
+ * ExpenseItem 컴포넌트용 타입
+ * ExpenseResponse 기반, UI에서 사용하기 편리하도록 확장
+ */
+export interface ExpenseItemData
+  extends Pick<ExpenseResponse, "uuid" | "amount" | "categoryUuid"> {
+  description?: string | null | undefined; // UI에서 null, undefined 모두 허용
+  date: string | Date; // UI에서 Date 객체도 허용
+  categoryName: string;
+  categoryColor: string;
+  categoryIcon: string;
+}
+
 export type CreateExpenseFormState = {
   errors?: {
     amount?: string[];

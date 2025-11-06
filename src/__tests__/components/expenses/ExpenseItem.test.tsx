@@ -18,12 +18,10 @@ describe("ExpenseItem", () => {
     amount: "50000",
     description: "마트 장보기",
     date: new Date("2025-01-15T10:00:00"),
-    category: {
-      uuid: "category-uuid",
-      name: "식비",
-      color: "#FF6B6B",
-      icon: "🍔",
-    },
+    categoryUuid: "category-uuid",
+    categoryName: "식비",
+    categoryColor: "#FF6B6B",
+    categoryIcon: "🍔",
   };
 
   it("지출 정보를 올바르게 렌더링한다", () => {

@@ -7,11 +7,12 @@
 
 import { getFamilyCategoriesAction } from "@/app/actions/category/get-categories-action";
 import type { CategoryResponse } from "@/types/api";
+import type { ExpenseItemData } from "@/types/actions";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { DeleteExpenseDialog } from "./DeleteExpenseDialog";
 import { EditExpenseDialog } from "./EditExpenseDialog";
-import { ExpenseItem, type ExpenseItemData } from "./ExpenseItem";
+import { ExpenseItem } from "./ExpenseItem";
 
 interface ExpenseData {
   uuid: string;
@@ -81,12 +82,11 @@ export function ExpenseListClient({
             amount: expense.amount,
             description: expense.description,
             date: expense.date,
-            category: {
-              uuid: expense.categoryUuid,
-              name: category?.name || expense.categoryName || "기타",
-              color: category?.color || expense.categoryColor || "#6366f1",
-              icon: category?.icon || "default",
-            },
+            categoryUuid: expense.categoryUuid,
+            categoryName: category?.name || expense.categoryName || "기타",
+            categoryColor:
+              category?.color || expense.categoryColor || "#6366f1",
+            categoryIcon: category?.icon || "default",
           };
           return (
             <ExpenseItem

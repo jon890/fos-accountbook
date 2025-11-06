@@ -3,23 +3,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getCategoryIcon } from "@/lib/utils/category-icons";
+import type { ExpenseItemData } from "@/types/actions";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
-
-export interface ExpenseItemData {
-  uuid: string;
-  amount: string | number;
-  description?: string | null;
-  date: Date | string;
-  category: {
-    uuid: string;
-    name: string;
-    color: string;
-    icon: string;
-  };
-}
 
 interface ExpenseItemProps {
   expense: ExpenseItemData;
@@ -29,8 +17,17 @@ interface ExpenseItemProps {
 
 export function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { uuid, amount, description, date, category } = expense;
-  const IconComponent = getCategoryIcon(category.icon);
+  const {
+    uuid,
+    amount,
+    description,
+    date,
+    categoryUuid,
+    categoryName,
+    categoryColor,
+    categoryIcon,
+  } = expense;
+  const IconComponent = getCategoryIcon(categoryIcon);
   const dateObj = typeof date === "string" ? new Date(date) : date;
 
   // Lucide 아이콘으로 매핑이 없으면 이모지를 그대로 사용
@@ -68,13 +65,13 @@ export function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemProps) {
           <div
             className="w-9 h-9 md:w-12 md:h-12 rounded-lg md:rounded-2xl flex items-center justify-center shadow-sm shrink-0"
             style={{
-              backgroundColor: `${category.color}20`,
+              backgroundColor: `${categoryColor}20`,
             }}
           >
             {useEmoji ? (
-              <span className="text-lg md:text-2xl">{category.icon}</span>
+              <span className="text-lg md:text-2xl">{categoryIcon}</span>
             ) : (
-              <div style={{ color: category.color }}>
+              <div style={{ color: categoryColor }}>
                 {IconComponent && (
                   <IconComponent className="w-4 h-4 md:w-6 md:h-6" />
                 )}
@@ -84,18 +81,18 @@ export function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemProps) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-1 md:space-x-2 mb-0.5">
               <h4 className="font-semibold text-gray-900 text-xs md:text-base truncate">
-                {description || category.name}
+                {description || categoryName}
               </h4>
               <Badge
                 variant="secondary"
                 className="text-[9px] md:text-xs px-1 md:px-1.5 py-0 shrink-0"
                 style={{
-                  backgroundColor: `${category.color}15`,
-                  color: category.color,
+                  backgroundColor: `${categoryColor}15`,
+                  color: categoryColor,
                   border: "none",
                 }}
               >
-                {category.name}
+                {categoryName}
               </Badge>
             </div>
             <p className="text-[10px] md:text-sm text-gray-500">

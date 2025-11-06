@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ExpenseItem } from "@/components/expenses/ExpenseItem";
-import type { RecentExpense } from "@/types/actions";
+import type { ExpenseItemData, RecentExpense } from "@/types/actions";
 import { Plus, Wallet } from "lucide-react";
 import Link from "next/link";
 
@@ -54,18 +54,19 @@ export function RecentActivity({ expenses }: RecentActivityProps) {
           </div>
         ) : (
           <div className="space-y-2 md:space-y-3">
-            {expenses.map((expense) => (
-              <ExpenseItem
-                key={expense.uuid}
-                expense={{
-                  uuid: expense.uuid,
-                  amount: expense.amount,
-                  description: expense.description,
-                  date: expense.date,
-                  category: expense.category,
-                }}
-              />
-            ))}
+            {expenses.map((expense) => {
+              const expenseData: ExpenseItemData = {
+                uuid: expense.uuid,
+                amount: expense.amount,
+                description: expense.description,
+                date: expense.date,
+                categoryUuid: expense.category.uuid,
+                categoryName: expense.category.name,
+                categoryColor: expense.category.color,
+                categoryIcon: expense.category.icon,
+              };
+              return <ExpenseItem key={expense.uuid} expense={expenseData} />;
+            })}
 
             {expenses.length >= 10 && (
               <div className="pt-3 md:pt-4">
