@@ -42,8 +42,12 @@ export function FamilySelectorDropdown() {
         ) {
           setSelectedFamily(selectedFamilyResult.data);
         } else if (familiesResult.data.length > 0) {
-          // 쿠키에 없거나 유효하지 않으면 첫 번째 가족 선택
-          setSelectedFamily(familiesResult.data[0].uuid);
+          // 쿠키에 없거나 유효하지 않으면 첫 번째 가족을 선택하고 쿠키에 저장
+          const firstFamilyUuid = familiesResult.data[0].uuid;
+          setSelectedFamily(firstFamilyUuid);
+
+          // 쿠키에도 저장 (특히 가족이 1개일 때 중요)
+          await selectFamilyAction(firstFamilyUuid);
         }
       }
     } catch (err) {

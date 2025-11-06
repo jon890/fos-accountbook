@@ -12,6 +12,7 @@ import {
 } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
 import { requireAuth } from "@/lib/server/auth-helpers";
+import { setSelectedFamilyUuid } from "@/lib/server/cookies";
 import type { CreateFamilyData, CreateFamilyResult } from "@/types/actions";
 import { revalidatePath } from "next/cache";
 
@@ -37,6 +38,9 @@ export async function createFamilyAction(
       method: "POST",
       body: JSON.stringify(data),
     });
+
+    // 생성된 가족을 바로 선택된 가족으로 설정
+    await setSelectedFamilyUuid(result.data.uuid);
 
     revalidatePath("/");
 

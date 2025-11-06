@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { Family } from "@/types/actions";
 import { ChevronRight, Plus, User, Users } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface FamilySelectorProps {
   onFamilySelect: (family: Family) => void;
@@ -22,10 +22,19 @@ export function FamilySelector({
   const [families, setFamilies] = useState<Family[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const autoSelectedRef = useRef(false);
 
   useEffect(() => {
     fetchFamilies();
   }, []);
+
+  // 가족이 1개일 때 자동으로 선택 (한 번만 실행)
+  useEffect(() => {
+    if (families.length === 1 && !loading && !autoSelectedRef.current) {
+      autoSelectedRef.current = true;
+      onFamilySelect(families[0]);
+    }
+  }, [families, loading, onFamilySelect]);
 
   const fetchFamilies = async () => {
     try {
