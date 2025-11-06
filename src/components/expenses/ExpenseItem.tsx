@@ -1,9 +1,12 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getCategoryIcon } from "@/lib/utils/category-icons";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
 
 interface ExpenseItemProps {
   uuid: string;
@@ -29,11 +32,20 @@ export function ExpenseItem({
   onEdit,
   onDelete,
 }: ExpenseItemProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const IconComponent = getCategoryIcon(category.icon);
   const dateObj = typeof date === "string" ? new Date(date) : date;
 
   // Lucide 아이콘으로 매핑이 없으면 이모지를 그대로 사용
   const useEmoji = !IconComponent;
+
+  // 모바일에서 아이템 클릭 핸들러
+  const handleMobileClick = () => {
+    // 버튼이 있을 때만 토글
+    if (onEdit || onDelete) {
+      setIsExpanded(!isExpanded);
+    }
+  };
 
   return (
     <div
@@ -41,7 +53,16 @@ export function ExpenseItem({
       className="p-2.5 md:p-4 rounded-xl md:rounded-2xl bg-gradient-to-r from-gray-50 to-white border border-gray-100 hover:shadow-md transition-all duration-200 group"
     >
       {/* 메인 컨텐츠 */}
-      <div className="flex items-center justify-between">
+      <div 
+        className="flex items-center justify-between md:cursor-default cursor-pointer"
+        onClick={(e) => {
+          // 모바일에서만 클릭 이벤트 처리
+          if (window.innerWidth < 768) {
+            e.stopPropagation();
+            handleMobileClick();
+          }
+        }}
+      >
         <div className="flex items-center space-x-2 md:space-x-4 flex-1 min-w-0">
           <div
             className="w-9 h-9 md:w-12 md:h-12 rounded-lg md:rounded-2xl flex items-center justify-center shadow-sm shrink-0"
@@ -119,14 +140,17 @@ export function ExpenseItem({
         </div>
       </div>
 
-      {/* 모바일: 아래에 버튼 표시 */}
-      {(onEdit || onDelete) && (
-        <div className="md:hidden flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-100">
+      {/* 모바일: 클릭 시 아래에 버튼 표시 */}
+      {(onEdit || onDelete) && isExpanded && (
+        <div className="md:hidden flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-100 animate-in slide-in-from-top-1">
           {onEdit && (
             <Button
               variant="outline"
               size="sm"
-              onClick={onEdit}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
               className="flex-1 h-7 text-xs gap-1"
             >
               <Pencil className="h-3 w-3" />
@@ -137,7 +161,10 @@ export function ExpenseItem({
             <Button
               variant="outline"
               size="sm"
-              onClick={onDelete}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
               className="flex-1 h-7 text-xs gap-1 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
             >
               <Trash2 className="h-3 w-3" />
