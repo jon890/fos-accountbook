@@ -1,0 +1,336 @@
+# 🏗️ 우리집 가계부 - Backend 개발 규칙
+
+## 📚 기술 스택
+
+- **Framework**: Spring Boot 3.x
+- **Language**: Java 21
+- **ORM**: JPA (Hibernate)
+- **Database**: MySQL (Production), H2 (Test)
+- **Migration**: Flyway
+- **Build Tool**: Gradle (Kotlin DSL)
+- **Documentation**: Swagger/OpenAPI
+
+---
+
+## 🏛️ 아키텍처
+
+### 계층 구조 (Layered Architecture)
+
+```
+Presentation (Controller, DTO)
+    ↓
+Application (Service, DTO)
+    ↓
+Domain (Entity, Repository Interface, Value Object)
+    ↓
+Infrastructure (JPA Repository Implementation)
+```
+
+### 패키지 구조
+
+```
+com.bifos.accountbook
+├── presentation
+│   ├── controller          # REST API 엔드포인트
+│   ├── dto                 # Request/Response DTO
+│   └── annotation          # @LoginUser 등
+├── application
+│   ├── service             # 비즈니스 로직
+│   └── dto                 # Service 레이어 DTO
+├── domain
+│   ├── entity              # JPA Entity
+│   ├── repository          # Repository 인터페이스 (순수 도메인)
+│   └── value               # Value Object (CustomUuid 등)
+└── infra
+    └── persistence
+        └── repository      # JPA Repository 구현체
+```
+
+---
+
+## 📏 코딩 컨벤션
+
+### 1. 엔티티 규칙
+
+```java
+@Entity
+@Table(name = "user_profiles")  // ✅ snake_case 필수
+public class UserProfile {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;  // ✅ PK는 Long auto_increment
+    
+    @Column(name = "user_uuid", nullable = false)  // ✅ snake_case
+    private CustomUuid userUuid;  // ✅ 관계는 UUID 기반
+    
+    @Column(name = "timezone")
+    private String timezone;
+    
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    
+    @Column(name = "deleted_at")  // ✅ Soft Delete
+    private LocalDateTime deletedAt;
+}
+```
+
+**핵심:**
+- 테이블명/컬럼명: `snake_case` 필수
+- PK: `Long id` (auto_increment)
+- 관계: UUID 기반 (`user_uuid`, `family_uuid`)
+- Soft Delete: `deleted_at` 컬럼 사용
+- Lombok: `@Builder`, `@Getter`, `@NoArgsConstructor`, `@AllArgsConstructor`
+
+---
+
+### 2. Repository 패턴
+
+```java
+// Domain Layer - 인터페이스만
+public interface UserRepository {
+    User save(User user);
+    Optional<User> findByUuid(CustomUuid uuid);
+}
+
+// Infrastructure Layer - 구현체
+@Repository
+public class UserJpaRepository implements UserRepository {
+    @PersistenceContext
+    private EntityManager entityManager;
+    
+    @Override
+    public User save(User user) {
+        // JPA 구현
+    }
+}
+```
+
+---
+
+### 3. Service 규칙
+
+```java
+@Service
+@RequiredArgsConstructor  // ✅ Lombok 생성자 주입
+@Transactional(readOnly = true)  // ✅ 기본 readOnly
+public class UserProfileService {
+    
+    private final UserProfileRepository userProfileRepository;
+    
+    @Transactional  // ✅ 쓰기 작업만 @Transactional
+    public UserProfileResponse updateProfile(CustomUuid userUuid, UpdateRequest request) {
+        UserProfile profile = userProfileRepository.findByUserUuid(userUuid)
+            .orElseThrow(() -> new IllegalArgumentException("프로필을 찾을 수 없습니다"));
+        
+        profile.updateTimezone(request.getTimezone());
+        
+        UserProfile saved = userProfileRepository.save(profile);
+        return UserProfileResponse.from(saved);
+    }
+}
+```
+
+---
+
+### 4. Controller 규칙
+
+```java
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+public class UserProfileController {
+    
+    private final UserProfileService userProfileService;
+    
+    @GetMapping("/me/profile")
+    public ResponseEntity<ApiSuccessResponse<UserProfileResponse>> getMyProfile(
+        @LoginUser LoginUserDto user  // ✅ 커스텀 애노테이션
+    ) {
+        UserProfileResponse response = userProfileService.getOrCreateProfile(user.getUserUuid());
+        return ResponseEntity.ok(
+            ApiSuccessResponse.of("프로필을 조회했습니다", response)
+        );
+    }
+    
+    @PutMapping("/me/profile")
+    public ResponseEntity<ApiSuccessResponse<UserProfileResponse>> updateMyProfile(
+        @LoginUser LoginUserDto user,
+        @Valid @RequestBody UpdateUserProfileRequest request  // ✅ @Valid 검증
+    ) {
+        UserProfileResponse response = userProfileService.updateProfile(user.getUserUuid(), request);
+        return ResponseEntity.ok(
+            ApiSuccessResponse.of("프로필이 수정되었습니다", response)
+        );
+    }
+}
+```
+
+**핵심:**
+- RESTful API 설계 (GET, POST, PUT, DELETE)
+- `@Valid` 필수 사용
+- `@LoginUser` 커스텀 애노테이션으로 인증 처리
+- 공통 응답: `ApiSuccessResponse<T>`, `ApiErrorResponse`
+
+---
+
+### 5. DTO 규칙
+
+```java
+// Request DTO
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class UpdateUserProfileRequest {
+    
+    @Pattern(regexp = "^[A-Za-z/_]+$", message = "올바른 시간대 형식이 아닙니다")
+    private String timezone;
+    
+    @Pattern(regexp = "^[a-z]{2}$", message = "언어 코드는 2자리여야 합니다")
+    private String language;
+}
+
+// Response DTO
+@Getter
+@Builder
+public class UserProfileResponse {
+    private String userUuid;
+    private String timezone;
+    private String language;
+    
+    public static UserProfileResponse from(UserProfile profile) {
+        return UserProfileResponse.builder()
+            .userUuid(profile.getUserUuid().getValue())
+            .timezone(profile.getTimezone())
+            .language(profile.getLanguage())
+            .build();
+    }
+}
+```
+
+---
+
+## 🧪 테스트 전략
+
+### 통합 테스트 (Controller)
+
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+@ExtendWith(DatabaseCleanupExtension.class)  // ✅ 필수
+@DisplayName("사용자 프로필 컨트롤러 통합 테스트")
+class UserProfileControllerTest {
+    
+    @Autowired private MockMvc mockMvc;
+    @Autowired private UserRepository userRepository;
+    
+    @Test
+    @DisplayName("프로필 조회 - 성공")
+    void getProfile_Success() throws Exception {
+        // Given: 실제 DB에 데이터 생성
+        User user = userRepository.save(createUser());
+        
+        // When: API 호출 (실제 커밋 발생)
+        mockMvc.perform(get("/api/users/me/profile")
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.userUuid").value(user.getUuid().getValue()));
+        
+        // Then: DB 상태 검증
+        assertThat(userRepository.findByUuid(user.getUuid())).isPresent();
+    }
+    // DatabaseCleanupExtension이 자동으로 테이블 정리
+}
+```
+
+**핵심 원칙:**
+- ✅ **@SpringBootTest 사용** (실제 Spring 컨텍스트)
+- ✅ **실제 Bean 사용** (Service, Repository 모두 실제)
+- ✅ **실제 DB 사용** (H2 테스트 DB)
+- ✅ **외부 API만 모킹** (우리가 제어 불가능한 것만)
+- ✅ **@ExtendWith(DatabaseCleanupExtension.class)** 필수
+- ❌ **@Transactional 사용 금지** (실제 커밋 테스트를 위해)
+
+---
+
+## 🗄️ 데이터베이스
+
+### Flyway 마이그레이션
+
+```sql
+-- V1__init.sql
+CREATE TABLE user_profiles (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_uuid VARCHAR(36) NOT NULL UNIQUE,
+    timezone VARCHAR(50) NOT NULL DEFAULT 'Asia/Seoul',
+    language VARCHAR(2) NOT NULL DEFAULT 'ko',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME,
+    deleted_at DATETIME,
+    INDEX idx_user_uuid (user_uuid),
+    INDEX idx_deleted_at (deleted_at)
+);
+```
+
+**규칙:**
+- 파일명: `V{version}__{description}.sql`
+- 테이블/컬럼: `snake_case`
+- PK: `id BIGINT AUTO_INCREMENT`
+- UUID: `VARCHAR(36)` + UNIQUE 인덱스
+- Soft Delete: `deleted_at DATETIME`
+- 생성/수정 시간: `created_at`, `updated_at`
+- 필요한 컬럼에 인덱스 추가
+
+---
+
+## ⚠️ 주의사항
+
+### 절대 금지 ❌
+
+1. **Production DB 직접 수정 금지**
+   - 반드시 Flyway 마이그레이션으로만 스키마 변경
+
+2. **풀패키지 경로 사용 금지**
+   ```java
+   // ❌ 나쁨
+   org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
+   
+   // ✅ 좋음
+   import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
+   UserDetailsServiceAutoConfiguration.class
+   ```
+
+3. **@Transactional 테스트 금지**
+   - 통합 테스트에서는 `DatabaseCleanupExtension` 사용
+
+4. **Service/Repository 모킹 금지**
+   - 외부 API만 모킹
+   - 내부 컴포넌트는 실제 빈 사용
+
+---
+
+## 📝 커밋 규칙
+
+- **신규 코드 = 테스트 필수**
+  - Controller 추가 → 통합 테스트 추가
+  - Service 추가 → 단위/통합 테스트 추가
+  - Repository 추가 → 테스트 추가
+
+- **커밋 전 확인**
+  ```bash
+  ./gradlew test  # 모든 테스트 통과 확인
+  ```
+
+---
+
+## 🎯 핵심 원칙
+
+1. **계층 분리**: Presentation → Application → Domain → Infrastructure
+2. **snake_case**: 모든 DB 테이블/컬럼
+3. **UUID 기반**: 테이블 간 관계
+4. **Soft Delete**: `deleted_at` 사용
+5. **Flyway**: 스키마 변경은 마이그레이션으로만
+6. **실제 통합 테스트**: @SpringBootTest + DatabaseCleanupExtension
+7. **외부만 모킹**: 내부 컴포넌트는 실제 빈 사용
+8. **테스트 필수**: 모든 신규 코드는 테스트와 함께
