@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
 import type { CreateExpenseFormState } from "@/types/actions";
 import type { CategoryResponse } from "@/types/api";
 import { useActionState, useEffect } from "react";
@@ -140,9 +141,9 @@ export function AddExpenseForm({
                 취소
               </Button>
             )}
-            <Button type="submit" className="flex-1">
+            <SubmitButton className="flex-1" pendingText="추가 중...">
               지출 추가
-            </Button>
+            </SubmitButton>
           </div>
         </form>
       </CardContent>

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
 import type { CategoryResponse } from "@/types/api";
 import { Loader2 } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
@@ -178,9 +179,9 @@ export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
             >
               취소
             </Button>
-            <Button type="submit" className="flex-1">
+            <SubmitButton className="flex-1" pendingText="추가 중...">
               수입 추가
-            </Button>
+            </SubmitButton>
           </div>
         </form>
       </DialogContent>
