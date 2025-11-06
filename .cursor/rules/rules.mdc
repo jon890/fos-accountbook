@@ -467,6 +467,140 @@ public class Expense {
 
 ---
 
+## 🧪 테스트 작성 가이드
+
+### 테스트 전략
+
+**테스트 피라미드 비율:**
+- Unit Tests (70%): 순수 함수, 유틸리티 테스트
+- Component Tests (20%): React 컴포넌트 렌더링 및 상호작용
+- Integration Tests (8%): Server Actions, API 통신
+- E2E Tests (2%): 크리티컬 사용자 플로우
+
+### 모킹 전략
+
+```typescript
+// ✅ 프론트엔드 테스트는 백엔드 연결 없이 모킹만 사용
+jest.mock('@/lib/server/api/client', () => ({
+  serverApiClient: jest.fn(),
+}));
+
+// ✅ Next.js 의존성 모킹
+jest.mock('@/lib/server/auth-helpers');
+jest.mock('@/lib/server/cookies');
+jest.mock('next/cache', () => ({
+  revalidatePath: jest.fn(),
+}));
+
+// ❌ jose 패키지는 직접 import 금지 (ESM 오류)
+// auth 대신 auth-helpers를 모킹
+```
+
+### 테스트 작성 패턴
+
+#### 1. Unit Test - 유틸리티 함수
+
+```typescript
+// src/__tests__/lib/utils/format.test.ts
+import { formatCurrency } from '@/lib/utils/format';
+
+describe('formatCurrency', () => {
+  it('숫자를 한국 원화 형식으로 변환한다', () => {
+    // Given
+    const amount = 50000;
+    
+    // When
+    const result = formatCurrency(amount);
+    
+    // Then
+    expect(result).toBe('₩50,000');
+  });
+});
+```
+
+#### 2. Component Test - React 컴포넌트
+
+```typescript
+// src/__tests__/components/ui/SubmitButton.test.tsx
+import { render, screen } from '@testing-library/react';
+import { SubmitButton } from '@/components/ui/submit-button';
+
+jest.mock('react-dom', () => ({
+  useFormStatus: jest.fn(),
+}));
+
+describe('SubmitButton', () => {
+  it('pending 상태일 때 버튼이 비활성화된다', () => {
+    // Given
+    useFormStatus.mockReturnValue({ pending: true });
+    
+    // When
+    render(<SubmitButton>제출</SubmitButton>);
+    
+    // Then
+    expect(screen.getByRole('button')).toBeDisabled();
+  });
+});
+```
+
+#### 3. Integration Test - Server Actions
+
+```typescript
+// src/__tests__/actions/expense/update-expense-action.test.ts
+import { updateExpenseAction } from '@/app/actions/expense/update-expense-action';
+
+jest.mock('@/lib/server/auth-helpers');
+jest.mock('@/lib/server/api/client');
+jest.mock('next/cache');
+
+describe('updateExpenseAction', () => {
+  it('유효한 데이터로 지출 수정에 성공한다', async () => {
+    // Given
+    mockRequireAuth.mockResolvedValue(undefined);
+    mockServerApiClient.mockResolvedValue({ data: { uuid: 'test' } });
+    
+    const formData = new FormData();
+    formData.append('amount', '50000');
+    
+    // When
+    const result = await updateExpenseAction(initialState, formData);
+    
+    // Then
+    expect(result.success).toBe(true);
+    expect(mockServerApiClient).toHaveBeenCalledWith(
+      expect.stringContaining('/expenses/'),
+      expect.objectContaining({ method: 'PUT' })
+    );
+  });
+});
+```
+
+### 테스트 실행
+
+```bash
+# 전체 테스트
+pnpm test
+
+# Watch 모드 (개발 중)
+pnpm test:watch
+
+# 커버리지
+pnpm test:coverage
+
+# 특정 파일만
+pnpm test format
+```
+
+### 주의사항
+
+1. **백엔드 연결 금지**: 모든 테스트는 모킹 사용
+2. **tsconfig.json 타입 설정**: `"types": ["@testing-library/jest-dom"]` 필수
+3. **AAA 패턴 준수**: Arrange → Act → Assert
+4. **Given-When-Then**: 명확한 테스트 시나리오
+5. **jest.setup.js**: 모든 테스트에 공통 설정 적용
+
+---
+
 ## 📚 중요 파일들
 
 ### Frontend
