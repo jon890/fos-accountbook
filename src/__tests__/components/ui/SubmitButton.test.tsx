@@ -24,16 +24,23 @@ const mockedUseFormStatus = useFormStatus as jest.MockedFunction<
   typeof useFormStatus
 >;
 
-// Mock FormStatus 데이터
-const createMockFormStatus = (
-  overrides: Partial<FormStatus> = {}
-): FormStatus => ({
-  pending: false,
-  data: new FormData(),
-  method: "POST",
-  action: "/test",
-  ...overrides,
-});
+// Mock FormStatus 데이터 - pending에 따라 타입이 달라짐
+const createMockFormStatus = (pending = false): FormStatus => {
+  if (pending) {
+    return {
+      pending: true,
+      data: new FormData(),
+      method: "POST",
+      action: "/test",
+    };
+  }
+  return {
+    pending: false,
+    data: null,
+    method: null,
+    action: null,
+  };
+};
 
 describe("SubmitButton", () => {
   beforeEach(() => {
@@ -57,9 +64,7 @@ describe("SubmitButton", () => {
 
   it("pending 상태일 때 버튼이 비활성화된다", () => {
     // Given
-    mockedUseFormStatus.mockReturnValue(
-      createMockFormStatus({ pending: true })
-    );
+    mockedUseFormStatus.mockReturnValue(createMockFormStatus(true));
 
     // When
     render(<SubmitButton>제출하기</SubmitButton>);
@@ -71,9 +76,7 @@ describe("SubmitButton", () => {
 
   it("pending 상태일 때 pendingText를 표시한다", () => {
     // Given
-    mockedUseFormStatus.mockReturnValue(
-      createMockFormStatus({ pending: true })
-    );
+    mockedUseFormStatus.mockReturnValue(createMockFormStatus(true));
 
     // When
     render(<SubmitButton pendingText="저장 중...">저장하기</SubmitButton>);
@@ -85,9 +88,7 @@ describe("SubmitButton", () => {
 
   it("pending 상태일 때 로딩 아이콘을 표시한다", () => {
     // Given
-    mockedUseFormStatus.mockReturnValue(
-      createMockFormStatus({ pending: true })
-    );
+    mockedUseFormStatus.mockReturnValue(createMockFormStatus(true));
 
     // When
     const { container } = render(<SubmitButton>제출하기</SubmitButton>);
@@ -99,9 +100,7 @@ describe("SubmitButton", () => {
 
   it("pendingText가 없으면 기본 텍스트를 표시한다", () => {
     // Given
-    mockedUseFormStatus.mockReturnValue(
-      createMockFormStatus({ pending: true })
-    );
+    mockedUseFormStatus.mockReturnValue(createMockFormStatus(true));
 
     // When
     render(<SubmitButton>제출하기</SubmitButton>);
@@ -121,9 +120,7 @@ describe("SubmitButton", () => {
 
   it("pending과 disabled 모두 true면 비활성화된다", () => {
     // Given
-    mockedUseFormStatus.mockReturnValue(
-      createMockFormStatus({ pending: true })
-    );
+    mockedUseFormStatus.mockReturnValue(createMockFormStatus(true));
 
     // When
     render(<SubmitButton disabled>제출하기</SubmitButton>);
