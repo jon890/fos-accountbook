@@ -8,7 +8,7 @@ import { ko } from "date-fns/locale";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-interface ExpenseItemProps {
+export interface ExpenseItemData {
   uuid: string;
   amount: string | number;
   description?: string | null;
@@ -19,20 +19,17 @@ interface ExpenseItemProps {
     color: string;
     icon: string;
   };
+}
+
+interface ExpenseItemProps {
+  expense: ExpenseItemData;
   onEdit?: () => void;
   onDelete?: () => void;
 }
 
-export function ExpenseItem({
-  uuid,
-  amount,
-  description,
-  date,
-  category,
-  onEdit,
-  onDelete,
-}: ExpenseItemProps) {
+export function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { uuid, amount, description, date, category } = expense;
   const IconComponent = getCategoryIcon(category.icon);
   const dateObj = typeof date === "string" ? new Date(date) : date;
 

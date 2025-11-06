@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { DeleteExpenseDialog } from "./DeleteExpenseDialog";
 import { EditExpenseDialog } from "./EditExpenseDialog";
-import { ExpenseItem } from "./ExpenseItem";
+import { ExpenseItem, type ExpenseItemData } from "./ExpenseItem";
 
 interface ExpenseData {
   uuid: string;
@@ -76,19 +76,22 @@ export function ExpenseListClient({
       <div className="space-y-2 md:space-y-3">
         {expenses.map((expense) => {
           const category = categoryMap.get(expense.categoryUuid);
+          const expenseData: ExpenseItemData = {
+            uuid: expense.uuid,
+            amount: expense.amount,
+            description: expense.description,
+            date: expense.date,
+            category: {
+              uuid: expense.categoryUuid,
+              name: category?.name || expense.categoryName || "기타",
+              color: category?.color || expense.categoryColor || "#6366f1",
+              icon: category?.icon || "default",
+            },
+          };
           return (
             <ExpenseItem
               key={expense.uuid}
-              uuid={expense.uuid}
-              amount={expense.amount}
-              description={expense.description}
-              date={expense.date}
-              category={{
-                uuid: expense.categoryUuid,
-                name: category?.name || expense.categoryName || "기타",
-                color: category?.color || expense.categoryColor || "#6366f1",
-                icon: category?.icon || "default",
-              }}
+              expense={expenseData}
               onEdit={() => setEditingExpense(expense)}
               onDelete={() => setDeletingExpense(expense)}
             />

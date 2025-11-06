@@ -28,7 +28,7 @@ describe("ExpenseItem", () => {
 
   it("지출 정보를 올바르게 렌더링한다", () => {
     // Given & When
-    render(<ExpenseItem {...mockExpense} />);
+    render(<ExpenseItem expense={mockExpense} />);
 
     // Then
     expect(screen.getByText("마트 장보기")).toBeInTheDocument();
@@ -44,7 +44,7 @@ describe("ExpenseItem", () => {
     };
 
     // When
-    render(<ExpenseItem {...expenseWithoutDescription} />);
+    render(<ExpenseItem expense={expenseWithoutDescription} />);
 
     // Then
     // 식비가 h4와 Badge 두 곳에 표시됨
@@ -54,7 +54,7 @@ describe("ExpenseItem", () => {
 
   it("날짜를 한국어 형식으로 표시한다", () => {
     // Given & When
-    render(<ExpenseItem {...mockExpense} />);
+    render(<ExpenseItem expense={mockExpense} />);
 
     // Then
     // "1월 15일 (수) 10:00" 형식
@@ -69,7 +69,7 @@ describe("ExpenseItem", () => {
     };
 
     // When
-    render(<ExpenseItem {...largeAmountExpense} />);
+    render(<ExpenseItem expense={largeAmountExpense} />);
 
     // Then
     expect(screen.getByText("-₩1,234,567")).toBeInTheDocument();
@@ -81,7 +81,7 @@ describe("ExpenseItem", () => {
 
     // When
     const { container } = render(
-      <ExpenseItem {...mockExpense} onEdit={onEdit} />
+      <ExpenseItem expense={mockExpense} onEdit={onEdit} />
     );
 
     // Then
@@ -94,7 +94,7 @@ describe("ExpenseItem", () => {
     const user = userEvent.setup();
     const onEdit = jest.fn();
     const { container } = render(
-      <ExpenseItem {...mockExpense} onEdit={onEdit} />
+      <ExpenseItem expense={mockExpense} onEdit={onEdit} />
     );
 
     // When
@@ -109,7 +109,7 @@ describe("ExpenseItem", () => {
 
   it("수정 버튼이 없으면 버튼을 렌더링하지 않는다", () => {
     // Given & When
-    const { container } = render(<ExpenseItem {...mockExpense} />);
+    const { container } = render(<ExpenseItem expense={mockExpense} />);
 
     // Then
     const editButton = container.querySelector("button");
@@ -118,7 +118,7 @@ describe("ExpenseItem", () => {
 
   it("카테고리 색상을 적용한다", () => {
     // Given & When
-    const { container } = render(<ExpenseItem {...mockExpense} />);
+    const { container } = render(<ExpenseItem expense={mockExpense} />);
 
     // Then
     const coloredElement = container.querySelector(

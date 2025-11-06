@@ -57,11 +57,13 @@ export function RecentActivity({ expenses }: RecentActivityProps) {
             {expenses.map((expense) => (
               <ExpenseItem
                 key={expense.uuid}
-                uuid={expense.uuid}
-                amount={expense.amount}
-                description={expense.description}
-                date={expense.date}
-                category={expense.category}
+                expense={{
+                  uuid: expense.uuid,
+                  amount: expense.amount,
+                  description: expense.description,
+                  date: expense.date,
+                  category: expense.category,
+                }}
               />
             ))}
 
