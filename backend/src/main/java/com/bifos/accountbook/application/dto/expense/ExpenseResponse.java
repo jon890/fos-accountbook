@@ -43,7 +43,7 @@ public class ExpenseResponse {
 
     public static ExpenseResponse fromWithoutCategory(Expense expense) {
         return ExpenseResponse.builder()
-                .uuid(expense.getUuid().toString())
+                .uuid(expense.getUuid().getValue())
                 .familyUuid(expense.getFamilyUuid().getValue())
                 .categoryUuid(expense.getCategoryUuid().getValue())
                 .amount(expense.getAmount())

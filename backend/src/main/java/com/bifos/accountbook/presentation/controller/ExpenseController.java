@@ -1,12 +1,12 @@
 package com.bifos.accountbook.presentation.controller;
 
-import com.bifos.accountbook.presentation.dto.ApiSuccessResponse;
 import com.bifos.accountbook.application.dto.expense.CreateExpenseRequest;
 import com.bifos.accountbook.application.dto.expense.ExpenseResponse;
 import com.bifos.accountbook.application.dto.expense.ExpenseSearchRequest;
 import com.bifos.accountbook.application.dto.expense.UpdateExpenseRequest;
 import com.bifos.accountbook.application.service.ExpenseService;
 import com.bifos.accountbook.presentation.annotation.LoginUser;
+import com.bifos.accountbook.presentation.dto.ApiSuccessResponse;
 import com.bifos.accountbook.presentation.dto.LoginUserDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -80,7 +80,6 @@ public class ExpenseController {
     @PutMapping("/{expenseUuid}")
     public ResponseEntity<ApiSuccessResponse<ExpenseResponse>> updateExpense(
             @LoginUser LoginUserDto loginUser,
-            @PathVariable String familyUuid,
             @PathVariable String expenseUuid,
             @Valid @RequestBody UpdateExpenseRequest request) {
         ExpenseResponse response = expenseService.updateExpense(loginUser.getUserUuid(), expenseUuid, request);
