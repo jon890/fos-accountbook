@@ -8,7 +8,7 @@ services:
       MYSQL_DATABASE: accountbook
       MYSQL_USER: accountbook_user
       MYSQL_PASSWORD: accountbook_password
-      TZ: Asia/Seoul
+      TZ: UTC
     ports:
       - "3306:3306"
     volumes:
