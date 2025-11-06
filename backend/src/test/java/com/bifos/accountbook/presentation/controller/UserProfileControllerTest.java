@@ -1,6 +1,7 @@
 package com.bifos.accountbook.presentation.controller;
 
 import com.bifos.accountbook.application.dto.UpdateUserProfileRequest;
+import com.bifos.accountbook.common.DatabaseCleanupExtension;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.entity.UserProfile;
 import com.bifos.accountbook.domain.repository.UserProfileRepository;
@@ -10,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,7 +19,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -27,12 +28,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * UserProfileController 통합 테스트
- * @SpringBootTest + @Transactional을 사용하여 실제 DB와 함께 테스트
+ * @SpringBootTest + DatabaseCleanupExtension을 사용하여 실제 DB와 함께 테스트
  * 외부 API만 모킹하고, 내부 컴포넌트는 모두 실제로 동작
+ * 각 테스트 메서드 실행 후 DatabaseCleanupExtension이 자동으로 데이터 정리
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional // 각 테스트 후 자동 롤백
+@ExtendWith(DatabaseCleanupExtension.class)
 @DisplayName("사용자 프로필 컨트롤러 통합 테스트")
 class UserProfileControllerTest {
 
