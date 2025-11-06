@@ -45,9 +45,10 @@ const mockGetFamilyCategories =
     typeof getFamilyCategoriesAction
   >;
 
-const mockCreateIncomeAction = createIncomeAction as jest.MockedFunction<
-  typeof createIncomeAction
->;
+// Mock variable for future use
+// const mockCreateIncomeAction = createIncomeAction as jest.MockedFunction<
+//   typeof createIncomeAction
+// >;
 
 describe("AddIncomeDialog", () => {
   const mockOnOpenChange = jest.fn();

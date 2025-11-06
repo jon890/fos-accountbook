@@ -8,8 +8,8 @@
  * - 로딩 텍스트 표시
  */
 
-import { render, screen } from "@testing-library/react";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { render, screen } from "@testing-library/react";
 
 // useFormStatus를 모킹
 jest.mock("react-dom", () => ({
@@ -18,20 +18,27 @@ jest.mock("react-dom", () => ({
 }));
 
 import { useFormStatus } from "react-dom";
+import type { FormStatus } from "react-dom";
 
 const mockedUseFormStatus = useFormStatus as jest.MockedFunction<
   typeof useFormStatus
 >;
 
+// Mock FormStatus 데이터
+const createMockFormStatus = (
+  overrides: Partial<FormStatus> = {}
+): FormStatus => ({
+  pending: false,
+  data: new FormData(),
+  method: "POST",
+  action: "/test",
+  ...overrides,
+});
+
 describe("SubmitButton", () => {
   beforeEach(() => {
     // 기본값: pending이 아닌 상태
-    mockedUseFormStatus.mockReturnValue({
-      pending: false,
-      data: null,
-      method: null,
-      action: null,
-    });
+    mockedUseFormStatus.mockReturnValue(createMockFormStatus());
   });
 
   afterEach(() => {
@@ -50,12 +57,9 @@ describe("SubmitButton", () => {
 
   it("pending 상태일 때 버튼이 비활성화된다", () => {
     // Given
-    mockedUseFormStatus.mockReturnValue({
-      pending: true,
-      data: null,
-      method: null,
-      action: null,
-    });
+    mockedUseFormStatus.mockReturnValue(
+      createMockFormStatus({ pending: true })
+    );
 
     // When
     render(<SubmitButton>제출하기</SubmitButton>);
@@ -67,12 +71,9 @@ describe("SubmitButton", () => {
 
   it("pending 상태일 때 pendingText를 표시한다", () => {
     // Given
-    mockedUseFormStatus.mockReturnValue({
-      pending: true,
-      data: null,
-      method: null,
-      action: null,
-    });
+    mockedUseFormStatus.mockReturnValue(
+      createMockFormStatus({ pending: true })
+    );
 
     // When
     render(<SubmitButton pendingText="저장 중...">저장하기</SubmitButton>);
@@ -84,12 +85,9 @@ describe("SubmitButton", () => {
 
   it("pending 상태일 때 로딩 아이콘을 표시한다", () => {
     // Given
-    mockedUseFormStatus.mockReturnValue({
-      pending: true,
-      data: null,
-      method: null,
-      action: null,
-    });
+    mockedUseFormStatus.mockReturnValue(
+      createMockFormStatus({ pending: true })
+    );
 
     // When
     const { container } = render(<SubmitButton>제출하기</SubmitButton>);
@@ -101,12 +99,9 @@ describe("SubmitButton", () => {
 
   it("pendingText가 없으면 기본 텍스트를 표시한다", () => {
     // Given
-    mockedUseFormStatus.mockReturnValue({
-      pending: true,
-      data: null,
-      method: null,
-      action: null,
-    });
+    mockedUseFormStatus.mockReturnValue(
+      createMockFormStatus({ pending: true })
+    );
 
     // When
     render(<SubmitButton>제출하기</SubmitButton>);
@@ -126,12 +121,9 @@ describe("SubmitButton", () => {
 
   it("pending과 disabled 모두 true면 비활성화된다", () => {
     // Given
-    mockedUseFormStatus.mockReturnValue({
-      pending: true,
-      data: null,
-      method: null,
-      action: null,
-    });
+    mockedUseFormStatus.mockReturnValue(
+      createMockFormStatus({ pending: true })
+    );
 
     // When
     render(<SubmitButton disabled>제출하기</SubmitButton>);

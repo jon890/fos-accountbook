@@ -66,7 +66,7 @@ export async function getRecentExpensesAction(
         description: expense.description || null,
         date: new Date(expense.date),
         category: {
-          id: expense.categoryUuid,
+          uuid: expense.categoryUuid,
           name: category?.name || "Unknown",
           color: category?.color || "#6366f1",
           icon: category?.icon || "💰",

@@ -19,7 +19,7 @@ export interface RecentExpense {
   description: string | null;
   date: Date;
   category: {
-    id: string;
+    uuid: string;
     name: string;
     color: string;
     icon: string;

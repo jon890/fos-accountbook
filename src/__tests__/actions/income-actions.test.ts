@@ -26,10 +26,20 @@ jest.mock("next/cache", () => ({
 
 import { requireAuthOrRedirect } from "@/lib/server/auth-helpers";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
+import type { Session } from "next-auth";
 
 const mockRequireAuth = requireAuthOrRedirect as jest.MockedFunction<
   typeof requireAuthOrRedirect
 >;
+
+// Mock Session 데이터
+const mockSession: Session = {
+  user: {
+    id: "user-1",
+    email: "test@example.com",
+  },
+  expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+};
 const mockGetSelectedFamilyUuid = getSelectedFamilyUuid as jest.MockedFunction<
   typeof getSelectedFamilyUuid
 >;
@@ -45,7 +55,7 @@ describe("Income Actions", () => {
   describe("createIncomeAction", () => {
     it("인증된 사용자가 수입을 성공적으로 생성할 수 있다", async () => {
       // Given
-      mockRequireAuth.mockResolvedValue(undefined);
+      mockRequireAuth.mockResolvedValue(mockSession);
       mockGetSelectedFamilyUuid.mockResolvedValue("family-1");
 
       mockServerApiClient.mockResolvedValue({
@@ -91,7 +101,7 @@ describe("Income Actions", () => {
 
     it("familyUuid가 없으면 에러를 반환한다", async () => {
       // Given
-      mockRequireAuth.mockResolvedValue(undefined);
+      mockRequireAuth.mockResolvedValue(mockSession);
       mockGetSelectedFamilyUuid.mockResolvedValue(null); // 쿠키 없음
 
       const formData = new FormData();
@@ -116,7 +126,7 @@ describe("Income Actions", () => {
 
     it("유효하지 않은 금액이면 검증 에러를 반환한다", async () => {
       // Given
-      mockRequireAuth.mockResolvedValue(undefined);
+      mockRequireAuth.mockResolvedValue(mockSession);
       mockGetSelectedFamilyUuid.mockResolvedValue("family-1");
 
       const formData = new FormData();
@@ -143,7 +153,7 @@ describe("Income Actions", () => {
   describe("deleteIncomeAction", () => {
     it("인증된 사용자가 수입을 성공적으로 삭제할 수 있다", async () => {
       // Given
-      mockRequireAuth.mockResolvedValue(undefined);
+      mockRequireAuth.mockResolvedValue(mockSession);
 
       mockServerApiClient.mockResolvedValue({});
 
@@ -162,7 +172,7 @@ describe("Income Actions", () => {
 
     it("API 호출 실패 시 에러를 반환한다", async () => {
       // Given
-      mockRequireAuth.mockResolvedValue(undefined);
+      mockRequireAuth.mockResolvedValue(mockSession);
 
       mockServerApiClient.mockRejectedValue(new Error("API Error"));
 
@@ -171,7 +181,9 @@ describe("Income Actions", () => {
 
       // Then
       expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
+      if (!result.success) {
+        expect(result.error).toBeDefined();
+      }
     });
   });
 });
