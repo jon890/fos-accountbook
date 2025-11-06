@@ -2,7 +2,6 @@ plugins {
     id("java")
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
-    id("jacoco")
 }
 
 group = "com.bifos"
@@ -49,19 +48,6 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-    finalizedBy(tasks.jacocoTestReport)
-}
-
-tasks.jacocoTestReport {
-    dependsOn(tasks.test)
-    reports {
-        xml.required.set(true)
-        html.required.set(true)
-    }
-}
-
-jacoco {
-    toolVersion = "0.8.11"
 }
 
 // Disable plain jar (only create executable boot jar)
