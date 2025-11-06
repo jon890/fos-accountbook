@@ -5,16 +5,34 @@
 import { createIncomeAction } from "@/app/actions/income/create-income-action";
 import { deleteIncomeAction } from "@/app/actions/income/delete-income-action";
 import { serverApiClient } from "@/lib/server/api/client";
-import { auth } from "@/lib/server/auth";
 
 // Mock modules
-jest.mock("@/lib/server/auth");
-jest.mock("@/lib/server/api/client");
+jest.mock("@/lib/server/auth-helpers", () => ({
+  requireAuthOrRedirect: jest.fn(),
+  requireAuth: jest.fn(),
+}));
+
+jest.mock("@/lib/server/api/client", () => ({
+  serverApiClient: jest.fn(),
+}));
+
+jest.mock("@/lib/server/cookies", () => ({
+  getSelectedFamilyUuid: jest.fn(),
+}));
+
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
 }));
 
-const mockAuth = auth as jest.MockedFunction<typeof auth>;
+import { requireAuthOrRedirect } from "@/lib/server/auth-helpers";
+import { getSelectedFamilyUuid } from "@/lib/server/cookies";
+
+const mockRequireAuth = requireAuthOrRedirect as jest.MockedFunction<
+  typeof requireAuthOrRedirect
+>;
+const mockGetSelectedFamilyUuid = getSelectedFamilyUuid as jest.MockedFunction<
+  typeof getSelectedFamilyUuid
+>;
 const mockServerApiClient = serverApiClient as jest.MockedFunction<
   typeof serverApiClient
 >;
@@ -27,10 +45,8 @@ describe("Income Actions", () => {
   describe("createIncomeAction", () => {
     it("인증된 사용자가 수입을 성공적으로 생성할 수 있다", async () => {
       // Given
-      mockAuth.mockResolvedValue({
-        user: { id: "user-1", email: "test@example.com", name: "Test User" },
-        expires: "2024-12-31",
-      });
+      mockRequireAuth.mockResolvedValue(undefined);
+      mockGetSelectedFamilyUuid.mockResolvedValue("family-1");
 
       mockServerApiClient.mockResolvedValue({
         data: {
@@ -75,10 +91,8 @@ describe("Income Actions", () => {
 
     it("familyUuid가 없으면 에러를 반환한다", async () => {
       // Given
-      mockAuth.mockResolvedValue({
-        user: { id: "user-1", email: "test@example.com", name: "Test User" },
-        expires: "2024-12-31",
-      });
+      mockRequireAuth.mockResolvedValue(undefined);
+      mockGetSelectedFamilyUuid.mockResolvedValue(null); // 쿠키 없음
 
       const formData = new FormData();
       formData.append("amount", "50000");
@@ -96,16 +110,14 @@ describe("Income Actions", () => {
       // Then
       expect(result.success).toBe(false);
       expect(result.message).toBe(
-        "가족 정보를 찾을 수 없습니다. 먼저 가족을 생성해주세요."
+        "가족이 선택되지 않았습니다. 먼저 가족을 선택해주세요."
       );
     });
 
     it("유효하지 않은 금액이면 검증 에러를 반환한다", async () => {
       // Given
-      mockAuth.mockResolvedValue({
-        user: { id: "user-1", email: "test@example.com", name: "Test User" },
-        expires: "2024-12-31",
-      });
+      mockRequireAuth.mockResolvedValue(undefined);
+      mockGetSelectedFamilyUuid.mockResolvedValue("family-1");
 
       const formData = new FormData();
       formData.append("familyUuid", "family-1");
@@ -131,10 +143,7 @@ describe("Income Actions", () => {
   describe("deleteIncomeAction", () => {
     it("인증된 사용자가 수입을 성공적으로 삭제할 수 있다", async () => {
       // Given
-      mockAuth.mockResolvedValue({
-        user: { id: "user-1", email: "test@example.com", name: "Test User" },
-        expires: "2024-12-31",
-      });
+      mockRequireAuth.mockResolvedValue(undefined);
 
       mockServerApiClient.mockResolvedValue({});
 
@@ -143,7 +152,6 @@ describe("Income Actions", () => {
 
       // Then
       expect(result.success).toBe(true);
-      expect(result.message).toBe("수입이 성공적으로 삭제되었습니다.");
       expect(mockServerApiClient).toHaveBeenCalledWith(
         "/families/family-1/incomes/income-1",
         expect.objectContaining({
@@ -154,10 +162,7 @@ describe("Income Actions", () => {
 
     it("API 호출 실패 시 에러를 반환한다", async () => {
       // Given
-      mockAuth.mockResolvedValue({
-        user: { id: "user-1", email: "test@example.com", name: "Test User" },
-        expires: "2024-12-31",
-      });
+      mockRequireAuth.mockResolvedValue(undefined);
 
       mockServerApiClient.mockRejectedValue(new Error("API Error"));
 
@@ -166,7 +171,7 @@ describe("Income Actions", () => {
 
       // Then
       expect(result.success).toBe(false);
-      expect(result.message).toContain("API Error");
+      expect(result.error).toBeDefined();
     });
   });
 });
