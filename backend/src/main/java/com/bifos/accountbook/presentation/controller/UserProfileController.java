@@ -27,6 +27,7 @@ public class UserProfileController {
     @GetMapping
     public ResponseEntity<ApiSuccessResponse<UserProfileResponse>> getMyProfile(
             @LoginUser LoginUserDto user
+            
     ) {
         UserProfileResponse profile = userProfileService.getOrCreateProfile(user.getUserUuid());
         return ResponseEntity.ok(

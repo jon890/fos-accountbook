@@ -29,7 +29,7 @@ services:
 
 volumes:
   mysql_data:
-    driver: local
+    driver: locall
     name: fos-accountbook-mysql-data
 
 networks:
