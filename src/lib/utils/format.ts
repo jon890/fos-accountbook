@@ -2,6 +2,9 @@
  * 포맷팅 유틸리티 함수
  */
 
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
+
 /**
  * 금액을 한국 원화 형식으로 포맷팅
  * @param amount - 포맷팅할 금액
@@ -98,6 +101,23 @@ export function formatRelativeTime(date: Date | string): string {
   }
 
   return formatDate(dateObj, "date-only");
+}
+
+/**
+ * 지출/수입 아이템용 날짜 포맷팅 (date-fns 사용)
+ * @param dateString - ISO 8601 형식의 날짜 문자열
+ * @returns 포맷팅된 날짜 문자열 (예: "1월 15일 (수) 10:00")
+ */
+export function formatExpenseDate(dateString: string): string {
+  try {
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) {
+      return "잘못된 날짜";
+    }
+    return format(date, "M월 d일 (E) HH:mm", { locale: ko });
+  } catch {
+    return "잘못된 날짜";
+  }
 }
 
 /**

@@ -64,7 +64,7 @@ export async function getRecentExpensesAction(
         uuid: expense.uuid,
         amount: expense.amount,
         description: expense.description || null,
-        date: new Date(expense.date),
+        date: expense.date, // ISO 8601 문자열 그대로 전달
         category: {
           uuid: expense.categoryUuid,
           name: category?.name || "Unknown",

@@ -11,7 +11,7 @@ import type { ExpenseResponse } from "@/types/api";
 export interface ExpenseItemData
   extends Pick<ExpenseResponse, "uuid" | "amount" | "categoryUuid"> {
   description?: string | null | undefined; // UI에서 null, undefined 모두 허용
-  date: string | Date; // UI에서 Date 객체도 허용
+  date: string; // ISO 8601 형식 문자열
   categoryName: string;
   categoryColor: string;
   categoryIcon: string;

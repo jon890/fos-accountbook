@@ -17,7 +17,7 @@ describe("ExpenseItem", () => {
     uuid: "test-uuid-123",
     amount: "50000",
     description: "마트 장보기",
-    date: new Date("2025-01-15T10:00:00"),
+    date: "2025-01-15T10:00:00",
     categoryUuid: "category-uuid",
     categoryName: "식비",
     categoryColor: "#FF6B6B",

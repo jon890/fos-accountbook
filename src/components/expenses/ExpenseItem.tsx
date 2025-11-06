@@ -2,9 +2,8 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatExpenseDate } from "@/lib/utils/format";
 import type { ExpenseItemData } from "@/types/actions";
-import { format } from "date-fns";
-import { ko } from "date-fns/locale";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
@@ -26,7 +25,6 @@ export function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemProps) {
     categoryColor,
     categoryIcon,
   } = expense;
-  const dateObj = typeof date === "string" ? new Date(date) : date;
 
   // 모바일에서 아이템 클릭 핸들러
   const handleMobileClick = () => {
@@ -83,9 +81,7 @@ export function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemProps) {
               </Badge>
             </div>
             <p className="text-[10px] md:text-sm text-gray-500">
-              {format(dateObj, "M월 d일 (E) HH:mm", {
-                locale: ko,
-              })}
+              {formatExpenseDate(date)}
             </p>
           </div>
         </div>

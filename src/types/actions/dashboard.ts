@@ -17,7 +17,7 @@ export interface RecentExpense {
   uuid: string;
   amount: string;
   description: string | null;
-  date: Date;
+  date: string; // ISO 8601 형식 문자열
   category: {
     uuid: string;
     name: string;
