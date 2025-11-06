@@ -4,7 +4,7 @@ import com.bifos.accountbook.application.dto.UpdateUserProfileRequest;
 import com.bifos.accountbook.application.dto.UserProfileResponse;
 import com.bifos.accountbook.application.service.UserProfileService;
 import com.bifos.accountbook.domain.value.CustomUuid;
-import com.bifos.accountbook.infra.security.dto.LoginUserDto;
+import com.bifos.accountbook.presentation.dto.LoginUserDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
