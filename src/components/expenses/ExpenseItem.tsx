@@ -2,7 +2,6 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getCategoryIcon } from "@/lib/utils/category-icons";
 import type { ExpenseItemData } from "@/types/actions";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -27,11 +26,7 @@ export function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemProps) {
     categoryColor,
     categoryIcon,
   } = expense;
-  const IconComponent = getCategoryIcon(categoryIcon);
   const dateObj = typeof date === "string" ? new Date(date) : date;
-
-  // Lucide 아이콘으로 매핑이 없으면 이모지를 그대로 사용
-  const useEmoji = !IconComponent;
 
   // 모바일에서 아이템 클릭 핸들러
   const handleMobileClick = () => {
@@ -68,15 +63,7 @@ export function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemProps) {
               backgroundColor: `${categoryColor}20`,
             }}
           >
-            {useEmoji ? (
-              <span className="text-lg md:text-2xl">{categoryIcon}</span>
-            ) : (
-              <div style={{ color: categoryColor }}>
-                {IconComponent && (
-                  <IconComponent className="w-4 h-4 md:w-6 md:h-6" />
-                )}
-              </div>
-            )}
+            <span className="text-lg md:text-2xl">{categoryIcon}</span>
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-1 md:space-x-2 mb-0.5">
