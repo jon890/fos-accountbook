@@ -1,10 +1,9 @@
 package com.bifos.accountbook.common;
 
 import jakarta.persistence.EntityManager;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -26,9 +25,8 @@ import java.util.List;
  * 주의: @Transactional과 함께 사용하면 롤백되므로, 
  * @Transactional 제거하고 이 Extension만 사용하세요.
  */
+@Slf4j
 public class DatabaseCleanupExtension implements AfterEachCallback {
-
-    private static final Logger log = LoggerFactory.getLogger(DatabaseCleanupExtension.class);
     
     /**
      * 프로젝트의 모든 테이블 목록 (외래키 순서를 고려하여 역순으로)

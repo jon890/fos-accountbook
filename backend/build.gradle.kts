@@ -39,6 +39,8 @@ dependencies {
     // Lombok
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
+    testCompileOnly(libs.lombok)
+    testAnnotationProcessor(libs.lombok)
     
     // Test (Bundle 사용)
     testImplementation(libs.bundles.testing)
