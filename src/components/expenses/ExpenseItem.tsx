@@ -38,80 +38,114 @@ export function ExpenseItem({
   return (
     <div
       key={uuid}
-      className="flex items-center justify-between p-3 md:p-4 rounded-xl md:rounded-2xl bg-gradient-to-r from-gray-50 to-white border border-gray-100 hover:shadow-md transition-all duration-200 group"
+      className="p-2.5 md:p-4 rounded-xl md:rounded-2xl bg-gradient-to-r from-gray-50 to-white border border-gray-100 hover:shadow-md transition-all duration-200 group"
     >
-      <div className="flex items-center space-x-2.5 md:space-x-4 flex-1">
-        <div
-          className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center shadow-sm"
-          style={{
-            backgroundColor: `${category.color}20`,
-          }}
-        >
-          {useEmoji ? (
-            <span className="text-xl md:text-2xl">{category.icon}</span>
-          ) : (
-            <div style={{ color: category.color }}>
-              {IconComponent && (
-                <IconComponent className="w-5 h-5 md:w-6 md:h-6" />
-              )}
-            </div>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center space-x-1.5 md:space-x-2 mb-0.5 md:mb-1">
-            <h4 className="font-semibold text-gray-900 text-sm md:text-base truncate">
-              {description || category.name}
-            </h4>
-            <Badge
-              variant="secondary"
-              className="text-[10px] md:text-xs px-1.5 py-0 shrink-0"
-              style={{
-                backgroundColor: `${category.color}15`,
-                color: category.color,
-                border: "none",
-              }}
-            >
-              {category.name}
-            </Badge>
+      {/* 메인 컨텐츠 */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2 md:space-x-4 flex-1 min-w-0">
+          <div
+            className="w-9 h-9 md:w-12 md:h-12 rounded-lg md:rounded-2xl flex items-center justify-center shadow-sm shrink-0"
+            style={{
+              backgroundColor: `${category.color}20`,
+            }}
+          >
+            {useEmoji ? (
+              <span className="text-lg md:text-2xl">{category.icon}</span>
+            ) : (
+              <div style={{ color: category.color }}>
+                {IconComponent && (
+                  <IconComponent className="w-4 h-4 md:w-6 md:h-6" />
+                )}
+              </div>
+            )}
           </div>
-          <p className="text-xs md:text-sm text-gray-500">
-            {format(dateObj, "M월 d일 (E) HH:mm", {
-              locale: ko,
-            })}
-          </p>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center space-x-1 md:space-x-2 mb-0.5">
+              <h4 className="font-semibold text-gray-900 text-xs md:text-base truncate">
+                {description || category.name}
+              </h4>
+              <Badge
+                variant="secondary"
+                className="text-[9px] md:text-xs px-1 md:px-1.5 py-0 shrink-0"
+                style={{
+                  backgroundColor: `${category.color}15`,
+                  color: category.color,
+                  border: "none",
+                }}
+              >
+                {category.name}
+              </Badge>
+            </div>
+            <p className="text-[10px] md:text-sm text-gray-500">
+              {format(dateObj, "M월 d일 (E) HH:mm", {
+                locale: ko,
+              })}
+            </p>
+          </div>
+        </div>
+
+        {/* 금액 & 데스크톱 버튼 */}
+        <div className="flex items-center gap-1.5 md:gap-2 ml-2 shrink-0">
+          <div className="text-right">
+            <p className="text-xs md:text-lg font-bold text-gray-900 whitespace-nowrap">
+              -₩{Number(amount).toLocaleString()}
+            </p>
+          </div>
+          {/* 데스크톱: hover 시 우측에 표시 */}
+          <div className="hidden md:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onEdit}
+                className="h-8 w-8"
+                title="수정"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onDelete}
+                className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
+                title="삭제"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
-      <div className="flex items-center gap-2 ml-2">
-        <div className="text-right">
-          <p className="text-sm md:text-lg font-bold text-gray-900 whitespace-nowrap">
-            -₩{Number(amount).toLocaleString()}
-          </p>
-        </div>
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+
+      {/* 모바일: 아래에 버튼 표시 */}
+      {(onEdit || onDelete) && (
+        <div className="md:hidden flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-100">
           {onEdit && (
             <Button
-              variant="ghost"
-              size="icon"
+              variant="outline"
+              size="sm"
               onClick={onEdit}
-              className="h-8 w-8"
-              title="수정"
+              className="flex-1 h-7 text-xs gap-1"
             >
-              <Pencil className="h-4 w-4" />
+              <Pencil className="h-3 w-3" />
+              수정
             </Button>
           )}
           {onDelete && (
             <Button
-              variant="ghost"
-              size="icon"
+              variant="outline"
+              size="sm"
               onClick={onDelete}
-              className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
-              title="삭제"
+              className="flex-1 h-7 text-xs gap-1 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-3 w-3" />
+              삭제
             </Button>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
