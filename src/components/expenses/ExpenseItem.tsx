@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { getCategoryIcon } from "@/lib/utils/category-icons";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 
 interface ExpenseItemProps {
   uuid: string;
@@ -17,6 +17,7 @@ interface ExpenseItemProps {
     icon: string;
   };
   onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 export function ExpenseItem({
@@ -26,6 +27,7 @@ export function ExpenseItem({
   date,
   category,
   onEdit,
+  onDelete,
 }: ExpenseItemProps) {
   const IconComponent = getCategoryIcon(category.icon);
   const dateObj = typeof date === "string" ? new Date(date) : date;
@@ -85,16 +87,30 @@ export function ExpenseItem({
             -₩{Number(amount).toLocaleString()}
           </p>
         </div>
-        {onEdit && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onEdit}
-            className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-        )}
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {onEdit && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onEdit}
+              className="h-8 w-8"
+              title="수정"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onDelete}
+              className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
+              title="삭제"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

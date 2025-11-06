@@ -11,7 +11,7 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
-import { requireAuthOrRedirect } from "@/lib/server/auth-helpers";
+import { requireAuth } from "@/lib/server/auth-helpers";
 import { revalidatePath } from "next/cache";
 
 export async function deleteExpenseAction(
@@ -20,37 +20,34 @@ export async function deleteExpenseAction(
 ): Promise<ActionResult<void>> {
   try {
     // 인증 확인
-    await requireAuthOrRedirect();
+    await requireAuth();
 
-    // UUID 검증
+    // familyUuid 검증
     if (!familyUuid) {
-      throw ActionError.invalidInput(
-        "가족 UUID",
-        familyUuid,
-        "UUID는 필수입니다"
-      );
+      throw ActionError.familyNotSelected();
     }
 
+    // expenseUuid 검증
     if (!expenseUuid) {
       throw ActionError.invalidInput(
-        "지출 UUID",
+        "expenseUuid",
         expenseUuid,
-        "UUID는 필수입니다"
+        "필수 값입니다"
       );
     }
 
-    // 백엔드 API 호출 (HTTP-only 쿠키에서 자동으로 Access Token 전달)
+    // 백엔드 API 호출
     await serverApiClient(`/families/${familyUuid}/expenses/${expenseUuid}`, {
       method: "DELETE",
     });
 
-    // 지출 페이지 및 대시보드 revalidate
+    // 페이지 재검증
     revalidatePath("/expenses");
     revalidatePath("/");
 
     return successResult(undefined);
   } catch (error) {
-    console.error("지출 삭제 중 오류:", error);
+    console.error("Failed to delete expense:", error);
     return handleActionError(error, "지출 삭제에 실패했습니다");
   }
 }

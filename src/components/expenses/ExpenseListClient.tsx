@@ -9,6 +9,7 @@ import { getFamilyCategoriesAction } from "@/app/actions/category/get-categories
 import type { CategoryResponse } from "@/types/api";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { DeleteExpenseDialog } from "./DeleteExpenseDialog";
 import { EditExpenseDialog } from "./EditExpenseDialog";
 import { ExpenseItem } from "./ExpenseItem";
 
@@ -34,6 +35,9 @@ export function ExpenseListClient({
   familyUuid,
 }: ExpenseListClientProps) {
   const [editingExpense, setEditingExpense] = useState<ExpenseData | null>(
+    null
+  );
+  const [deletingExpense, setDeletingExpense] = useState<ExpenseData | null>(
     null
   );
   const [categories, setCategories] =
@@ -86,6 +90,7 @@ export function ExpenseListClient({
                 icon: category?.icon || "default",
               }}
               onEdit={() => setEditingExpense(expense)}
+              onDelete={() => setDeletingExpense(expense)}
             />
           );
         })}
@@ -108,6 +113,22 @@ export function ExpenseListClient({
           familyUuid={familyUuid}
           categories={categories}
           isLoadingCategories={isLoadingCategories}
+        />
+      )}
+
+      {/* 삭제 확인 다이얼로그 */}
+      {deletingExpense && (
+        <DeleteExpenseDialog
+          open={!!deletingExpense}
+          onOpenChange={(open) => {
+            if (!open) setDeletingExpense(null);
+          }}
+          familyUuid={familyUuid}
+          expenseUuid={deletingExpense.uuid}
+          expenseDescription={deletingExpense.description}
+          onDeleted={() => {
+            setDeletingExpense(null);
+          }}
         />
       )}
     </>
