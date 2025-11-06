@@ -1,312 +1,485 @@
 ---
 alwaysApply: true
+description: 우리집 가계부 프로젝트의 전체 개발 규칙 및 컨벤션
+version: "2.0"
 ---
 
 # 우리집 가계부 - Cursor AI 개발 규칙
 
 ## 🎯 프로젝트 개요
-Next.js 15 + TypeScript + Prisma ORM + Tailwind CSS를 사용한 가족 가계부 애플리케이션
+
+**프론트엔드**: Next.js 15 + TypeScript + Tailwind CSS
+**백엔드**: Spring Boot + JPA + MySQL
+**인증**: NextAuth.js (Google OAuth)
+**배포**: Vercel (Frontend) + Railway (Backend)
+
+---
 
 ## 📋 코딩 컨벤션
 
-### 1. 데이터베이스 & API 컨벤션
-- **모든 데이터베이스 테이블명과 컬럼명은 snake_case 사용**
-  - 예: `family_members`, `created_at`, `user_id`, `family_uuid`
-- **UUID 기반 관계 설정**: 모든 테이블 간 조인은 UUID를 통해 수행
-  - 예: `family_uuid`, `category_uuid` 등
-- **Soft Delete 패턴**: 모든 비즈니스 테이블에 `deleted_at` 컬럼 사용
+### 1. 프론트엔드 (Next.js)
 
-### 2. TypeScript 타입 안전성
-- **절대 `any` 타입 사용 금지** - `unknown` 또는 정확한 타입 사용
-- **Prisma 공식 에러 타입 사용**: `PrismaClientKnownRequestError` 등
-- **Zod 스키마 검증**: `error.issues` 사용 (not `error.errors`)
+#### TypeScript 규칙
 
-### 3. 아키텍처 패턴
-- **Repository 패턴**: 데이터 액세스 레이어 분리
-- **Service 패턴**: 비즈니스 로직 캡슐화
-- **의존성 주입**: Container를 통한 인스턴스 관리
+- ❌ **절대 `any` 타입 사용 금지** - `unknown` 또는 정확한 타입 사용
+- ✅ **Zod 스키마 필수 사용**: 모든 폼 데이터 및 API 입력 검증
+- ✅ Zod의 `safeParse()` 사용
+- ✅ 에러는 `error.flatten().fieldErrors` 사용
 
-### 4. Next.js 15 아키텍처 패턴 (중요!)
-- **Server Components 우선 사용**: 기본적으로 모든 컴포넌트는 Server Component로 작성
-- **Server Actions 우선 사용**: 데이터 변경 작업은 Server Actions 사용
-- **API Routes는 최소화**: 다음 경우에만 API Routes 사용
+#### 타입 구조
+
+- **도메인별 타입 분리**: `src/types/actions/` 폴더에 도메인별로 구조화
+  - `common.ts` - 공통 타입
+  - `dashboard.ts` - 대시보드 타입
+  - `expense.ts` - 지출 타입
+  - `family.ts` - 가족 타입
+  - `invitation.ts` - 초대 타입
+  - `index.ts` - 통합 export
+
+#### Next.js 15 아키텍처
+
+- **Server Components 우선**: 기본적으로 모든 컴포넌트는 Server Component
+- **Server Actions 우선**: 데이터 변경은 Server Actions 사용
+- **API Routes 최소화**: 다음 경우에만 사용
   - 외부 Webhook 처리
   - 써드파티 API 통합
   - NextAuth.js 등 라이브러리 요구사항
-  - 실시간 스트리밍 등 특수한 경우
-- **Client Component는 필요한 경우만**: 다음 경우에만 'use client' 사용
-  - 사용자 상호작용 (onClick, onChange 등)
-  - React Hooks 사용 (useState, useEffect 등)
-  - 브라우저 전용 API 사용
+- **Client Component는 필요시만**: 다음 경우에만 'use client'
+  - 사용자 상호작용 (onClick, onChange)
+  - React Hooks (useState, useEffect)
+  - 브라우저 전용 API
 
-### 5. 프론트엔드 컨벤션
-- **React 19 기능 사용**: 최신 React 19 API 및 기능을 적극 활용
-  - **❌ `ReactDOM.useFormState` 사용 금지** (deprecated)
-  - **✅ `React.useActionState` 사용** - React 19에서 공식 API로 변경
-  - import 경로: `react-dom` → `react`
-  ```typescript
-  // ❌ 잘못된 방법 (구버전)
-  import { useFormState } from 'react-dom'
-  const [state, formAction] = useFormState(action, initialState)
-  
-  // ✅ 올바른 방법 (React 19)
-  import { useActionState } from 'react'
-  const [state, formAction] = useActionState(action, initialState)
-  ```
-- **React Hooks 최적화**: `useCallback`, `useMemo` 적절히 사용
-- **Next.js Image 컴포넌트**: `<img>` 태그 대신 `<Image />` 사용
-- **Tailwind CSS**: 일관된 스타일링
-- **shadcn/ui**: UI 컴포넌트 라이브러리 활용
+#### React 19 규칙
+
+```typescript
+// ❌ Deprecated
+import { useFormState } from "react-dom";
+
+// ✅ React 19
+import { useActionState } from "react";
+const [state, formAction] = useActionState(action, initialState);
+```
+
+#### 폼 제출 패턴
+
+```typescript
+// ✅ SubmitButton 사용 (중복 제출 방지)
+<form action={formAction}>
+  <SubmitButton pendingText="저장 중...">저장하기</SubmitButton>
+</form>
+```
+
+### 2. 백엔드 (Spring Boot)
+
+#### 아키텍처 패턴
+
+- **Controller → Service → Repository** 계층 구조
+- **Entity는 snake_case**: 모든 테이블명과 컬럼명은 snake_case
+  - 예: `family_members`, `created_at`, `user_id`, `family_uuid`
+- **UUID 기반 관계**: 모든 테이블 간 조인은 UUID로 수행
+- **Soft Delete**: 모든 비즈니스 엔티티에 `deleted_at` 컬럼
+
+#### API 규칙
+
+- **RESTful API 설계**: HTTP 메서드를 올바르게 사용
+  - GET: 조회
+  - POST: 생성
+  - PUT: 전체 수정
+  - PATCH: 부분 수정
+  - DELETE: 삭제
+- **DTO 패턴**: Request/Response용 별도 DTO 클래스
+- **공통 응답 형식**: `ApiSuccessResponse<T>`, `ApiErrorResponse`
+- **에러 처리**: `@ControllerAdvice`로 전역 예외 처리
+
+---
 
 ## 🛠 기술 스택
-- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS v3
-- **Backend**: Next.js Server Actions, Prisma ORM
-- **Database**: Supabase (PostgreSQL)
-- **Authentication**: NextAuth.js (Google OAuth)
-- **Deployment**: Vercel
+
+### Frontend
+
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v3
+- **UI Components**: shadcn/ui
+- **State Management**: React 19 Hooks
+- **Form Validation**: Zod
 - **Package Manager**: pnpm
 
+### Backend
+
+- **Framework**: Spring Boot 3.x
+- **Language**: Java 17+
+- **ORM**: JPA (Hibernate)
+- **Database**: MySQL
+- **Migration**: Flyway
+- **API Documentation**: Swagger/OpenAPI
+- **Build Tool**: Gradle
+
+### Deployment
+
+- **Frontend**: Vercel
+- **Backend**: Railway
+- **Authentication**: NextAuth.js (Google OAuth)
+
+---
+
 ## 📁 프로젝트 구조
+
+### Frontend (Next.js)
+
 ```
 src/
-├── app/                 # Next.js App Router
-│   ├── actions/        # Server Actions (권장)
-│   ├── api/            # API Routes (최소화)
-│   └── (pages)/        # Page Components
-├── components/         # React Components
-│   ├── ui/            # shadcn/ui Components
-│   ├── common/        # 공통 컴포넌트
-│   └── feature/       # 기능별 컴포넌트
-├── lib/               # 유틸리티 함수
-├── repositories/      # 데이터 액세스 레이어
-├── services/          # 비즈니스 로직 레이어
-├── container/         # 의존성 주입 컨테이너
-└── types/            # TypeScript 타입 정의
+├── app/                    # Next.js App Router
+│   ├── actions/           # Server Actions (도메인별)
+│   │   ├── expense/
+│   │   ├── family/
+│   │   └── dashboard/
+│   ├── api/               # API Routes (최소화)
+│   └── (pages)/           # Page Components
+├── components/            # React Components
+│   ├── ui/               # shadcn/ui Components
+│   ├── common/           # 공통 컴포넌트
+│   └── [domain]/         # 도메인별 컴포넌트
+├── lib/                  # 유틸리티 함수
+│   ├── server/          # 서버 전용 유틸
+│   └── client/          # 클라이언트 유틸
+└── types/               # TypeScript 타입 정의
+    └── actions/         # 도메인별 타입
 ```
+
+### Backend (Spring Boot)
+
+```
+src/main/java/com/bifos/accountbook/
+├── presentation/         # Controller 레이어
+│   └── controller/
+├── application/         # Service & DTO 레이어
+│   ├── service/
+│   └── dto/
+├── domain/              # Domain 레이어
+│   ├── entity/
+│   └── repository/
+└── infra/               # Infrastructure 레이어
+    └── persistence/
+```
+
+---
 
 ## 🚀 개발 가이드라인
 
-### 1. 새로운 기능 추가 시 (권장 패턴)
-1. Repository 인터페이스 정의
-2. Repository 구현체 작성
-3. Service 레이어 구현
-4. **Server Actions 작성** (`src/app/actions/` 디렉토리)
-5. Server Component에서 Server Actions 호출
-6. 필요한 부분만 Client Component로 분리
+### 1. Server Actions 패턴 (프론트엔드)
 
-**예시: Server Actions 패턴**
 ```typescript
-// src/app/actions/todo-actions.ts
-'use server'
+// src/app/actions/expense/create-expense-action.ts
+"use server";
 
-import { auth } from "@/lib/auth"
-import { container } from "@/container"
-import { revalidatePath } from "next/cache"
+import { z } from "zod";
+import { requireAuth } from "@/lib/server/auth-helpers";
+import { serverApiClient } from "@/lib/server/api/client";
+import { revalidatePath } from "next/cache";
 
-export async function createTodo(data: CreateTodoData) {
-  const session = await auth()
-  if (!session?.user?.id) throw new Error('Unauthorized')
-  
-  const todoService = container.getTodoService()
-  const result = await todoService.create(data)
-  
-  revalidatePath('/todos')
-  return result
-}
+// Zod 스키마 정의
+const createExpenseSchema = z.object({
+  amount: z.number().positive("금액은 0보다 커야 합니다"),
+  categoryId: z.string().min(1, "카테고리를 선택해주세요"),
+  description: z.string().optional(),
+  date: z.string().optional(),
+});
 
-// src/app/todos/page.tsx (Server Component)
-import { getTodos } from '../actions/todo-actions'
+export async function createExpenseAction(
+  prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
+  try {
+    // 1. 인증 확인
+    await requireAuth();
 
-export default async function TodosPage() {
-  const todos = await getTodos()
-  return <TodoList todos={todos} />
+    // 2. 데이터 추출 및 변환
+    const rawData = {
+      amount: Number(formData.get("amount")),
+      categoryId: formData.get("categoryId")?.toString(),
+      description: formData.get("description")?.toString(),
+      date: formData.get("date")?.toString(),
+    };
+
+    // 3. Zod 검증
+    const validated = createExpenseSchema.safeParse(rawData);
+    if (!validated.success) {
+      return {
+        success: false,
+        errors: validated.error.flatten().fieldErrors,
+        message: "입력값을 확인해주세요",
+      };
+    }
+
+    // 4. 백엔드 API 호출
+    await serverApiClient("/expenses", {
+      method: "POST",
+      body: JSON.stringify(validated.data),
+    });
+
+    // 5. 페이지 재검증
+    revalidatePath("/expenses");
+
+    return { success: true, message: "지출이 추가되었습니다" };
+  } catch (error) {
+    return {
+      success: false,
+      message: "지출 추가에 실패했습니다",
+    };
+  }
 }
 ```
 
-### 2. API Route가 필요한 경우 (예외)
-1. Repository 인터페이스 정의
-2. Repository 구현체 작성
-3. Service 레이어 구현
-4. API Route 작성 (`withAuth` 사용)
-5. 에러 처리 및 타입 안전성 확보
+### 2. 컴포넌트 개발
 
-### 3. 데이터베이스 스키마 변경 시 (중요!)
-**⚠️ 반드시 마이그레이션을 사용하여 변경 이력을 추적해야 합니다**
+```typescript
+// Server Component (기본)
+export default async function ExpensePage() {
+  const expenses = await getExpenses();
+  return <ExpenseList expenses={expenses} />;
+}
 
-1. Prisma 스키마 수정 (snake_case 준수)
-2. **마이그레이션 생성 및 적용** (필수)
-   ```bash
-   # 마이그레이션 생성 및 적용
-   pnpm db:migrate
-   
-   # 또는 생성만 하기 (검토 후 적용)
-   pnpm db:migrate:create
-   ```
-3. **❌ `db:push` 사용 금지** - 프로토타이핑 시에만 제한적 사용
-   - 마이그레이션 히스토리가 남지 않음
-   - 팀 협업 시 문제 발생 가능
-   - 프로덕션 배포 시 추적 불가
-4. Repository 구현체 업데이트
-5. 타입 정의 확인
-6. 마이그레이션 파일 커밋 (반드시 포함)
+// Client Component (상호작용 필요시)
+("use client");
+export function ExpenseForm() {
+  const [state, formAction] = useActionState(createExpenseAction, initialState);
 
-### 4. 컴포넌트 개발 시
-1. **기본은 Server Component**: 'use client' 없이 시작
-2. 상호작용이 필요한 경우만 Client Component로 분리
-3. TypeScript Props 인터페이스 정의
-4. React Hooks 의존성 최적화
-5. 에러 바운더리 고려
-6. 접근성 (a11y) 고려
+  return (
+    <form action={formAction}>
+      {/* 폼 필드 */}
+      <SubmitButton pendingText="추가 중...">지출 추가</SubmitButton>
+    </form>
+  );
+}
+```
+
+### 3. 백엔드 API 개발
+
+```java
+// Controller
+@RestController
+@RequestMapping("/families/{familyUuid}/expenses")
+public class ExpenseController {
+
+    @PostMapping
+    public ResponseEntity<ApiSuccessResponse<ExpenseResponse>> createExpense(
+        @LoginUser LoginUserDto user,
+        @PathVariable String familyUuid,
+        @Valid @RequestBody CreateExpenseRequest request
+    ) {
+        ExpenseResponse response = expenseService.createExpense(
+            user.getUserUuid(),
+            familyUuid,
+            request
+        );
+
+        return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(ApiSuccessResponse.of("지출이 등록되었습니다", response));
+    }
+}
+
+// Service
+@Service
+@Transactional
+public class ExpenseService {
+    public ExpenseResponse createExpense(
+        CustomUuid userUuid,
+        String familyUuid,
+        CreateExpenseRequest request
+    ) {
+        // 비즈니스 로직
+        // 검증, 변환, 저장
+        return ExpenseResponse.from(expense);
+    }
+}
+```
+
+### 4. 데이터베이스 스키마 변경
+
+#### Backend - Flyway 마이그레이션
+
+```sql
+-- src/main/resources/db/migration/V1__init.sql
+CREATE TABLE expenses (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    uuid VARCHAR(36) NOT NULL UNIQUE,
+    family_uuid VARCHAR(36) NOT NULL,
+    category_uuid VARCHAR(36) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    description VARCHAR(1000),
+    date DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME,
+    deleted_at DATETIME,
+    INDEX idx_family_uuid (family_uuid),
+    INDEX idx_deleted_at (deleted_at)
+);
+```
+
+**마이그레이션 프로세스:**
+
+1. Entity 클래스 수정
+2. Flyway SQL 파일 생성 (`V{version}__{description}.sql`)
+3. 로컬에서 테스트
+4. DTO 및 관련 코드 업데이트
+5. 커밋 및 배포
+
+---
 
 ## ⚠️ 주의사항
 
+### Frontend
+
+- ❌ `.env.local` 커밋 금지
+- ✅ Server Actions에서 항상 인증 확인
+- ✅ Zod 검증 필수
+- ❌ `any` 타입 사용 금지
+
+### Backend
+
+- ✅ Flyway 마이그레이션 필수
+- ❌ Production에서 직접 스키마 수정 금지
+- ✅ DTO를 통한 요청/응답 처리
+- ✅ `@ControllerAdvice`로 통합 에러 처리
+
 ### 데이터베이스
-- **✅ 반드시 마이그레이션 사용**: 모든 스키마 변경은 `pnpm db:migrate`로 처리
-- **❌ `db:push` 금지**: 프로토타이핑 단계 외에는 사용하지 않음
-- **✅ 마이그레이션 파일 커밋**: `prisma/migrations/` 디렉토리 전체를 Git에 포함
-- **❌ Production에서 `--force-reset` 절대 금지**: 데이터 손실 위험
-- **✅ 마이그레이션 순서 유지**: 팀원과 마이그레이션 충돌 주의
 
-### 보안
-- **환경변수 (.env.local) 커밋 금지**
-- **API 키 및 민감한 정보 노출 금지**
-- **Server Actions에서는 항상 인증 확인 필수**
+- ✅ 모든 테이블/컬럼은 snake_case
+- ✅ UUID 기반 관계 설정
+- ✅ Soft Delete 패턴 (deleted_at)
+- ✅ 마이그레이션 파일 반드시 커밋
 
-### 코드 품질
-- **타입 안전성을 위해 런타임 검증 필수**
-- **any 타입 사용 금지**: unknown 또는 정확한 타입 사용
+---
 
 ## 🔧 유용한 명령어
 
-### 개발 서버
+### Frontend 개발
+
 ```bash
 pnpm dev              # 개발 서버 실행
 pnpm build            # 프로덕션 빌드
+pnpm lint             # ESLint 실행
 ```
 
-### 데이터베이스 (중요!)
+### Backend 개발
+
 ```bash
-# ✅ 마이그레이션 (권장 - 변경 이력 추적)
-pnpm db:migrate              # 마이그레이션 생성 및 적용
-pnpm db:migrate:create       # 마이그레이션 생성만 (검토 후 적용)
-pnpm db:migrate:deploy       # 프로덕션 배포용 마이그레이션 적용
-
-# 📊 기타 유틸리티
-pnpm db:studio               # Prisma Studio 실행 (데이터 시각화)
-pnpm db:generate             # Prisma Client 생성
-pnpm db:validate             # 스키마 검증
-
-# ⚠️ 프로토타이핑 전용 (일반 개발에서는 사용 금지)
-pnpm db:push                 # 마이그레이션 없이 스키마 동기화
-                             # 주의: 변경 이력이 남지 않음!
+./gradlew bootRun     # 개발 서버 실행
+./gradlew build       # 빌드
+./gradlew test        # 테스트
 ```
 
 ### 배포
+
 ```bash
-vercel                # Vercel 배포
+vercel                # Frontend 배포 (Vercel)
+# Backend는 Railway에서 자동 배포
 ```
+
+---
 
 ## 🗄️ 데이터베이스 스키마 규칙
 
-### 테이블 및 컬럼 명명 규칙
-- **테이블명**: snake_case (예: `family_members`, `verification_tokens`)
-- **컬럼명**: snake_case (예: `user_id`, `created_at`, `family_uuid`)
-- **관계 컬럼**: UUID 기반 (예: `family_uuid`, `category_uuid`)
+### 명명 규칙
 
-### 스키마 예시
-```prisma
-model FamilyMember {
-  id          BigInt    @id @default(autoincrement())
-  uuid        String    @unique @default(uuid()) @db.Uuid
-  family_uuid String    @db.Uuid @map("family_uuid")
-  user_id     String    @map("user_id")
-  role        String    @default("member")
-  joined_at   DateTime  @default(now()) @map("joined_at")
-  deleted_at  DateTime? @map("deleted_at")
+- **테이블명**: snake_case (예: `family_members`)
+- **컬럼명**: snake_case (예: `created_at`, `family_uuid`)
+- **관계**: UUID 기반 (예: `family_uuid` → `families.uuid`)
 
-  family Family @relation("FamilyMembers", fields: [family_uuid], references: [uuid])
-  user   User   @relation("UserFamilyMembers", fields: [user_id], references: [id])
+### Entity 예시
 
-  @@unique([family_uuid, user_id])
-  @@map("family_members")
+```java
+@Entity
+@Table(name = "expenses")
+public class Expense {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "uuid", unique = true, nullable = false)
+    private String uuid;
+
+    @Column(name = "family_uuid", nullable = false)
+    private String familyUuid;
+
+    @Column(name = "category_uuid", nullable = false)
+    private String categoryUuid;
+
+    @Column(name = "amount", nullable = false)
+    private BigDecimal amount;
+
+    @Column(name = "description", length = 1000)
+    private String description;
+
+    @Column(name = "date", nullable = false)
+    private LocalDateTime date;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }
 ```
+
+---
 
 ## 🔄 최근 주요 개선사항
 
-### Next.js 15 Server Components & Server Actions 전환 (2025-09-30)
-- **변경**: API Routes 패턴에서 Server Components + Server Actions 패턴으로 전환
-- **장점**:
-  - Zero JavaScript by Default: Server Components는 클라이언트에 JS를 보내지 않음
-  - 더 빠른 초기 로딩: 서버에서 렌더링된 콘텐츠
-  - 향상된 SEO: 서버 사이드 렌더링
-  - 직접적인 데이터베이스 접근: 중간 API 레이어 불필요
-  - 자동 revalidation: `revalidatePath`로 실시간 동기화
-  - 타입 안전성: 전체 스택에서 TypeScript 타입 공유
+### Next.js 15 Server Actions 전환 (2025-09)
 
-**데이터 흐름**
-```
-사용자 요청
-    ↓
-Server Component (page.tsx)
-    ↓
-Server Action (actions/*.ts)
-    ↓
-Service Layer
-    ↓
-Repository Layer
-    ↓
-Prisma ORM → Database
-    ↓
-HTML 렌더링 (서버)
-    ↓
-클라이언트 (최소 JavaScript)
-```
+- API Routes → Server Actions 패턴으로 전환
+- Zero JavaScript by Default
+- 향상된 SEO 및 성능
+- 타입 안전성 강화
 
-### Repository 레이어 아키텍처 개선 (2025-12-21)
-- **문제**: Repository에서 `serialize()` 함수 사용으로 Date 객체가 문자열로 변환되어 ORM 이점 상실
-- **해결**: 
-  - Prisma가 제공하는 Date 객체를 그대로 유지
-  - BigInt와 Decimal만 필요 시 문자열로 변환
-  - `date.toLocaleDateString is not a function` 오류 해결
+### 타입 구조 개선 (2025-11)
 
-### 타입 안전성 개선
-```typescript
-// ❌ 기존: 직렬화로 인한 타입 혼동
-interface ExpenseData {
-  date: Date | string  // 불안정한 유니온 타입
-  amount: string | number
-}
+- 도메인별 타입 파일 분리
+- `src/types/actions/` 폴더 구조화
+- 유지보수성 및 확장성 향상
 
-// ✅ 개선: ORM 레이어에서 명확한 타입 유지
-interface ExpenseData {
-  date: Date           // Date 객체 유지
-  amount: string       // Repository에서 일관된 문자열 변환
-}
-```
+### Zod 검증 도입
 
-### 데이터 흐름 최적화
-```
-Prisma ORM → Repository → Service → Server Action → UI
-     ↓            ↓        ↓           ↓            ↓
-   Date         Date    Date        Date         Date  ✅ Date 객체 유지
-   Decimal   → string  string      string       string ✅ 일관된 변환
-   BigInt    → string  string      string       string ✅ 일관된 변환
-```
+- 모든 Server Actions에서 Zod 스키마 검증
+- 런타임 타입 안전성 보장
+- 명확한 에러 메시지 제공
 
-### 핵심 원칙
-1. **ORM 이점 활용**: Prisma의 타입 안전성과 Date 객체를 최대한 활용
-2. **최소 변환**: 반드시 필요한 경우(BigInt, Decimal)만 문자열로 변환
-3. **일관된 인터페이스**: Repository 레이어에서 일관된 데이터 형태 제공
-4. **Server Components 우선**: 기본적으로 Server Components와 Server Actions 사용
-5. **API Routes 최소화**: 외부 통합이나 특수 케이스만 API Routes 사용
+### SubmitButton 컴포넌트
 
-### 중요 파일들
-- `src/app/actions/dashboard-actions.ts`: 대시보드 Server Actions
-- `src/app/actions/expense-actions.ts`: 지출 Server Actions
-- `src/repositories/implementations/expense.repository.impl.ts`: Date 객체 유지 로직
-- `src/repositories/interfaces/expense.repository.ts`: 정확한 타입 정의
-- `src/components/dashboard/RecentActivity.tsx`: Date 객체 직접 사용
-- `src/lib/serialization.ts`: API 응답용 직렬화 함수 (Repository에서 사용 금지)
+- `useFormStatus` Hook 활용
+- 중복 제출 자동 방지
+- 로딩 상태 자동 표시
 
-이러한 개선을 통해 Next.js 15의 최신 기능을 활용하면서 ORM의 장점을 완전히 활용하고 타입 안전성도 크게 향상되었습니다.
+---
+
+## 💡 핵심 원칙
+
+1. **Server Components 우선**: 기본은 Server Component
+2. **타입 안전성**: TypeScript + Zod 이중 검증
+3. **도메인 분리**: 타입과 액션을 도메인별로 구조화
+4. **API 통신 최소화**: Server Actions로 직접 백엔드 호출
+5. **일관된 패턴**: 모든 기능에 동일한 패턴 적용
+6. **에러 처리**: 명확한 에러 메시지와 처리
+7. **UX 개선**: 중복 제출 방지, 로딩 상태 표시
+
+---
+
+## 📚 중요 파일들
+
+### Frontend
+
+- `src/app/actions/` - Server Actions (도메인별)
+- `src/types/actions/` - 타입 정의 (도메인별)
+- `src/components/ui/submit-button.tsx` - 폼 제출 버튼
+- `src/lib/server/` - 서버 유틸리티
+- `.cursor/rules/rules.mdc` - 개발 규칙
+
+### Backend
+
+- `src/main/java/.../presentation/controller/` - REST API
+- `src/main/java/.../application/service/` - 비즈니스 로직
+- `src/main/java/.../domain/entity/` - 엔티티
+- `src/main/resources/db/migration/` - Flyway 마이그레이션

@@ -1,7 +1,7 @@
 import { getExpensesAction } from "@/app/actions/expense/get-expenses-action";
 import { Card, CardContent } from "@/components/ui/card";
 import type { CategoryResponse } from "@/types/api";
-import { ExpenseItem } from "./ExpenseItem";
+import { ExpenseListClient } from "./ExpenseListClient";
 import { ExpensePagination } from "./ExpensePagination";
 
 interface ExpenseListProps {
@@ -59,33 +59,15 @@ export async function ExpenseList({
     );
   }
 
-  // 카테고리 매핑 (UUID로 검색)
-  const categoryMap = new Map(categories.map((cat) => [cat.uuid, cat]));
-
   return (
     <div className="space-y-3 md:space-y-4">
       <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
         <CardContent className="p-3 md:p-6">
-          <div className="space-y-2 md:space-y-3">
-            {expenses.map((expense) => {
-              const category = categoryMap.get(expense.categoryUuid);
-              return (
-                <ExpenseItem
-                  key={expense.uuid}
-                  uuid={expense.uuid}
-                  amount={expense.amount}
-                  description={expense.description}
-                  date={expense.date}
-                  category={{
-                    name: category?.name || expense.categoryName || "기타",
-                    color:
-                      category?.color || expense.categoryColor || "#6366f1",
-                    icon: category?.icon || "default",
-                  }}
-                />
-              );
-            })}
-          </div>
+          <ExpenseListClient
+            expenses={expenses}
+            categories={categories}
+            familyUuid={familyId}
+          />
         </CardContent>
       </Card>
 

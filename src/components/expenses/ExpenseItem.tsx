@@ -1,7 +1,9 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { getCategoryIcon } from "@/lib/utils/category-icons";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { Pencil } from "lucide-react";
 
 interface ExpenseItemProps {
   uuid: string;
@@ -9,10 +11,12 @@ interface ExpenseItemProps {
   description?: string | null;
   date: Date | string;
   category: {
+    uuid: string;
     name: string;
     color: string;
     icon: string;
   };
+  onEdit?: () => void;
 }
 
 export function ExpenseItem({
@@ -21,6 +25,7 @@ export function ExpenseItem({
   description,
   date,
   category,
+  onEdit,
 }: ExpenseItemProps) {
   const IconComponent = getCategoryIcon(category.icon);
   const dateObj = typeof date === "string" ? new Date(date) : date;
@@ -31,7 +36,7 @@ export function ExpenseItem({
   return (
     <div
       key={uuid}
-      className="flex items-center justify-between p-3 md:p-4 rounded-xl md:rounded-2xl bg-gradient-to-r from-gray-50 to-white border border-gray-100 hover:shadow-md transition-all duration-200"
+      className="flex items-center justify-between p-3 md:p-4 rounded-xl md:rounded-2xl bg-gradient-to-r from-gray-50 to-white border border-gray-100 hover:shadow-md transition-all duration-200 group"
     >
       <div className="flex items-center space-x-2.5 md:space-x-4 flex-1">
         <div
@@ -74,10 +79,22 @@ export function ExpenseItem({
           </p>
         </div>
       </div>
-      <div className="text-right ml-2">
-        <p className="text-sm md:text-lg font-bold text-gray-900 whitespace-nowrap">
-          -₩{Number(amount).toLocaleString()}
-        </p>
+      <div className="flex items-center gap-2 ml-2">
+        <div className="text-right">
+          <p className="text-sm md:text-lg font-bold text-gray-900 whitespace-nowrap">
+            -₩{Number(amount).toLocaleString()}
+          </p>
+        </div>
+        {onEdit && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onEdit}
+            className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+        )}
       </div>
     </div>
   );
