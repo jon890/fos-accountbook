@@ -11,7 +11,7 @@ import {
 } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
 import { requireAuth } from "@/lib/server/auth-helpers";
-import type { Family } from "@/types/actions";
+import type { Family } from "@/types/family";
 
 export async function getFamiliesAction(): Promise<ActionResult<Family[]>> {
   try {

@@ -13,7 +13,7 @@ import {
 import { serverApiClient } from "@/lib/server/api/client";
 import { requireAuth } from "@/lib/server/auth-helpers";
 import { setSelectedFamilyUuid } from "@/lib/server/cookies";
-import type { CreateFamilyData, CreateFamilyResult } from "@/types/actions";
+import type { CreateFamilyData, CreateFamilyResult } from "@/types/family";
 import { revalidatePath } from "next/cache";
 
 export async function createFamilyAction(

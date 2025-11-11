@@ -7,7 +7,7 @@ import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import type { Family } from "@/types/actions";
+import type { Family } from "@/types/family";
 import { ChevronRight, Plus, User, Users } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";

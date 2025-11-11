@@ -1,7 +1,7 @@
 "use client";
 
 import { setDefaultFamilyAction } from "@/app/actions/user/set-default-family-action";
-import type { Family } from "@/types/actions";
+import type { Family } from "@/types/family";
 import { useRouter } from "next/navigation";
 import { FamilySelector } from "./FamilySelector";
 
