@@ -2,11 +2,14 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import type { Income } from "@/types/income";
+import type { CategoryResponse } from "@/types/api";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IncomeItem } from "./IncomeItem";
 
 interface IncomeListClientProps {
   incomes: Income[];
+  familyUuid: string;
+  categories: CategoryResponse[];
   totalElements: number;
   totalPages: number;
   currentPage: number;
@@ -15,6 +18,8 @@ interface IncomeListClientProps {
 
 export function IncomeListClient({
   incomes,
+  familyUuid,
+  categories,
   totalElements,
   totalPages,
   currentPage,
@@ -35,9 +40,14 @@ export function IncomeListClient({
       <Card>
         <CardContent className="p-4 md:p-6">
           <div className="space-y-2">
-            {incomes.map((income) => (
-              <IncomeItem key={income.uuid} income={income} />
-            ))}
+          {incomes.map((income) => (
+            <IncomeItem
+              key={income.uuid}
+              income={income}
+              familyUuid={familyUuid}
+              categories={categories}
+            />
+          ))}
           </div>
         </CardContent>
       </Card>

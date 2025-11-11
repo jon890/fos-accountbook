@@ -4,13 +4,46 @@ import type { Income } from "@/types/income";
 import { formatExpenseDate } from "@/lib/utils/format";
 import { Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { EditIncomeDialog } from "./EditIncomeDialog";
+import type { CategoryResponse } from "@/types/api";
+import { deleteIncomeAction } from "@/app/actions/income/delete-income-action";
+import { toast } from "sonner";
 
 interface IncomeItemProps {
   income: Income;
+  familyUuid: string;
+  categories: CategoryResponse[];
 }
 
-export function IncomeItem({ income }: IncomeItemProps) {
+export function IncomeItem({
+  income,
+  familyUuid,
+  categories,
+}: IncomeItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm("이 수입 내역을 삭제하시겠습니까?")) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const result = await deleteIncomeAction(familyUuid, income.uuid);
+
+      if (result.success) {
+        toast.success("수입이 삭제되었습니다");
+      } else {
+        toast.error(result.error?.message || "삭제에 실패했습니다");
+      }
+    } catch (error) {
+      toast.error("삭제 중 오류가 발생했습니다");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   console.log(income);
 
@@ -56,20 +89,22 @@ export function IncomeItem({ income }: IncomeItemProps) {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  // TODO: 수정 기능
+                  setIsEditDialogOpen(true);
                 }}
                 className="p-1.5 hover:bg-emerald-100 rounded-lg transition-colors"
                 aria-label="수입 수정"
+                disabled={isDeleting}
               >
                 <Edit className="w-4 h-4 text-emerald-600" />
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  // TODO: 삭제 기능
+                  handleDelete();
                 }}
                 className="p-1.5 hover:bg-red-50 rounded-lg transition-colors"
                 aria-label="수입 삭제"
+                disabled={isDeleting}
               >
                 <Trash2 className="w-4 h-4 text-red-500" />
               </button>
@@ -82,25 +117,36 @@ export function IncomeItem({ income }: IncomeItemProps) {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              // TODO: 수정 기능
+              setIsEditDialogOpen(true);
             }}
             className="p-2 hover:bg-emerald-100 rounded-lg transition-colors"
             aria-label="수입 수정"
+            disabled={isDeleting}
           >
             <Edit className="w-4 h-4 text-emerald-600" />
           </button>
           <button
             onClick={(e) => {
               e.stopPropagation();
-              // TODO: 삭제 기능
+              handleDelete();
             }}
             className="p-2 hover:bg-red-50 rounded-lg transition-colors"
             aria-label="수입 삭제"
+            disabled={isDeleting}
           >
             <Trash2 className="w-4 h-4 text-red-500" />
           </button>
         </div>
       </div>
+
+      {/* 수정 다이얼로그 */}
+      <EditIncomeDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        income={income}
+        familyUuid={familyUuid}
+        categories={categories}
+      />
     </div>
   );
 }

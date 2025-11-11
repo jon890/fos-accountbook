@@ -11,7 +11,7 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
-import { requireAuthOrRedirect } from "@/lib/server/auth-helpers";
+import { requireAuth } from "@/lib/server/auth-helpers";
 import { revalidatePath } from "next/cache";
 
 export async function deleteIncomeAction(
@@ -20,23 +20,16 @@ export async function deleteIncomeAction(
 ): Promise<ActionResult<void>> {
   try {
     // 인증 확인
-    await requireAuthOrRedirect();
+    await requireAuth();
 
-    // UUID 검증
+    // familyUuid 검증
     if (!familyUuid) {
-      throw ActionError.invalidInput(
-        "가족 UUID",
-        familyUuid,
-        "UUID는 필수입니다"
-      );
+      throw ActionError.familyNotSelected();
     }
 
+    // incomeUuid 검증
     if (!incomeUuid) {
-      throw ActionError.invalidInput(
-        "수입 UUID",
-        incomeUuid,
-        "UUID는 필수입니다"
-      );
+      throw ActionError.invalidInput("incomeUuid", incomeUuid, "필수 값입니다");
     }
 
     // 백엔드 API 호출
@@ -44,13 +37,13 @@ export async function deleteIncomeAction(
       method: "DELETE",
     });
 
-    // 페이지 revalidate
-    revalidatePath("/incomes");
+    // 페이지 재검증
+    revalidatePath("/transactions");
     revalidatePath("/");
 
     return successResult(undefined);
   } catch (error) {
-    console.error("수입 삭제 중 오류:", error);
+    console.error("Failed to delete income:", error);
     return handleActionError(error, "수입 삭제에 실패했습니다");
   }
 }
