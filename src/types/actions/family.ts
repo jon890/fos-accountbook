@@ -21,11 +21,15 @@ export interface FamilyCategory {
 export interface Family {
   uuid: string;
   name: string;
+  createdAt: string;
+  updatedAt: string;
+  memberCount: number;
+  expenseCount: number;
+  categoryCount: number;
   description?: string;
-  role: string;
+  role?: string;
   members?: FamilyMember[];
   categories?: FamilyCategory[];
-  expenseCount?: number;
 }
 
 export interface GetFamiliesResult {
