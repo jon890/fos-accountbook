@@ -147,31 +147,37 @@ export function ExpenseFilters({
         <CardTitle className="text-sm md:text-base">내역 필터</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* 카테고리 필터 */}
-        <div className="md:max-w-md">
-          <label className="text-xs text-gray-600 mb-1 block">카테고리</label>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="h-9 text-sm">
-              <SelectValue placeholder="전체 카테고리" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">전체 카테고리</SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category.uuid} value={category.uuid}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">{category.icon}</span>
-                    <span className="text-sm">{category.name}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* 카테고리 및 기간 필터 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+          {/* 카테고리 필터 */}
+          <div>
+            <label className="text-xs text-gray-600 mb-1 block">
+              카테고리
+            </label>
+            <Select
+              value={selectedCategory}
+              onValueChange={setSelectedCategory}
+            >
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="전체 카테고리" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">전체 카테고리</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category.uuid} value={category.uuid}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">{category.icon}</span>
+                      <span className="text-sm">{category.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* 날짜 필터 - 한 줄로 배치 */}
-        <div className="md:max-w-md">
-          <label className="text-xs text-gray-600 mb-1 block">기간</label>
-          <div className="space-y-2">
+          {/* 날짜 필터 */}
+          <div>
+            <label className="text-xs text-gray-600 mb-1 block">기간</label>
             <div className="grid grid-cols-2 gap-2">
               <Input
                 type="date"
@@ -188,40 +194,41 @@ export function ExpenseFilters({
                 className="h-9 text-sm"
               />
             </div>
-            {/* 날짜 바로가기 */}
-            <div className="flex gap-1.5">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={setThisMonth}
-                className="h-7 text-xs px-2 flex-1"
-              >
-                <Calendar className="w-3 h-3 mr-1" />
-                이번달
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={setLast3Months}
-                className="h-7 text-xs px-2 flex-1"
-              >
-                <CalendarRange className="w-3 h-3 mr-1" />
-                3개월
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={setLastYear}
-                className="h-7 text-xs px-2 flex-1"
-              >
-                <CalendarRange className="w-3 h-3 mr-1" />
-                1년
-              </Button>
-            </div>
           </div>
+        </div>
+
+        {/* 날짜 바로가기 */}
+        <div className="flex gap-1.5 md:max-w-[50%] md:ml-auto">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={setThisMonth}
+            className="h-7 text-xs px-2 flex-1"
+          >
+            <Calendar className="w-3 h-3 mr-1" />
+            이번달
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={setLast3Months}
+            className="h-7 text-xs px-2 flex-1"
+          >
+            <CalendarRange className="w-3 h-3 mr-1" />
+            3개월
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={setLastYear}
+            className="h-7 text-xs px-2 flex-1"
+          >
+            <CalendarRange className="w-3 h-3 mr-1" />
+            1년
+          </Button>
         </div>
 
         {/* 버튼 및 페이지 크기 */}
