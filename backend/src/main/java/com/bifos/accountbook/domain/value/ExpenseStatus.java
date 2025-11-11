@@ -22,17 +22,5 @@ public enum ExpenseStatus implements CodeEnum {
     DELETED("DELETED");
 
     private final String code;
-
-    public static ExpenseStatus fromCode(String code) {
-        if (code == null) {
-            throw new IllegalArgumentException("지출 상태 코드는 null일 수 없습니다");
-        }
-
-        try {
-            return valueOf(code);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("유효하지 않은 지출 상태 코드: " + code);
-        }
-    }
 }
 

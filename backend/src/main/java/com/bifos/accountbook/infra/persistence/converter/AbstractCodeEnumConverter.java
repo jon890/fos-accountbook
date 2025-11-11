@@ -2,6 +2,7 @@ package com.bifos.accountbook.infra.persistence.converter;
 
 import com.bifos.accountbook.domain.value.CodeEnum;
 import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 
 /**
  * CodeEnum을 DB 코드값으로 변환하는 추상 Converter
@@ -18,6 +19,7 @@ import jakarta.persistence.AttributeConverter;
  *
  * @param <E> CodeEnum을 구현한 Enum 타입
  */
+@Converter
 public abstract class AbstractCodeEnumConverter<E extends Enum<E> & CodeEnum>
         implements AttributeConverter<E, String> {
 
