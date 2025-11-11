@@ -58,11 +58,12 @@ public class AuthService {
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
+                                .addParameter("email", request.getEmail()));
 
         if (user.getStatus() == UserStatus.DELETED) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND, "삭제된 사용자입니다")
-                    .addParameter("userUuid", user.getUuid().toString());
+                    .addParameter("userUuid", user.getUuid().getValue());
         }
 
         return generateAuthResponse(user);
@@ -73,7 +74,9 @@ public class AuthService {
      */
     private AuthResponse loginExistingUserByProvider(String provider, String providerId) {
         User user = userRepository.findByProviderAndProviderId(provider, providerId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
+                                .addParameter("provider", provider)
+                                .addParameter("providerId", providerId));
 
         if (user.getStatus() == UserStatus.DELETED) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND, "삭제된 사용자입니다")
@@ -115,7 +118,8 @@ public class AuthService {
     @Transactional(readOnly = true)
     public AuthResponse.UserInfo getCurrentUser(String userUuid) {
         User user = userRepository.findByUuid(CustomUuid.from(userUuid))
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
+                                .addParameter("userUuid", userUuid));
 
         return AuthResponse.UserInfo.builder()
                 .id(user.getId().toString())

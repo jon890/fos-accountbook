@@ -2,6 +2,8 @@ package com.bifos.accountbook.application.service;
 
 import com.bifos.accountbook.application.dto.profile.UpdateUserProfileRequest;
 import com.bifos.accountbook.application.dto.profile.UserProfileResponse;
+import com.bifos.accountbook.common.exception.BusinessException;
+import com.bifos.accountbook.common.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.UserProfile;
 import com.bifos.accountbook.domain.repository.UserProfileRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
@@ -36,7 +38,8 @@ public class UserProfileService {
     @Transactional
     public UserProfileResponse updateProfile(CustomUuid userUuid, UpdateUserProfileRequest request) {
         UserProfile profile = userProfileRepository.findByUserUuid(userUuid)
-                .orElseThrow(() -> new IllegalArgumentException("프로필을 찾을 수 없습니다: " + userUuid.getValue()));
+                .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND, "프로필을 찾을 수 없습니다")
+                                .addParameter("userUuid", userUuid.getValue()));
 
         // 각 필드가 null이 아닐 때만 업데이트
         if (request.getTimezone() != null) {
