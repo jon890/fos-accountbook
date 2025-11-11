@@ -1,6 +1,6 @@
-import { DashboardTabsSkeleton } from "@/components/dashboard/DashboardTabsSkeleton";
-import { StatsCardsSkeleton } from "@/components/dashboard/StatsCardsSkeleton";
-import { WelcomeSectionSkeleton } from "@/components/dashboard/WelcomeSectionSkeleton";
+import { DashboardTabsSkeleton } from "@/components/dashboard/skeleton/DashboardTabsSkeleton";
+import { StatsCardsSkeleton } from "@/components/dashboard/skeleton/StatsCardsSkeleton";
+import { WelcomeSectionSkeleton } from "@/components/dashboard/skeleton/WelcomeSectionSkeleton";
 
 /**
  * Dashboard 페이지 로딩 UI (스켈레톤)
