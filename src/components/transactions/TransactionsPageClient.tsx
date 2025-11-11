@@ -1,17 +1,13 @@
 "use client";
 
-import { getExpensesAction } from "@/app/actions/expense/get-expenses-action";
-import { getIncomesAction } from "@/app/actions/income/get-incomes-action";
-import { CategoryExpenseSummary } from "@/components/expenses/CategoryExpenseSummary";
 import { ExpenseFilters } from "@/components/expenses/ExpenseFilters";
-import { ExpenseList } from "@/components/expenses/ExpenseList";
 import { ExpensePageClient } from "@/components/expenses/ExpensePageClient";
-import { IncomeList } from "@/components/incomes/IncomeList";
 import { IncomePageClient } from "@/components/incomes/IncomePageClient";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { CategoryResponse } from "@/types/api";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ReactNode } from "react";
 
 interface TransactionsPageClientProps {
   familyUuid: string;
@@ -24,6 +20,8 @@ interface TransactionsPageClientProps {
     page?: string;
     limit?: string;
   };
+  expenseListContent: ReactNode;
+  incomeListContent: ReactNode;
 }
 
 export function TransactionsPageClient({
@@ -31,6 +29,8 @@ export function TransactionsPageClient({
   categories,
   activeTab,
   searchParams,
+  expenseListContent,
+  incomeListContent,
 }: TransactionsPageClientProps) {
   const router = useRouter();
   const currentSearchParams = useSearchParams();
@@ -43,9 +43,6 @@ export function TransactionsPageClient({
     router.push(`/transactions?${params.toString()}`);
   };
 
-  const page = parseInt(searchParams.page || "1", 10);
-  const limit = parseInt(searchParams.limit || "25", 10);
-
   return (
     <div className="space-y-6">
       {/* 페이지 헤더 */}
@@ -57,6 +54,13 @@ export function TransactionsPageClient({
           <IncomePageClient familyUuid={familyUuid} />
         )}
       </div>
+
+      {/* 필터 */}
+      <ExpenseFilters
+        categories={categories}
+        defaultStartDate={searchParams.startDate || ""}
+        defaultEndDate={searchParams.endDate || ""}
+      />
 
       {/* 탭 */}
       <Tabs value={activeTab} onValueChange={handleTabChange}>
@@ -71,49 +75,11 @@ export function TransactionsPageClient({
           </TabsTrigger>
         </TabsList>
 
-        {/* 지출 탭 */}
-        <TabsContent value="expenses" className="space-y-6 mt-6">
-          {/* 필터 */}
-          <ExpenseFilters
-            categories={categories}
-            defaultStartDate={searchParams.startDate || ""}
-            defaultEndDate={searchParams.endDate || ""}
-          />
-
-          {/* 지출 목록 */}
-          <ExpenseList
-            familyId={familyUuid}
-            categories={categories}
-            categoryId={searchParams.categoryId}
-            startDate={searchParams.startDate}
-            endDate={searchParams.endDate}
-            page={page}
-            limit={limit}
-          />
-        </TabsContent>
-
-        {/* 수입 탭 */}
-        <TabsContent value="incomes" className="space-y-6 mt-6">
-          {/* 필터 */}
-          <ExpenseFilters
-            categories={categories}
-            defaultStartDate={searchParams.startDate || ""}
-            defaultEndDate={searchParams.endDate || ""}
-          />
-
-          {/* 수입 목록 */}
-          <IncomeList
-            familyId={familyUuid}
-            categories={categories}
-            categoryId={searchParams.categoryId}
-            startDate={searchParams.startDate}
-            endDate={searchParams.endDate}
-            page={page}
-            limit={limit}
-          />
-        </TabsContent>
+        {/* Server Component로 렌더링된 컨텐츠 표시 */}
+        <div className="mt-6">
+          {activeTab === "expenses" ? expenseListContent : incomeListContent}
+        </div>
       </Tabs>
     </div>
   );
 }
-
