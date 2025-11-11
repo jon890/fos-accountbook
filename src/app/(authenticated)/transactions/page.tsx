@@ -5,6 +5,7 @@
 
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { ExpenseList } from "@/components/expenses/ExpenseList";
+import { ExpenseSummaryWrapper } from "@/components/expenses/ExpenseSummaryWrapper";
 import { IncomeList } from "@/components/incomes/IncomeList";
 import { TransactionsPageClient } from "@/components/transactions/TransactionsPageClient";
 import { Card, CardContent } from "@/components/ui/card";
@@ -94,25 +95,47 @@ export default async function TransactionsPage({
         endDate,
       }}
       expenseListContent={
-        <Suspense
-          fallback={
-            <Card className="w-full">
-              <CardContent className="flex justify-center items-center min-h-[400px] py-12">
-                <LoadingSpinner />
-              </CardContent>
-            </Card>
-          }
-        >
-          <ExpenseList
-            familyId={family.uuid}
-            categories={categories}
-            categoryId={resolvedSearchParams.categoryId}
-            startDate={startDate}
-            endDate={endDate}
-            page={page}
-            limit={limit}
-          />
-        </Suspense>
+        <div className="space-y-4 md:space-y-6">
+          {/* 카테고리별 지출 요약 */}
+          <Suspense
+            fallback={
+              <Card className="w-full border-0 bg-white/80 backdrop-blur-sm shadow-xl">
+                <CardContent className="flex justify-center items-center min-h-[200px] py-8">
+                  <LoadingSpinner />
+                </CardContent>
+              </Card>
+            }
+          >
+            <ExpenseSummaryWrapper
+              familyId={family.uuid}
+              categories={categories}
+              categoryId={resolvedSearchParams.categoryId}
+              startDate={startDate}
+              endDate={endDate}
+            />
+          </Suspense>
+
+          {/* 지출 목록 */}
+          <Suspense
+            fallback={
+              <Card className="w-full">
+                <CardContent className="flex justify-center items-center min-h-[400px] py-12">
+                  <LoadingSpinner />
+                </CardContent>
+              </Card>
+            }
+          >
+            <ExpenseList
+              familyId={family.uuid}
+              categories={categories}
+              categoryId={resolvedSearchParams.categoryId}
+              startDate={startDate}
+              endDate={endDate}
+              page={page}
+              limit={limit}
+            />
+          </Suspense>
+        </div>
       }
       incomeListContent={
         <Suspense
