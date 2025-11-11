@@ -59,8 +59,8 @@ public class User {
     /**
      * 사용자 상태
      * ACTIVE: 활성, DELETED: 삭제됨
+     * UserStatusConverter가 자동으로 코드값으로 변환하여 DB에 저장합니다.
      */
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
     private UserStatus status = UserStatus.ACTIVE;
