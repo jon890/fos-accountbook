@@ -43,7 +43,7 @@ public class IncomeResponse {
 
     public static IncomeResponse fromWithoutCategory(Income income) {
         return IncomeResponse.builder()
-                .uuid(income.getUuid().toString())
+                .uuid(income.getUuid().getValue())
                 .familyUuid(income.getFamilyUuid().getValue())
                 .categoryUuid(income.getCategoryUuid().getValue())
                 .amount(income.getAmount())

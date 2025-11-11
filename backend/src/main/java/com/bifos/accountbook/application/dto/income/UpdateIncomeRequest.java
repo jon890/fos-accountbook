@@ -4,6 +4,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +12,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateIncomeRequest {
