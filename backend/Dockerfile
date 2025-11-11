@@ -1,7 +1,7 @@
 # Multi-stage build for Spring Boot application
 
 # Stage 1: Build
-FROM gradle:8.14-jdk21-alpine AS builder
+FROM gradle:9.0-jdk21-alpine AS builder
 
 WORKDIR /app
 
