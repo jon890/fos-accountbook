@@ -1,4 +1,4 @@
-package com.bifos.accountbook.infra.persistence.converter;
+package com.bifos.accountbook.domain.entity.converter;
 
 import com.bifos.accountbook.domain.value.ExpenseStatus;
 import jakarta.persistence.Converter;
