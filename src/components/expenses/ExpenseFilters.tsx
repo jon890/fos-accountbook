@@ -121,7 +121,7 @@ export function ExpenseFilters({
       </CardHeader>
       <CardContent className="space-y-3">
         {/* 카테고리 필터 */}
-        <div>
+        <div className="md:max-w-md">
           <label className="text-xs text-gray-600 mb-1 block">카테고리</label>
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="h-9 text-sm">
@@ -142,7 +142,7 @@ export function ExpenseFilters({
         </div>
 
         {/* 날짜 필터 - 한 줄로 배치 */}
-        <div>
+        <div className="md:max-w-md">
           <label className="text-xs text-gray-600 mb-1 block">기간</label>
           <div className="grid grid-cols-2 gap-2">
             <Input
