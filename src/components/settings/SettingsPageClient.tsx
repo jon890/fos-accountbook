@@ -15,12 +15,18 @@ import { toast } from "sonner";
 
 interface SettingsPageClientProps {
   families: Family[];
+  defaultFamilyUuid: string | null;
 }
 
-export function SettingsPageClient({ families }: SettingsPageClientProps) {
+export function SettingsPageClient({
+  families,
+  defaultFamilyUuid,
+}: SettingsPageClientProps) {
   const router = useRouter();
   const [selectedFamily, setSelectedFamily] = useState<string>("");
-  const [currentDefaultFamily, setCurrentDefaultFamily] = useState<string>("");
+  const [currentDefaultFamily, setCurrentDefaultFamily] = useState<string>(
+    defaultFamilyUuid || ""
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [editingBudget, setEditingBudget] = useState<string | null>(null);
   const [budgetValues, setBudgetValues] = useState<Record<string, string>>({});

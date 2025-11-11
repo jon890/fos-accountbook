@@ -1,4 +1,5 @@
 import { getFamiliesAction } from "@/app/actions/family/get-families-action";
+import { getUserProfileAction } from "@/app/actions/user/get-user-profile-action";
 import { SettingsPageClient } from "@/components/settings/SettingsPageClient";
 import { redirect } from "next/navigation";
 
@@ -6,11 +7,22 @@ import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
+  // 1. 사용자 프로필 조회 (기본 가족 확인)
+  const profileResult = await getUserProfileAction();
+
+  // 2. 가족 목록 조회
   const familiesResult = await getFamiliesAction();
 
   if (!familiesResult.success) {
     redirect("/families/create");
   }
 
-  return <SettingsPageClient families={familiesResult.data} />;
+  return (
+    <SettingsPageClient
+      families={familiesResult.data}
+      defaultFamilyUuid={
+        profileResult.success ? profileResult.data.defaultFamilyUuid : null
+      }
+    />
+  );
 }
