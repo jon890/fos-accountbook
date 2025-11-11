@@ -122,11 +122,28 @@ export function FamilySelector({
     >
       <div className="max-w-2xl mx-auto px-4">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            가계부 시작하기
-          </h1>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex-1" />
+            <h1 className="text-3xl font-bold text-gray-900 flex-1">
+              가계부 시작하기
+            </h1>
+            <div className="flex-1 flex justify-end">
+              {families.length > 0 && (
+                <Button
+                  onClick={onCreateFamily}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                  size="lg"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  새 가족 만들기
+                </Button>
+              )}
+            </div>
+          </div>
           <p className="text-gray-600">
-            어떤 방식으로 가계부를 관리하시겠어요?
+            {families.length > 0
+              ? "기존 가족을 선택하거나 새로운 가족을 만드세요"
+              : "어떤 방식으로 가계부를 관리하시겠어요?"}
           </p>
         </div>
 
