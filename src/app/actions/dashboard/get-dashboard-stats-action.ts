@@ -1,8 +1,5 @@
 /**
  * 대시보드 통계 데이터 조회 Server Action
- * - 백엔드 QueryDSL 기반 월별 통계 API 호출
- * - 기존: 1000개 가져와서 프론트에서 필터링 (비효율)
- * - 개선: 백엔드에서 DB 레벨에서 직접 집계 (효율적)
  */
 
 "use server";
@@ -38,8 +35,7 @@ export async function getDashboardStatsAction(): Promise<
     const year = now.getFullYear();
     const month = now.getMonth() + 1;
 
-    // 백엔드 대시보드 API 호출 (QueryDSL 기반 집계)
-    // GET /api/v1/families/{familyUuid}/dashboard/stats/monthly?year=2025&month=11
+    // 월별 통계 조회
     const stats = await serverApiGet<DashboardStats>(
       `/families/${selectedFamilyUuid}/dashboard/stats/monthly?year=${year}&month=${month}`
     );
