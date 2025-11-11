@@ -1,6 +1,16 @@
 /**
  * deleteExpenseAction 테스트
+ * @jest-environment node
  */
+
+// Mock modules - import 전에 선언해야 함
+jest.mock("@/lib/server/auth/config", () => ({
+  authConfig: { providers: [], session: { strategy: "jwt" } },
+}));
+jest.mock("@/lib/server/auth-helpers");
+jest.mock("@/lib/server/auth");
+jest.mock("@/lib/server/api/client");
+jest.mock("next/cache");
 
 import { deleteExpenseAction } from "@/app/actions/expense/delete-expense-action";
 import { ActionError } from "@/lib/errors";
@@ -8,11 +18,6 @@ import { serverApiClient } from "@/lib/server/api/client";
 import { requireAuth } from "@/lib/server/auth-helpers";
 import type { Session } from "next-auth";
 import { revalidatePath } from "next/cache";
-
-// Mock modules
-jest.mock("@/lib/server/auth-helpers");
-jest.mock("@/lib/server/api/client");
-jest.mock("next/cache");
 
 const mockRequireAuth = requireAuth as jest.MockedFunction<typeof requireAuth>;
 const mockServerApiClient = serverApiClient as jest.MockedFunction<
@@ -52,7 +57,7 @@ describe("deleteExpenseAction", () => {
         method: "DELETE",
       })
     );
-    expect(mockRevalidatePath).toHaveBeenCalledWith("/expenses");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/transactions");
     expect(mockRevalidatePath).toHaveBeenCalledWith("/");
   });
 
@@ -118,7 +123,7 @@ describe("deleteExpenseAction", () => {
 
     // Then
     expect(mockRevalidatePath).toHaveBeenCalledTimes(2);
-    expect(mockRevalidatePath).toHaveBeenCalledWith("/expenses");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/transactions");
     expect(mockRevalidatePath).toHaveBeenCalledWith("/");
   });
 });

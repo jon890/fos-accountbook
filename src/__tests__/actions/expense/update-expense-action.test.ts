@@ -75,7 +75,7 @@ describe("updateExpenseAction", () => {
         method: "PUT",
       })
     );
-    expect(mockedRevalidatePath).toHaveBeenCalledWith("/expenses");
+    expect(mockedRevalidatePath).toHaveBeenCalledWith("/transactions");
     expect(mockedRevalidatePath).toHaveBeenCalledWith("/");
   });
 

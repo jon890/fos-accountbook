@@ -9,6 +9,7 @@
 
 import { getDashboardStatsAction } from "@/app/actions/dashboard/get-dashboard-stats-action";
 import { getRecentExpensesAction } from "@/app/actions/dashboard/get-recent-expenses-action";
+import { getFamiliesAction } from "@/app/actions/family/get-families-action";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { WelcomeSection } from "@/components/dashboard/WelcomeSection";
@@ -34,10 +35,13 @@ export default async function DashboardPage() {
   }
 
   // 3. 대시보드 데이터 병렬로 가져오기
-  const [statsResult, recentExpensesResult] = await Promise.all([
-    getDashboardStatsAction(),
-    getRecentExpensesAction(10),
-  ]);
+  const [statsResult, recentExpensesResult, familiesResult] = await Promise.all(
+    [
+      getDashboardStatsAction(),
+      getRecentExpensesAction(10),
+      getFamiliesAction(),
+    ]
+  );
 
   // 4. 기본값 설정 (데이터를 가져오지 못한 경우)
   const statsData = statsResult.success
@@ -56,10 +60,19 @@ export default async function DashboardPage() {
     ? recentExpensesResult.data
     : [];
 
+  // 선택된 가족의 이름 찾기
+  const selectedFamily =
+    familiesResult.success && familiesResult.data
+      ? familiesResult.data.find((f) => f.uuid === selectedFamilyUuid)
+      : null;
+
   // 5. 대시보드 렌더링
   return (
     <DashboardClient recentExpenses={recentExpenses}>
-      <WelcomeSection userName={session.user.name} />
+      <WelcomeSection
+        userName={session.user.name}
+        familyName={selectedFamily?.name}
+      />
       <StatsCards data={statsData} />
     </DashboardClient>
   );

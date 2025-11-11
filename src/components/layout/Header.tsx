@@ -2,7 +2,15 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { LogOut, Wallet } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { LogOut, User, Wallet } from "lucide-react";
 import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -51,24 +59,52 @@ export function Header({ session }: HeaderProps) {
           </Link>
 
           <div className="flex items-center space-x-1.5 md:space-x-3">
-            <FamilySelectorDropdown />
+            <div className="hidden md:block">
+              <FamilySelectorDropdown />
+            </div>
             {selectedFamilyUuid && (
               <NotificationBell familyUuid={selectedFamilyUuid} />
             )}
-            <Avatar className="w-8 h-8 md:w-9 md:h-9 ring-2 ring-blue-100">
-              <AvatarImage src={session.user?.image || ""} />
-              <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold text-xs md:text-sm">
-                {session.user?.name?.[0] || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push("/auth/signout")}
-              className="text-gray-600 hover:text-gray-900 h-8 w-8 md:h-9 md:w-9 p-0"
-            >
-              <LogOut className="w-3.5 h-3.5 md:w-4 md:h-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="w-8 h-8 md:w-9 md:h-9 p-0 rounded-full"
+                >
+                  <Avatar className="w-8 h-8 md:w-9 md:h-9 ring-2 ring-blue-100">
+                    <AvatarImage src={session.user?.image || ""} />
+                    <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold text-xs md:text-sm">
+                      {session.user?.name?.[0] || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {session.user?.name}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {session.user?.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push("/settings")}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>설정</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => router.push("/auth/signout")}
+                  variant="destructive"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>로그아웃</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
