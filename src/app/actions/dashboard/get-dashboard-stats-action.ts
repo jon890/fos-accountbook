@@ -1,5 +1,8 @@
 /**
  * 대시보드 통계 데이터 조회 Server Action
+ * - 백엔드 QueryDSL 기반 월별 통계 API 호출
+ * - 기존: 1000개 가져와서 프론트에서 필터링 (비효율)
+ * - 개선: 백엔드에서 DB 레벨에서 직접 집계 (효율적)
  */
 
 "use server";
@@ -14,10 +17,6 @@ import { serverApiGet } from "@/lib/server/api";
 import { requireAuth } from "@/lib/server/auth-helpers";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
 import type { DashboardStats } from "@/types/dashboard";
-import type { ExpenseResponse } from "@/types/expense";
-import type { FamilyResponse } from "@/types/family";
-import type { IncomeResponse } from "@/types/income";
-import type { PaginationResponse } from "@/types/common";
 
 export async function getDashboardStatsAction(): Promise<
   ActionResult<DashboardStats>
@@ -34,64 +33,18 @@ export async function getDashboardStatsAction(): Promise<
       throw ActionError.familyNotSelected();
     }
 
-    // 선택된 가족 정보 조회
-    const family = await serverApiGet<FamilyResponse>(
-      `/families/${selectedFamilyUuid}`
-    );
-
     // 현재 연도와 월 계산
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth() + 1;
 
-    // 이번 달 지출 목록 조회 (간단하게 전체 조회 후 필터링)
-    const expenses = await serverApiGet<PaginationResponse<ExpenseResponse>>(
-      `/families/${family.uuid}/expenses?page=0&size=1000`
+    // 백엔드 대시보드 API 호출 (QueryDSL 기반 집계)
+    // GET /api/v1/families/{familyUuid}/dashboard/stats/monthly?year=2025&month=11
+    const stats = await serverApiGet<DashboardStats>(
+      `/families/${selectedFamilyUuid}/dashboard/stats/monthly?year=${year}&month=${month}`
     );
 
-    // 이번 달 지출만 필터링하고 합계 계산
-    const monthlyExpense = expenses.items
-      .filter((expense) => {
-        const expenseDate = new Date(expense.date);
-        return (
-          expenseDate.getFullYear() === year &&
-          expenseDate.getMonth() + 1 === month
-        );
-      })
-      .reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
-
-    // 이번 달 수입 목록 조회
-    const incomes = await serverApiGet<PaginationResponse<IncomeResponse>>(
-      `/families/${family.uuid}/incomes?page=0&size=1000`
-    );
-
-    // 이번 달 수입만 필터링하고 합계 계산
-    const monthlyIncome = incomes.items
-      .filter((income) => {
-        const incomeDate = new Date(income.date);
-        return (
-          incomeDate.getFullYear() === year &&
-          incomeDate.getMonth() + 1 === month
-        );
-      })
-      .reduce((sum, income) => sum + parseFloat(income.amount), 0);
-
-    // 가족 구성원 수
-    const familyMembers = family.memberCount || 0;
-
-    // 예산 정보 (추후 예산 기능 구현 시 실제 데이터로 대체)
-    const budget = 0;
-    const remainingBudget = Math.max(0, budget - monthlyExpense);
-
-    return successResult({
-      monthlyExpense,
-      monthlyIncome,
-      remainingBudget,
-      familyMembers,
-      budget,
-      year,
-      month,
-    });
+    return successResult(stats);
   } catch (error) {
     console.error("Failed to load dashboard stats:", error);
     return handleActionError(error, "대시보드 통계를 불러오는데 실패했습니다");
