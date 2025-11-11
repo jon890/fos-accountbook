@@ -21,9 +21,8 @@ export function FamilySelectorPage({ families }: FamilySelectorPageProps) {
     const result = await setDefaultFamilyAction(family.uuid);
 
     if (result.success) {
-      // revalidatePath가 서버에서 캐시를 무효화했으므로
-      // router.push만으로 최신 데이터로 페이지 렌더링됨
-      router.push("/");
+      // 기본 가족 설정 완료 → 대시보드로 이동
+      router.push("/dashboard");
     }
   };
 
