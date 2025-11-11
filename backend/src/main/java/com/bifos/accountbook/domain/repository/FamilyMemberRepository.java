@@ -46,4 +46,9 @@ public interface FamilyMemberRepository {
      * 가족 UUID로 구성원 수 조회
      */
     int countByFamilyUuid(CustomUuid familyUuid);
+
+    /**
+     * 사용자 UUID로 가족 수 조회 (해당 사용자가 속한 가족 수)
+     */
+    int countByUserUuid(CustomUuid userUuid);
 }

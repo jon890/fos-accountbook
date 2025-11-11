@@ -32,5 +32,8 @@ public interface FamilyMemberJpaRepository extends JpaRepository<FamilyMember, L
 
     @Query("SELECT COUNT(fm) FROM FamilyMember fm WHERE fm.familyUuid = :familyUuid AND fm.deletedAt IS NULL")
     int countByFamilyUuid(@Param("familyUuid") CustomUuid familyUuid);
+
+    @Query("SELECT COUNT(fm) FROM FamilyMember fm WHERE fm.userUuid = :userUuid AND fm.deletedAt IS NULL")
+    int countByUserUuid(@Param("userUuid") CustomUuid userUuid);
 }
 

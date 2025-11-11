@@ -54,5 +54,10 @@ public class FamilyMemberRepositoryImpl implements FamilyMemberRepository {
     public int countByFamilyUuid(CustomUuid familyUuid) {
         return jpaRepository.countByFamilyUuid(familyUuid);
     }
+
+    @Override
+    public int countByUserUuid(CustomUuid userUuid) {
+        return jpaRepository.countByUserUuid(userUuid);
+    }
 }
 

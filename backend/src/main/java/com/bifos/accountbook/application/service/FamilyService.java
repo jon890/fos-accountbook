@@ -32,9 +32,11 @@ public class FamilyService {
     private final UserRepository userRepository;
     private final CategoryService categoryService;
     private final FamilyValidationService familyValidationService;
+    private final UserProfileService userProfileService;
 
     /**
      * 가족 생성 (생성자를 owner로 자동 추가 + 기본 카테고리 생성)
+     * 첫 가족 생성 시 자동으로 기본 가족으로 설정
      */
     @Transactional
     public FamilyResponse createFamily(CustomUuid userUuid, CreateFamilyRequest request) {
@@ -62,6 +64,13 @@ public class FamilyService {
 
         // 기본 카테고리 생성 (CategoryService에 위임)
         categoryService.createDefaultCategoriesForFamily(family.getUuid());
+
+        // 첫 가족인 경우 자동으로 기본 가족으로 설정
+        int userFamilyCount = familyMemberRepository.countByUserUuid(userUuid);
+        if (userFamilyCount == 1) {
+            userProfileService.setDefaultFamily(userUuid, family.getUuid().getValue());
+            log.info("Set first family as default for user: {}", userUuid);
+        }
 
         // memberCount 포함해서 반환 (방금 생성했으므로 1명)
         return FamilyResponse.fromWithMemberCount(family, 1);
