@@ -68,7 +68,6 @@ export async function IncomeList({
   return (
     <IncomeListClient
       incomes={incomes}
-      categories={categories}
       totalElements={totalElements}
       totalPages={totalPages}
       currentPage={currentPage + 1} // UI는 1-based

@@ -1,14 +1,12 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import type { CategoryResponse } from "@/types/api";
 import type { Income } from "@/types/income";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IncomeItem } from "./IncomeItem";
 
 interface IncomeListClientProps {
   incomes: Income[];
-  categories: CategoryResponse[];
   totalElements: number;
   totalPages: number;
   currentPage: number;
@@ -17,7 +15,6 @@ interface IncomeListClientProps {
 
 export function IncomeListClient({
   incomes,
-  categories,
   totalElements,
   totalPages,
   currentPage,

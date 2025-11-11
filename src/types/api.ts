@@ -244,14 +244,23 @@ export interface UpdateExpenseRequest {
 // ============================
 
 /**
+ * 카테고리 기본 정보
+ */
+export interface CategoryInfo {
+  uuid: string;
+  name: string;
+  color: string;
+  icon: string;
+}
+
+/**
  * 수입 응답
  */
 export interface IncomeResponse {
   uuid: string;
   familyUuid: string;
   categoryUuid: string;
-  categoryName?: string;
-  categoryColor?: string;
+  category: CategoryInfo; // 카테고리 정보 포함
   amount: string; // BigDecimal은 문자열로 전송
   description?: string;
   date: string; // ISO 8601 형식

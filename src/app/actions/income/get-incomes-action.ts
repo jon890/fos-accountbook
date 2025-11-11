@@ -1,20 +1,13 @@
 "use server";
 
-import { requireAuth } from "@/lib/server/auth-helpers";
-import { serverApiGet } from "@/lib/server/api/client";
 import {
-  successResult,
   handleActionError,
+  successResult,
   type ActionResult,
 } from "@/lib/errors";
-import type {
-  Income,
-  GetIncomesParams,
-  GetIncomesResponse,
-} from "@/types/income";
-
-// Re-export for backward compatibility
-export type { Income, GetIncomesParams, GetIncomesResponse };
+import { serverApiGet } from "@/lib/server/api/client";
+import { requireAuth } from "@/lib/server/auth-helpers";
+import type { GetIncomesParams, GetIncomesResponse } from "@/types/income";
 
 /**
  * 수입 목록 조회 Server Action
