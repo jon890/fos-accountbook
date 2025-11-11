@@ -4,6 +4,7 @@ import com.bifos.accountbook.application.dto.income.CreateIncomeRequest;
 import com.bifos.accountbook.application.dto.income.IncomeResponse;
 import com.bifos.accountbook.application.dto.income.UpdateIncomeRequest;
 import com.bifos.accountbook.common.DatabaseCleanupExtension;
+import com.bifos.accountbook.common.TestUserHolder;
 import com.bifos.accountbook.common.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Family;
@@ -40,7 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ExtendWith(DatabaseCleanupExtension.class)
+@ExtendWith({DatabaseCleanupExtension.class, TestUserHolder.class})
 @DisplayName("IncomeController 통합 테스트")
 class IncomeControllerTest {
 
@@ -49,9 +50,6 @@ class IncomeControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private FamilyRepository familyRepository;
@@ -65,28 +63,20 @@ class IncomeControllerTest {
     @Autowired
     private IncomeRepository incomeRepository;
 
-    private User testUser;
+    @Autowired
+    private UserRepository userRepository;
+
+    private TestUserHolder testUserHolder;
     private Family testFamily;
     private Category testCategory;
 
     @BeforeEach
-    void setUp() {
-        // SecurityContext 초기화
-        SecurityContextHolder.clearContext();
-
-        // 테스트 사용자 생성
-        testUser = User.builder()
-                .provider("google")
-                .providerId("test-provider-id")
-                .email("test@example.com")
-                .name("Test User")
-                .build();
-        testUser = userRepository.save(testUser);
-
-        // SecurityContext에 인증 정보 설정
-        UsernamePasswordAuthenticationToken authentication = 
-            new UsernamePasswordAuthenticationToken(testUser.getUuid().getValue(), null, null);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+    void setUp(TestUserHolder testUserHolder) {
+        // Extension을 파라미터로 주입받음
+        this.testUserHolder = testUserHolder;
+        
+        // 테스트 사용자는 TestUserHolder가 자동으로 생성
+        User testUser = testUserHolder.getUser();
 
         // 테스트 가족 생성
         testFamily = Family.builder()
@@ -135,6 +125,7 @@ class IncomeControllerTest {
                 .andExpect(jsonPath("$.data.uuid").exists());
 
         // 데이터베이스 검증
+        User testUser = testUserHolder.getUser();
         assertThat(incomeRepository.findAllByFamilyUuid(testFamily.getUuid(),
                 org.springframework.data.domain.PageRequest.of(0, 10)).getTotalElements()).isEqualTo(1);
     }
@@ -143,6 +134,8 @@ class IncomeControllerTest {
     @DisplayName("수입 목록 조회 - 성공")
     void getFamilyIncomes_Success() throws Exception {
         // Given
+        User testUser = testUserHolder.getUser();
+        
         Income income1 = Income.builder()
                 .familyUuid(testFamily.getUuid())
                 .categoryUuid(testCategory.getUuid())
@@ -178,6 +171,8 @@ class IncomeControllerTest {
     @DisplayName("수입 목록 조회 - 페이징")
     void getFamilyIncomes_WithPaging() throws Exception {
         // Given
+        User testUser = testUserHolder.getUser();
+        
         for (int i = 0; i < 25; i++) {
             Income income = Income.builder()
                     .familyUuid(testFamily.getUuid())
@@ -205,6 +200,8 @@ class IncomeControllerTest {
     @DisplayName("수입 상세 조회 - 성공")
     void getIncome_Success() throws Exception {
         // Given
+        User testUser = testUserHolder.getUser();
+        
         Income income = Income.builder()
                 .familyUuid(testFamily.getUuid())
                 .categoryUuid(testCategory.getUuid())
@@ -230,6 +227,8 @@ class IncomeControllerTest {
     @DisplayName("수입 수정 - 성공")
     void updateIncome_Success() throws Exception {
         // Given
+        User testUser = testUserHolder.getUser();
+        
         Income income = Income.builder()
                 .familyUuid(testFamily.getUuid())
                 .categoryUuid(testCategory.getUuid())
@@ -267,6 +266,8 @@ class IncomeControllerTest {
     @DisplayName("수입 삭제 - 성공")
     void deleteIncome_Success() throws Exception {
         // Given
+        User testUser = testUserHolder.getUser();
+        
         Income income = Income.builder()
                 .familyUuid(testFamily.getUuid())
                 .categoryUuid(testCategory.getUuid())
