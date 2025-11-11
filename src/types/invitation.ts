@@ -3,7 +3,7 @@
  */
 
 /**
- * 초대장 응답
+ * 초대장 응답 (백엔드 API)
  */
 export interface InvitationResponse {
   uuid: string;
@@ -29,4 +29,45 @@ export interface CreateInvitationRequest {
  */
 export interface AcceptInvitationRequest {
   token: string;
+}
+
+/**
+ * 초대 정보 (클라이언트 사이드)
+ */
+export interface InvitationInfo {
+  uuid: string;
+  token: string;
+  expiresAt: Date;
+  createdAt: Date;
+  isExpired: boolean;
+  isUsed: boolean;
+  inviteUrl: string;
+}
+
+/**
+ * 초대 생성 결과
+ */
+export interface CreateInvitationResult {
+  success: boolean;
+  invitation?: InvitationInfo;
+  message: string;
+}
+
+/**
+ * 초대 액션 결과
+ */
+export interface InvitationActionResult {
+  success: boolean;
+  message: string;
+  familyUuid?: string;
+}
+
+/**
+ * 초대 정보 조회 결과
+ */
+export interface InvitationInfoResult {
+  valid: boolean;
+  familyName?: string;
+  expiresAt?: Date;
+  message?: string;
 }

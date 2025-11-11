@@ -8,7 +8,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ExpenseItem } from "@/components/expenses/ExpenseItem";
-import type { ExpenseItemData, RecentExpense } from "@/types/actions";
+import type { ExpenseItemData } from "@/types/expense";
+import type { RecentExpense } from "@/types/dashboard";
 import { Plus, Wallet } from "lucide-react";
 import Link from "next/link";
 

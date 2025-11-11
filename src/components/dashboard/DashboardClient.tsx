@@ -5,7 +5,7 @@
 
 "use client";
 
-import type { RecentExpense } from "@/types/actions";
+import type { RecentExpense } from "@/types/dashboard";
 import { DashboardTabs } from "./DashboardTabs";
 
 interface DashboardClientProps {

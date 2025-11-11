@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { RecentExpense } from "@/types/actions";
+import type { RecentExpense } from "@/types/dashboard";
 import { BarChart3, CreditCard } from "lucide-react";
 import { QuickActions } from "./QuickActions";
 import { RecentActivity } from "./RecentActivity";

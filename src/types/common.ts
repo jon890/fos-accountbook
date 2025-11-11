@@ -51,3 +51,19 @@ export interface CategoryInfo {
   color: string;
   icon: string;
 }
+
+/**
+ * 공통 액션 결과
+ */
+export interface ActionResult {
+  success: boolean;
+  message?: string;
+}
+
+/**
+ * 사용자 가족 확인 결과
+ */
+export interface CheckUserFamilyResult {
+  hasFamily: boolean;
+  familyId?: string;
+}

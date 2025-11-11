@@ -13,7 +13,7 @@ import {
 import { serverApiGet } from "@/lib/server/api";
 import { requireAuth } from "@/lib/server/auth-helpers";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
-import type { RecentExpense } from "@/types/actions";
+import type { RecentExpense } from "@/types/dashboard";
 import type { CategoryResponse } from "@/types/category";
 import type { ExpenseResponse } from "@/types/expense";
 import type { PaginationResponse } from "@/types/common";

@@ -10,6 +10,8 @@ export type {
   ErrorDetails,
   PaginationResponse,
   CategoryInfo,
+  ActionResult,
+  CheckUserFamilyResult,
 } from "./common";
 
 // 인증
@@ -27,6 +29,12 @@ export type {
   FamilyMemberResponse,
   CreateFamilyRequest,
   UpdateFamilyRequest,
+  FamilyMember,
+  FamilyCategory,
+  Family,
+  GetFamiliesResult,
+  CreateFamilyData,
+  CreateFamilyResult,
 } from "./family";
 
 // 카테고리
@@ -48,6 +56,7 @@ export type {
   GetExpensesResponse,
   CreateExpenseFormState,
   UpdateExpenseFormState,
+  ExpenseItemData,
 } from "./expense";
 
 // 수입
@@ -67,7 +76,11 @@ export type {
   InvitationResponse,
   CreateInvitationRequest,
   AcceptInvitationRequest,
+  InvitationInfo,
+  CreateInvitationResult,
+  InvitationActionResult,
+  InvitationInfoResult,
 } from "./invitation";
 
 // 대시보드
-export type { DashboardStats } from "./dashboard";
+export type { DashboardStats, RecentExpense } from "./dashboard";

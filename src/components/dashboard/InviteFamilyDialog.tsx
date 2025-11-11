@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { InvitationInfo } from "@/types/actions";
+import type { InvitationInfo } from "@/types/invitation";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import {

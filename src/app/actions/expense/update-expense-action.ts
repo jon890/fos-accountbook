@@ -7,8 +7,7 @@
 import { ActionError } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
 import { requireAuth } from "@/lib/server/auth-helpers";
-import type { UpdateExpenseFormState } from "@/types/actions";
-import type { ExpenseResponse } from "@/types/expense";
+import type { UpdateExpenseFormState, ExpenseResponse } from "@/types/expense";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 

@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatExpenseDate } from "@/lib/utils/format";
-import type { ExpenseItemData } from "@/types/actions";
+import type { ExpenseItemData } from "@/types/expense";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
