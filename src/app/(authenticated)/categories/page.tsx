@@ -6,7 +6,7 @@ import { getFamilyCategoriesAction } from "@/app/actions/category/get-categories
 import { checkUserFamilyAction } from "@/app/actions/family/check-user-family-action";
 import { CategoryPageClient } from "@/components/categories/CategoryPageClient";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
-import type { CategoryResponse } from "@/types/api";
+import type { CategoryResponse } from "@/types/category";
 import { redirect } from "next/navigation";
 
 // 동적 렌더링 강제

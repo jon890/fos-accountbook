@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { AddExpenseForm } from "@/components/expenses/AddExpenseForm";
-import type { CategoryResponse } from "@/types/api";
+import type { CategoryResponse } from "@/types/category";
 
 interface ExpensePageClientProps {
   categories: CategoryResponse[];

@@ -1,6 +1,6 @@
 import { getExpensesAction } from "@/app/actions/expense/get-expenses-action";
 import { Card, CardContent } from "@/components/ui/card";
-import type { CategoryResponse } from "@/types/api";
+import type { CategoryResponse } from "@/types/category";
 import { ExpenseListClient } from "./ExpenseListClient";
 import { ExpensePagination } from "./ExpensePagination";
 
@@ -45,7 +45,12 @@ export async function ExpenseList({
     );
   }
 
-  const { items: expenses, totalPages, totalElements, currentPage } = result.data;
+  const {
+    items: expenses,
+    totalPages,
+    totalElements,
+    currentPage,
+  } = result.data;
 
   if (expenses.length === 0) {
     return (

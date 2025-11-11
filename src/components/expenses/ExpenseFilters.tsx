@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import type { CategoryResponse } from "@/types/api";
+import type { CategoryResponse } from "@/types/category";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
@@ -58,19 +58,19 @@ export function ExpenseFilters({
     } else {
       params.delete("categoryId");
     }
-    
+
     if (startDate) {
       params.set("startDate", startDate);
     } else {
       params.delete("startDate");
     }
-    
+
     if (endDate) {
       params.set("endDate", endDate);
     } else {
       params.delete("endDate");
     }
-    
+
     params.set("limit", pageSize.toString());
     params.set("page", "1"); // 페이지를 1로 리셋
 
@@ -90,7 +90,7 @@ export function ExpenseFilters({
     setStartDate(defaultStartDate || "");
     setEndDate(defaultEndDate || "");
     setPageSize(25);
-    
+
     const params = new URLSearchParams(searchParams.toString());
     // 필터 관련 파라미터만 제거
     params.delete("categoryId");
@@ -108,7 +108,7 @@ export function ExpenseFilters({
     }
     params.set("limit", "25");
     params.set("page", "1");
-    
+
     router.push(`/transactions?${params.toString()}`);
   };
 

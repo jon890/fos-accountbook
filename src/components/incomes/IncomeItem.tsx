@@ -5,7 +5,7 @@ import { formatExpenseDate } from "@/lib/utils/format";
 import { Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { EditIncomeDialog } from "./EditIncomeDialog";
-import type { CategoryResponse } from "@/types/api";
+import type { CategoryResponse } from "@/types/category";
 import { deleteIncomeAction } from "@/app/actions/income/delete-income-action";
 import { toast } from "sonner";
 
@@ -44,8 +44,6 @@ export function IncomeItem({
       setIsDeleting(false);
     }
   };
-
-  console.log(income);
 
   return (
     <div

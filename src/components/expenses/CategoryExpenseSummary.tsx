@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCategoryIcon } from "@/lib/utils/category-icons";
-import type { CategoryExpenseSummaryResponse } from "@/types/api";
+import type { CategoryExpenseSummaryResponse } from "@/types/expense";
 
 interface CategoryExpenseSummaryProps {
   summary: CategoryExpenseSummaryResponse;

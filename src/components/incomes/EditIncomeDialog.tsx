@@ -4,10 +4,8 @@
 
 "use client";
 
-import {
-  updateIncomeAction,
-  type UpdateIncomeFormState,
-} from "@/app/actions/income/update-income-action";
+import { updateIncomeAction } from "@/app/actions/income/update-income-action";
+import type { UpdateIncomeFormState, Income } from "@/types/income";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
-import type { CategoryResponse } from "@/types/api";
+import type { CategoryResponse } from "@/types/category";
 import { Loader2 } from "lucide-react";
 import { useActionState, useEffect } from "react";
 import { toast } from "sonner";
@@ -27,13 +25,7 @@ import { toast } from "sonner";
 interface EditIncomeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  income: {
-    uuid: string;
-    amount: number;
-    description?: string | null;
-    date: Date | string;
-    categoryUuid: string;
-  };
+  income: Income;
   familyUuid: string;
   categories: CategoryResponse[];
   isLoadingCategories?: boolean;
@@ -128,9 +120,9 @@ export function EditIncomeDialog({
                 ))}
               </select>
             )}
-            {state.errors?.categoryId && (
+            {state.errors?.categoryUuid && (
               <p className="text-sm text-red-500">
-                {state.errors.categoryId[0]}
+                {state.errors.categoryUuid[0]}
               </p>
             )}
           </div>

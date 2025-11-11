@@ -2,16 +2,6 @@
  * 환경변수 통합 export
  *
  * ⚠️ 중요: 서버와 클라이언트 환경변수를 분리하여 import하세요!
- *
- * 사용 예시:
- *
- * // 서버 사이드 (Server Components, Server Actions, API Routes)
- * import { serverEnv } from '@/lib/env/server.env'
- * console.log(serverEnv.DATABASE_URL)
- *
- * // 클라이언트 사이드 (Client Components)
- * import { clientEnv } from '@/lib/env/client.env'
- * console.log(clientEnv.NEXT_PUBLIC_API_BASE_URL)
  */
 
 // 클라이언트 환경변수만 export (클라이언트 번들에 포함되어도 안전)

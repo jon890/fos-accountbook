@@ -13,7 +13,7 @@ import {
 import { serverApiGet } from "@/lib/server/api";
 import { requireAuth } from "@/lib/server/auth-helpers";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
-import type { CategoryResponse } from "@/types/api";
+import type { CategoryResponse } from "@/types/category";
 
 export async function getFamilyCategoriesAction(
   familyUuid?: string

@@ -12,7 +12,7 @@ import {
 } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
 import { requireAuth } from "@/lib/server/auth-helpers";
-import type { AcceptInvitationRequest } from "@/types/api";
+import type { AcceptInvitationRequest } from "@/types/invitation";
 import { revalidatePath } from "next/cache";
 
 export async function acceptInvitationAction(

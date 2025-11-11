@@ -5,7 +5,7 @@
 import type { CategoryInfo, PaginationResponse } from "./common";
 
 /**
- * 수입 응답
+ * 수입 응답 (백엔드 API 응답)
  */
 export interface IncomeResponse {
   uuid: string;
@@ -75,3 +75,31 @@ export interface GetIncomesParams {
  * 수입 목록 조회 응답
  */
 export type GetIncomesResponse = PaginationResponse<Income>;
+
+/**
+ * 수입 생성 폼 상태
+ */
+export type CreateIncomeFormState = {
+  errors?: {
+    amount?: string[];
+    description?: string[];
+    categoryUuid?: string[];
+    date?: string[];
+  };
+  message?: string;
+  success?: boolean;
+};
+
+/**
+ * 수입 수정 폼 상태
+ */
+export type UpdateIncomeFormState = {
+  errors?: {
+    amount?: string[];
+    description?: string[];
+    categoryUuid?: string[];
+    date?: string[];
+  };
+  message?: string;
+  success?: boolean;
+};

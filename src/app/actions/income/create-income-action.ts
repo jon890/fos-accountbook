@@ -8,7 +8,7 @@ import { ActionError } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
 import { requireAuthOrRedirect } from "@/lib/server/auth-helpers";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
-import type { CreateIncomeRequest, IncomeResponse } from "@/types/api";
+import type { CreateIncomeRequest, IncomeResponse } from "@/types/income";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 

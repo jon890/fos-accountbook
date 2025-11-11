@@ -5,7 +5,7 @@
 
 import { CategoryExpenseSummary } from "./CategoryExpenseSummary";
 import { serverApiGet } from "@/lib/server/api";
-import type { CategoryExpenseSummaryResponse } from "@/types/api";
+import type { CategoryExpenseSummaryResponse } from "@/types/expense";
 
 interface ExpenseSummaryWrapperProps {
   familyId: string;

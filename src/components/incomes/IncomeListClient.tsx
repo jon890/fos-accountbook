@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import type { Income } from "@/types/income";
-import type { CategoryResponse } from "@/types/api";
+import type { CategoryResponse } from "@/types/category";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IncomeItem } from "./IncomeItem";
 
@@ -40,14 +40,14 @@ export function IncomeListClient({
       <Card>
         <CardContent className="p-4 md:p-6">
           <div className="space-y-2">
-          {incomes.map((income) => (
-            <IncomeItem
-              key={income.uuid}
-              income={income}
-              familyUuid={familyUuid}
-              categories={categories}
-            />
-          ))}
+            {incomes.map((income) => (
+              <IncomeItem
+                key={income.uuid}
+                income={income}
+                familyUuid={familyUuid}
+                categories={categories}
+              />
+            ))}
           </div>
         </CardContent>
       </Card>

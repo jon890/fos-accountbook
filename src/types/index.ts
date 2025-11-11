@@ -38,24 +38,28 @@ export type {
 
 // 지출
 export type {
+  Expense,
   ExpenseResponse,
   CategoryExpenseStatResponse,
   CategoryExpenseSummaryResponse,
   CreateExpenseRequest,
   UpdateExpenseRequest,
   GetExpensesParams,
+  GetExpensesResponse,
   CreateExpenseFormState,
   UpdateExpenseFormState,
 } from "./expense";
 
 // 수입
 export type {
-  IncomeResponse,
   Income,
+  IncomeResponse,
   CreateIncomeRequest,
   UpdateIncomeRequest,
   GetIncomesParams,
   GetIncomesResponse,
+  CreateIncomeFormState,
+  UpdateIncomeFormState,
 } from "./income";
 
 // 초대

@@ -6,26 +6,17 @@
 "use client";
 
 import { getFamilyCategoriesAction } from "@/app/actions/category/get-categories-action";
-import type { CategoryResponse } from "@/types/api";
 import type { ExpenseItemData } from "@/types/actions";
+import type { CategoryResponse } from "@/types/category";
+import type { Expense } from "@/types/expense";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { DeleteExpenseDialog } from "./DeleteExpenseDialog";
 import { EditExpenseDialog } from "./EditExpenseDialog";
 import { ExpenseItem } from "./ExpenseItem";
 
-interface ExpenseData {
-  uuid: string;
-  amount: string;
-  description?: string;
-  date: string;
-  categoryUuid: string;
-  categoryName?: string;
-  categoryColor?: string;
-}
-
 interface ExpenseListClientProps {
-  expenses: ExpenseData[];
+  expenses: Expense[];
   categories: CategoryResponse[];
   familyUuid: string;
 }
@@ -35,12 +26,8 @@ export function ExpenseListClient({
   categories: initialCategories,
   familyUuid,
 }: ExpenseListClientProps) {
-  const [editingExpense, setEditingExpense] = useState<ExpenseData | null>(
-    null
-  );
-  const [deletingExpense, setDeletingExpense] = useState<ExpenseData | null>(
-    null
-  );
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
   const [categories, setCategories] =
     useState<CategoryResponse[]>(initialCategories);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
@@ -83,10 +70,10 @@ export function ExpenseListClient({
             description: expense.description,
             date: expense.date,
             categoryUuid: expense.categoryUuid,
-            categoryName: category?.name || expense.categoryName || "기타",
+            categoryName: category?.name || expense.category?.name || "기타",
             categoryColor:
-              category?.color || expense.categoryColor || "#6366f1",
-            categoryIcon: category?.icon || "default",
+              category?.color || expense.category?.color || "#6366f1",
+            categoryIcon: category?.icon || expense.category?.icon || "default",
           };
           return (
             <ExpenseItem
@@ -108,8 +95,8 @@ export function ExpenseListClient({
           }}
           expense={{
             uuid: editingExpense.uuid,
-            amount: editingExpense.amount,
-            description: editingExpense.description,
+            amount: String(editingExpense.amount),
+            description: editingExpense.description || undefined,
             date: editingExpense.date,
             categoryUuid: editingExpense.categoryUuid,
           }}
@@ -128,7 +115,7 @@ export function ExpenseListClient({
           }}
           familyUuid={familyUuid}
           expenseUuid={deletingExpense.uuid}
-          expenseDescription={deletingExpense.description}
+          expenseDescription={deletingExpense.description || undefined}
           onDeleted={() => {
             setDeletingExpense(null);
           }}

@@ -15,7 +15,8 @@ import { serverApiClient } from "@/lib/server/api/client";
 import { requireAuth } from "@/lib/server/auth-helpers";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
 import type { InvitationInfo } from "@/types/actions";
-import type { FamilyResponse, InvitationResponse } from "@/types/api";
+import type { InvitationResponse } from "@/types/invitation";
+import type { FamilyResponse } from "@/types/family";
 
 export async function getActiveInvitationsAction(): Promise<
   ActionResult<InvitationInfo[]>

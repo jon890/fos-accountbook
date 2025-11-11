@@ -13,14 +13,11 @@ import {
 import { serverApiGet } from "@/lib/server/api/client";
 import { requireAuth } from "@/lib/server/auth-helpers";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
-import type { GetExpensesParams } from "@/types/actions";
-import type { ExpenseResponse, PaginationResponse } from "@/types/api";
-
-type GetExpensesData = PaginationResponse<ExpenseResponse>;
+import type { GetExpensesParams, GetExpensesResponse } from "@/types/expense";
 
 export async function getExpensesAction(
   params: GetExpensesParams
-): Promise<ActionResult<GetExpensesData>> {
+): Promise<ActionResult<GetExpensesResponse>> {
   try {
     // 인증 확인
     await requireAuth();
@@ -61,7 +58,7 @@ export async function getExpensesAction(
       queryParams += `&endDate=${endDate}`;
     }
 
-    const response = await serverApiGet<PaginationResponse<ExpenseResponse>>(
+    const response = await serverApiGet<GetExpensesResponse>(
       `/families/${familyId}/expenses?${queryParams}`
     );
 

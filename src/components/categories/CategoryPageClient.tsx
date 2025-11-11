@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import type { CategoryResponse } from "@/types/api";
+import type { CategoryResponse } from "@/types/category";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { AddCategoryDialog } from "./AddCategoryDialog";

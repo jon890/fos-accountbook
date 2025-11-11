@@ -13,7 +13,7 @@ import {
 import { serverApiPost } from "@/lib/server/api";
 import { requireAuth } from "@/lib/server/auth-helpers";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
-import type { CategoryResponse } from "@/types/api";
+import type { CategoryResponse } from "@/types/category";
 import { revalidatePath } from "next/cache";
 
 export async function createCategoryAction(

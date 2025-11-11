@@ -7,19 +7,9 @@
 import { ActionError } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
 import { requireAuth } from "@/lib/server/auth-helpers";
+import type { UpdateIncomeFormState } from "@/types/income";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-
-export type UpdateIncomeFormState = {
-  errors?: {
-    amount?: string[];
-    description?: string[];
-    categoryId?: string[];
-    date?: string[];
-  };
-  message?: string;
-  success?: boolean;
-};
 
 // 수입 수정 스키마 (모든 필드가 선택적)
 const updateIncomeSchema = z.object({

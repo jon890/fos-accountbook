@@ -14,12 +14,10 @@ import { serverApiGet } from "@/lib/server/api";
 import { requireAuth } from "@/lib/server/auth-helpers";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
 import type { DashboardStats } from "@/types/actions";
-import type {
-  ExpenseResponse,
-  FamilyResponse,
-  IncomeResponse,
-  PaginationResponse,
-} from "@/types/api";
+import type { ExpenseResponse } from "@/types/expense";
+import type { FamilyResponse } from "@/types/family";
+import type { IncomeResponse } from "@/types/income";
+import type { PaginationResponse } from "@/types/common";
 
 export async function getDashboardStatsAction(): Promise<
   ActionResult<DashboardStats>

@@ -14,11 +14,9 @@ import { serverApiGet } from "@/lib/server/api";
 import { requireAuth } from "@/lib/server/auth-helpers";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
 import type { RecentExpense } from "@/types/actions";
-import type {
-  CategoryResponse,
-  ExpenseResponse,
-  PaginationResponse,
-} from "@/types/api";
+import type { CategoryResponse } from "@/types/category";
+import type { ExpenseResponse } from "@/types/expense";
+import type { PaginationResponse } from "@/types/common";
 
 export async function getRecentExpensesAction(
   limit: number = 10

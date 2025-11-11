@@ -11,7 +11,7 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
-import type { InvitationResponse } from "@/types/api";
+import type { InvitationResponse } from "@/types/invitation";
 
 export interface InvitationInfoData {
   valid: boolean;

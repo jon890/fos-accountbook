@@ -10,7 +10,8 @@ import { IncomeList } from "@/components/incomes/IncomeList";
 import { TransactionsPageClient } from "@/components/transactions/TransactionsPageClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { serverApiGet } from "@/lib/server/api";
-import type { CategoryResponse, FamilyResponse } from "@/types/api";
+import type { CategoryResponse } from "@/types/category";
+import type { FamilyResponse } from "@/types/family";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
