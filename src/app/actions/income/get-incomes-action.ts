@@ -1,7 +1,7 @@
 "use server";
 
 import { requireAuth } from "@/lib/server/auth-helpers";
-import { serverApiClient } from "@/lib/server/api/client";
+import { serverApiGet } from "@/lib/server/api/client";
 import {
   successResult,
   handleActionError,
@@ -65,9 +65,7 @@ export async function getIncomesAction(
     }`;
 
     // 3. 백엔드 API 호출
-    const response = await serverApiClient<GetIncomesResponse>(endpoint, {
-      method: "GET",
-    });
+    const response = await serverApiGet<GetIncomesResponse>(endpoint);
 
     return successResult(response);
   } catch (error) {

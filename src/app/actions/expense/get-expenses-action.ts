@@ -10,18 +10,13 @@ import {
   successResult,
   type ActionResult,
 } from "@/lib/errors";
-import { serverApiClient } from "@/lib/server/api/client";
+import { serverApiGet } from "@/lib/server/api/client";
 import { requireAuth } from "@/lib/server/auth-helpers";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
 import type { GetExpensesParams } from "@/types/actions";
-import type { ExpenseResponse } from "@/types/api";
+import type { ExpenseResponse, PaginationResponse } from "@/types/api";
 
-interface GetExpensesData {
-  items: ExpenseResponse[];
-  totalPages: number;
-  totalElements: number;
-  currentPage: number;
-}
+type GetExpensesData = PaginationResponse<ExpenseResponse>;
 
 export async function getExpensesAction(
   params: GetExpensesParams
@@ -66,23 +61,11 @@ export async function getExpensesAction(
       queryParams += `&endDate=${endDate}`;
     }
 
-    const response = await serverApiClient<{
-      data: {
-        items: ExpenseResponse[];
-        totalPages: number;
-        totalElements: number;
-        currentPage: number;
-      };
-    }>(`/families/${familyId}/expenses?${queryParams}`, {
-      method: "GET",
-    });
+    const response = await serverApiGet<PaginationResponse<ExpenseResponse>>(
+      `/families/${familyId}/expenses?${queryParams}`
+    );
 
-    return successResult({
-      items: response.data.items,
-      totalPages: response.data.totalPages,
-      totalElements: response.data.totalElements,
-      currentPage: response.data.currentPage,
-    });
+    return successResult(response);
   } catch (error) {
     console.error("지출 조회 중 오류:", error);
     return handleActionError(error, "지출 조회에 실패했습니다");
