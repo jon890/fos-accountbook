@@ -3,13 +3,14 @@ package com.bifos.accountbook.application.dto.profile;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
  * 사용자 프로필 수정 요청 DTO
+ * Value Object로 immutable하게 관리
  */
-@Data
+@Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

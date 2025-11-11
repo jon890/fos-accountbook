@@ -3,15 +3,16 @@ package com.bifos.accountbook.application.dto.profile;
 import com.bifos.accountbook.domain.entity.UserProfile;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 /**
  * 사용자 프로필 응답 DTO
+ * Value Object로 immutable하게 관리
  */
-@Data
+@Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
