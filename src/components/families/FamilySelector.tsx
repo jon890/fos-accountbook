@@ -1,6 +1,8 @@
 "use client";
 
 import { getFamiliesAction } from "@/app/actions/family/get-families-action";
+import { getUserProfileAction } from "@/app/actions/user/get-user-profile-action";
+import { setDefaultFamilyAction } from "@/app/actions/user/set-default-family-action";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,18 +27,41 @@ export function FamilySelector({
   const autoSelectedRef = useRef(false);
 
   useEffect(() => {
-    fetchFamilies();
+    initializeSelector();
   }, []);
 
-  // 가족이 1개일 때 자동으로 선택 (한 번만 실행)
+  // 기본 가족이 있으면 자동 선택, 없으면 가족이 1개일 때 자동 선택
   useEffect(() => {
-    if (families.length === 1 && !loading && !autoSelectedRef.current) {
-      autoSelectedRef.current = true;
-      onFamilySelect(families[0]);
-    }
+    if (loading || autoSelectedRef.current || families.length === 0) return;
+
+    const selectFamily = async () => {
+      // 사용자 프로필에서 기본 가족 조회
+      const profileResult = await getUserProfileAction();
+
+      if (profileResult.success && profileResult.data.defaultFamilyUuid) {
+        // 기본 가족이 설정되어 있으면 해당 가족 선택
+        const defaultFamily = families.find(
+          (f) => f.uuid === profileResult.data.defaultFamilyUuid
+        );
+
+        if (defaultFamily) {
+          autoSelectedRef.current = true;
+          onFamilySelect(defaultFamily);
+          return;
+        }
+      }
+
+      // 기본 가족이 없고 가족이 1개뿐이면 자동 선택
+      if (families.length === 1) {
+        autoSelectedRef.current = true;
+        await handleFamilySelect(families[0]);
+      }
+    };
+
+    selectFamily();
   }, [families, loading, onFamilySelect]);
 
-  const fetchFamilies = async () => {
+  const initializeSelector = async () => {
     try {
       setLoading(true);
       const result = await getFamiliesAction();
@@ -59,6 +84,12 @@ export function FamilySelector({
     }
   };
 
+  const handleFamilySelect = async (family: Family) => {
+    // 선택한 가족을 기본 가족으로 저장
+    await setDefaultFamilyAction(family.uuid);
+    onFamilySelect(family);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -73,7 +104,7 @@ export function FamilySelector({
         <Card className="w-full max-w-md">
           <CardContent className="py-8 text-center">
             <p className="text-red-500 mb-4">{error}</p>
-            <Button onClick={fetchFamilies}>다시 시도</Button>
+            <Button onClick={initializeSelector}>다시 시도</Button>
           </CardContent>
         </Card>
       </div>
@@ -110,7 +141,7 @@ export function FamilySelector({
                 <Card
                   key={family.uuid}
                   className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-blue-200"
-                  onClick={() => onFamilySelect(family)}
+                  onClick={() => handleFamilySelect(family)}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">

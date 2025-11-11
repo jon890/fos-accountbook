@@ -1,0 +1,41 @@
+"use server";
+
+import { requireAuth } from "@/lib/server/auth-helpers";
+import { serverApiClient } from "@/lib/server/api/client";
+import {
+  successResult,
+  handleActionError,
+  type ActionResult,
+} from "@/lib/errors";
+
+export interface UserProfile {
+  userUuid: string;
+  timezone: string;
+  language: string;
+  currency: string;
+  defaultFamilyUuid: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * 사용자 프로필 조회 Server Action
+ */
+export async function getUserProfileAction(): Promise<
+  ActionResult<UserProfile>
+> {
+  try {
+    // 1. 인증 확인
+    await requireAuth();
+
+    // 2. 백엔드 API 호출
+    const profile = await serverApiClient<UserProfile>("/users/me/profile", {
+      method: "GET",
+    });
+
+    return successResult(profile);
+  } catch (error) {
+    console.error("사용자 프로필 조회 실패:", error);
+    return handleActionError(error, "사용자 프로필 조회에 실패했습니다");
+  }
+}
