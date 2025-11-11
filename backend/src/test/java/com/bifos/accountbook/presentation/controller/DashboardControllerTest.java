@@ -233,10 +233,9 @@ class DashboardControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    // TODO: 인증 설정 수정 필요
-    // @Test
-    // @DisplayName("월별 통계 조회 - 성공 (QueryDSL 집계)")
-    void getMonthlyStats_Success_TODO() throws Exception {
+    @Test
+    @DisplayName("월별 통계 조회 - 성공 (QueryDSL 집계)")
+    void getMonthlyStats_Success() throws Exception {
         // Given: 이번 달 지출/수입 데이터 생성
         LocalDateTime now = LocalDateTime.now();
         int year = now.getYear();
@@ -256,10 +255,6 @@ class DashboardControllerTest {
         createExpense(familyUuid, userUuid, foodCategory.getUuid(), 
                 BigDecimal.valueOf(20000), now.minusMonths(1));
 
-        // SecurityContext 설정
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(testUser.getEmail(), null, null));
-
         // When & Then: 월별 통계 조회
         mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly", familyUuid.getValue())
                         .param("year", String.valueOf(year))
@@ -274,15 +269,10 @@ class DashboardControllerTest {
                 .andExpect(jsonPath("$.data.month").value(month));
     }
 
-    // TODO: 인증 설정 수정 필요
-    // @Test
-    // @DisplayName("월별 통계 조회 - 기본값 (현재 연월)")
-    void getMonthlyStats_DefaultValues_TODO() throws Exception {
+    @Test
+    @DisplayName("월별 통계 조회 - 기본값 (현재 연월)")
+    void getMonthlyStats_DefaultValues() throws Exception {
         // Given: 데이터 없음
-
-        // SecurityContext 설정
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(testUser.getEmail(), null, null));
 
         // When & Then: 파라미터 없이 조회 (현재 연월 사용)
         mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly", familyUuid.getValue())
