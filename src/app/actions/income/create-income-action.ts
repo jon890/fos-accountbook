@@ -91,6 +91,7 @@ export async function createIncomeAction(
 
     // 페이지 revalidate
     revalidatePath("/incomes");
+    revalidatePath("/transactions"); // 검색 조건 초기화를 위한 내역 페이지 revalidate
     revalidatePath("/");
 
     return {

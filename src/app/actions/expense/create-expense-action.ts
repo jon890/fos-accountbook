@@ -79,6 +79,7 @@ export async function createExpenseAction(
 
     // 지출 페이지 및 대시보드 revalidate
     revalidatePath("/expenses");
+    revalidatePath("/transactions"); // 검색 조건 초기화를 위한 내역 페이지 revalidate
     revalidatePath("/");
 
     return {
