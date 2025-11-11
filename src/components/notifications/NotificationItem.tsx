@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AlertTriangle, AlertCircle, XCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/client/utils";
 import { markNotificationReadAction } from "@/app/actions/notification/mark-notification-read-action";
 import type {
   Notification,

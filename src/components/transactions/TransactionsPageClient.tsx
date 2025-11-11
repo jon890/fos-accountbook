@@ -4,7 +4,7 @@ import { ExpenseFilters } from "@/components/expenses/forms/ExpenseFilters";
 import { ExpenseTabContent } from "@/app/(authenticated)/transactions/_components/ExpenseTabContent";
 import { IncomeTabContent } from "@/app/(authenticated)/transactions/_components/IncomeTabContent";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/client/utils";
 import type { CategoryResponse } from "@/types/category";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";

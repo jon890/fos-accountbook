@@ -2,7 +2,7 @@
 
 import { AddExpenseDialog } from "@/components/expenses/dialogs/AddExpenseDialog";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/client/utils";
 import type { LucideIcon } from "lucide-react";
 import { BarChart3, CreditCard, Home, Plus, Settings } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";

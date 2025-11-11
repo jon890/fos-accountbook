@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/client/utils";
 import type { CategoryExpenseSummaryResponse } from "@/types/expense";
 import { useRouter, useSearchParams } from "next/navigation";
 
