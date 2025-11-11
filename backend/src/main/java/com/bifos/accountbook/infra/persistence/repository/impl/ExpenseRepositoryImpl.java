@@ -15,7 +15,8 @@ import java.util.Optional;
 
 /**
  * ExpenseRepository 구현체
- * JpaRepository를 내부적으로 사용하여 도메인 인터페이스 구현
+.* - JpaRepository를 사용한 기본 CRUD 작업 전담
+ * - 통계 쿼리는 DashboardRepository로 분리됨
  */
 @Repository
 @RequiredArgsConstructor
@@ -71,23 +72,5 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
     @Override
     public int countByFamilyUuid(CustomUuid familyUuid) {
         return jpaRepository.countByFamilyUuid(familyUuid);
-    }
-
-    @Override
-    public List<com.bifos.accountbook.domain.repository.projection.CategoryExpenseProjection> findCategoryExpenseStats(
-            CustomUuid familyUuid,
-            CustomUuid categoryUuid,
-            LocalDateTime startDate,
-            LocalDateTime endDate) {
-        return jpaRepository.findCategoryExpenseStats(familyUuid, categoryUuid, startDate, endDate);
-    }
-
-    @Override
-    public java.math.BigDecimal getTotalExpenseAmount(
-            CustomUuid familyUuid,
-            CustomUuid categoryUuid,
-            LocalDateTime startDate,
-            LocalDateTime endDate) {
-        return jpaRepository.getTotalExpenseAmount(familyUuid, categoryUuid, startDate, endDate);
     }
 }

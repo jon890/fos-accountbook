@@ -22,6 +22,7 @@ springdoc-openapi = "2.7.0"
 
 # Utilities
 lombok = "1.18.34"
+querydsl = "5.1.0"
 
 # Testing
 # JUnit 버전은 Spring Boot가 자동 관리
@@ -53,6 +54,10 @@ springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openap
 
 # Lombok
 lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+
+# QueryDSL
+querydsl-jpa = { module = "com.querydsl:querydsl-jpa", version.ref = "querydsl" }
+querydsl-apt = { module = "com.querydsl:querydsl-apt", version.ref = "querydsl" }
 
 # Testing
 spring-security-test = { module = "org.springframework.security:spring-security-test" }
