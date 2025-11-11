@@ -116,81 +116,84 @@ export function ExpenseFilters({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>지출 내역 필터</CardTitle>
+      <CardHeader className="py-3 md:py-4">
+        <CardTitle className="text-sm md:text-base">내역 필터</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          {/* 카테고리 필터 */}
-          <div>
-            <Select
-              value={selectedCategory}
-              onValueChange={setSelectedCategory}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="전체 카테고리" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체 카테고리</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category.uuid} value={category.uuid}>
-                    <div className="flex items-center gap-2">
-                      <span>{category.icon}</span>
-                      <span>{category.name}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <CardContent className="space-y-3">
+        {/* 카테고리 필터 */}
+        <div>
+          <label className="text-xs text-gray-600 mb-1 block">카테고리</label>
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="전체 카테고리" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체 카테고리</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category.uuid} value={category.uuid}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{category.icon}</span>
+                    <span className="text-sm">{category.name}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-          {/* 시작 날짜 */}
-          <div>
+        {/* 날짜 필터 - 한 줄로 배치 */}
+        <div>
+          <label className="text-xs text-gray-600 mb-1 block">기간</label>
+          <div className="grid grid-cols-2 gap-2">
             <Input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               placeholder="시작 날짜"
+              className="h-9 text-sm"
             />
-          </div>
-
-          {/* 종료 날짜 */}
-          <div>
             <Input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               placeholder="종료 날짜"
+              className="h-9 text-sm"
             />
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+        {/* 버튼 및 페이지 크기 */}
+        <div className="flex flex-col gap-2 pt-1">
+          {/* 필터 버튼 */}
           <div className="flex gap-2">
             <Button
               onClick={applyFilters}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-blue-600 hover:bg-blue-700 h-9 text-sm flex-1"
             >
               필터 적용
             </Button>
 
             {hasActiveFilters && (
-              <Button variant="outline" onClick={clearFilters}>
-                필터 초기화
+              <Button
+                variant="outline"
+                onClick={clearFilters}
+                className="h-9 text-sm"
+              >
+                초기화
               </Button>
             )}
           </div>
 
           {/* 페이지 크기 선택 */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">표시 개수:</span>
+          <div className="flex items-center gap-2 justify-between">
+            <span className="text-xs text-gray-600">표시 개수:</span>
             <div className="flex gap-1.5">
               {PAGE_SIZE_OPTIONS.map((option) => (
                 <Badge
                   key={option.value}
                   variant={pageSize === option.value ? "default" : "outline"}
                   className={cn(
-                    "cursor-pointer transition-colors",
+                    "cursor-pointer transition-colors text-xs px-2 py-0.5",
                     pageSize === option.value
                       ? "bg-blue-600 hover:bg-blue-700"
                       : "hover:bg-gray-100"

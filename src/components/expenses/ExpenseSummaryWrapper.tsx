@@ -27,9 +27,9 @@ export async function ExpenseSummaryWrapper({
   if (categoryId) params.append("categoryId", categoryId);
 
   try {
-    // 백엔드 집계 API 호출
+    // 대시보드 백엔드 집계 API 호출
     const summary = await serverApiGet<CategoryExpenseSummaryResponse>(
-      `/families/${familyId}/expenses/summary/by-category?${params.toString()}`
+      `/families/${familyId}/dashboard/expenses/by-category?${params.toString()}`
     );
 
     // 데이터가 없으면 null 반환
