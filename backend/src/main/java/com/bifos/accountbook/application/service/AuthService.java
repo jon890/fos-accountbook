@@ -8,6 +8,7 @@ import com.bifos.accountbook.common.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.UserRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.domain.value.UserStatus;
 import com.bifos.accountbook.infra.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +60,7 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
 
-        if (user.getDeletedAt() != null) {
+        if (user.getStatus() == UserStatus.DELETED) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND, "삭제된 사용자입니다")
                     .addParameter("userUuid", user.getUuid().toString());
         }
@@ -74,7 +75,7 @@ public class AuthService {
         User user = userRepository.findByProviderAndProviderId(provider, providerId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
 
-        if (user.getDeletedAt() != null) {
+        if (user.getStatus() == UserStatus.DELETED) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND, "삭제된 사용자입니다")
                     .addParameter("userUuid", user.getUuid().toString());
         }
@@ -100,7 +101,7 @@ public class AuthService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
                         .addParameter("userUuid", userUuid));
 
-        if (user.getDeletedAt() != null) {
+        if (user.getStatus() == UserStatus.DELETED) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND, "삭제된 사용자입니다")
                     .addParameter("userUuid", user.getUuid().toString());
         }

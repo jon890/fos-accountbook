@@ -1,6 +1,7 @@
 package com.bifos.accountbook.domain.entity;
 
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.domain.value.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -55,8 +56,14 @@ public class User {
     @Column(name = "updatedAt", nullable = false)
     private LocalDateTime updatedAt;
 
-    @Column(name = "deletedAt")
-    private LocalDateTime deletedAt;
+    /**
+     * 사용자 상태
+     * ACTIVE: 활성, DELETED: 삭제됨
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private UserStatus status = UserStatus.ACTIVE;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
