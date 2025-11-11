@@ -15,7 +15,6 @@ import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.repository.UserRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.domain.value.FamilyStatus;
-import com.bifos.accountbook.domain.value.FamilyStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
