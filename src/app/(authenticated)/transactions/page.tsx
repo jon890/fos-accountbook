@@ -82,8 +82,8 @@ export default async function TransactionsPage({
     <div className="space-y-6">
       <Suspense
         fallback={
-          <Card>
-            <CardContent className="flex justify-center items-center py-8">
+          <Card className="w-full">
+            <CardContent className="flex justify-center items-center min-h-[400px] py-12">
               <LoadingSpinner />
             </CardContent>
           </Card>
