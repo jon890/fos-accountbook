@@ -4,18 +4,22 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { AddExpenseForm } from "@/components/expenses/AddExpenseForm";
+import { AddExpenseForm } from "@/components/expenses/forms/AddExpenseForm";
 import type { CategoryResponse } from "@/types/category";
 
-interface ExpensePageClientProps {
+interface ExpenseTabContentProps {
   categories: CategoryResponse[];
   familyUuid: string;
 }
 
-export function ExpensePageClient({
+/**
+ * Expense Tab Content Component
+ * Transactions 페이지의 지출 탭 전용 컴포넌트
+ */
+export function ExpenseTabContent({
   categories,
   familyUuid,
-}: ExpensePageClientProps) {
+}: ExpenseTabContentProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const router = useRouter();
 

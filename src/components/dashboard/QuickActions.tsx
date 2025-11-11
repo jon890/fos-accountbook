@@ -1,7 +1,7 @@
 "use client";
 
-import { AddExpenseDialog } from "@/components/expenses/AddExpenseDialog";
-import { AddIncomeDialog } from "@/components/incomes/AddIncomeDialog";
+import { AddExpenseDialog } from "@/components/expenses/dialogs/AddExpenseDialog";
+import { AddIncomeDialog } from "@/components/incomes/dialogs/AddIncomeDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Settings, UserPlus, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";

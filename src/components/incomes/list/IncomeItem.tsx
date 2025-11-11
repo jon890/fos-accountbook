@@ -4,7 +4,7 @@ import type { Income } from "@/types/income";
 import { formatExpenseDate } from "@/lib/utils/format";
 import { Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { EditIncomeDialog } from "./EditIncomeDialog";
+import { EditIncomeDialog } from "../dialogs/EditIncomeDialog";
 import type { CategoryResponse } from "@/types/category";
 import { deleteIncomeAction } from "@/app/actions/income/delete-income-action";
 import { toast } from "sonner";

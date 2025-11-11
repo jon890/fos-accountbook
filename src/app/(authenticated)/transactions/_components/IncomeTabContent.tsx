@@ -3,13 +3,17 @@
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useState } from "react";
-import { AddIncomeDialog } from "./AddIncomeDialog";
+import { AddIncomeDialog } from "@/components/incomes/dialogs/AddIncomeDialog";
 
-interface IncomePageClientProps {
+interface IncomeTabContentProps {
   familyUuid: string;
 }
 
-export function IncomePageClient({ familyUuid }: IncomePageClientProps) {
+/**
+ * Income Tab Content Component
+ * Transactions 페이지의 수입 탭 전용 컴포넌트
+ */
+export function IncomeTabContent({ familyUuid }: IncomeTabContentProps) {
   const [addIncomeDialogOpen, setAddIncomeDialogOpen] = useState(false);
 
   return (
@@ -29,4 +33,3 @@ export function IncomePageClient({ familyUuid }: IncomePageClientProps) {
     </>
   );
 }
-

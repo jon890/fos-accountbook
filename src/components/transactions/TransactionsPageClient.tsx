@@ -1,8 +1,8 @@
 "use client";
 
-import { ExpenseFilters } from "@/components/expenses/ExpenseFilters";
-import { ExpensePageClient } from "@/components/expenses/ExpensePageClient";
-import { IncomePageClient } from "@/components/incomes/IncomePageClient";
+import { ExpenseFilters } from "@/components/expenses/forms/ExpenseFilters";
+import { ExpenseTabContent } from "@/app/(authenticated)/transactions/_components/ExpenseTabContent";
+import { IncomeTabContent } from "@/app/(authenticated)/transactions/_components/IncomeTabContent";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { CategoryResponse } from "@/types/category";
@@ -50,9 +50,9 @@ export function TransactionsPageClient({
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">내역</h1>
         {activeTab === "expenses" ? (
-          <ExpensePageClient categories={categories} familyUuid={familyUuid} />
+          <ExpenseTabContent categories={categories} familyUuid={familyUuid} />
         ) : (
-          <IncomePageClient familyUuid={familyUuid} />
+          <IncomeTabContent familyUuid={familyUuid} />
         )}
       </div>
 

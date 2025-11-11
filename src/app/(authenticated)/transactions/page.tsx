@@ -4,9 +4,9 @@
  */
 
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
-import { ExpenseList } from "@/components/expenses/ExpenseList";
-import { ExpenseSummaryWrapper } from "@/components/expenses/ExpenseSummaryWrapper";
-import { IncomeList } from "@/components/incomes/IncomeList";
+import { ExpenseList } from "@/components/expenses/list/ExpenseList";
+import { ExpenseSummaryWrapper } from "@/components/expenses/summary/ExpenseSummaryWrapper";
+import { IncomeList } from "@/components/incomes/list/IncomeList";
 import { TransactionsPageClient } from "@/components/transactions/TransactionsPageClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { serverApiGet } from "@/lib/server/api";

@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ExpenseItem } from "@/components/expenses/ExpenseItem";
+import { ExpenseItem } from "@/components/expenses/list/ExpenseItem";
 import type { ExpenseItemData } from "@/types/expense";
 import type { RecentExpense } from "@/types/dashboard";
 import { Plus, Wallet } from "lucide-react";

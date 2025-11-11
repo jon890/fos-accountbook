@@ -10,7 +10,7 @@
 
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ExpenseItem } from "@/components/expenses/ExpenseItem";
+import { ExpenseItem } from "@/components/expenses/list/ExpenseItem";
 
 describe("ExpenseItem", () => {
   const mockExpense = {

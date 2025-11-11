@@ -10,8 +10,8 @@ import type { CategoryResponse } from "@/types/category";
 import type { Expense, ExpenseItemData } from "@/types/expense";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { DeleteExpenseDialog } from "./DeleteExpenseDialog";
-import { EditExpenseDialog } from "./EditExpenseDialog";
+import { DeleteExpenseDialog } from "../dialogs/DeleteExpenseDialog";
+import { EditExpenseDialog } from "../dialogs/EditExpenseDialog";
 import { ExpenseItem } from "./ExpenseItem";
 
 interface ExpenseListClientProps {
