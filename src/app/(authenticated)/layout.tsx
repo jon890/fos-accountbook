@@ -9,6 +9,8 @@ import { auth } from "@/lib/server/auth";
 import { redirect } from "next/navigation";
 import { ReactNode } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { TimeZoneProvider } from "@/lib/client/timezone-context";
+import { getUserProfileAction } from "@/app/actions/user/get-user-profile-action";
 
 interface AuthenticatedLayoutProps {
   children: ReactNode;
@@ -25,6 +27,22 @@ export default async function AuthenticatedLayout({
     redirect("/auth/signin");
   }
 
+  // 사용자 프로필에서 시간대 가져오기
+  let timezone = "Asia/Seoul"; // 기본값
+  try {
+    const profileResult = await getUserProfileAction();
+    if (profileResult.success && profileResult.data.timezone) {
+      timezone = profileResult.data.timezone;
+    }
+  } catch (error) {
+    console.error("Failed to fetch user profile:", error);
+    // 실패 시 기본값 사용
+  }
+
   // 인증된 사용자에게 공통 레이아웃 제공
-  return <AppLayout initialSession={session}>{children}</AppLayout>;
+  return (
+    <TimeZoneProvider timezone={timezone}>
+      <AppLayout initialSession={session}>{children}</AppLayout>
+    </TimeZoneProvider>
+  );
 }

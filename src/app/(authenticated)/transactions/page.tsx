@@ -14,6 +14,8 @@ import type { CategoryResponse } from "@/types/category";
 import type { FamilyResponse } from "@/types/family";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { getUserProfileAction } from "@/app/actions/user/get-user-profile-action";
+import { getMonthRange } from "@/lib/utils/date-timezone";
 
 // 쿠키를 사용하므로 동적 렌더링 필요
 export const dynamic = "force-dynamic";
@@ -39,17 +41,20 @@ export default async function TransactionsPage({
   // 기본 탭은 지출
   const activeTab = resolvedSearchParams.tab || "expenses";
 
-  // 기본값: 현재 달의 시작일과 종료일
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth();
+  // 사용자 프로필에서 시간대 가져오기
+  let timezone = "Asia/Seoul"; // 기본값
+  try {
+    const profileResult = await getUserProfileAction();
+    if (profileResult.success && profileResult.data.timezone) {
+      timezone = profileResult.data.timezone;
+    }
+  } catch (error) {
+    console.error("Failed to fetch user timezone:", error);
+  }
 
-  const defaultStartDate = new Date(currentYear, currentMonth, 1)
-    .toISOString()
-    .split("T")[0];
-  const defaultEndDate = new Date(currentYear, currentMonth + 1, 0)
-    .toISOString()
-    .split("T")[0];
+  // 시간대 기준으로 현재 달의 시작일과 종료일 계산
+  const { startDate: defaultStartDate, endDate: defaultEndDate } =
+    getMonthRange(timezone);
 
   // 쿼리 파라미터가 없으면 기본값 사용
   const startDate = resolvedSearchParams.startDate || defaultStartDate;
