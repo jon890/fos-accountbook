@@ -1,5 +1,6 @@
 package com.bifos.accountbook.application.dto.expense;
 
+import com.bifos.accountbook.application.dto.common.CategoryInfo;
 import com.bifos.accountbook.domain.entity.Expense;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,8 +19,7 @@ public class ExpenseResponse {
     private String uuid;
     private String familyUuid;
     private String categoryUuid;
-    private String categoryName;
-    private String categoryColor;
+    private CategoryInfo category;
     private BigDecimal amount;
     private String description;
     private LocalDateTime date;
@@ -31,8 +31,7 @@ public class ExpenseResponse {
                 .uuid(expense.getUuid().getValue())
                 .familyUuid(expense.getFamilyUuid().getValue())
                 .categoryUuid(expense.getCategoryUuid().getValue())
-                .categoryName(expense.getCategory() != null ? expense.getCategory().getName() : null)
-                .categoryColor(expense.getCategory() != null ? expense.getCategory().getColor() : null)
+                .category(CategoryInfo.from(expense.getCategory()))
                 .amount(expense.getAmount())
                 .description(expense.getDescription())
                 .date(expense.getDate())

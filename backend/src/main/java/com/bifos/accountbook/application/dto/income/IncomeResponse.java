@@ -1,5 +1,6 @@
 package com.bifos.accountbook.application.dto.income;
 
+import com.bifos.accountbook.application.dto.common.CategoryInfo;
 import com.bifos.accountbook.domain.entity.Income;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,8 +19,7 @@ public class IncomeResponse {
     private String uuid;
     private String familyUuid;
     private String categoryUuid;
-    private String categoryName;
-    private String categoryColor;
+    private CategoryInfo category;
     private BigDecimal amount;
     private String description;
     private LocalDateTime date;
@@ -31,8 +31,7 @@ public class IncomeResponse {
                 .uuid(income.getUuid().getValue())
                 .familyUuid(income.getFamilyUuid().getValue())
                 .categoryUuid(income.getCategoryUuid().getValue())
-                .categoryName(income.getCategory() != null ? income.getCategory().getName() : null)
-                .categoryColor(income.getCategory() != null ? income.getCategory().getColor() : null)
+                .category(CategoryInfo.from(income.getCategory()))
                 .amount(income.getAmount())
                 .description(income.getDescription())
                 .date(income.getDate())
