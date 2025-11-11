@@ -51,7 +51,7 @@ class UserProfileControllerTest {
     private UserProfileRepository userProfileRepository;
 
     private User testUser;
-    private static final String API_BASE_URL = "/api/users/me/profile";
+    private static final String API_BASE_URL = "/api/v1/users/me/profile";
 
     @BeforeEach
     void setUp() {

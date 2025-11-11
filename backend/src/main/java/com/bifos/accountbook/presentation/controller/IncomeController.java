@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/families/{familyUuid}/incomes")
+@RequestMapping("/api/v1/families/{familyUuid}/incomes")
 @RequiredArgsConstructor
 public class IncomeController {
 

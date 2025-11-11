@@ -47,11 +47,12 @@ public class SecurityConfig {
 
                 // 요청에 대한 인증/인가 설정
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
-                        .requestMatchers("/health", "/actuator/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/invitations/token/**").permitAll() // 초대장
-                        // 조회
+                        // Public endpoints (Actuator)
+                        .requestMatchers("/actuator/**").permitAll()
+                        
+                        // Public API endpoints
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/invitations/token/**").permitAll() // 초대장 조회
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // Swagger UI 및 OpenAPI 문서

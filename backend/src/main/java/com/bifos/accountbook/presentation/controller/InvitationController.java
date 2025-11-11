@@ -18,7 +18,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/invitations")
+@RequestMapping("/api/v1/invitations")
 @RequiredArgsConstructor
 public class InvitationController {
 

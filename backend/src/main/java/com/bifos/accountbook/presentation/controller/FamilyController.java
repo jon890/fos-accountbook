@@ -24,7 +24,7 @@ import java.util.List;
 @Tag(name = "가족 (Family)", description = "가족 생성, 조회, 수정, 삭제 API")
 @Slf4j
 @RestController
-@RequestMapping("/families")
+@RequestMapping("/api/v1/families")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 public class FamilyController {

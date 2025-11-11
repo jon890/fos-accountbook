@@ -45,6 +45,19 @@ springdoc:
   swagger-ui:
     enabled: ${SWAGGER_ENABLED:false} # 기본 비활성화
 
+# Actuator 프로덕션 설정 (보안을 위해 최소화)
+management:
+  endpoints:
+    web:
+      exposure:
+        # 프로덕션에서는 health만 노출
+        include: health
+  endpoint:
+    health:
+      # 헬스 체크는 기본 정보만 표시 (보안)
+      show-details: when-authorized
+      show-components: when-authorized
+
 # CORS 설정 (프로덕션 환경) - allowed-origins만 오버라이드
 cors:
   allowed-origins:

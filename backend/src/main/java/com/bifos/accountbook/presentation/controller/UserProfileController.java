@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
  * 사용자 프로필 컨트롤러
  */
 @RestController
-@RequestMapping("/api/users/me/profile")
+@RequestMapping("/api/v1/users/me/profile")
 @RequiredArgsConstructor
 public class UserProfileController {
 
