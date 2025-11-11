@@ -1,7 +1,13 @@
 "use client";
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { CategoryExpenseSummaryResponse } from "@/types/expense";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -30,103 +36,116 @@ export function CategoryExpenseSummary({
 
   return (
     <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
-      <CardHeader className="pb-3 md:pb-4 px-4 md:px-6 pt-4 md:pt-6">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base md:text-xl font-bold text-gray-900">
-            카테고리별 지출
-          </CardTitle>
-          <Badge variant="secondary" className="bg-gray-100 text-xs md:text-sm">
-            총 ₩{totalExpense.toLocaleString()}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="px-4 md:px-6">
-        <div className="space-y-3 md:space-y-4">
-          {categoryStats.map((stat) => {
-            const isSelected =
-              searchParams.get("categoryId") === stat.categoryUuid;
-
-            return (
-              <div
-                key={stat.categoryUuid}
-                onClick={() => handleCategoryClick(stat.categoryUuid)}
-                className={cn(
-                  "relative overflow-hidden rounded-xl md:rounded-2xl bg-gradient-to-r from-gray-50 to-white p-3 md:p-4 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg",
-                  isSelected ? "border-2 shadow-md" : "border border-gray-100"
-                )}
-                style={
-                  isSelected ? { borderColor: stat.categoryColor } : undefined
-                }
+      <Accordion type="single" collapsible defaultValue="category-summary">
+        <AccordionItem value="category-summary" className="border-0">
+          <AccordionTrigger className="px-4 md:px-6 py-4 md:py-5 hover:no-underline hover:bg-gray-50/50 rounded-t-xl transition-colors">
+            <div className="flex items-center justify-between w-full pr-2">
+              <h3 className="text-base md:text-xl font-bold text-gray-900">
+                카테고리별 지출
+              </h3>
+              <Badge
+                variant="secondary"
+                className="bg-gray-100 text-xs md:text-sm"
               >
-                {/* 배경 프로그레스 바 */}
-                <div
-                  className="absolute inset-0 opacity-10"
-                  style={{
-                    background: `linear-gradient(to right, ${stat.categoryColor} 0%, ${stat.categoryColor} ${stat.percentage}%, transparent ${stat.percentage}%)`,
-                  }}
-                />
+                총 ₩{totalExpense.toLocaleString()}
+              </Badge>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <CardContent className="px-4 md:px-6 pt-0 pb-4 md:pb-6">
+              <div className="space-y-3 md:space-y-4">
+                {categoryStats.map((stat) => {
+                  const isSelected =
+                    searchParams.get("categoryId") === stat.categoryUuid;
 
-                <div className="relative flex items-center justify-between">
-                  <div className="flex items-center space-x-2.5 md:space-x-3 flex-1">
-                    {/* 카테고리 아이콘 */}
+                  return (
                     <div
-                      className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center shadow-sm shrink-0"
-                      style={{
-                        backgroundColor: `${stat.categoryColor}20`,
-                      }}
+                      key={stat.categoryUuid}
+                      onClick={() => handleCategoryClick(stat.categoryUuid)}
+                      className={cn(
+                        "relative overflow-hidden rounded-xl md:rounded-2xl bg-gradient-to-r from-gray-50 to-white p-3 md:p-4 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg",
+                        isSelected
+                          ? "border-2 shadow-md"
+                          : "border border-gray-100"
+                      )}
+                      style={
+                        isSelected
+                          ? { borderColor: stat.categoryColor }
+                          : undefined
+                      }
                     >
-                      <span className="text-xl md:text-2xl">
-                        {stat.categoryIcon}
-                      </span>
-                    </div>
+                      {/* 배경 프로그레스 바 */}
+                      <div
+                        className="absolute inset-0 opacity-10"
+                        style={{
+                          background: `linear-gradient(to right, ${stat.categoryColor} 0%, ${stat.categoryColor} ${stat.percentage}%, transparent ${stat.percentage}%)`,
+                        }}
+                      />
 
-                    {/* 카테고리 정보 */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-gray-900 text-sm md:text-base">
-                          {stat.categoryName}
-                        </h4>
-                        <Badge
-                          variant="secondary"
-                          className="text-[10px] md:text-xs"
-                          style={{
-                            backgroundColor: `${stat.categoryColor}15`,
-                            color: stat.categoryColor,
-                            border: "none",
-                          }}
-                        >
-                          {stat.count}건
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1.5 md:h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="relative flex items-center justify-between">
+                        <div className="flex items-center space-x-2.5 md:space-x-3 flex-1">
+                          {/* 카테고리 아이콘 */}
                           <div
-                            className="h-full rounded-full transition-all duration-300"
+                            className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center shadow-sm shrink-0"
                             style={{
-                              width: `${stat.percentage}%`,
-                              backgroundColor: stat.categoryColor,
+                              backgroundColor: `${stat.categoryColor}20`,
                             }}
-                          />
+                          >
+                            <span className="text-xl md:text-2xl">
+                              {stat.categoryIcon}
+                            </span>
+                          </div>
+
+                          {/* 카테고리 정보 */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-semibold text-gray-900 text-sm md:text-base">
+                                {stat.categoryName}
+                              </h4>
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] md:text-xs"
+                                style={{
+                                  backgroundColor: `${stat.categoryColor}15`,
+                                  color: stat.categoryColor,
+                                  border: "none",
+                                }}
+                              >
+                                {stat.count}건
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-1.5 md:h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all duration-300"
+                                  style={{
+                                    width: `${stat.percentage}%`,
+                                    backgroundColor: stat.categoryColor,
+                                  }}
+                                />
+                              </div>
+                              <span className="text-xs md:text-sm text-gray-500 tabular-nums">
+                                {stat.percentage.toFixed(1)}%
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <span className="text-xs md:text-sm text-gray-500 tabular-nums">
-                          {stat.percentage.toFixed(1)}%
-                        </span>
+
+                        {/* 금액 */}
+                        <div className="text-right ml-3 md:ml-4">
+                          <p className="text-sm md:text-lg font-bold text-gray-900 whitespace-nowrap">
+                            ₩{stat.totalAmount.toLocaleString()}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-
-                  {/* 금액 */}
-                  <div className="text-right ml-3 md:ml-4">
-                    <p className="text-sm md:text-lg font-bold text-gray-900 whitespace-nowrap">
-                      ₩{stat.totalAmount.toLocaleString()}
-                    </p>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
-      </CardContent>
+            </CardContent>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </Card>
   );
 }
