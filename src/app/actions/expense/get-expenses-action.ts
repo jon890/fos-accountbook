@@ -17,7 +17,7 @@ import type { GetExpensesParams } from "@/types/actions";
 import type { ExpenseResponse } from "@/types/api";
 
 interface GetExpensesData {
-  expenses: ExpenseResponse[];
+  items: ExpenseResponse[];
   totalPages: number;
   totalElements: number;
   currentPage: number;
@@ -68,20 +68,20 @@ export async function getExpensesAction(
 
     const response = await serverApiClient<{
       data: {
-        content: ExpenseResponse[];
+        items: ExpenseResponse[];
         totalPages: number;
         totalElements: number;
-        number: number;
+        currentPage: number;
       };
     }>(`/families/${familyId}/expenses?${queryParams}`, {
       method: "GET",
     });
 
     return successResult({
-      expenses: response.data.content,
+      items: response.data.items,
       totalPages: response.data.totalPages,
       totalElements: response.data.totalElements,
-      currentPage: response.data.number,
+      currentPage: response.data.currentPage,
     });
   } catch (error) {
     console.error("지출 조회 중 오류:", error);

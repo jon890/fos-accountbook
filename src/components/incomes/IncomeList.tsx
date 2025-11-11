@@ -42,7 +42,12 @@ export async function IncomeList({
     );
   }
 
-  const { incomes, totalElements, totalPages, currentPage } = result.data;
+  const {
+    items: incomes,
+    totalElements,
+    totalPages,
+    currentPage,
+  } = result.data;
 
   if (incomes.length === 0) {
     return (
@@ -71,4 +76,3 @@ export async function IncomeList({
     />
   );
 }
-

@@ -18,7 +18,7 @@ import type {
   ExpenseResponse,
   FamilyResponse,
   IncomeResponse,
-  PageResponse,
+  PaginationResponse,
 } from "@/types/api";
 
 export async function getDashboardStatsAction(): Promise<
@@ -47,12 +47,12 @@ export async function getDashboardStatsAction(): Promise<
     const month = now.getMonth() + 1;
 
     // 이번 달 지출 목록 조회 (간단하게 전체 조회 후 필터링)
-    const expenses = await serverApiGet<PageResponse<ExpenseResponse>>(
+    const expenses = await serverApiGet<PaginationResponse<ExpenseResponse>>(
       `/families/${family.uuid}/expenses?page=0&size=1000`
     );
 
     // 이번 달 지출만 필터링하고 합계 계산
-    const monthlyExpense = expenses.content
+    const monthlyExpense = expenses.items
       .filter((expense) => {
         const expenseDate = new Date(expense.date);
         return (
@@ -63,12 +63,12 @@ export async function getDashboardStatsAction(): Promise<
       .reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
 
     // 이번 달 수입 목록 조회
-    const incomes = await serverApiGet<PageResponse<IncomeResponse>>(
+    const incomes = await serverApiGet<PaginationResponse<IncomeResponse>>(
       `/families/${family.uuid}/incomes?page=0&size=1000`
     );
 
     // 이번 달 수입만 필터링하고 합계 계산
-    const monthlyIncome = incomes.content
+    const monthlyIncome = incomes.items
       .filter((income) => {
         const incomeDate = new Date(income.date);
         return (

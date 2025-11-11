@@ -45,7 +45,7 @@ export async function ExpenseList({
     );
   }
 
-  const { expenses, totalPages, totalElements, currentPage } = result.data;
+  const { items: expenses, totalPages, totalElements, currentPage } = result.data;
 
   if (expenses.length === 0) {
     return (

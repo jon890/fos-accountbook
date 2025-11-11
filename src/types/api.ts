@@ -210,25 +210,13 @@ export interface CategoryExpenseSummaryResponse {
 }
 
 /**
- * 지출 페이지 응답 (Spring Data Page)
+ * 공통 페이지네이션 응답
  */
-export interface PageResponse<T> {
-  content: T[];
-  pageable: {
-    pageNumber: number;
-    pageSize: number;
-    offset: number;
-    paged: boolean;
-    unpaged: boolean;
-  };
+export interface PaginationResponse<T> {
+  items: T[];
   totalElements: number;
   totalPages: number;
-  size: number;
-  number: number;
-  numberOfElements: number;
-  first: boolean;
-  last: boolean;
-  empty: boolean;
+  currentPage: number;
 }
 
 /**

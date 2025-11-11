@@ -17,7 +17,7 @@ import type { RecentExpense } from "@/types/actions";
 import type {
   CategoryResponse,
   ExpenseResponse,
-  PageResponse,
+  PaginationResponse,
 } from "@/types/api";
 
 export async function getRecentExpensesAction(
@@ -45,7 +45,9 @@ export async function getRecentExpensesAction(
     }
 
     // 최근 지출 조회 (페이징)
-    const expensesPage = await serverApiGet<PageResponse<ExpenseResponse>>(
+    const expensesPage = await serverApiGet<
+      PaginationResponse<ExpenseResponse>
+    >(
       `/families/${selectedFamilyUuid}/expenses?page=0&size=${limit}&sort=-date`
     );
 
@@ -57,7 +59,7 @@ export async function getRecentExpensesAction(
     // 카테고리 맵 생성
     const categoryMap = new Map(categories.map((cat) => [cat.uuid, cat]));
 
-    const recentExpenses = expensesPage.content.map((expense) => {
+    const recentExpenses = expensesPage.items.map((expense) => {
       const category = categoryMap.get(expense.categoryUuid);
       return {
         id: expense.uuid, // UUID를 id로 사용

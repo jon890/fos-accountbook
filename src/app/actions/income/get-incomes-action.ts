@@ -35,11 +35,10 @@ export interface GetIncomesParams {
 }
 
 export interface GetIncomesResponse {
-  incomes: Income[];
+  items: Income[];
   totalElements: number;
   totalPages: number;
   currentPage: number;
-  pageSize: number;
 }
 
 /**

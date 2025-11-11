@@ -31,7 +31,9 @@ export function CategoryExpenseSummary({
       <CardContent className="px-4 md:px-6">
         <div className="space-y-3 md:space-y-4">
           {categoryStats.map((stat) => {
-            const IconComponent = getCategoryIcon(stat.categoryIcon || "default");
+            const IconComponent = getCategoryIcon(
+              stat.categoryIcon || "default"
+            );
             const useEmoji = !IconComponent;
 
             return (
