@@ -56,7 +56,7 @@ public class ExpenseService {
         // 사용자 확인
         User user = userRepository.findByUuid(userUuid)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
-                        .addParameter("userUuid", userUuid.toString()));
+                        .addParameter("userUuid", userUuid.getValue()));
 
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
@@ -64,12 +64,12 @@ public class ExpenseService {
         // 카테고리 확인
         Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
-                        .addParameter("categoryUuid", categoryCustomUuid.toString()));
+                        .addParameter("categoryUuid", categoryCustomUuid.getValue()));
 
         if (!category.getFamilyUuid().equals(familyCustomUuid)) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 가족의 카테고리가 아닙니다")
-                    .addParameter("categoryFamilyUuid", category.getFamilyUuid().toString())
-                    .addParameter("requestFamilyUuid", familyCustomUuid.toString());
+                    .addParameter("categoryFamilyUuid", category.getFamilyUuid().getValue())
+                    .addParameter("requestFamilyUuid", familyCustomUuid.getValue());
         }
 
         // 지출 생성
@@ -83,7 +83,6 @@ public class ExpenseService {
                 .build();
 
         expense = expenseRepository.save(expense);
-        log.info("Created expense: {} in family: {} by user: {}", expense.getUuid(), familyUuid, userUuid);
 
         return ExpenseResponse.fromWithoutCategory(expense);
     }
@@ -164,7 +163,7 @@ public class ExpenseService {
 
         Expense expense = expenseRepository.findActiveByUuid(expenseCustomUuid)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_NOT_FOUND)
-                        .addParameter("expenseUuid", expenseCustomUuid.toString()));
+                        .addParameter("expenseUuid", expenseCustomUuid.getValue()));
 
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
@@ -181,7 +180,7 @@ public class ExpenseService {
 
         Expense expense = expenseRepository.findActiveByUuid(expenseCustomUuid)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_NOT_FOUND)
-                        .addParameter("expenseUuid", expenseCustomUuid.toString()));
+                        .addParameter("expenseUuid", expenseCustomUuid.getValue()));
 
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
@@ -197,8 +196,8 @@ public class ExpenseService {
 
             if (!category.getFamilyUuid().equals(expense.getFamilyUuid())) {
                 throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 가족의 카테고리가 아닙니다")
-                        .addParameter("categoryFamilyUuid", category.getFamilyUuid().toString())
-                        .addParameter("expenseFamilyUuid", expense.getFamilyUuid().toString());
+                        .addParameter("categoryFamilyUuid", category.getFamilyUuid().getValue())
+                        .addParameter("expenseFamilyUuid", expense.getFamilyUuid().getValue());
             }
         }
 
@@ -222,7 +221,7 @@ public class ExpenseService {
 
         Expense expense = expenseRepository.findActiveByUuid(expenseCustomUuid)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_NOT_FOUND)
-                        .addParameter("expenseUuid", expenseCustomUuid.toString()));
+                        .addParameter("expenseUuid", expenseCustomUuid.getValue()));
 
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());

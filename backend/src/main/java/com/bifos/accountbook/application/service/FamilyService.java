@@ -49,7 +49,7 @@ public class FamilyService {
         // 사용자 조회
         User user = userRepository.findByUuid(userUuid)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
-                        .addParameter("userUuid", userUuid.toString()));
+                        .addParameter("userUuid", userUuid.getValue()));
 
         // 가족 생성
         Family family = Family.builder()
@@ -88,7 +88,7 @@ public class FamilyService {
     public List<FamilyResponse> getUserFamilies(CustomUuid userUuid) {
         User user = userRepository.findByUuid(userUuid)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
-                        .addParameter("userUuid", userUuid.toString()));
+                        .addParameter("userUuid", userUuid.getValue()));
 
         // 사용자가 속한 가족 멤버십 조회
         List<FamilyMember> memberships = familyMemberRepository.findAllByUserUuid(user.getUuid());

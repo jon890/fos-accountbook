@@ -36,8 +36,8 @@ public class FamilyValidationService {
 
         if (!isMember) {
             throw new BusinessException(ErrorCode.NOT_FAMILY_MEMBER)
-                    .addParameter("userUuid", userUuid.toString())
-                    .addParameter("familyUuid", familyUuid.toString());
+                    .addParameter("userUuid", userUuid.getValue())
+                    .addParameter("familyUuid", familyUuid.getValue());
         }
     }
 
@@ -53,13 +53,13 @@ public class FamilyValidationService {
     public void validateFamilyOwner(CustomUuid userUuid, CustomUuid familyUuid) {
         FamilyMember membership = familyMemberRepository.findByFamilyUuidAndUserUuid(familyUuid, userUuid)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FAMILY_MEMBER)
-                        .addParameter("userUuid", userUuid.toString())
-                        .addParameter("familyUuid", familyUuid.toString()));
+                        .addParameter("userUuid", userUuid.getValue())
+                        .addParameter("familyUuid", familyUuid.getValue()));
 
         if (!"owner".equals(membership.getRole())) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "가족 소유자만 이 작업을 수행할 수 있습니다")
-                    .addParameter("userUuid", userUuid.toString())
-                    .addParameter("familyUuid", familyUuid.toString())
+                    .addParameter("userUuid", userUuid.getValue())
+                    .addParameter("familyUuid", familyUuid.getValue())
                     .addParameter("role", membership.getRole());
         }
     }

@@ -46,7 +46,7 @@ public class IncomeService {
         // 사용자 확인
         User user = userRepository.findByUuid(userUuid)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
-                        .addParameter("userUuid", userUuid.toString()));
+                        .addParameter("userUuid", userUuid.getValue()));
 
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
@@ -54,12 +54,12 @@ public class IncomeService {
         // 카테고리 확인
         Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
-                        .addParameter("categoryUuid", categoryCustomUuid.toString()));
+                        .addParameter("categoryUuid", categoryCustomUuid.getValue()));
 
         if (!category.getFamilyUuid().equals(familyCustomUuid)) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 가족의 카테고리가 아닙니다")
-                    .addParameter("categoryFamilyUuid", category.getFamilyUuid().toString())
-                    .addParameter("requestFamilyUuid", familyCustomUuid.toString());
+                    .addParameter("categoryFamilyUuid", category.getFamilyUuid().getValue())
+                    .addParameter("requestFamilyUuid", familyCustomUuid.getValue());
         }
 
         // 수입 생성
@@ -133,7 +133,7 @@ public class IncomeService {
 
         Income income = incomeRepository.findActiveByUuid(incomeCustomUuid)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INCOME_NOT_FOUND)
-                        .addParameter("incomeUuid", incomeCustomUuid.toString()));
+                        .addParameter("incomeUuid", incomeCustomUuid.getValue()));
 
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());
@@ -191,7 +191,7 @@ public class IncomeService {
 
         Income income = incomeRepository.findActiveByUuid(incomeCustomUuid)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INCOME_NOT_FOUND)
-                        .addParameter("incomeUuid", incomeCustomUuid.toString()));
+                        .addParameter("incomeUuid", incomeCustomUuid.getValue()));
 
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());

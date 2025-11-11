@@ -41,7 +41,7 @@ public class CategoryService {
         categoryRepository.findByFamilyUuidAndName(familyCustomUuid, request.getName())
                 .ifPresent(c -> {
                     throw new BusinessException(ErrorCode.CATEGORY_ALREADY_EXISTS)
-                            .addParameter("familyUuid", familyCustomUuid.toString())
+                            .addParameter("familyUuid", familyCustomUuid.getValue())
                             .addParameter("categoryName", request.getName());
                 });
 
@@ -84,7 +84,7 @@ public class CategoryService {
 
         Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
-                        .addParameter("categoryUuid", categoryCustomUuid.toString()));
+                        .addParameter("categoryUuid", categoryCustomUuid.getValue()));
 
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
@@ -101,14 +101,14 @@ public class CategoryService {
 
         Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
-                        .addParameter("categoryUuid", categoryCustomUuid.toString()));
+                        .addParameter("categoryUuid", categoryCustomUuid.getValue()));
 
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
 
         // 이름 변경 시 중복 확인
         if (request.getName() != null && !request.getName().equals(category.getName())) {
-            final String familyUuidStr = category.getFamilyUuid().toString(); // final 변수 생성
+            final String familyUuidStr = category.getFamilyUuid().getValue(); // final 변수 생성
             categoryRepository.findByFamilyUuidAndName(category.getFamilyUuid(), request.getName())
                     .ifPresent(c -> {
                         throw new BusinessException(ErrorCode.CATEGORY_ALREADY_EXISTS)
@@ -138,7 +138,7 @@ public class CategoryService {
 
         Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
-                        .addParameter("categoryUuid", categoryCustomUuid.toString()));
+                        .addParameter("categoryUuid", categoryCustomUuid.getValue()));
 
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());

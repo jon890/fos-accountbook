@@ -104,7 +104,7 @@ public class AuthService {
 
         if (user.getStatus() == UserStatus.DELETED) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND, "삭제된 사용자입니다")
-                    .addParameter("userUuid", user.getUuid().toString());
+                    .addParameter("userUuid", user.getUuid().getValue());
         }
 
         return generateAuthResponse(user);

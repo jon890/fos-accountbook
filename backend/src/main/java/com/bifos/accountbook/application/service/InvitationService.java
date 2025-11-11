@@ -49,7 +49,7 @@ public class InvitationService {
                 // 권한 확인 (가족 멤버만 초대 가능)
                 User user = userRepository.findByUuid(userUuid)
                                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
-                                                .addParameter("userUuid", userUuid.toString()));
+                                                .addParameter("userUuid", userUuid.getValue()));
 
                 familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
@@ -108,7 +108,7 @@ public class InvitationService {
 
                 Family family = familyRepository.findActiveByUuid(invitation.getFamilyUuid())
                                 .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
-                                                .addParameter("familyUuid", invitation.getFamilyUuid().toString()));
+                                                .addParameter("familyUuid", invitation.getFamilyUuid().getValue()));
 
                 return InvitationResponse.fromWithFamilyName(invitation, family.getName());
         }
@@ -120,7 +120,7 @@ public class InvitationService {
         public void acceptInvitation(CustomUuid userUuid, String token) {
                 User user = userRepository.findByUuid(userUuid)
                                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
-                                                .addParameter("userUuid", userUuid.toString()));
+                                                .addParameter("userUuid", userUuid.getValue()));
 
                 Invitation invitation = invitationRepository.findValidByToken(token, LocalDateTime.now())
                                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INVITATION_TOKEN)
@@ -132,8 +132,8 @@ public class InvitationService {
 
                 if (alreadyMember) {
                         throw new BusinessException(ErrorCode.ALREADY_FAMILY_MEMBER)
-                                        .addParameter("userUuid", userUuid.toString())
-                                        .addParameter("familyUuid", invitation.getFamilyUuid().toString());
+                                        .addParameter("userUuid", userUuid.getValue())
+                                        .addParameter("familyUuid", invitation.getFamilyUuid().getValue());
                 }
 
                 // 가족 멤버로 추가
@@ -156,7 +156,7 @@ public class InvitationService {
 
                 User user = userRepository.findByUuid(userUuid)
                                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
-                                                .addParameter("userUuid", userUuid.toString()));
+                                                .addParameter("userUuid", userUuid.getValue()));
 
                 Invitation invitation = invitationRepository.findByUuid(invitationCustomUuid)
                                 .orElseThrow(() -> new BusinessException(ErrorCode.INVITATION_NOT_FOUND)
@@ -193,13 +193,13 @@ public class InvitationService {
                 FamilyMember membership = familyMemberRepository.findByFamilyUuidAndUserUuid(
                                 invitation.getFamilyUuid(), userUuid)
                                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FAMILY_MEMBER)
-                                                .addParameter("userUuid", userUuid.toString())
-                                                .addParameter("familyUuid", invitation.getFamilyUuid().toString()));
+                                                .addParameter("userUuid", userUuid.getValue())
+                                                .addParameter("familyUuid", invitation.getFamilyUuid().getValue()));
 
                 if (!"owner".equals(membership.getRole())) {
                         throw new BusinessException(ErrorCode.FORBIDDEN, "초대장을 삭제할 권한이 없습니다")
-                                        .addParameter("userUuid", userUuid.toString())
-                                        .addParameter("familyUuid", invitation.getFamilyUuid().toString())
+                                        .addParameter("userUuid", userUuid.getValue())
+                                        .addParameter("familyUuid", invitation.getFamilyUuid().getValue())
                                         .addParameter("role", membership.getRole());
                 }
         }
