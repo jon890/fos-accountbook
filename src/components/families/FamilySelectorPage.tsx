@@ -21,9 +21,8 @@ export function FamilySelectorPage({ families }: FamilySelectorPageProps) {
     const result = await setDefaultFamilyAction(family.uuid);
 
     if (result.success) {
-      // Server Component를 재실행하여 최신 프로필 정보로 다시 렌더링
-      router.refresh();
-      // 홈페이지로 SPA 라우팅 (무한루프 방지)
+      // revalidatePath가 서버에서 캐시를 무효화했으므로
+      // router.push만으로 최신 데이터로 페이지 렌더링됨
       router.push("/");
     }
   };

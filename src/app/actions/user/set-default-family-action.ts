@@ -7,6 +7,7 @@ import {
   handleActionError,
   type ActionResult,
 } from "@/lib/errors";
+import { revalidatePath } from "next/cache";
 
 /**
  * 기본 가족 설정 Server Action
@@ -24,6 +25,9 @@ export async function setDefaultFamilyAction(
       method: "PUT",
       body: JSON.stringify({ defaultFamilyUuid: familyUuid }),
     });
+
+    // 3. Next.js 캐시 무효화 - 홈 페이지 재검증
+    revalidatePath("/", "page");
 
     return successResult(undefined);
   } catch (error) {
