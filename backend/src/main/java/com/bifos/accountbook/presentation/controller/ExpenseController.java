@@ -1,8 +1,10 @@
 package com.bifos.accountbook.presentation.controller;
 
+import com.bifos.accountbook.application.dto.expense.CategoryExpenseSummaryResponse;
 import com.bifos.accountbook.application.dto.expense.CreateExpenseRequest;
 import com.bifos.accountbook.application.dto.expense.ExpenseResponse;
 import com.bifos.accountbook.application.dto.expense.ExpenseSearchRequest;
+import com.bifos.accountbook.application.dto.expense.ExpenseSummarySearchRequest;
 import com.bifos.accountbook.application.dto.expense.UpdateExpenseRequest;
 import com.bifos.accountbook.application.service.ExpenseService;
 import com.bifos.accountbook.presentation.annotation.LoginUser;
@@ -98,5 +100,25 @@ public class ExpenseController {
         expenseService.deleteExpense(loginUser.getUserUuid(), expenseUuid);
 
         return ResponseEntity.ok(ApiSuccessResponse.of("지출이 삭제되었습니다", null));
+    }
+
+    /**
+     * 카테고리별 지출 요약 조회
+     */
+    @GetMapping("/summary/by-category")
+    public ResponseEntity<ApiSuccessResponse<CategoryExpenseSummaryResponse>> getCategoryExpenseSummary(
+            @LoginUser LoginUserDto loginUser,
+            @PathVariable String familyUuid,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) String categoryUuid) {
+
+        ExpenseSummarySearchRequest searchRequest = ExpenseSummarySearchRequest.withDefaults(
+                startDate, endDate, categoryUuid);
+
+        CategoryExpenseSummaryResponse response = expenseService.getCategoryExpenseSummary(
+                loginUser.getUserUuid(), familyUuid, searchRequest);
+
+        return ResponseEntity.ok(ApiSuccessResponse.of(response));
     }
 }

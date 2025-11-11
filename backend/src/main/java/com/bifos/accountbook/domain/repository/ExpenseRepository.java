@@ -64,4 +64,22 @@ public interface ExpenseRepository {
      * 가족 UUID로 지출 개수 조회 (삭제되지 않은)
      */
     int countByFamilyUuid(CustomUuid familyUuid);
+
+    /**
+     * 카테고리별 지출 통계 조회
+     */
+    List<com.bifos.accountbook.domain.repository.projection.CategoryExpenseProjection> findCategoryExpenseStats(
+            CustomUuid familyUuid,
+            CustomUuid categoryUuid,
+            LocalDateTime startDate,
+            LocalDateTime endDate);
+
+    /**
+     * 전체 지출 합계 조회
+     */
+    java.math.BigDecimal getTotalExpenseAmount(
+            CustomUuid familyUuid,
+            CustomUuid categoryUuid,
+            LocalDateTime startDate,
+            LocalDateTime endDate);
 }

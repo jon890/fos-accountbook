@@ -72,4 +72,22 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
     public int countByFamilyUuid(CustomUuid familyUuid) {
         return jpaRepository.countByFamilyUuid(familyUuid);
     }
+
+    @Override
+    public List<com.bifos.accountbook.domain.repository.projection.CategoryExpenseProjection> findCategoryExpenseStats(
+            CustomUuid familyUuid,
+            CustomUuid categoryUuid,
+            LocalDateTime startDate,
+            LocalDateTime endDate) {
+        return jpaRepository.findCategoryExpenseStats(familyUuid, categoryUuid, startDate, endDate);
+    }
+
+    @Override
+    public java.math.BigDecimal getTotalExpenseAmount(
+            CustomUuid familyUuid,
+            CustomUuid categoryUuid,
+            LocalDateTime startDate,
+            LocalDateTime endDate) {
+        return jpaRepository.getTotalExpenseAmount(familyUuid, categoryUuid, startDate, endDate);
+    }
 }

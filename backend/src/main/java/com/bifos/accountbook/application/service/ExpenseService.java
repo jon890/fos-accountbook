@@ -1,8 +1,11 @@
 package com.bifos.accountbook.application.service;
 
+import com.bifos.accountbook.application.dto.expense.CategoryExpenseStat;
+import com.bifos.accountbook.application.dto.expense.CategoryExpenseSummaryResponse;
 import com.bifos.accountbook.application.dto.expense.CreateExpenseRequest;
 import com.bifos.accountbook.application.dto.expense.ExpenseResponse;
 import com.bifos.accountbook.application.dto.expense.ExpenseSearchRequest;
+import com.bifos.accountbook.application.dto.expense.ExpenseSummarySearchRequest;
 import com.bifos.accountbook.application.dto.expense.UpdateExpenseRequest;
 import com.bifos.accountbook.common.exception.BusinessException;
 import com.bifos.accountbook.common.exception.ErrorCode;
@@ -13,6 +16,7 @@ import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.UserRepository;
+import com.bifos.accountbook.domain.repository.projection.CategoryExpenseProjection;
 import com.bifos.accountbook.domain.value.ExpenseStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +27,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.domain.value.ExpenseStatus;
 
@@ -233,5 +241,73 @@ public class ExpenseService {
         // 더티 체킹으로 자동 업데이트
 
         log.info("Deleted expense: {} by user: {}", expenseUuid, userUuid);
+    }
+
+    /**
+     * 카테고리별 지출 요약 조회
+     */
+    @Transactional(readOnly = true)
+    public CategoryExpenseSummaryResponse getCategoryExpenseSummary(
+            CustomUuid userUuid,
+            String familyUuid,
+            ExpenseSummarySearchRequest searchRequest) {
+        
+        CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
+
+        // 권한 확인
+        familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
+
+        // 카테고리 UUID 변환 (null 가능)
+        CustomUuid categoryCustomUuid = searchRequest.getCategoryUuid() != null
+                ? CustomUuid.from(searchRequest.getCategoryUuid())
+                : null;
+
+        // 전체 지출 합계 조회
+        BigDecimal totalExpense = expenseRepository.getTotalExpenseAmount(
+                familyCustomUuid,
+                categoryCustomUuid,
+                searchRequest.getStartDate(),
+                searchRequest.getEndDate());
+
+        // 카테고리별 지출 통계 조회
+        List<CategoryExpenseProjection> projections = expenseRepository.findCategoryExpenseStats(
+                familyCustomUuid,
+                categoryCustomUuid,
+                searchRequest.getStartDate(),
+                searchRequest.getEndDate());
+
+        // DTO 변환 및 비율 계산
+        List<CategoryExpenseStat> categoryStats = new ArrayList<>();
+        
+        for (CategoryExpenseProjection projection : projections) {
+            // 비율 계산 (소수점 2자리)
+            Double percentage = 0.0;
+            if (totalExpense.compareTo(BigDecimal.ZERO) > 0) {
+                percentage = projection.getTotalAmount()
+                        .multiply(BigDecimal.valueOf(100))
+                        .divide(totalExpense, 2, RoundingMode.HALF_UP)
+                        .doubleValue();
+            }
+
+            CategoryExpenseStat stat = CategoryExpenseStat.builder()
+                    .categoryUuid(projection.getCategoryUuid())
+                    .categoryName(projection.getCategoryName())
+                    .categoryIcon(projection.getCategoryIcon())
+                    .categoryColor(projection.getCategoryColor())
+                    .totalAmount(projection.getTotalAmount())
+                    .count(projection.getCount())
+                    .percentage(percentage)
+                    .build();
+
+            categoryStats.add(stat);
+        }
+
+        log.info("Retrieved category expense summary for family: {} (total: {}, categories: {})",
+                familyUuid, totalExpense, categoryStats.size());
+
+        return CategoryExpenseSummaryResponse.builder()
+                .totalExpense(totalExpense)
+                .categoryStats(categoryStats)
+                .build();
     }
 }
