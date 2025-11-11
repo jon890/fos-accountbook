@@ -1,0 +1,73 @@
+# Dependabot 설정
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Gradle 의존성 업데이트
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Seoul"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "nhn"
+    labels:
+      - "dependencies"
+      - "gradle"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    groups:
+      # Spring Boot 관련 의존성을 하나의 PR로 그룹화
+      spring-boot:
+        patterns:
+          - "org.springframework.boot*"
+          - "org.springframework*"
+      # 테스트 관련 의존성을 하나의 PR로 그룹화
+      test-dependencies:
+        patterns:
+          - "*junit*"
+          - "*mockito*"
+          - "*assertj*"
+      # 로깅 관련 의존성을 하나의 PR로 그룹화
+      logging:
+        patterns:
+          - "ch.qos.logback*"
+          - "org.slf4j*"
+
+  # Docker 이미지 업데이트
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Seoul"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "nhn"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "chore(docker)"
+
+  # GitHub Actions 업데이트 (나중에 CI/CD 추가시 사용)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Seoul"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "nhn"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci)"
