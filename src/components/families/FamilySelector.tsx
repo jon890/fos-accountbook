@@ -134,8 +134,7 @@ export function FamilySelector({
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
                   size="lg"
                 >
-                  <Plus className="w-5 h-5 mr-2" />
-                  새 가족 만들기
+                  <Plus className="w-5 h-5 mr-2" />새 가족 만들기
                 </Button>
               )}
             </div>
