@@ -48,7 +48,7 @@ jobs:
           SKIP_ENV_VALIDATION: true
 
       - name: Upload coverage reports
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         if: always()
         with:
           files: ./coverage/coverage-final.json
