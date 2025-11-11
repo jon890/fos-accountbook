@@ -1,80 +1,28 @@
 import { getFamiliesAction } from "@/app/actions/family/get-families-action";
 import { getUserProfileAction } from "@/app/actions/user/get-user-profile-action";
 import { SettingsPageClient } from "./_components/SettingsPageClient";
-import { redirect } from "next/navigation";
+import { requireActionSuccess } from "@/lib/server/action-result-handler";
 
 // 쿠키를 사용하므로 동적 렌더링 필요
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   // 1. 사용자 프로필 조회 (없으면 백엔드에서 자동 생성)
-  const profileResult = await getUserProfileAction();
-
-  // 프로필 조회 실패 시 에러 처리
-  if (!profileResult.success) {
-    // 네트워크 연결 오류
-    if (profileResult.error.code === "C004") {
-      redirect(
-        `/auth/signin?error=network&message=${encodeURIComponent(
-          profileResult.error.message
-        )}`
-      );
-    }
-
-    // 인증 오류
-    if (
-      profileResult.error.code === "A001" ||
-      profileResult.error.code === "A002"
-    ) {
-      redirect(
-        `/auth/signin?error=auth&message=${encodeURIComponent(
-          profileResult.error.message
-        )}`
-      );
-    }
-
-    // 기타 오류 - 로그인 페이지로
-    redirect(
-      `/auth/signin?error=profile&message=${encodeURIComponent(
-        profileResult.error.message
-      )}`
-    );
-  }
+  // 실패 시: 네트워크/인증 오류는 자동 처리, 기타는 "profile" 에러로 로그인
+  const profile = await requireActionSuccess(await getUserProfileAction(), {
+    fallbackErrorType: "profile",
+  });
 
   // 2. 가족 목록 조회
-  const familiesResult = await getFamiliesAction();
-
-  // 가족 목록 조회 실패 시 에러 처리
-  if (!familiesResult.success) {
-    // 네트워크 연결 오류 (서버 다운)
-    if (familiesResult.error.code === "C004") {
-      redirect(
-        `/auth/signin?error=network&message=${encodeURIComponent(
-          familiesResult.error.message
-        )}`
-      );
-    }
-
-    // 인증 오류
-    if (
-      familiesResult.error.code === "A001" ||
-      familiesResult.error.code === "A002"
-    ) {
-      redirect(
-        `/auth/signin?error=auth&message=${encodeURIComponent(
-          familiesResult.error.message
-        )}`
-      );
-    }
-
-    // 기타 오류 (가족이 없음 등) → 가족 생성 페이지로
-    redirect("/families/create");
-  }
+  // 실패 시: 네트워크/인증 오류는 자동 처리, 기타는 가족 생성 페이지로
+  const families = await requireActionSuccess(await getFamiliesAction(), {
+    fallbackRedirect: "/families/create",
+  });
 
   return (
     <SettingsPageClient
-      families={familiesResult.data}
-      defaultFamilyUuid={profileResult.data.defaultFamilyUuid}
+      families={families}
+      defaultFamilyUuid={profile.defaultFamilyUuid}
     />
   );
 }

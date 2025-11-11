@@ -12,6 +12,7 @@
  * - Client Components ('use client') → @/lib/client 사용!
  *
  * 📦 포함된 모듈:
+ * - action-result-handler: Server Action 에러 처리 유틸리티
  * - api: 백엔드 API 클라이언트 및 응답 헬퍼
  * - auth: NextAuth 설정 및 인증 유틸리티
  * - config: 환경 변수 관리
@@ -19,6 +20,7 @@
  * 💡 데이터베이스: 백엔드 API를 통해서만 접근
  */
 
+export * from "./action-result-handler";
 export * from "./api";
 export * from "./auth";
 export * from "./config";

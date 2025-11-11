@@ -13,6 +13,7 @@ import { getFamiliesAction } from "@/app/actions/family/get-families-action";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { WelcomeSection } from "@/components/dashboard/WelcomeSection";
+import { getActionDataOrDefault } from "@/lib/server/action-result-handler";
 import { auth } from "@/lib/server/auth";
 import { getSelectedFamilyUuid } from "@/lib/server/cookies";
 import { redirect } from "next/navigation";
@@ -43,28 +44,24 @@ export default async function DashboardPage() {
     ]
   );
 
-  // 4. 기본값 설정 (데이터를 가져오지 못한 경우)
-  const statsData = statsResult.success
-    ? statsResult.data
-    : {
-        monthlyExpense: 0,
-        monthlyIncome: 0,
-        remainingBudget: 0,
-        familyMembers: 0,
-        budget: 0,
-        year: new Date().getFullYear(),
-        month: new Date().getMonth() + 1,
-      };
+  // 4. 기본값 설정 (에러 발생 시에도 페이지 렌더링)
+  const statsData = getActionDataOrDefault(statsResult, {
+    monthlyExpense: 0,
+    monthlyIncome: 0,
+    remainingBudget: 0,
+    familyMembers: 0,
+    budget: 0,
+    year: new Date().getFullYear(),
+    month: new Date().getMonth() + 1,
+  });
 
-  const recentExpenses = recentExpensesResult.success
-    ? recentExpensesResult.data
-    : [];
+  const recentExpenses = getActionDataOrDefault(recentExpensesResult, []);
+
+  const families = getActionDataOrDefault(familiesResult, []);
 
   // 선택된 가족의 이름 찾기
   const selectedFamily =
-    familiesResult.success && familiesResult.data
-      ? familiesResult.data.find((f) => f.uuid === selectedFamilyUuid)
-      : null;
+    families.find((f) => f.uuid === selectedFamilyUuid) || null;
 
   // 5. 대시보드 렌더링
   return (
