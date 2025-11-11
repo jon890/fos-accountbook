@@ -40,6 +40,10 @@ export function BottomNavigation() {
 
   const isActive = (path: string) => pathname === path;
 
+  // 내역 페이지 활성화 체크 (transactions, expenses 둘 다)
+  const isTransactionsActive =
+    pathname === "/transactions" || pathname === "/expenses";
+
   const handleAnalyticsClick = () => {
     alert("분석 기능은 준비 중입니다.");
   };
@@ -53,16 +57,16 @@ export function BottomNavigation() {
             <NavButton
               icon={Home}
               label="홈"
-              isActive={isActive("/")}
-              onClick={() => router.push("/")}
+              isActive={isActive("/") || isActive("/dashboard")}
+              onClick={() => router.push("/dashboard")}
             />
 
             {/* 내역 */}
             <NavButton
               icon={CreditCard}
               label="내역"
-              isActive={isActive("/expenses")}
-              onClick={() => router.push("/expenses")}
+              isActive={isTransactionsActive}
+              onClick={() => router.push("/transactions?tab=expenses")}
             />
 
             {/* 지출 추가 */}
