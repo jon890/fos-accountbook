@@ -73,9 +73,13 @@ public class IncomeService {
                 .build();
 
         income = incomeRepository.save(income);
+        
+        // 카테고리 정보와 함께 반환하기 위해 다시 조회
+        income.setCategory(category);
+        
         log.info("Created income: {} in family: {} by user: {}", income.getUuid(), familyUuid, userUuid);
 
-        return IncomeResponse.fromWithoutCategory(income);
+        return IncomeResponse.from(income);
     }
 
     /**
@@ -122,7 +126,7 @@ public class IncomeService {
             incomes = incomeRepository.findAllByFamilyUuid(familyCustomUuid, pageable);
         }
 
-        return incomes.map(IncomeResponse::fromWithoutCategory);
+        return incomes.map(IncomeResponse::from);
     }
 
     /**
@@ -139,7 +143,7 @@ public class IncomeService {
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());
 
-        return IncomeResponse.fromWithoutCategory(income);
+        return IncomeResponse.from(income);
     }
 
     /**
@@ -190,7 +194,7 @@ public class IncomeService {
         // 더티 체킹으로 자동 업데이트
         log.info("Updated income: {} by user: {}", incomeUuid, userUuid);
 
-        return IncomeResponse.fromWithoutCategory(income);
+        return IncomeResponse.from(income);
     }
 
     /**
