@@ -143,7 +143,7 @@ export function ExpenseFilters({
 
   return (
     <Card>
-      <CardHeader className="py-3 md:py-4">
+      <CardHeader className="py-1.5 md:py-4">
         <CardTitle className="text-sm md:text-base">내역 필터</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">

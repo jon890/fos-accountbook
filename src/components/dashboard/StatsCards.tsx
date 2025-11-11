@@ -1,3 +1,5 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -8,6 +10,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface StatsData {
   monthlyExpense: number;
@@ -22,6 +25,7 @@ interface StatsCardsProps {
 }
 
 export function StatsCards({ data }: StatsCardsProps) {
+  const router = useRouter();
   // 예산 대비 지출 비율 계산
   const expenseRatio =
     data.budget > 0 ? (data.monthlyExpense / data.budget) * 100 : 0;
@@ -38,7 +42,10 @@ export function StatsCards({ data }: StatsCardsProps) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-8">
       {/* Monthly Expense Card */}
-      <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white border-0 shadow-xl">
+      <Card
+        className="relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white border-0 shadow-xl cursor-pointer transition-transform hover:scale-105 active:scale-95"
+        onClick={() => router.push("/transactions?tab=expenses")}
+      >
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
         <CardContent className="relative p-3 md:p-6">
           <div className="flex items-center justify-between mb-2 md:mb-4">
@@ -68,7 +75,10 @@ export function StatsCards({ data }: StatsCardsProps) {
       </Card>
 
       {/* Monthly Income Card */}
-      <Card className="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-green-600 to-green-700 text-white border-0 shadow-xl">
+      <Card
+        className="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-green-600 to-green-700 text-white border-0 shadow-xl cursor-pointer transition-transform hover:scale-105 active:scale-95"
+        onClick={() => router.push("/transactions?tab=incomes")}
+      >
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
         <CardContent className="relative p-3 md:p-6">
           <div className="flex items-center justify-between mb-2 md:mb-4">
@@ -98,7 +108,8 @@ export function StatsCards({ data }: StatsCardsProps) {
           isBudgetExceeded
             ? "bg-gradient-to-br from-red-500 via-red-600 to-red-700"
             : "bg-gradient-to-br from-amber-500 via-orange-600 to-orange-700"
-        } text-white border-0 shadow-xl`}
+        } text-white border-0 shadow-xl cursor-pointer transition-transform hover:scale-105 active:scale-95`}
+        onClick={() => router.push("/settings")}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
         <CardContent className="relative p-3 md:p-6">
@@ -144,7 +155,10 @@ export function StatsCards({ data }: StatsCardsProps) {
       </Card>
 
       {/* Family Members Card */}
-      <Card className="relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-700 text-white border-0 shadow-xl">
+      <Card
+        className="relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-700 text-white border-0 shadow-xl cursor-pointer transition-transform hover:scale-105 active:scale-95"
+        onClick={() => router.push("/settings")}
+      >
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
         <CardContent className="relative p-3 md:p-6">
           <div className="flex items-center justify-between mb-2 md:mb-4">
