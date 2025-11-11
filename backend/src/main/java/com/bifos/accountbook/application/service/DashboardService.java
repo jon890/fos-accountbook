@@ -1,9 +1,12 @@
 package com.bifos.accountbook.application.service;
 
+import com.bifos.accountbook.application.dto.dashboard.MonthlyStatsResponse;
 import com.bifos.accountbook.application.dto.expense.CategoryExpenseStat;
 import com.bifos.accountbook.application.dto.expense.CategoryExpenseSummaryResponse;
 import com.bifos.accountbook.application.dto.expense.ExpenseSummarySearchRequest;
+import com.bifos.accountbook.domain.entity.Family;
 import com.bifos.accountbook.domain.repository.DashboardRepository;
+import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.repository.projection.CategoryExpenseProjection;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +32,7 @@ import java.util.List;
 public class DashboardService {
 
     private final DashboardRepository dashboardRepository;
+    private final FamilyRepository familyRepository;
     private final FamilyValidationService familyValidationService;
 
     /**
@@ -120,6 +124,58 @@ public class DashboardService {
                 .multiply(BigDecimal.valueOf(100))
                 .divide(total, 2, RoundingMode.HALF_UP)
                 .doubleValue();
+    }
+
+    /**
+     * 월별 통계 조회 (QueryDSL 기반)
+     * - 이번 달 지출/수입 합계를 백엔드에서 직접 집계
+     * - 프론트에서 1000개 가져와서 필터링하던 비효율 개선
+     * 
+     * @param userUuid 사용자 UUID
+     * @param familyUuid 가족 UUID
+     * @param year 연도 (예: 2025)
+     * @param month 월 (1~12)
+     * @return 월별 통계 (지출, 수입, 예산, 가족 구성원 수)
+     */
+    public MonthlyStatsResponse getMonthlyStats(
+            CustomUuid userUuid,
+            String familyUuid,
+            int year,
+            int month) {
+
+        CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
+
+        // 권한 확인
+        familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
+
+        // 가족 정보 조회 (구성원 수)
+        Family family = familyRepository.findByUuid(familyCustomUuid)
+                .orElseThrow(() -> new IllegalArgumentException("가족을 찾을 수 없습니다"));
+
+        // QueryDSL로 월별 지출 합계 조회 (DB에서 직접 집계)
+        BigDecimal monthlyExpense = dashboardRepository.getMonthlyExpenseAmount(
+                familyCustomUuid, year, month);
+
+        // QueryDSL로 월별 수입 합계 조회 (DB에서 직접 집계)
+        BigDecimal monthlyIncome = dashboardRepository.getMonthlyIncomeAmount(
+                familyCustomUuid, year, month);
+
+        // 예산 정보 (향후 예산 기능 구현 시 실제 데이터로 대체)
+        BigDecimal budget = BigDecimal.ZERO;
+        BigDecimal remainingBudget = budget.subtract(monthlyExpense);
+        if (remainingBudget.compareTo(BigDecimal.ZERO) < 0) {
+            remainingBudget = BigDecimal.ZERO;
+        }
+
+        return MonthlyStatsResponse.builder()
+                .monthlyExpense(monthlyExpense)
+                .monthlyIncome(monthlyIncome)
+                .remainingBudget(remainingBudget)
+                .familyMembers(family.getMembers() != null ? family.getMembers().size() : 0)
+                .budget(budget)
+                .year(year)
+                .month(month)
+                .build();
     }
 }
 

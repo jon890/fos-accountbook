@@ -1,5 +1,6 @@
 package com.bifos.accountbook.presentation.controller;
 
+import com.bifos.accountbook.application.dto.dashboard.MonthlyStatsResponse;
 import com.bifos.accountbook.application.dto.expense.CategoryExpenseSummaryResponse;
 import com.bifos.accountbook.application.dto.expense.ExpenseSummarySearchRequest;
 import com.bifos.accountbook.application.service.DashboardService;
@@ -10,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 /**
  * 대시보드 컨트롤러
@@ -48,6 +51,35 @@ public class DashboardController {
 
         CategoryExpenseSummaryResponse response = dashboardService.getCategoryExpenseSummary(
                 loginUser.getUserUuid(), familyUuid, searchRequest);
+
+        return ResponseEntity.ok(ApiSuccessResponse.of(response));
+    }
+
+    /**
+     * 월별 통계 조회 (QueryDSL 기반)
+     * - 지출 합계, 수입 합계를 DB에서 직접 집계
+     * - 기존 프론트에서 1000개 가져와서 필터링하던 방식 개선
+     *
+     * @param loginUser  로그인 사용자
+     * @param familyUuid 가족 UUID
+     * @param year       연도 (선택, 기본값: 현재 연도)
+     * @param month      월 (선택, 기본값: 현재 월)
+     * @return 월별 통계 (지출, 수입, 예산, 가족 구성원 수)
+     */
+    @GetMapping("/stats/monthly")
+    public ResponseEntity<ApiSuccessResponse<MonthlyStatsResponse>> getMonthlyStats(
+            @LoginUser LoginUserDto loginUser,
+            @PathVariable String familyUuid,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month) {
+
+        // 기본값: 현재 연도/월
+        LocalDate now = LocalDate.now();
+        int targetYear = year != null ? year : now.getYear();
+        int targetMonth = month != null ? month : now.getMonthValue();
+
+        MonthlyStatsResponse response = dashboardService.getMonthlyStats(
+                loginUser.getUserUuid(), familyUuid, targetYear, targetMonth);
 
         return ResponseEntity.ok(ApiSuccessResponse.of(response));
     }

@@ -2,11 +2,13 @@ package com.bifos.accountbook.infra.persistence.repository.impl;
 
 import com.bifos.accountbook.domain.entity.QCategory;
 import com.bifos.accountbook.domain.entity.QExpense;
+import com.bifos.accountbook.domain.entity.QIncome;
 import com.bifos.accountbook.domain.repository.DashboardRepository;
 import com.bifos.accountbook.domain.repository.projection.CategoryExpenseProjection;
 import com.bifos.accountbook.domain.value.CategoryStatus;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.domain.value.ExpenseStatus;
+import com.bifos.accountbook.domain.value.IncomeStatus;
 import com.bifos.accountbook.infra.persistence.repository.projection.CategoryExpenseProjectionImpl;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -149,6 +151,60 @@ public class DashboardRepositoryImpl implements DashboardRepository {
      */
     private BooleanExpression dateLoe(QExpense expense, LocalDateTime endDate) {
         return endDate != null ? expense.date.loe(endDate) : null;
+    }
+
+    /**
+     * 특정 월의 지출 합계 조회 (QueryDSL)
+     * - YEAR(date), MONTH(date) 조건 사용
+     * - ACTIVE 상태만 집계
+     */
+    @Override
+    public BigDecimal getMonthlyExpenseAmount(
+            CustomUuid familyUuid,
+            int year,
+            int month) {
+
+        QExpense expense = QExpense.expense;
+
+        BigDecimal result = queryFactory
+                .select(expense.amount.sum().coalesce(BigDecimal.ZERO))
+                .from(expense)
+                .where(
+                        expense.familyUuid.eq(familyUuid),
+                        expense.status.eq(ExpenseStatus.ACTIVE),
+                        expense.date.year().eq(year),
+                        expense.date.month().eq(month)
+                )
+                .fetchOne();
+
+        return result != null ? result : BigDecimal.ZERO;
+    }
+
+    /**
+     * 특정 월의 수입 합계 조회 (QueryDSL)
+     * - YEAR(date), MONTH(date) 조건 사용
+     * - ACTIVE 상태만 집계
+     */
+    @Override
+    public BigDecimal getMonthlyIncomeAmount(
+            CustomUuid familyUuid,
+            int year,
+            int month) {
+
+        QIncome income = QIncome.income;
+
+        BigDecimal result = queryFactory
+                .select(income.amount.sum().coalesce(BigDecimal.ZERO))
+                .from(income)
+                .where(
+                        income.familyUuid.eq(familyUuid),
+                        income.status.eq(IncomeStatus.ACTIVE),
+                        income.date.year().eq(year),
+                        income.date.month().eq(month)
+                )
+                .fetchOne();
+
+        return result != null ? result : BigDecimal.ZERO;
     }
 }
 

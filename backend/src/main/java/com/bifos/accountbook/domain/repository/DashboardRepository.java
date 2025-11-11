@@ -54,6 +54,38 @@ public interface DashboardRepository {
             LocalDateTime endDate
     );
 
+    /**
+     * 특정 월의 지출 합계 조회 (QueryDSL)
+     * - YEAR(date), MONTH(date) 조건 사용
+     * - ACTIVE 상태만 집계
+     * 
+     * @param familyUuid 가족 UUID (필수)
+     * @param year 연도 (예: 2025)
+     * @param month 월 (1~12)
+     * @return 지출 합계 (없으면 0)
+     */
+    BigDecimal getMonthlyExpenseAmount(
+            CustomUuid familyUuid,
+            int year,
+            int month
+    );
+
+    /**
+     * 특정 월의 수입 합계 조회 (QueryDSL)
+     * - YEAR(date), MONTH(date) 조건 사용
+     * - ACTIVE 상태만 집계
+     * 
+     * @param familyUuid 가족 UUID (필수)
+     * @param year 연도 (예: 2025)
+     * @param month 월 (1~12)
+     * @return 수입 합계 (없으면 0)
+     */
+    BigDecimal getMonthlyIncomeAmount(
+            CustomUuid familyUuid,
+            int year,
+            int month
+    );
+
     // ===== 향후 추가 가능한 메서드 =====
 
     /**
