@@ -35,7 +35,7 @@ jest.mock("sonner", () => ({
 
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { SettingsPageClient } from "@/components/settings/SettingsPageClient";
+import { SettingsPageClient } from "@/app/(authenticated)/settings/_components/SettingsPageClient";
 import { setDefaultFamilyAction } from "@/app/actions/user/set-default-family-action";
 import { updateFamilyAction } from "@/app/actions/family/update-family-action";
 import type { Family } from "@/types/family";

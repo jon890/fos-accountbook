@@ -1,6 +1,6 @@
 import { getFamiliesAction } from "@/app/actions/family/get-families-action";
 import { getUserProfileAction } from "@/app/actions/user/get-user-profile-action";
-import { SettingsPageClient } from "@/components/settings/SettingsPageClient";
+import { SettingsPageClient } from "./_components/SettingsPageClient";
 import { redirect } from "next/navigation";
 
 // 쿠키를 사용하므로 동적 렌더링 필요
