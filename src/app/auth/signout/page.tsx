@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { signOut } from "@/lib/server/auth";
+import { signOutAction } from "@/app/actions/auth/signout-action";
 import { LogOut } from "lucide-react";
 import Link from "next/link";
 
@@ -27,24 +27,18 @@ export default function SignOutPage() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-600 text-center">
-            로그아웃하시면 저장된 세션이 삭제되며,<br />
+            로그아웃하시면 모든 세션 및 저장된 정보가 삭제되며,<br />
             다시 사용하려면 로그인이 필요합니다.
           </p>
         </CardContent>
         <CardFooter className="flex flex-col gap-2">
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/auth/signin" });
-            }}
-            className="w-full"
-          >
+          <form action={signOutAction} className="w-full">
             <Button type="submit" variant="destructive" className="w-full">
               <LogOut className="w-4 h-4 mr-2" />
               로그아웃
             </Button>
           </form>
-          <Link href="/" className="w-full">
+          <Link href="/dashboard" className="w-full">
             <Button variant="outline" className="w-full">
               취소
             </Button>
