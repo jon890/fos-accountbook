@@ -6,7 +6,8 @@
 "use client";
 
 import type { RecentExpense } from "@/types/dashboard";
-import { DashboardTabs } from "./DashboardTabs";
+import { QuickActions } from "./QuickActions";
+import { RecentActivity } from "./RecentActivity";
 
 interface DashboardClientProps {
   children: React.ReactNode;
@@ -20,7 +21,10 @@ export function DashboardClient({
   return (
     <>
       {children}
-      <DashboardTabs recentExpenses={recentExpenses} />
+      <div className="space-y-4 md:space-y-6 mb-4 md:mb-8">
+        <QuickActions />
+        <RecentActivity expenses={recentExpenses} />
+      </div>
     </>
   );
 }

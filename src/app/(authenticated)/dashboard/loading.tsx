@@ -1,4 +1,4 @@
-import { DashboardTabsSkeleton } from "@/components/dashboard/skeleton/DashboardTabsSkeleton";
+import { DashboardContentSkeleton } from "@/components/dashboard/skeleton/DashboardContentSkeleton";
 import { StatsCardsSkeleton } from "@/components/dashboard/skeleton/StatsCardsSkeleton";
 import { WelcomeSectionSkeleton } from "@/components/dashboard/skeleton/WelcomeSectionSkeleton";
 
@@ -14,7 +14,7 @@ export default function DashboardLoading() {
     <div className="animate-in fade-in duration-300">
       <WelcomeSectionSkeleton />
       <StatsCardsSkeleton />
-      <DashboardTabsSkeleton />
+      <DashboardContentSkeleton />
     </div>
   );
 }
