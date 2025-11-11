@@ -28,10 +28,11 @@ public enum ExpenseStatus implements CodeEnum {
             throw new IllegalArgumentException("지출 상태 코드는 null일 수 없습니다");
         }
 
-        return Arrays.stream(values())
-                .filter(status -> status.getCode().equals(code))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 지출 상태 코드: " + code));
+        try {
+            return valueOf(code);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("유효하지 않은 지출 상태 코드: " + code);
+        }
     }
 }
 

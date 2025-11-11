@@ -3,8 +3,6 @@ package com.bifos.accountbook.infra.persistence.converter;
 import com.bifos.accountbook.domain.value.CodeEnum;
 import jakarta.persistence.AttributeConverter;
 
-import java.lang.reflect.Method;
-
 /**
  * CodeEnum을 DB 코드값으로 변환하는 추상 Converter
  * <p>
@@ -44,11 +42,8 @@ public abstract class AbstractCodeEnumConverter<E extends Enum<E> & CodeEnum>
         }
 
         try {
-            Method fromCodeMethod = enumClass.getMethod("fromCode", String.class);
-            @SuppressWarnings("unchecked")
-            E result = (E) fromCodeMethod.invoke(null, dbData);
-            return result;
-        } catch (Exception e) {
+            return Enum.valueOf(enumClass, dbData);
+        } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(
                     String.format("DB 값 '%s'를 %s로 변환할 수 없습니다", dbData, enumClass.getSimpleName()),
                     e
