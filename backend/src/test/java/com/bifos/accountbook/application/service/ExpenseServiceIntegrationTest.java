@@ -63,7 +63,9 @@ class ExpenseServiceIntegrationTest {
         testUser = userRepository.save(testUser);
 
         // 테스트 가족 생성 (기본 카테고리 포함)
-        CreateFamilyRequest familyRequest = new CreateFamilyRequest("지출 테스트 가족");
+        CreateFamilyRequest familyRequest = CreateFamilyRequest.builder()
+                .name("지출 테스트 가족")
+                .build();
         testFamily = familyService.createFamily(testUser.getUuid(), familyRequest);
 
         // 카테고리 조회

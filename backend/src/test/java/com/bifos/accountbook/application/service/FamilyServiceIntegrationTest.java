@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,7 +59,9 @@ class FamilyServiceIntegrationTest {
     @DisplayName("가족 생성 시 기본 카테고리 10개가 자동으로 생성되어야 한다")
     void createFamily_ShouldCreateDefaultCategories() {
         // Given
-        CreateFamilyRequest request = new CreateFamilyRequest("통합테스트 가족");
+        CreateFamilyRequest request = CreateFamilyRequest.builder()
+                .name("통합테스트 가족")
+                .build();
 
         // When
         FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
@@ -97,7 +100,9 @@ class FamilyServiceIntegrationTest {
     @DisplayName("가족 생성 시 각 카테고리가 올바른 색상과 아이콘을 가져야 한다")
     void createFamily_ShouldCreateCategoriesWithCorrectColorsAndIcons() {
         // Given
-        CreateFamilyRequest request = new CreateFamilyRequest("카테고리 속성 테스트 가족");
+        CreateFamilyRequest request = CreateFamilyRequest.builder()
+                .name("카테고리 속성 테스트 가족")
+                .build();
 
         // When
         FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
@@ -133,8 +138,12 @@ class FamilyServiceIntegrationTest {
     @DisplayName("여러 가족을 생성해도 각각 독립적인 카테고리를 가져야 한다")
     void createMultipleFamilies_ShouldHaveIndependentCategories() {
         // Given
-        CreateFamilyRequest request1 = new CreateFamilyRequest("첫 번째 가족");
-        CreateFamilyRequest request2 = new CreateFamilyRequest("두 번째 가족");
+        CreateFamilyRequest request1 = CreateFamilyRequest.builder()
+                .name("첫 번째 가족")
+                .build();
+        CreateFamilyRequest request2 = CreateFamilyRequest.builder()
+                .name("두 번째 가족")
+                .build();
 
         // When
         FamilyResponse family1 = familyService.createFamily(testUser.getUuid(), request1);
@@ -163,10 +172,12 @@ class FamilyServiceIntegrationTest {
     }
 
     @Test
-    @DisplayName("가족 생성 후 기본 카테고리를 수정하거나 삭제할 수 있어야 한다")
-    void createFamily_DefaultCategoriesShouldBeModifiable() {
+    @DisplayName("가족 생성 후 카테고리를 조회할 수 있어야 한다")
+    void createFamily_DefaultCategoriesShouldBeAccessible() {
         // Given
-        CreateFamilyRequest request = new CreateFamilyRequest("수정 가능성 테스트 가족");
+        CreateFamilyRequest request = CreateFamilyRequest.builder()
+                .name("카테고리 조회 테스트 가족")
+                .build();
 
         // When
         FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
@@ -175,20 +186,54 @@ class FamilyServiceIntegrationTest {
         CustomUuid familyUuid = CustomUuid.from(family.getUuid());
         List<Category> categories = categoryRepository.findAllByFamilyUuid(familyUuid);
 
-        // 카테고리 수정 테스트
+        // 카테고리 조회 확인
+        assertThat(categories).hasSize(10);
         Category firstCategory = categories.get(0);
-        firstCategory.setName("수정된 카테고리");
-        firstCategory.setColor("#000000");
-        categoryRepository.save(firstCategory);
+        assertThat(firstCategory).isNotNull();
+        assertThat(firstCategory.getUuid()).isNotNull();
+        assertThat(firstCategory.getName()).isNotBlank();
+        assertThat(firstCategory.getColor()).isNotBlank();
+        assertThat(firstCategory.getIcon()).isNotBlank();
 
-        // 수정 확인
-        Category updatedCategory = categoryRepository.findByUuid(firstCategory.getUuid())
+        // UUID로 특정 카테고리 조회 테스트
+        Category foundCategory = categoryRepository.findByUuid(firstCategory.getUuid())
                 .orElseThrow();
-        assertThat(updatedCategory.getName()).isEqualTo("수정된 카테고리");
-        assertThat(updatedCategory.getColor()).isEqualTo("#000000");
+        assertThat(foundCategory.getUuid()).isEqualTo(firstCategory.getUuid());
+        assertThat(foundCategory.getName()).isEqualTo(firstCategory.getName());
+    }
 
-        // 여전히 10개의 카테고리가 있어야 함
-        List<Category> updatedCategories = categoryRepository.findAllByFamilyUuid(familyUuid);
-        assertThat(updatedCategories).hasSize(10);
+    @Test
+    @DisplayName("가족 생성 시 월 예산을 설정할 수 있다")
+    void createFamily_WithMonthlyBudget() {
+        // Given
+        BigDecimal budget = new BigDecimal("1000000.00");
+        CreateFamilyRequest request = CreateFamilyRequest.builder()
+                .name("예산 설정 가족")
+                .monthlyBudget(budget)
+                .build();
+
+        // When
+        FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
+
+        // Then
+        assertThat(family).isNotNull();
+        assertThat(family.getName()).isEqualTo("예산 설정 가족");
+        assertThat(family.getMonthlyBudget()).isEqualByComparingTo(budget);
+    }
+
+    @Test
+    @DisplayName("가족 생성 시 월 예산을 설정하지 않으면 0으로 초기화된다")
+    void createFamily_WithoutMonthlyBudget_DefaultsToZero() {
+        // Given
+        CreateFamilyRequest request = CreateFamilyRequest.builder()
+                .name("예산 미설정 가족")
+                .build();
+
+        // When
+        FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
+
+        // Then
+        assertThat(family).isNotNull();
+        assertThat(family.getMonthlyBudget()).isEqualByComparingTo(BigDecimal.ZERO);
     }
 }

@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
@@ -16,6 +17,7 @@ public class FamilyResponse {
 
     private String uuid;
     private String name;
+    private BigDecimal monthlyBudget;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Integer memberCount;
@@ -26,6 +28,7 @@ public class FamilyResponse {
         return FamilyResponse.builder()
                 .uuid(family.getUuid().getValue())
                 .name(family.getName())
+                .monthlyBudget(family.getMonthlyBudget())
                 .createdAt(family.getCreatedAt())
                 .updatedAt(family.getUpdatedAt())
                 .memberCount(family.getMembers() != null ? family.getMembers().size() : 0)
@@ -38,6 +41,7 @@ public class FamilyResponse {
         return FamilyResponse.builder()
                 .uuid(family.getUuid().getValue())
                 .name(family.getName())
+                .monthlyBudget(family.getMonthlyBudget())
                 .createdAt(family.getCreatedAt())
                 .updatedAt(family.getUpdatedAt())
                 .memberCount(memberCount)
@@ -50,6 +54,7 @@ public class FamilyResponse {
         return FamilyResponse.builder()
                 .uuid(family.getUuid().getValue())
                 .name(family.getName())
+                .monthlyBudget(family.getMonthlyBudget())
                 .createdAt(family.getCreatedAt())
                 .updatedAt(family.getUpdatedAt())
                 .memberCount(memberCount)
