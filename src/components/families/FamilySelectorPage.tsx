@@ -18,10 +18,14 @@ export function FamilySelectorPage({ families }: FamilySelectorPageProps) {
 
   const handleFamilySelect = async (family: Family) => {
     // 선택한 가족을 기본 가족으로 설정
-    await setDefaultFamilyAction(family.uuid);
+    const result = await setDefaultFamilyAction(family.uuid);
 
-    // 홈페이지로 리다이렉트 (새로고침하여 대시보드 렌더링)
-    window.location.href = "/";
+    if (result.success) {
+      // Server Component를 재실행하여 최신 프로필 정보로 다시 렌더링
+      router.refresh();
+      // 홈페이지로 SPA 라우팅 (무한루프 방지)
+      router.push("/");
+    }
   };
 
   const handleCreateFamily = () => {
