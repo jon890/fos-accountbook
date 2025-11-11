@@ -7,39 +7,14 @@ import {
   handleActionError,
   type ActionResult,
 } from "@/lib/errors";
+import type {
+  Income,
+  GetIncomesParams,
+  GetIncomesResponse,
+} from "@/types/income";
 
-export interface Income {
-  uuid: string;
-  familyUuid: string;
-  categoryUuid: string;
-  category: {
-    uuid: string;
-    name: string;
-    color: string;
-    icon: string;
-  };
-  amount: number;
-  description: string | null;
-  date: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface GetIncomesParams {
-  familyId: string;
-  categoryId?: string;
-  startDate?: string;
-  endDate?: string;
-  page?: number;
-  limit?: number;
-}
-
-export interface GetIncomesResponse {
-  items: Income[];
-  totalElements: number;
-  totalPages: number;
-  currentPage: number;
-}
+// Re-export for backward compatibility
+export type { Income, GetIncomesParams, GetIncomesResponse };
 
 /**
  * 수입 목록 조회 Server Action

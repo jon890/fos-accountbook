@@ -1,8 +1,8 @@
 "use client";
 
-import type { Income } from "@/app/actions/income/get-incomes-action";
 import { Card, CardContent } from "@/components/ui/card";
 import type { CategoryResponse } from "@/types/api";
+import type { Income } from "@/types/income";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IncomeItem } from "./IncomeItem";
 
@@ -70,4 +70,3 @@ export function IncomeListClient({
     </div>
   );
 }
-

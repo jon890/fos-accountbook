@@ -1,6 +1,6 @@
 "use client";
 
-import type { Income } from "@/app/actions/income/get-incomes-action";
+import type { Income } from "@/types/income";
 import { formatExpenseDate } from "@/lib/utils/format";
 import { Edit, Trash2 } from "lucide-react";
 import { useState } from "react";

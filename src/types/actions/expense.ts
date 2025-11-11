@@ -1,8 +1,16 @@
 /**
  * Expense Actions 타입 정의
+ * @deprecated - 새로운 타입은 @/types/expense 사용
  */
 
 import type { ExpenseResponse } from "@/types/api";
+
+// Re-export for backward compatibility
+export type {
+  GetExpensesParams,
+  CreateExpenseFormState,
+  UpdateExpenseFormState,
+} from "@/types/expense";
 
 /**
  * ExpenseItem 컴포넌트용 타입
@@ -15,37 +23,6 @@ export interface ExpenseItemData
   categoryName: string;
   categoryColor: string;
   categoryIcon: string;
-}
-
-export type CreateExpenseFormState = {
-  errors?: {
-    amount?: string[];
-    description?: string[];
-    categoryId?: string[];
-    date?: string[];
-  };
-  message?: string;
-  success?: boolean;
-};
-
-export type UpdateExpenseFormState = {
-  errors?: {
-    amount?: string[];
-    description?: string[];
-    categoryId?: string[];
-    date?: string[];
-  };
-  message?: string;
-  success?: boolean;
-};
-
-export interface GetExpensesParams {
-  familyId: string;
-  categoryId?: string;
-  startDate?: string;
-  endDate?: string;
-  page?: number;
-  limit?: number;
 }
 
 export interface GetExpensesResult {
