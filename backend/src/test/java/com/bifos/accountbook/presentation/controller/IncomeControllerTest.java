@@ -160,11 +160,11 @@ class IncomeControllerTest {
         mockMvc.perform(get("/api/v1/families/{familyUuid}/incomes", testFamily.getUuid().getValue()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.incomes").isArray())
-                .andExpect(jsonPath("$.data.incomes", hasSize(2)))
+                .andExpect(jsonPath("$.data.items").isArray())
+                .andExpect(jsonPath("$.data.items", hasSize(2)))
                 .andExpect(jsonPath("$.data.totalElements").value(2))
-                .andExpect(jsonPath("$.data.incomes[0].description").value("월급"))
-                .andExpect(jsonPath("$.data.incomes[1].description").value("보너스"));
+                .andExpect(jsonPath("$.data.items[0].description").value("월급"))
+                .andExpect(jsonPath("$.data.items[1].description").value("보너스"));
     }
 
     @Test
@@ -190,7 +190,7 @@ class IncomeControllerTest {
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.incomes", hasSize(10)))
+                .andExpect(jsonPath("$.data.items", hasSize(10)))
                 .andExpect(jsonPath("$.data.totalElements").value(25))
                 .andExpect(jsonPath("$.data.totalPages").value(3))
                 .andExpect(jsonPath("$.data.currentPage").value(0));

@@ -1,5 +1,6 @@
 package com.bifos.accountbook.presentation.controller;
 
+import com.bifos.accountbook.application.dto.common.PaginationResponse;
 import com.bifos.accountbook.application.dto.expense.CategoryExpenseSummaryResponse;
 import com.bifos.accountbook.application.dto.expense.CreateExpenseRequest;
 import com.bifos.accountbook.application.dto.expense.ExpenseResponse;
@@ -45,7 +46,7 @@ public class ExpenseController {
      * 가족의 지출 목록 조회 (페이징 + 필터링)
      */
     @GetMapping
-    public ResponseEntity<ApiSuccessResponse<Page<ExpenseResponse>>> getFamilyExpenses(
+    public ResponseEntity<ApiSuccessResponse<PaginationResponse<ExpenseResponse>>> getFamilyExpenses(
             @LoginUser LoginUserDto loginUser,
             @PathVariable String familyUuid,
             @RequestParam(defaultValue = "0") Integer page,
@@ -57,10 +58,12 @@ public class ExpenseController {
         ExpenseSearchRequest searchRequest = ExpenseSearchRequest.withDefaults(
                 page, size, categoryId, startDate, endDate);
 
-        Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
+        Page<ExpenseResponse> expensesPage = expenseService.getFamilyExpenses(
                 loginUser.getUserUuid(), familyUuid, searchRequest);
 
-        return ResponseEntity.ok(ApiSuccessResponse.of(expenses));
+        PaginationResponse<ExpenseResponse> response = PaginationResponse.from(expensesPage);
+
+        return ResponseEntity.ok(ApiSuccessResponse.of(response));
     }
 
     /**
