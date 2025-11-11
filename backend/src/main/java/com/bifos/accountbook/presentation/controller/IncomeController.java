@@ -1,6 +1,7 @@
 package com.bifos.accountbook.presentation.controller;
 
 import com.bifos.accountbook.application.dto.income.CreateIncomeRequest;
+import com.bifos.accountbook.application.dto.income.IncomePaginationResponse;
 import com.bifos.accountbook.application.dto.income.IncomeResponse;
 import com.bifos.accountbook.application.dto.income.IncomeSearchRequest;
 import com.bifos.accountbook.application.dto.income.UpdateIncomeRequest;
@@ -43,7 +44,7 @@ public class IncomeController {
      * 가족의 수입 목록 조회 (페이징 + 필터링)
      */
     @GetMapping
-    public ResponseEntity<ApiSuccessResponse<Page<IncomeResponse>>> getFamilyIncomes(
+    public ResponseEntity<ApiSuccessResponse<IncomePaginationResponse>> getFamilyIncomes(
             @LoginUser LoginUserDto loginUser,
             @PathVariable String familyUuid,
             @RequestParam(defaultValue = "0") Integer page,
@@ -55,10 +56,12 @@ public class IncomeController {
         IncomeSearchRequest searchRequest = IncomeSearchRequest.withDefaults(
                 page, size, categoryUuid, startDate, endDate);
 
-        Page<IncomeResponse> incomes = incomeService.getFamilyIncomes(
+        Page<IncomeResponse> incomesPage = incomeService.getFamilyIncomes(
                 loginUser.getUserUuid(), familyUuid, searchRequest);
 
-        return ResponseEntity.ok(ApiSuccessResponse.of(incomes));
+        IncomePaginationResponse response = IncomePaginationResponse.from(incomesPage);
+
+        return ResponseEntity.ok(ApiSuccessResponse.of(response));
     }
 
     /**
