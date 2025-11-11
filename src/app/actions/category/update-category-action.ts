@@ -51,7 +51,6 @@ export async function updateCategoryAction(
     );
 
     revalidatePath("/");
-    revalidatePath("/expenses");
     revalidatePath("/categories");
 
     return successResult(category);

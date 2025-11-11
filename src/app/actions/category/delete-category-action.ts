@@ -33,7 +33,6 @@ export async function deleteCategoryAction(
     await serverApiDelete(`/categories/${categoryUuid}`);
 
     revalidatePath("/");
-    revalidatePath("/expenses");
     revalidatePath("/categories");
 
     return successResult(undefined);

@@ -97,8 +97,7 @@ export async function updateExpenseAction(
     });
 
     // 관련 페이지 재검증
-    revalidatePath("/expenses");
-    revalidatePath("/transactions"); // 검색 조건 초기화를 위한 내역 페이지 revalidate
+    revalidatePath("/transactions");
     revalidatePath("/");
 
     return {
