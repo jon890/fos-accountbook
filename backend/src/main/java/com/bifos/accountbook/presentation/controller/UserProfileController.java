@@ -1,7 +1,7 @@
 package com.bifos.accountbook.presentation.controller;
 
-import com.bifos.accountbook.application.dto.UpdateUserProfileRequest;
-import com.bifos.accountbook.application.dto.UserProfileResponse;
+import com.bifos.accountbook.application.dto.profile.UpdateUserProfileRequest;
+import com.bifos.accountbook.application.dto.profile.UserProfileResponse;
 import com.bifos.accountbook.application.service.UserProfileService;
 import com.bifos.accountbook.presentation.annotation.LoginUser;
 import com.bifos.accountbook.presentation.dto.ApiSuccessResponse;

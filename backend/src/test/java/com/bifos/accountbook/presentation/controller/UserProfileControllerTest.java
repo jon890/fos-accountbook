@@ -1,6 +1,6 @@
 package com.bifos.accountbook.presentation.controller;
 
-import com.bifos.accountbook.application.dto.UpdateUserProfileRequest;
+import com.bifos.accountbook.application.dto.profile.UpdateUserProfileRequest;
 import com.bifos.accountbook.common.DatabaseCleanupExtension;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.entity.UserProfile;

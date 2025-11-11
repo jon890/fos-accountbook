@@ -1,4 +1,4 @@
-package com.bifos.accountbook.application.dto;
+package com.bifos.accountbook.application.dto.profile;
 
 import com.bifos.accountbook.domain.entity.UserProfile;
 import lombok.AllArgsConstructor;

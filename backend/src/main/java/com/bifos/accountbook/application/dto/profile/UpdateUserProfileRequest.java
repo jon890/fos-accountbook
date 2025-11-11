@@ -1,4 +1,4 @@
-package com.bifos.accountbook.application.dto;
+package com.bifos.accountbook.application.dto.profile;
 
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
