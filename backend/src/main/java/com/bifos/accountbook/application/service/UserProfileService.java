@@ -55,8 +55,7 @@ public class UserProfileService {
             profile.updateDefaultFamily(CustomUuid.from(request.getDefaultFamilyUuid()));
         }
 
-        UserProfile saved = userProfileRepository.save(profile);
-        return UserProfileResponse.from(saved);
+        return UserProfileResponse.from(profile);
     }
 
     /**
@@ -73,8 +72,7 @@ public class UserProfileService {
             profile.updateDefaultFamily(CustomUuid.from(familyUuid));
         }
 
-        UserProfile saved = userProfileRepository.save(profile);
-        return UserProfileResponse.from(saved);
+        return UserProfileResponse.from(profile);
     }
 
     /**
