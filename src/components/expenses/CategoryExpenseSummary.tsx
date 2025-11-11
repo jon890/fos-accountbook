@@ -1,61 +1,18 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCategoryIcon } from "@/lib/utils/category-icons";
-import type { CategoryResponse, ExpenseResponse } from "@/types/api";
+import type { CategoryExpenseSummaryResponse } from "@/types/api";
 
 interface CategoryExpenseSummaryProps {
-  expenses: ExpenseResponse[];
-  categories: CategoryResponse[];
-}
-
-interface CategoryStat {
-  category: CategoryResponse;
-  total: number;
-  count: number;
-  percentage: number;
+  summary: CategoryExpenseSummaryResponse;
 }
 
 export function CategoryExpenseSummary({
-  expenses,
-  categories,
+  summary,
 }: CategoryExpenseSummaryProps) {
-  // 카테고리별 지출 집계
-  const categoryStats = new Map<string, { total: number; count: number }>();
+  const { totalExpense, categoryStats } = summary;
 
-  expenses.forEach((expense) => {
-    const current = categoryStats.get(expense.categoryUuid) || {
-      total: 0,
-      count: 0,
-    };
-    categoryStats.set(expense.categoryUuid, {
-      total: current.total + parseFloat(expense.amount),
-      count: current.count + 1,
-    });
-  });
-
-  // 전체 지출 합계
-  const totalExpense = Array.from(categoryStats.values()).reduce(
-    (sum, stat) => sum + stat.total,
-    0
-  );
-
-  // 카테고리 통계 생성 및 정렬
-  const stats: CategoryStat[] = categories
-    .map((category) => {
-      const stat = categoryStats.get(category.uuid);
-      if (!stat) return null;
-
-      return {
-        category,
-        total: stat.total,
-        count: stat.count,
-        percentage: totalExpense > 0 ? (stat.total / totalExpense) * 100 : 0,
-      };
-    })
-    .filter((stat): stat is CategoryStat => stat !== null)
-    .sort((a, b) => b.total - a.total); // 금액 내림차순 정렬
-
-  if (stats.length === 0) {
+  if (categoryStats.length === 0) {
     return null;
   }
 
@@ -73,22 +30,20 @@ export function CategoryExpenseSummary({
       </CardHeader>
       <CardContent className="px-4 md:px-6">
         <div className="space-y-3 md:space-y-4">
-          {stats.map((stat) => {
-            const IconComponent = getCategoryIcon(
-              stat.category.icon || "default"
-            );
+          {categoryStats.map((stat) => {
+            const IconComponent = getCategoryIcon(stat.categoryIcon || "default");
             const useEmoji = !IconComponent;
 
             return (
               <div
-                key={stat.category.uuid}
+                key={stat.categoryUuid}
                 className="relative overflow-hidden rounded-xl md:rounded-2xl bg-gradient-to-r from-gray-50 to-white border border-gray-100 p-3 md:p-4"
               >
                 {/* 배경 프로그레스 바 */}
                 <div
                   className="absolute inset-0 opacity-10"
                   style={{
-                    background: `linear-gradient(to right, ${stat.category.color} 0%, ${stat.category.color} ${stat.percentage}%, transparent ${stat.percentage}%)`,
+                    background: `linear-gradient(to right, ${stat.categoryColor} 0%, ${stat.categoryColor} ${stat.percentage}%, transparent ${stat.percentage}%)`,
                   }}
                 />
 
@@ -98,15 +53,15 @@ export function CategoryExpenseSummary({
                     <div
                       className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center shadow-sm shrink-0"
                       style={{
-                        backgroundColor: `${stat.category.color}20`,
+                        backgroundColor: `${stat.categoryColor}20`,
                       }}
                     >
                       {useEmoji ? (
                         <span className="text-xl md:text-2xl">
-                          {stat.category.icon}
+                          {stat.categoryIcon}
                         </span>
                       ) : (
-                        <div style={{ color: stat.category.color }}>
+                        <div style={{ color: stat.categoryColor }}>
                           {IconComponent && (
                             <IconComponent className="w-5 h-5 md:w-6 md:h-6" />
                           )}
@@ -118,14 +73,14 @@ export function CategoryExpenseSummary({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-semibold text-gray-900 text-sm md:text-base">
-                          {stat.category.name}
+                          {stat.categoryName}
                         </h4>
                         <Badge
                           variant="secondary"
                           className="text-[10px] md:text-xs"
                           style={{
-                            backgroundColor: `${stat.category.color}15`,
-                            color: stat.category.color,
+                            backgroundColor: `${stat.categoryColor}15`,
+                            color: stat.categoryColor,
                             border: "none",
                           }}
                         >
@@ -138,7 +93,7 @@ export function CategoryExpenseSummary({
                             className="h-full rounded-full transition-all duration-300"
                             style={{
                               width: `${stat.percentage}%`,
-                              backgroundColor: stat.category.color,
+                              backgroundColor: stat.categoryColor,
                             }}
                           />
                         </div>
@@ -152,7 +107,7 @@ export function CategoryExpenseSummary({
                   {/* 금액 */}
                   <div className="text-right ml-3 md:ml-4">
                     <p className="text-sm md:text-lg font-bold text-gray-900 whitespace-nowrap">
-                      ₩{stat.total.toLocaleString()}
+                      ₩{stat.totalAmount.toLocaleString()}
                     </p>
                   </div>
                 </div>

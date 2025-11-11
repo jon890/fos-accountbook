@@ -108,7 +108,6 @@ export default async function TransactionsPage({
           >
             <ExpenseSummaryWrapper
               familyId={family.uuid}
-              categories={categories}
               categoryId={resolvedSearchParams.categoryId}
               startDate={startDate}
               endDate={endDate}

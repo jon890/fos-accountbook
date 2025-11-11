@@ -189,6 +189,27 @@ export interface ExpenseResponse {
 }
 
 /**
+ * 카테고리별 지출 통계
+ */
+export interface CategoryExpenseStatResponse {
+  categoryUuid: string;
+  categoryName: string;
+  categoryIcon: string;
+  categoryColor: string;
+  totalAmount: number;
+  count: number;
+  percentage: number;
+}
+
+/**
+ * 카테고리별 지출 요약 응답
+ */
+export interface CategoryExpenseSummaryResponse {
+  totalExpense: number;
+  categoryStats: CategoryExpenseStatResponse[];
+}
+
+/**
  * 지출 페이지 응답 (Spring Data Page)
  */
 export interface PageResponse<T> {

@@ -1,15 +1,14 @@
 /**
  * Expense Summary Wrapper - Server Component
- * 카테고리별 지출 요약을 표시하기 위해 전체 지출 데이터를 fetch
+ * 카테고리별 지출 요약을 백엔드 집계 API로 조회
  */
 
-import { getExpensesAction } from "@/app/actions/expense/get-expenses-action";
 import { CategoryExpenseSummary } from "./CategoryExpenseSummary";
-import type { CategoryResponse } from "@/types/api";
+import { serverApiGet } from "@/lib/server/api";
+import type { CategoryExpenseSummaryResponse } from "@/types/api";
 
 interface ExpenseSummaryWrapperProps {
   familyId: string;
-  categories: CategoryResponse[];
   categoryId?: string;
   startDate?: string;
   endDate?: string;
@@ -17,29 +16,30 @@ interface ExpenseSummaryWrapperProps {
 
 export async function ExpenseSummaryWrapper({
   familyId,
-  categories,
   categoryId,
   startDate,
   endDate,
 }: ExpenseSummaryWrapperProps) {
-  // 통계를 위해 많은 데이터 가져오기 (최대 1000건)
-  const result = await getExpensesAction({
-    familyId,
-    categoryId,
-    startDate,
-    endDate,
-    page: 1,
-    limit: 1000,
-  });
+  // 쿼리 파라미터 생성
+  const params = new URLSearchParams();
+  if (startDate) params.append("startDate", startDate);
+  if (endDate) params.append("endDate", endDate);
+  if (categoryId) params.append("categoryId", categoryId);
 
-  if (!result.success || result.data.expenses.length === 0) {
+  try {
+    // 백엔드 집계 API 호출
+    const summary = await serverApiGet<CategoryExpenseSummaryResponse>(
+      `/families/${familyId}/expenses/summary/by-category?${params.toString()}`
+    );
+
+    // 데이터가 없으면 null 반환
+    if (!summary || summary.categoryStats.length === 0) {
+      return null;
+    }
+
+    return <CategoryExpenseSummary summary={summary} />;
+  } catch (error) {
+    console.error("Failed to fetch expense summary:", error);
     return null;
   }
-
-  return (
-    <CategoryExpenseSummary
-      expenses={result.data.expenses}
-      categories={categories}
-    />
-  );
 }
