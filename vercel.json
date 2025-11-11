@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "app/**/*.{ts,tsx}": {
+      "runtime": "nodejs22.x"
+    }
+  }
+}

@@ -4,6 +4,7 @@
 version: 2
 updates:
   # npm 의존성 업데이트 (pnpm 사용)
+  # Node.js 22 사용 중 (@types/node v22 범위 유지)
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -20,6 +21,11 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
+    # Node.js 22 사용 중이므로 @types/node v23+ 무시
+    ignore:
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+        versions: [">=23.0.0"]
     groups:
       # Next.js 관련 의존성을 하나의 PR로 그룹화
       nextjs:
