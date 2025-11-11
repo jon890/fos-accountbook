@@ -12,6 +12,8 @@ interface IncomeItemProps {
 export function IncomeItem({ income }: IncomeItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  console.log(income);
+
   return (
     <div
       className="group flex items-center justify-between p-3 rounded-lg hover:bg-emerald-50/50 transition-colors cursor-pointer relative"
@@ -102,4 +104,3 @@ export function IncomeItem({ income }: IncomeItemProps) {
     </div>
   );
 }
-

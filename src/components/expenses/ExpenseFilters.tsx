@@ -50,18 +50,31 @@ export function ExpenseFilters({
   );
 
   const applyFilters = () => {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams.toString());
 
-    if (selectedCategory && selectedCategory !== "all")
+    // 필터 값 설정
+    if (selectedCategory && selectedCategory !== "all") {
       params.set("categoryId", selectedCategory);
-    if (startDate) params.set("startDate", startDate);
-    if (endDate) params.set("endDate", endDate);
+    } else {
+      params.delete("categoryId");
+    }
+    
+    if (startDate) {
+      params.set("startDate", startDate);
+    } else {
+      params.delete("startDate");
+    }
+    
+    if (endDate) {
+      params.set("endDate", endDate);
+    } else {
+      params.delete("endDate");
+    }
+    
     params.set("limit", pageSize.toString());
+    params.set("page", "1"); // 페이지를 1로 리셋
 
-    // 페이지를 1로 리셋
-    params.set("page", "1");
-
-    router.push(`/expenses?${params.toString()}`);
+    router.push(`/transactions?${params.toString()}`);
   };
 
   const handlePageSizeChange = (newSize: number) => {
@@ -69,15 +82,34 @@ export function ExpenseFilters({
     const params = new URLSearchParams(searchParams.toString());
     params.set("limit", newSize.toString());
     params.set("page", "1"); // 페이지 크기 변경 시 1페이지로 리셋
-    router.push(`/expenses?${params.toString()}`);
+    router.push(`/transactions?${params.toString()}`);
   };
 
   const clearFilters = () => {
     setSelectedCategory("all");
-    setStartDate("");
-    setEndDate("");
+    setStartDate(defaultStartDate || "");
+    setEndDate(defaultEndDate || "");
     setPageSize(25);
-    router.push("/expenses");
+    
+    const params = new URLSearchParams(searchParams.toString());
+    // 필터 관련 파라미터만 제거
+    params.delete("categoryId");
+    params.delete("page");
+    // startDate와 endDate는 기본값으로 설정
+    if (defaultStartDate) {
+      params.set("startDate", defaultStartDate);
+    } else {
+      params.delete("startDate");
+    }
+    if (defaultEndDate) {
+      params.set("endDate", defaultEndDate);
+    } else {
+      params.delete("endDate");
+    }
+    params.set("limit", "25");
+    params.set("page", "1");
+    
+    router.push(`/transactions?${params.toString()}`);
   };
 
   const hasActiveFilters = selectedCategory !== "all" || startDate || endDate;
