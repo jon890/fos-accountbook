@@ -3,7 +3,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { getCategoryIcon } from "@/lib/utils/category-icons";
 import type { CategoryExpenseSummaryResponse } from "@/types/expense";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -44,10 +43,6 @@ export function CategoryExpenseSummary({
       <CardContent className="px-4 md:px-6">
         <div className="space-y-3 md:space-y-4">
           {categoryStats.map((stat) => {
-            const IconComponent = getCategoryIcon(
-              stat.categoryIcon || "default"
-            );
-            const useEmoji = !IconComponent;
             const isSelected =
               searchParams.get("categoryId") === stat.categoryUuid;
 
@@ -80,17 +75,9 @@ export function CategoryExpenseSummary({
                         backgroundColor: `${stat.categoryColor}20`,
                       }}
                     >
-                      {useEmoji ? (
-                        <span className="text-xl md:text-2xl">
-                          {stat.categoryIcon}
-                        </span>
-                      ) : (
-                        <div style={{ color: stat.categoryColor }}>
-                          {IconComponent && (
-                            <IconComponent className="w-5 h-5 md:w-6 md:h-6" />
-                          )}
-                        </div>
-                      )}
+                      <span className="text-xl md:text-2xl">
+                        {stat.categoryIcon}
+                      </span>
                     </div>
 
                     {/* 카테고리 정보 */}
