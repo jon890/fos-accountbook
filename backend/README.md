@@ -80,7 +80,7 @@ infra/            # 기술적 구현 (Config, Security, Exception)
 **설계 원칙**:
 
 - UUID 기반 관계 설정
-- Soft Delete 패턴 (`deleted_at` 컬럼)
+- Soft Delete 패턴 (`status` 컬럼 기반: ACTIVE, DELETED)
 - Flyway 마이그레이션으로 스키마 버전 관리
 
 ### Gradle Version Catalogs
