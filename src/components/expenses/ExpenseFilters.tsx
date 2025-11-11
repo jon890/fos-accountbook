@@ -168,7 +168,7 @@ export function ExpenseFilters({
           <div className="flex gap-2">
             <Button
               onClick={applyFilters}
-              className="bg-blue-600 hover:bg-blue-700 h-9 text-sm flex-1"
+              className="bg-blue-600 hover:bg-blue-700 h-9 text-sm flex-1 md:flex-initial md:max-w-[120px]"
             >
               필터 적용
             </Button>
@@ -177,7 +177,7 @@ export function ExpenseFilters({
               <Button
                 variant="outline"
                 onClick={clearFilters}
-                className="h-9 text-sm"
+                className="h-9 text-sm md:max-w-[100px]"
               >
                 초기화
               </Button>
