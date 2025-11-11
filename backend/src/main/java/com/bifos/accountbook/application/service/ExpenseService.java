@@ -186,39 +186,29 @@ public class ExpenseService {
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
 
-        // 카테고리 변경
+        // 카테고리 변경 검증
+        CustomUuid categoryCustomUuid = null;
         if (request.getCategoryUuid() != null) {
-            CustomUuid categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
+            categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
+            final String categoryUuidStr = categoryCustomUuid.getValue(); // final 변수 생성
             Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
                     .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
-                            .addParameter("categoryUuid", categoryCustomUuid.toString()));
+                            .addParameter("categoryUuid", categoryUuidStr));
 
             if (!category.getFamilyUuid().equals(expense.getFamilyUuid())) {
                 throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 가족의 카테고리가 아닙니다")
                         .addParameter("categoryFamilyUuid", category.getFamilyUuid().toString())
                         .addParameter("expenseFamilyUuid", expense.getFamilyUuid().toString());
             }
-
-            expense.setCategoryUuid(categoryCustomUuid);
         }
 
-        // 금액 변경
-        if (request.getAmount() != null) {
-            expense.setAmount(request.getAmount());
-        }
-
-        // 설명 변경
-        if (request.getDescription() != null) {
-            expense.setDescription(request.getDescription());
-        }
-
-        // 날짜 변경
-        if (request.getDate() != null) {
-            expense.setDate(request.getDate());
-        }
-
-        // 더티 체킹으로 자동 업데이트
-        log.info("Updated expense: {} by user: {}", expenseUuid, userUuid);
+        // 지출 정보 업데이트
+        expense.update(
+            categoryCustomUuid,
+            request.getAmount(),
+            request.getDescription(),
+            request.getDate()
+        );
 
         return ExpenseResponse.fromWithoutCategory(expense);
     }
@@ -237,7 +227,7 @@ public class ExpenseService {
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
 
-        expense.setStatus(ExpenseStatus.DELETED);
+        expense.delete();
         // 더티 체킹으로 자동 업데이트
 
         log.info("Deleted expense: {} by user: {}", expenseUuid, userUuid);
@@ -301,9 +291,6 @@ public class ExpenseService {
 
             categoryStats.add(stat);
         }
-
-        log.info("Retrieved category expense summary for family: {} (total: {}, categories: {})",
-                familyUuid, totalExpense, categoryStats.size());
 
         return CategoryExpenseSummaryResponse.builder()
                 .totalExpense(totalExpense)

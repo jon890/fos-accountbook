@@ -115,15 +115,15 @@ public class CategoryService {
                                 .addParameter("familyUuid", familyUuidStr)
                                 .addParameter("categoryName", request.getName());
                     });
-            category.setName(request.getName());
+            category.updateName(request.getName());
         }
 
         if (request.getColor() != null) {
-            category.setColor(request.getColor());
+            category.updateColor(request.getColor());
         }
 
         if (request.getIcon() != null) {
-            category.setIcon(request.getIcon());
+            category.updateIcon(request.getIcon());
         }
 
         return CategoryResponse.from(category);
@@ -143,7 +143,7 @@ public class CategoryService {
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
 
-        category.setStatus(CategoryStatus.DELETED);
+        category.delete();
 
         log.info("Deleted category: {} by user: {}", categoryUuid, userUuid);
     }

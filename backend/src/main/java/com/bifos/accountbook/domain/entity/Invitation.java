@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 })
 @EntityListeners(AuditingEntityListener.class)
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -62,5 +61,34 @@ public class Invitation {
             uuid = CustomUuid.generate();
         }
         // createdAt은 JPA Auditing이 자동 관리
+    }
+
+    // ========== 비즈니스 메서드 ==========
+
+    /**
+     * 초대 수락
+     */
+    public void accept() {
+        if (!"PENDING".equals(this.status)) {
+            throw new IllegalStateException("수락할 수 없는 초대 상태입니다");
+        }
+        if (LocalDateTime.now().isAfter(this.expiresAt)) {
+            throw new IllegalStateException("만료된 초대입니다");
+        }
+        this.status = "ACCEPTED";
+    }
+
+    /**
+     * 초대 만료 여부 확인
+     */
+    public boolean isExpired() {
+        return LocalDateTime.now().isAfter(this.expiresAt);
+    }
+
+    /**
+     * 초대 수락 가능 여부 확인
+     */
+    public boolean canAccept() {
+        return "PENDING".equals(this.status) && !isExpired();
     }
 }

@@ -137,12 +137,7 @@ public class InvitationService {
                                 .build();
 
                 familyMemberRepository.save(member);
-
-                // 초대장 사용 처리 (더티 체킹으로 자동 업데이트)
-                invitation.setStatus("ACCEPTED");
-
-                log.info("User: {} accepted invitation: {} and joined family: {}",
-                                userUuid, invitation.getUuid(), invitation.getFamilyUuid());
+                invitation.accept();
         }
 
         /**

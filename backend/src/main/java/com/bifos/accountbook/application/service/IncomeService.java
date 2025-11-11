@@ -73,11 +73,6 @@ public class IncomeService {
                 .build();
 
         income = incomeRepository.save(income);
-        
-        // 카테고리 정보와 함께 반환하기 위해 다시 조회
-        income.setCategory(category);
-        
-        log.info("Created income: {} in family: {} by user: {}", income.getUuid(), familyUuid, userUuid);
 
         return IncomeResponse.from(income);
     }
@@ -155,44 +150,34 @@ public class IncomeService {
 
         Income income = incomeRepository.findActiveByUuid(incomeCustomUuid)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INCOME_NOT_FOUND)
-                        .addParameter("incomeUuid", incomeCustomUuid.toString()));
+                        .addParameter("incomeUuid", incomeCustomUuid.getValue()));
 
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());
 
-        // 카테고리 변경
+        // 카테고리 변경 검증
+        CustomUuid categoryCustomUuid = null;
         if (request.getCategoryUuid() != null) {
-            CustomUuid categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
+            categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
+            final String categoryUuidStr = categoryCustomUuid.getValue(); // final 변수 생성
             Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
                     .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
-                            .addParameter("categoryUuid", categoryCustomUuid.toString()));
+                            .addParameter("categoryUuid", categoryUuidStr));
 
             if (!category.getFamilyUuid().equals(income.getFamilyUuid())) {
                 throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 가족의 카테고리가 아닙니다")
-                        .addParameter("categoryFamilyUuid", category.getFamilyUuid().toString())
-                        .addParameter("incomeFamilyUuid", income.getFamilyUuid().toString());
+                        .addParameter("categoryFamilyUuid", category.getFamilyUuid().getValue())
+                        .addParameter("incomeFamilyUuid", income.getFamilyUuid().getValue());
             }
-
-            income.setCategoryUuid(categoryCustomUuid);
         }
 
-        // 금액 변경
-        if (request.getAmount() != null) {
-            income.setAmount(request.getAmount());
-        }
-
-        // 설명 변경
-        if (request.getDescription() != null) {
-            income.setDescription(request.getDescription());
-        }
-
-        // 날짜 변경
-        if (request.getDate() != null) {
-            income.setDate(request.getDate());
-        }
-
-        // 더티 체킹으로 자동 업데이트
-        log.info("Updated income: {} by user: {}", incomeUuid, userUuid);
+        // 수입 정보 업데이트
+        income.update(
+            categoryCustomUuid,
+            request.getAmount(),
+            request.getDescription(),
+            request.getDate()
+        );
 
         return IncomeResponse.from(income);
     }
@@ -211,10 +196,7 @@ public class IncomeService {
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());
 
-        income.setStatus(IncomeStatus.DELETED);
-        // 더티 체킹으로 자동 업데이트
-
-        log.info("Deleted income: {} by user: {}", incomeUuid, userUuid);
+        income.delete();
     }
 }
 

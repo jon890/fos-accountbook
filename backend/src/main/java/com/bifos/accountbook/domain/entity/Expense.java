@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
 })
 @EntityListeners(AuditingEntityListener.class)
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -87,5 +86,35 @@ public class Expense {
             date = LocalDateTime.now();
         }
         // createdAt, updatedAt은 JPA Auditing이 자동 관리
+    }
+
+    // ========== 비즈니스 메서드 ==========
+
+    /**
+     * 지출 정보 수정
+     */
+    public void update(CustomUuid categoryUuid, BigDecimal amount, String description, LocalDateTime date) {
+        if (categoryUuid != null) {
+            this.categoryUuid = categoryUuid;
+        }
+        if (amount != null) {
+            if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("금액은 0보다 커야 합니다");
+            }
+            this.amount = amount;
+        }
+        if (description != null) {
+            this.description = description;
+        }
+        if (date != null) {
+            this.date = date;
+        }
+    }
+
+    /**
+     * 지출 삭제 (Soft Delete)
+     */
+    public void delete() {
+        this.status = ExpenseStatus.DELETED;
     }
 }

@@ -16,7 +16,6 @@ import java.util.List;
 @Table(name = "categories")
 @EntityListeners(AuditingEntityListener.class)
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -72,5 +71,41 @@ public class Category {
             uuid = CustomUuid.generate();
         }
         // createdAt, updatedAt은 JPA Auditing이 자동 관리
+    }
+
+    // ========== 비즈니스 메서드 ==========
+
+    /**
+     * 카테고리 이름 변경
+     */
+    public void updateName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("카테고리 이름은 필수입니다");
+        }
+        this.name = name;
+    }
+
+    /**
+     * 카테고리 색상 변경
+     */
+    public void updateColor(String color) {
+        if (color != null && !color.matches("^#[0-9a-fA-F]{6}$")) {
+            throw new IllegalArgumentException("유효하지 않은 색상 코드입니다");
+        }
+        this.color = color != null ? color : this.color;
+    }
+
+    /**
+     * 카테고리 아이콘 변경
+     */
+    public void updateIcon(String icon) {
+        this.icon = icon;
+    }
+
+    /**
+     * 카테고리 삭제 (Soft Delete)
+     */
+    public void delete() {
+        this.status = CategoryStatus.DELETED;
     }
 }

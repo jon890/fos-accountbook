@@ -8,6 +8,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +17,6 @@ import java.util.List;
 @Table(name = "families")
 @EntityListeners(AuditingEntityListener.class)
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -31,6 +31,14 @@ public class Family {
 
     @Column(nullable = false, length = 100)
     private String name;
+
+    /**
+     * 월 예산
+     * 0은 예산 미설정 상태를 의미합니다.
+     */
+    @Column(name = "monthly_budget", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal monthlyBudget = BigDecimal.ZERO;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -66,5 +74,34 @@ public class Family {
             uuid = CustomUuid.generate();
         }
         // createdAt, updatedAt은 JPA Auditing이 자동 관리
+    }
+
+    // ========== 비즈니스 메서드 ==========
+
+    /**
+     * 가족 이름 변경
+     */
+    public void updateName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("가족 이름은 필수입니다");
+        }
+        this.name = name;
+    }
+
+    /**
+     * 월 예산 변경
+     */
+    public void updateMonthlyBudget(BigDecimal monthlyBudget) {
+        if (monthlyBudget == null || monthlyBudget.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("월 예산은 0 이상이어야 합니다");
+        }
+        this.monthlyBudget = monthlyBudget;
+    }
+
+    /**
+     * 가족 삭제 (Soft Delete)
+     */
+    public void delete() {
+        this.status = FamilyStatus.DELETED;
     }
 }

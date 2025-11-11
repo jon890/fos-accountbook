@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -53,6 +54,7 @@ public class FamilyService {
         // 가족 생성
         Family family = Family.builder()
                 .name(request.getName())
+                .monthlyBudget(request.getMonthlyBudget() != null ? request.getMonthlyBudget() : BigDecimal.ZERO)
                 .build();
 
         family = familyRepository.save(family);
@@ -65,7 +67,6 @@ public class FamilyService {
                 .build();
 
         familyMemberRepository.save(member);
-        log.info("Added owner to family: {}", family.getUuid());
 
         // 기본 카테고리 생성 (CategoryService에 위임)
         categoryService.createDefaultCategoriesForFamily(family.getUuid());
@@ -74,7 +75,6 @@ public class FamilyService {
         int userFamilyCount = familyMemberRepository.countByUserUuid(userUuid);
         if (userFamilyCount == 1) {
             userProfileService.setDefaultFamily(userUuid, family.getUuid().getValue());
-            log.info("Set first family as default for user: {}", userUuid);
         }
 
         // memberCount 포함해서 반환 (방금 생성했으므로 1명)
@@ -143,7 +143,12 @@ public class FamilyService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
                         .addParameter("familyUuid", familyUuid));
 
-        family.setName(request.getName());
+        family.updateName(request.getName());
+        
+        // monthlyBudget이 제공된 경우에만 업데이트
+        if (request.getMonthlyBudget() != null) {
+            family.updateMonthlyBudget(request.getMonthlyBudget());
+        }
 
         int memberCount = familyMemberRepository.countByFamilyUuid(familyCustomUuid);
         return FamilyResponse.fromWithMemberCount(family, memberCount);
@@ -163,7 +168,7 @@ public class FamilyService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
                         .addParameter("familyUuid", familyUuid));
 
-        family.setStatus(FamilyStatus.DELETED);
+        family.delete();
         // 더티 체킹으로 자동 업데이트
 
         log.info("Deleted family: {} by user: {}", familyUuid, userUuid);
