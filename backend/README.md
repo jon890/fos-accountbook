@@ -15,6 +15,7 @@ Spring Boot 3.5 + Java 21 기반 가계부 애플리케이션 백엔드 API 서�
 - 💌 **초대 시스템** - 가족 구성원 초대 링크
 - 📝 **API 문서 자동화** - Swagger UI (OpenAPI 3.0)
 - 🔄 **DB 마이그레이션 관리** - Flyway
+- 🤖 **자동 의존성 업데이트** - Dependabot
 
 ---
 
@@ -35,11 +36,11 @@ Spring Boot 3.5 + Java 21 기반 가계부 애플리케이션 백엔드 API 서�
 - **API Docs**: SpringDoc OpenAPI 3.0
 - **Utils**: Lombok, MapStruct
 
-### Deployment
+### DevOps
 
 - **Container**: Docker
 - **Platform**: Railway
-- **CI/CD**: GitHub Actions (Railway 자동 배포)
+- **Dependency Management**: Dependabot (매주 자동 업데이트)
 
 ---
 
@@ -53,16 +54,16 @@ Spring Boot 3.5 + Java 21 기반 가계부 애플리케이션 백엔드 API 서�
 presentation/     # REST API 엔드포인트 (Controller)
     ├── controller/
     └── dto/
-        
+
 application/      # 비즈니스 로직 (Service, DTO)
     ├── service/
     ├── dto/
     └── mapper/
-        
+
 domain/           # 도메인 모델 (Entity, Repository Interface)
     ├── entity/
     └── repository/
-        
+
 infra/            # 기술적 구현 (Config, Security, Exception)
     ├── config/
     ├── security/
@@ -77,6 +78,7 @@ infra/            # 기술적 구현 (Config, Security, Exception)
   - `families`, `family_members`, `categories`, `expenses`, `invitations`
 
 **설계 원칙**:
+
 - UUID 기반 관계 설정
 - Soft Delete 패턴 (`deleted_at` 컬럼)
 - Flyway 마이그레이션으로 스키마 버전 관리
@@ -86,12 +88,14 @@ infra/            # 기술적 구현 (Config, Security, Exception)
 의존성 버전을 중앙 집중식으로 관리하기 위해 Gradle Version Catalogs를 사용합니다.
 
 **장점**:
+
 - 🎯 중앙 집중식 버전 관리 - 모든 버전을 한 곳에서 관리
 - 🔒 타입 안전성 - IDE 자동완성 및 컴파일 타임 검증
 - 📦 번들 관리 - 관련 라이브러리를 그룹으로 관리
 - 🚀 멀티모듈 대응 - 향후 멀티모듈 전환 시 유리
 
 **파일 구조**:
+
 ```
 gradle/
 ├── libs.versions.toml    # Version Catalog 정의
@@ -99,11 +103,12 @@ gradle/
 ```
 
 **사용 예시** (build.gradle.kts):
+
 ```kotlin
 dependencies {
     // 개별 라이브러리
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
-    
+
     // 번들 사용
     implementation(libs.bundles.spring.boot.starters)
     runtimeOnly(libs.bundles.jwt)
@@ -114,222 +119,30 @@ dependencies {
 
 ### Spring Profiles
 
-| Profile | 용도 | 데이터베이스 | Swagger | 로깅 |
-|---------|------|-------------|---------|------|
-| **local** | 로컬 개발 | Docker MySQL | ✅ | Console + File |
-| **prod** | Railway 배포 | Railway MySQL | ❌ | Console만 |
-| **test** | 테스트 | H2 in-memory | ❌ | Console만 |
+| Profile   | 용도         | 데이터베이스  | Swagger | 로깅           |
+| --------- | ------------ | ------------- | ------- | -------------- |
+| **local** | 로컬 개발    | Docker MySQL  | ✅      | Console + File |
+| **prod**  | Railway 배포 | Railway MySQL | ❌      | Console만      |
+| **test**  | 테스트       | H2 in-memory  | ❌      | Console만      |
 
-### CORS 설정 (application.yml에서 관리)
+### CORS 설정
 
-이 프로젝트는 **CORS 설정을 코드가 아닌 설정 파일**에서 관리합니다.
+CORS 설정은 코드가 아닌 설정 파일(`application.yml`)에서 관리합니다.
 
-**공통 설정** (`application.yml`):
-```yaml
-cors:
-  allowed-methods:
-    - GET, POST, PUT, PATCH, DELETE, OPTIONS
-  allowed-headers:
-    - Authorization, Content-Type, X-Requested-With, Accept, Origin
-  exposed-headers:
-    - Authorization
-  allow-credentials: true
-  max-age: 3600
-```
+환경별로 `allowed-origins`만 변경하면 되도록 구성되어 있습니다:
 
-**환경별 allowed-origins 설정**:
+- `application-local.yml`: localhost 포트들
+- `application-prod.yml`: Vercel 프로덕션 도메인
 
-**로컬 개발** (`application-local.yml`):
-```yaml
-cors:
-  allowed-origins:
-    - http://localhost:3000
-    - http://localhost:3001
-    - http://localhost:3002
-    - http://localhost:3003
-```
+### Dependabot 자동 의존성 관리
 
-**프로덕션** (`application-prod.yml`):
-```yaml
-cors:
-  allowed-origins:
-    - https://your-app.vercel.app  # ⚠️ 실제 Vercel 도메인으로 변경!
-```
+매주 월요일 오전 9시(KST)에 Dependabot이 자동으로 의존성 업데이트를 체크합니다:
 
-**💡 장점**:
-- 공통 설정은 한 곳에서 관리 (중복 제거)
-- 환경별로 도메인만 변경하면 됨
-- 코드 수정 없이 설정 파일만 수정
+- **Gradle 의존성**: Spring Boot, 테스트 라이브러리, 로깅 등
+- **Docker 이미지**: Dockerfile 베이스 이미지
+- **관련 라이브러리 그룹화**: 하나의 PR로 통합 관리
 
-설정 파일 위치:
-- `src/main/resources/application.yml` (공통)
-- `src/main/resources/application-local.yml` (로컬 - 도메인만)
-- `src/main/resources/application-prod.yml` (프로덕션 - 도메인만)
-- `src/main/java/com/bifos/accountbook/infra/config/CorsProperties.java` (설정 클래스)
-
----
-
-## 🚀 빠른 시작
-
-### 사전 요구사항
-
-- **Java 21** 이상
-- **Docker** (로컬 MySQL 용)
-- **IDE**: IntelliJ IDEA (권장)
-
-### 1. 레포지터리 클론
-
-```bash
-git clone https://github.com/your-repo/fos-accountbook-backend.git
-cd fos-accountbook-backend
-```
-
-### 2. MySQL 시작 (Docker Compose)
-
-```bash
-# MySQL 컨테이너 시작
-docker compose up -d
-
-# 로그 확인
-docker compose logs -f mysql
-
-# 상태 확인
-docker compose ps
-```
-
-**로컬 MySQL 정보**:
-- 호스트: `localhost:3306`
-- 데이터베이스: `accountbook`
-- 사용자: `accountbook_user`
-- 비밀번호: `accountbook_password`
-
-### 3. 애플리케이션 실행
-
-#### IntelliJ IDEA (권장)
-
-1. `Application.java` 파일 열기
-2. Run Configuration 설정
-   - **Active profiles**: `local` 입력
-3. ▶ 버튼으로 실행 (Shift+F10)
-
-#### Gradle
-
-```bash
-./gradlew bootRun --args='--spring.profiles.active=local'
-```
-
-### 4. API 테스트
-
-```bash
-# Health Check
-curl http://localhost:8080/api/v1/health
-
-# Swagger UI
-open http://localhost:8080/api/v1/swagger-ui.html
-```
-
----
-
-## 📚 문서
-
-상세한 가이드는 `docs/` 디렉토리에서 확인하세요:
-
-- **[Railway 배포 가이드](docs/deploy/railway.md)** - Railway 배포 전체 과정
-- **API 문서**: Swagger UI (`/api/v1/swagger-ui.html`)
-
----
-
-## 🔧 주요 설정
-
-### API Endpoints
-
-모든 API는 `/api/v1` 컨텍스트 경로를 사용합니다:
-
-- **Auth**: `/api/v1/auth/*`
-- **Family**: `/api/v1/families/*`
-- **Category**: `/api/v1/categories/*`
-- **Expense**: `/api/v1/expenses/*`
-- **Invitation**: `/api/v1/invitations/*`
-- **Health Check**: `/api/v1/health`
-- **Swagger UI**: `/api/v1/swagger-ui.html`
-
-### Flyway 마이그레이션
-
-데이터베이스 스키마는 Flyway로 버전 관리됩니다:
-
-```
-src/main/resources/db/migration/
-└── V1__init.sql  # 초기 스키마
-```
-
-**명령어**:
-```bash
-# 마이그레이션 적용 (애플리케이션 시작 시 자동)
-./gradlew bootRun
-
-# Prisma Studio로 데이터 확인
-# (프론트엔드 프로젝트에서)
-```
-
-### 환경변수
-
-| 변수명 | 설명 | 로컬 기본값 |
-|--------|------|------------|
-| `SPRING_PROFILES_ACTIVE` | 활성 프로파일 | `local` |
-| `MYSQLHOST` | MySQL 호스트 | `localhost` |
-| `MYSQLPORT` | MySQL 포트 | `3306` |
-| `MYSQLDATABASE` | DB 이름 | `accountbook` |
-| `MYSQLUSER` | DB 사용자 | `accountbook_user` |
-| `MYSQLPASSWORD` | DB 비밀번호 | `accountbook_password` |
-| `AUTH_SECRET` | JWT + NextAuth 공통 비밀키 🔑 | (로컬용 기본값 있음) |
-
-**프로덕션 환경변수**는 [Railway 배포 가이드](docs/deploy/railway.md)를 참조하세요.
-
----
-
-## 🧪 테스트
-
-```bash
-# 전체 테스트 실행
-./gradlew test
-
-# 빌드 (테스트 포함)
-./gradlew clean build
-
-# 빌드 (테스트 제외)
-./gradlew clean build -x test
-```
-
-**테스트 프로파일**: H2 in-memory 데이터베이스 사용
-
----
-
-## 🚢 배포
-
-### Railway 배포
-
-```bash
-# 1. GitHub에 푸시
-git push origin main
-
-# 2. Railway가 자동으로 감지하여 배포
-# 3. Railway 대시보드에서 환경변수 설정
-```
-
-**상세 가이드**: [docs/deploy/railway.md](docs/deploy/railway.md)
-
-### Docker 로컬 테스트
-
-```bash
-# 이미지 빌드
-docker build -t fos-accountbook-backend .
-
-# 컨테이너 실행 (local 프로파일)
-docker run -p 8080:8080 \
-  -e SPRING_PROFILES_ACTIVE=local \
-  -e AUTH_SECRET=test-secret \
-  fos-accountbook-backend
-```
+설정 파일: `.github/dependabot.yml`
 
 ---
 
@@ -366,12 +179,13 @@ fos-accountbook-backend/
 ├── gradle/                                    # Gradle 설정
 │   ├── libs.versions.toml                    # Version Catalog
 │   └── README.md                             # Version Catalog 가이드
+├── .github/
+│   └── dependabot.yml                        # Dependabot 설정
 ├── docs/                                      # 문서
 │   └── deploy/
 │       └── railway.md                        # Railway 배포 가이드
 ├── Dockerfile                                 # Docker 이미지 빌드
 ├── railway.json                              # Railway 설정
-├── .dockerignore                             # Docker 빌드 제외 파일
 ├── docker-compose.yml                        # 로컬 MySQL 설정
 ├── build.gradle.kts                          # Gradle 빌드 설정
 └── README.md                                 # 이 파일
@@ -382,45 +196,29 @@ fos-accountbook-backend/
 ## 🔗 관련 프로젝트
 
 **프론트엔드 레포지터리**: [fos-accountbook](https://github.com/jon890/fos-accountbook)
+
 - Next.js 15 + Auth.js v5
 - Tailwind CSS + shadcn/ui
 - TypeScript
+- Dependabot 자동 의존성 관리
 
 **배포 구성**:
+
 - Frontend: Vercel
 - Backend: Railway (Spring Boot + MySQL)
 
 ---
 
-## 🤝 기여
-
-### 개발 가이드라인
-
-1. `main` 브랜치에서 feature 브랜치 생성
-2. 코딩 컨벤션 준수 (프로젝트 설정 참고)
-3. 커밋 메시지: Conventional Commits
-4. PR 생성 및 리뷰 요청
-
-### 코딩 컨벤션
+## 📝 코딩 컨벤션
 
 - **Database**: snake_case (비즈니스 테이블), camelCase (Auth 테이블)
 - **Java**: CamelCase (클래스), camelCase (변수/메서드)
 - **Package**: 소문자, 점(.) 구분
 - **Layer 분리**: Presentation → Application → Domain → Infrastructure
+- **DTO**: @Getter + @Builder + @NoArgsConstructor + @AllArgsConstructor (immutable)
+- **테스트**: 모든 신규 코드는 테스트와 함께 작성
 
 ---
 
-## 📄 라이선스
-
-This project is licensed under the MIT License.
-
----
-
-## 📞 문의
-
-프로젝트 관련 문의사항은 GitHub Issues를 이용해주세요.
-
----
-
-**마지막 업데이트**: 2025-10-21  
+**마지막 업데이트**: 2025-11-11  
 **버전**: 1.0.0
