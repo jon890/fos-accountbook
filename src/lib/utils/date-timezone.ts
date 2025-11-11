@@ -80,3 +80,93 @@ export function getBrowserTimezone(): string {
     return "Asia/Seoul"; // 최종 폴백
   }
 }
+
+/**
+ * 시간대 기준 현재 날짜 가져오기 (YYYY-MM-DD)
+ */
+function getTodayInTimezone(timezone: string): string {
+  try {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    return formatter.format(now); // YYYY-MM-DD
+  } catch (error) {
+    // 폴백: 브라우저 시간대
+    return new Date().toISOString().split("T")[0];
+  }
+}
+
+/**
+ * 최근 N개월 범위 반환
+ */
+export function getLastNMonthsRange(
+  timezone: string,
+  months: number
+): {
+  startDate: string;
+  endDate: string;
+} {
+  try {
+    const endDate = getTodayInTimezone(timezone);
+
+    // endDate를 파싱하여 months만큼 이전 날짜 계산
+    const [year, month, day] = endDate.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+
+    // months만큼 빼기
+    date.setMonth(date.getMonth() - months);
+
+    const startYear = date.getFullYear();
+    const startMonth = String(date.getMonth() + 1).padStart(2, "0");
+    const startDay = String(date.getDate()).padStart(2, "0");
+    const startDate = `${startYear}-${startMonth}-${startDay}`;
+
+    return { startDate, endDate };
+  } catch (error) {
+    console.error("최근 N개월 계산 실패:", error);
+    // 폴백
+    const endDate = new Date().toISOString().split("T")[0];
+    const startDateObj = new Date();
+    startDateObj.setMonth(startDateObj.getMonth() - months);
+    const startDate = startDateObj.toISOString().split("T")[0];
+    return { startDate, endDate };
+  }
+}
+
+/**
+ * 최근 1년 범위 반환
+ */
+export function getLastYearRange(timezone: string): {
+  startDate: string;
+  endDate: string;
+} {
+  try {
+    const endDate = getTodayInTimezone(timezone);
+
+    // endDate를 파싱하여 1년 전 날짜 계산
+    const [year, month, day] = endDate.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+
+    // 1년 빼기
+    date.setFullYear(date.getFullYear() - 1);
+
+    const startYear = date.getFullYear();
+    const startMonth = String(date.getMonth() + 1).padStart(2, "0");
+    const startDay = String(date.getDate()).padStart(2, "0");
+    const startDate = `${startYear}-${startMonth}-${startDay}`;
+
+    return { startDate, endDate };
+  } catch (error) {
+    console.error("최근 1년 계산 실패:", error);
+    // 폴백
+    const endDate = new Date().toISOString().split("T")[0];
+    const startDateObj = new Date();
+    startDateObj.setFullYear(startDateObj.getFullYear() - 1);
+    const startDate = startDateObj.toISOString().split("T")[0];
+    return { startDate, endDate };
+  }
+}

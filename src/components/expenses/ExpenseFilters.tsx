@@ -12,9 +12,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import {
+  getMonthRange,
+  getLastNMonthsRange,
+  getLastYearRange,
+} from "@/lib/utils/date-timezone";
+import { useTimeZone } from "@/lib/client/timezone-context";
 import type { CategoryResponse } from "@/types/category";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { Calendar, CalendarRange } from "lucide-react";
 
 interface ExpenseFiltersProps {
   categories: CategoryResponse[];
@@ -35,6 +42,7 @@ export function ExpenseFilters({
 }: ExpenseFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { timezone } = useTimeZone();
 
   const [selectedCategory, setSelectedCategory] = useState(
     searchParams.get("categoryId") || "all"
@@ -112,6 +120,25 @@ export function ExpenseFilters({
     router.push(`/transactions?${params.toString()}`);
   };
 
+  // 날짜 범위 바로가기
+  const setThisMonth = () => {
+    const { startDate: start, endDate: end } = getMonthRange(timezone);
+    setStartDate(start);
+    setEndDate(end);
+  };
+
+  const setLast3Months = () => {
+    const { startDate: start, endDate: end } = getLastNMonthsRange(timezone, 3);
+    setStartDate(start);
+    setEndDate(end);
+  };
+
+  const setLastYear = () => {
+    const { startDate: start, endDate: end } = getLastYearRange(timezone);
+    setStartDate(start);
+    setEndDate(end);
+  };
+
   const hasActiveFilters = selectedCategory !== "all" || startDate || endDate;
 
   return (
@@ -144,21 +171,56 @@ export function ExpenseFilters({
         {/* 날짜 필터 - 한 줄로 배치 */}
         <div className="md:max-w-md">
           <label className="text-xs text-gray-600 mb-1 block">기간</label>
-          <div className="grid grid-cols-2 gap-2">
-            <Input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              placeholder="시작 날짜"
-              className="h-9 text-sm"
-            />
-            <Input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              placeholder="종료 날짜"
-              className="h-9 text-sm"
-            />
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                placeholder="시작 날짜"
+                className="h-9 text-sm"
+              />
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                placeholder="종료 날짜"
+                className="h-9 text-sm"
+              />
+            </div>
+            {/* 날짜 바로가기 */}
+            <div className="flex gap-1.5">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={setThisMonth}
+                className="h-7 text-xs px-2 flex-1"
+              >
+                <Calendar className="w-3 h-3 mr-1" />
+                이번달
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={setLast3Months}
+                className="h-7 text-xs px-2 flex-1"
+              >
+                <CalendarRange className="w-3 h-3 mr-1" />
+                3개월
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={setLastYear}
+                className="h-7 text-xs px-2 flex-1"
+              >
+                <CalendarRange className="w-3 h-3 mr-1" />
+                1년
+              </Button>
+            </div>
           </div>
         </div>
 
