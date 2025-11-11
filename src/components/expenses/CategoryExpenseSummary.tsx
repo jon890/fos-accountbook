@@ -1,7 +1,11 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { getCategoryIcon } from "@/lib/utils/category-icons";
 import type { CategoryExpenseSummaryResponse } from "@/types/expense";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface CategoryExpenseSummaryProps {
   summary: CategoryExpenseSummaryResponse;
@@ -11,10 +15,19 @@ export function CategoryExpenseSummary({
   summary,
 }: CategoryExpenseSummaryProps) {
   const { totalExpense, categoryStats } = summary;
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   if (categoryStats.length === 0) {
     return null;
   }
+
+  const handleCategoryClick = (categoryUuid: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("categoryId", categoryUuid);
+    params.set("page", "1"); // 페이지를 1로 리셋
+    router.push(`/transactions?${params.toString()}`);
+  };
 
   return (
     <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
@@ -35,11 +48,20 @@ export function CategoryExpenseSummary({
               stat.categoryIcon || "default"
             );
             const useEmoji = !IconComponent;
+            const isSelected =
+              searchParams.get("categoryId") === stat.categoryUuid;
 
             return (
               <div
                 key={stat.categoryUuid}
-                className="relative overflow-hidden rounded-xl md:rounded-2xl bg-gradient-to-r from-gray-50 to-white border border-gray-100 p-3 md:p-4"
+                onClick={() => handleCategoryClick(stat.categoryUuid)}
+                className={cn(
+                  "relative overflow-hidden rounded-xl md:rounded-2xl bg-gradient-to-r from-gray-50 to-white p-3 md:p-4 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg",
+                  isSelected ? "border-2 shadow-md" : "border border-gray-100"
+                )}
+                style={
+                  isSelected ? { borderColor: stat.categoryColor } : undefined
+                }
               >
                 {/* 배경 프로그레스 바 */}
                 <div
