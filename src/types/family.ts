@@ -10,6 +10,7 @@ import type { CategoryResponse } from "./category";
 export interface FamilyResponse {
   uuid: string;
   name: string;
+  monthlyBudget: number;
   createdAt: string;
   updatedAt: string;
   memberCount?: number;
@@ -35,6 +36,7 @@ export interface FamilyMemberResponse {
  */
 export interface CreateFamilyRequest {
   name: string;
+  monthlyBudget?: number;
   description?: string;
 }
 
@@ -43,6 +45,7 @@ export interface CreateFamilyRequest {
  */
 export interface UpdateFamilyRequest {
   name?: string;
+  monthlyBudget?: number;
   description?: string;
 }
 
@@ -74,6 +77,7 @@ export interface FamilyCategory {
 export interface Family {
   uuid: string;
   name: string;
+  monthlyBudget: number;
   createdAt: string;
   updatedAt: string;
   memberCount: number;

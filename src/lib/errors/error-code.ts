@@ -51,6 +51,14 @@ export const ErrorCode = {
   INVITATION_NOT_FOUND: "I001",
   INVITATION_EXPIRED: "I002",
   INVITATION_ALREADY_USED: "I003",
+
+  // ============================================
+  // Notification Errors (N001~N099)
+  // ============================================
+  NOTIFICATION_FETCH_FAILED: "N001",
+  NOTIFICATION_READ_FAILED: "N002",
+  NOTIFICATION_MARK_ALL_READ_FAILED: "N003",
+  UNREAD_COUNT_FETCH_FAILED: "N004",
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -92,4 +100,10 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   I001: "초대장을 찾을 수 없습니다",
   I002: "만료된 초대장입니다",
   I003: "이미 사용된 초대장입니다",
+
+  // Notification
+  N001: "알림 목록을 가져오는데 실패했습니다",
+  N002: "알림 읽음 처리에 실패했습니다",
+  N003: "모든 알림 읽음 처리에 실패했습니다",
+  N004: "읽지 않은 알림 수를 가져오는데 실패했습니다",
 };

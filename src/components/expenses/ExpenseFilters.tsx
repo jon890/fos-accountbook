@@ -151,9 +151,7 @@ export function ExpenseFilters({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
           {/* 카테고리 필터 */}
           <div>
-            <label className="text-xs text-gray-600 mb-1 block">
-              카테고리
-            </label>
+            <label className="text-xs text-gray-600 mb-1 block">카테고리</label>
             <Select
               value={selectedCategory}
               onValueChange={setSelectedCategory}

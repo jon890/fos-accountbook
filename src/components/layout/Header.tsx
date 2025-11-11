@@ -7,6 +7,9 @@ import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FamilySelectorDropdown } from "@/components/families/FamilySelectorDropdown";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { getSelectedFamilyAction } from "@/app/actions/family/get-selected-family-action";
+import { useEffect, useState } from "react";
 
 interface HeaderProps {
   session: Session;
@@ -14,6 +17,20 @@ interface HeaderProps {
 
 export function Header({ session }: HeaderProps) {
   const router = useRouter();
+  const [selectedFamilyUuid, setSelectedFamilyUuid] = useState<string | null>(
+    null
+  );
+
+  useEffect(() => {
+    const loadSelectedFamily = async () => {
+      const result = await getSelectedFamilyAction();
+      if (result.success && result.data) {
+        setSelectedFamilyUuid(result.data);
+      }
+    };
+
+    loadSelectedFamily();
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-gray-200/50 shadow-sm">
@@ -35,6 +52,9 @@ export function Header({ session }: HeaderProps) {
 
           <div className="flex items-center space-x-1.5 md:space-x-3">
             <FamilySelectorDropdown />
+            {selectedFamilyUuid && (
+              <NotificationBell familyUuid={selectedFamilyUuid} />
+            )}
             <Avatar className="w-8 h-8 md:w-9 md:h-9 ring-2 ring-blue-100">
               <AvatarImage src={session.user?.image || ""} />
               <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold text-xs md:text-sm">

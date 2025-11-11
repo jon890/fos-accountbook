@@ -1,12 +1,14 @@
 "use client";
 
 import { setDefaultFamilyAction } from "@/app/actions/user/set-default-family-action";
+import { updateFamilyAction } from "@/app/actions/family/update-family-action";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { Family } from "@/types/family";
-import { Check, Users } from "lucide-react";
+import { Check, Users, DollarSign, Edit2, Save, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -20,6 +22,8 @@ export function SettingsPageClient({ families }: SettingsPageClientProps) {
   const [selectedFamily, setSelectedFamily] = useState<string>("");
   const [currentDefaultFamily, setCurrentDefaultFamily] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
+  const [editingBudget, setEditingBudget] = useState<string | null>(null);
+  const [budgetValues, setBudgetValues] = useState<Record<string, string>>({});
 
   const handleSaveDefaultFamily = async () => {
     if (!selectedFamily) {
@@ -43,6 +47,49 @@ export function SettingsPageClient({ families }: SettingsPageClientProps) {
       toast.error("기본 가족 설정에 실패했습니다");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleEditBudget = (familyUuid: string, currentBudget: number) => {
+    setEditingBudget(familyUuid);
+    setBudgetValues({
+      ...budgetValues,
+      [familyUuid]: currentBudget.toString(),
+    });
+  };
+
+  const handleCancelBudget = (familyUuid: string) => {
+    setEditingBudget(null);
+    const newBudgetValues = { ...budgetValues };
+    delete newBudgetValues[familyUuid];
+    setBudgetValues(newBudgetValues);
+  };
+
+  const handleSaveBudget = async (familyUuid: string, familyName: string) => {
+    const budgetStr = budgetValues[familyUuid];
+    const budget = parseFloat(budgetStr);
+
+    if (isNaN(budget) || budget < 0) {
+      toast.error("올바른 예산 금액을 입력해주세요");
+      return;
+    }
+
+    try {
+      const result = await updateFamilyAction(familyUuid, {
+        name: familyName,
+        monthlyBudget: budget,
+      });
+
+      if (result.success) {
+        toast.success("월 예산이 설정되었습니다");
+        setEditingBudget(null);
+        router.refresh();
+      } else {
+        toast.error(result.error.message);
+      }
+    } catch (error) {
+      console.error("Failed to update budget:", error);
+      toast.error("예산 설정에 실패했습니다");
     }
   };
 
@@ -118,6 +165,90 @@ export function SettingsPageClient({ families }: SettingsPageClientProps) {
             >
               {isSaving ? "저장 중..." : "기본 가족으로 설정"}
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 월 예산 설정 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="w-5 h-5" />월 예산 설정
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-600 mb-4">
+            각 가족의 월 예산을 설정하세요. 예산을 초과하면 알림을 받을 수
+            있습니다.
+          </p>
+          <div className="space-y-3">
+            {families.map((family) => (
+              <div
+                key={family.uuid}
+                className="flex items-center justify-between p-4 border rounded-lg"
+              >
+                <div className="flex-1">
+                  <h3 className="font-medium text-gray-900">{family.name}</h3>
+                  {editingBudget === family.uuid ? (
+                    <div className="flex items-center gap-2 mt-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        step="1000"
+                        value={budgetValues[family.uuid] || ""}
+                        onChange={(e) =>
+                          setBudgetValues({
+                            ...budgetValues,
+                            [family.uuid]: e.target.value,
+                          })
+                        }
+                        placeholder="월 예산 입력"
+                        className="w-48"
+                      />
+                      <span className="text-sm text-gray-500">원</span>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 mt-1">
+                      {family.monthlyBudget > 0
+                        ? `월 예산: ${family.monthlyBudget.toLocaleString()}원`
+                        : "예산 미설정"}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {editingBudget === family.uuid ? (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleCancelBudget(family.uuid)}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          handleSaveBudget(family.uuid, family.name)
+                        }
+                      >
+                        <Save className="w-4 h-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        handleEditBudget(family.uuid, family.monthlyBudget)
+                      }
+                    >
+                      <Edit2 className="w-4 h-4 mr-1" />
+                      수정
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

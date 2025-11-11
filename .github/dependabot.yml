@@ -1,0 +1,87 @@
+# Dependabot 설정 - Frontend
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # npm 의존성 업데이트 (pnpm 사용)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Seoul"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "nhn"
+    labels:
+      - "dependencies"
+      - "npm"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    groups:
+      # Next.js 관련 의존성을 하나의 PR로 그룹화
+      nextjs:
+        patterns:
+          - "next"
+          - "next-*"
+          - "@next/*"
+      # React 관련 의존성을 하나의 PR로 그룹화
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      # Auth 관련 의존성을 하나의 PR로 그룹화
+      auth:
+        patterns:
+          - "next-auth"
+          - "@auth/*"
+      # UI 컴포넌트 라이브러리를 하나의 PR로 그룹화
+      ui-components:
+        patterns:
+          - "@radix-ui/*"
+          - "class-variance-authority"
+          - "clsx"
+          - "tailwind-merge"
+      # 테스트 관련 의존성을 하나의 PR로 그룹화
+      testing:
+        patterns:
+          - "jest"
+          - "@testing-library/*"
+          - "@types/jest"
+      # TypeScript 관련 의존성을 하나의 PR로 그룹화
+      typescript:
+        patterns:
+          - "typescript"
+          - "@types/*"
+        exclude-patterns:
+          - "@types/react"
+          - "@types/react-dom"
+          - "@types/jest"
+      # Tailwind CSS 관련 의존성을 하나의 PR로 그룹화
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "tailwindcss-*"
+          - "postcss"
+          - "autoprefixer"
+
+  # GitHub Actions 업데이트 (나중에 CI/CD 추가시 사용)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Seoul"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "nhn"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci)"
