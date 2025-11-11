@@ -15,11 +15,16 @@ import { signIn } from "@/lib/server/auth";
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ callbackUrl?: string; error?: string }>;
+  searchParams: Promise<{
+    callbackUrl?: string;
+    error?: string;
+    message?: string;
+  }>;
 }) {
   const params = await searchParams;
   const callbackUrl = params.callbackUrl || "/";
   const error = params.error;
+  const customMessage = params.message;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -31,9 +36,11 @@ export default async function SignInPage({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {error && (
+          {(error || customMessage) && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              <p className="text-sm font-medium">{getErrorMessage(error)}</p>
+              <p className="text-sm font-medium">
+                {customMessage || getErrorMessage(error!)}
+              </p>
             </div>
           )}
 
@@ -82,6 +89,10 @@ export default async function SignInPage({
 
 function getErrorMessage(error: string): string {
   switch (error) {
+    case "network":
+      return "서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.";
+    case "auth":
+      return "인증이 만료되었습니다. 다시 로그인해주세요.";
     case "OAuthSignin":
       return "OAuth 제공자와 연결하는 중 오류가 발생했습니다.";
     case "OAuthCallback":

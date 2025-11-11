@@ -163,6 +163,22 @@ export class ActionError extends Error {
 
     return error;
   }
+
+  /**
+   * 네트워크 연결 오류
+   */
+  static networkError(message?: string, cause?: unknown): ActionError {
+    const error = new ActionError(
+      "C004",
+      message || "서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요."
+    );
+
+    if (cause) {
+      error.withCause(cause);
+    }
+
+    return error;
+  }
 }
 
 /**
@@ -180,6 +196,28 @@ export function failureResult(error: ActionError): ActionResult<never> {
 }
 
 /**
+ * 네트워크 에러인지 확인
+ */
+function isNetworkError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const errorMessage = error.message.toLowerCase();
+
+  // fetch API 네트워크 에러 패턴들
+  return (
+    errorMessage.includes("fetch failed") ||
+    errorMessage.includes("failed to fetch") ||
+    errorMessage.includes("network request failed") ||
+    errorMessage.includes("econnrefused") ||
+    errorMessage.includes("enotfound") ||
+    errorMessage.includes("etimedout") ||
+    (error.name === "TypeError" && errorMessage.includes("fetch"))
+  );
+}
+
+/**
  * 에러 처리 헬퍼
  * try-catch에서 발생한 에러를 ActionError로 변환
  */
@@ -194,6 +232,14 @@ export function handleActionError(
 
   // Error 객체인 경우
   if (error instanceof Error) {
+    // 네트워크 연결 오류 확인
+    if (isNetworkError(error)) {
+      return ActionError.networkError(
+        "서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.",
+        error
+      ).toFailureResult();
+    }
+
     return ActionError.internalError(defaultMessage, error).toFailureResult();
   }
 

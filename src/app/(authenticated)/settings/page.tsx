@@ -14,6 +14,28 @@ export default async function SettingsPage() {
   const familiesResult = await getFamiliesAction();
 
   if (!familiesResult.success) {
+    // 네트워크 연결 오류 (서버 다운)
+    if (familiesResult.error.code === "C004") {
+      redirect(
+        `/auth/signin?error=network&message=${encodeURIComponent(
+          familiesResult.error.message
+        )}`
+      );
+    }
+
+    // 인증 오류
+    if (
+      familiesResult.error.code === "A001" ||
+      familiesResult.error.code === "A002"
+    ) {
+      redirect(
+        `/auth/signin?error=auth&message=${encodeURIComponent(
+          familiesResult.error.message
+        )}`
+      );
+    }
+
+    // 기타 오류 (가족이 없음 등) → 가족 생성 페이지로
     redirect("/families/create");
   }
 

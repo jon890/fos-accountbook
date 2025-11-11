@@ -10,6 +10,7 @@ export const ErrorCode = {
   INVALID_INPUT: "C001",
   ENTITY_NOT_FOUND: "C002",
   INTERNAL_ERROR: "C003",
+  NETWORK_ERROR: "C004",
 
   // ============================================
   // Authentication Errors (A001~A099)
@@ -71,6 +72,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   C001: "입력값이 올바르지 않습니다",
   C002: "요청한 데이터를 찾을 수 없습니다",
   C003: "서버 내부 오류가 발생했습니다",
+  C004: "서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.",
 
   // Authentication
   A001: "로그인이 필요합니다",
