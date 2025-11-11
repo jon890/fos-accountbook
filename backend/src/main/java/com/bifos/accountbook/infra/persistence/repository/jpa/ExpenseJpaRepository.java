@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -87,9 +88,23 @@ public interface ExpenseJpaRepository extends JpaRepository<Expense, Long> {
                        "AND (:categoryUuid IS NULL OR e.categoryUuid = :categoryUuid) " +
                        "AND (:startDate IS NULL OR e.date >= :startDate) " +
                        "AND (:endDate IS NULL OR e.date <= :endDate)")
-        java.math.BigDecimal getTotalExpenseAmount(
+        BigDecimal getTotalExpenseAmount(
                         @Param("familyUuid") CustomUuid familyUuid,
                         @Param("categoryUuid") CustomUuid categoryUuid,
+                        @Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate);
+
+        /**
+         * 가족 UUID와 날짜 범위로 지출 금액 합계 조회
+         * 예산 알림 체크용
+         */
+        @Query("SELECT COALESCE(SUM(e.amount), 0) " +
+                       "FROM Expense e " +
+                       "WHERE e.familyUuid = :familyUuid " +
+                       "AND e.status = com.bifos.accountbook.domain.value.ExpenseStatus.ACTIVE " +
+                       "AND e.date BETWEEN :startDate AND :endDate")
+        BigDecimal sumAmountByFamilyUuidAndDateBetween(
+                        @Param("familyUuid") CustomUuid familyUuid,
                         @Param("startDate") LocalDateTime startDate,
                         @Param("endDate") LocalDateTime endDate);
 }

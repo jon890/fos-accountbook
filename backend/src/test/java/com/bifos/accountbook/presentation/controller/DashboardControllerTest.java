@@ -93,6 +93,7 @@ class DashboardControllerTest {
         testFamily = Family.builder()
                 .uuid(familyUuid)
                 .name("테스트 가족")
+                .monthlyBudget(BigDecimal.ZERO) // 기본 예산 0
                 .build();
         testFamily = familyRepository.save(testFamily);
 
@@ -283,6 +284,70 @@ class DashboardControllerTest {
                 .andExpect(jsonPath("$.data.monthlyIncome").value(0))
                 .andExpect(jsonPath("$.data.year").exists())
                 .andExpect(jsonPath("$.data.month").exists());
+    }
+
+    @Test
+    @DisplayName("월별 통계 조회 - 예산 설정된 경우")
+    void getMonthlyStats_WithBudget() throws Exception {
+        // Given: 예산이 설정된 가족
+        testFamily.updateMonthlyBudget(BigDecimal.valueOf(500000)); // 50만원 예산
+        familyRepository.save(testFamily);
+
+        LocalDateTime now = LocalDateTime.now();
+        int year = now.getYear();
+        int month = now.getMonthValue();
+
+        // 이번 달 지출: 200,000원
+        createExpense(familyUuid, userUuid, foodCategory.getUuid(), 
+                BigDecimal.valueOf(150000), now);
+        createExpense(familyUuid, userUuid, transportCategory.getUuid(), 
+                BigDecimal.valueOf(50000), now);
+
+        // 이번 달 수입: 300,000원
+        createIncome(familyUuid, userUuid, foodCategory.getUuid(), 
+                BigDecimal.valueOf(300000), now);
+
+        // When & Then: 월별 통계 조회
+        mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly", familyUuid.getValue())
+                        .param("year", String.valueOf(year))
+                        .param("month", String.valueOf(month))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.monthlyExpense").value(200000))
+                .andExpect(jsonPath("$.data.monthlyIncome").value(300000))
+                .andExpect(jsonPath("$.data.budget").value(500000))
+                .andExpect(jsonPath("$.data.remainingBudget").value(300000)) // 500,000 - 200,000
+                .andExpect(jsonPath("$.data.familyMembers").value(greaterThan(0)))
+                .andExpect(jsonPath("$.data.year").value(year))
+                .andExpect(jsonPath("$.data.month").value(month));
+    }
+
+    @Test
+    @DisplayName("월별 통계 조회 - 예산 초과한 경우")
+    void getMonthlyStats_BudgetExceeded() throws Exception {
+        // Given: 예산이 설정된 가족
+        testFamily.updateMonthlyBudget(BigDecimal.valueOf(100000)); // 10만원 예산
+        familyRepository.save(testFamily);
+
+        LocalDateTime now = LocalDateTime.now();
+        int year = now.getYear();
+        int month = now.getMonthValue();
+
+        // 이번 달 지출: 150,000원 (예산 초과)
+        createExpense(familyUuid, userUuid, foodCategory.getUuid(), 
+                BigDecimal.valueOf(150000), now);
+
+        // When & Then: 남은 예산이 음수로 표시됨
+        mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly", familyUuid.getValue())
+                        .param("year", String.valueOf(year))
+                        .param("month", String.valueOf(month))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.monthlyExpense").value(150000))
+                .andExpect(jsonPath("$.data.budget").value(100000))
+                .andExpect(jsonPath("$.data.remainingBudget").value(-50000)); // 100,000 - 150,000 = -50,000
     }
 
     // ===== Helper Methods =====

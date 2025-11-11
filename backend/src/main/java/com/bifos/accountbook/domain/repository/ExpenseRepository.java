@@ -5,6 +5,7 @@ import com.bifos.accountbook.domain.value.CustomUuid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -64,4 +65,13 @@ public interface ExpenseRepository {
      * 가족 UUID로 지출 개수 조회 (삭제되지 않은)
      */
     int countByFamilyUuid(CustomUuid familyUuid);
+
+    /**
+     * 가족 UUID와 날짜 범위로 지출 금액 합계 조회
+     * 예산 알림 체크용
+     */
+    BigDecimal sumAmountByFamilyUuidAndDateBetween(
+            CustomUuid familyUuid,
+            LocalDateTime startDate,
+            LocalDateTime endDate);
 }

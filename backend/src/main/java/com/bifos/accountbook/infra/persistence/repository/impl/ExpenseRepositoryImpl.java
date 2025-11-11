@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -72,5 +73,13 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
     @Override
     public int countByFamilyUuid(CustomUuid familyUuid) {
         return jpaRepository.countByFamilyUuid(familyUuid);
+    }
+
+    @Override
+    public BigDecimal sumAmountByFamilyUuidAndDateBetween(
+            CustomUuid familyUuid,
+            LocalDateTime startDate,
+            LocalDateTime endDate) {
+        return jpaRepository.sumAmountByFamilyUuidAndDateBetween(familyUuid, startDate, endDate);
     }
 }

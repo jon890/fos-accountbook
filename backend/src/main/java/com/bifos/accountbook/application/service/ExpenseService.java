@@ -4,6 +4,8 @@ import com.bifos.accountbook.application.dto.expense.CreateExpenseRequest;
 import com.bifos.accountbook.application.dto.expense.ExpenseResponse;
 import com.bifos.accountbook.application.dto.expense.ExpenseSearchRequest;
 import com.bifos.accountbook.application.dto.expense.UpdateExpenseRequest;
+import com.bifos.accountbook.application.event.ExpenseCreatedEvent;
+import com.bifos.accountbook.application.event.ExpenseUpdatedEvent;
 import com.bifos.accountbook.common.exception.BusinessException;
 import com.bifos.accountbook.common.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.Category;
@@ -13,9 +15,11 @@ import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.UserRepository;
+import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.domain.value.ExpenseStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,10 +27,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import com.bifos.accountbook.domain.value.CustomUuid;
-import com.bifos.accountbook.domain.value.ExpenseStatus;
 
 @Slf4j
 @Service
@@ -37,6 +40,7 @@ public class ExpenseService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final FamilyValidationService familyValidationService; // 가족 검증 로직
+    private final ApplicationEventPublisher eventPublisher; // 이벤트 발행
 
     /**
      * 지출 생성
@@ -76,6 +80,15 @@ public class ExpenseService {
                 .build();
 
         expense = expenseRepository.save(expense);
+
+        // 이벤트 발행 - 예산 알림 체크를 트리거
+        eventPublisher.publishEvent(new ExpenseCreatedEvent(
+                expense.getUuid(),
+                expense.getFamilyUuid(),
+                expense.getUserUuid(),
+                expense.getAmount(),
+                expense.getDate()
+        ));
 
         return ExpenseResponse.fromWithoutCategory(expense);
     }
@@ -178,6 +191,9 @@ public class ExpenseService {
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
 
+        // 이벤트 발행을 위해 기존 금액 저장
+        BigDecimal oldAmount = expense.getAmount();
+
         // 카테고리 변경 검증
         CustomUuid categoryCustomUuid = null;
         if (request.getCategoryUuid() != null) {
@@ -201,6 +217,18 @@ public class ExpenseService {
             request.getDescription(),
             request.getDate()
         );
+
+        // 이벤트 발행 - 금액이 변경된 경우 예산 알림 체크를 트리거
+        if (request.getAmount() != null && !oldAmount.equals(request.getAmount())) {
+            eventPublisher.publishEvent(new ExpenseUpdatedEvent(
+                    expense.getUuid(),
+                    expense.getFamilyUuid(),
+                    expense.getUserUuid(),
+                    expense.getAmount(),
+                    oldAmount,
+                    expense.getDate()
+            ));
+        }
 
         return ExpenseResponse.fromWithoutCategory(expense);
     }

@@ -78,7 +78,12 @@ public enum ErrorCode {
     INVITATION_EXPIRED(HttpStatus.BAD_REQUEST, "I002", "만료된 초대장입니다"),
     INVITATION_ALREADY_USED(HttpStatus.BAD_REQUEST, "I003", "이미 사용된 초대장입니다"),
     INVALID_INVITATION_TOKEN(HttpStatus.BAD_REQUEST, "I004", "유효하지 않은 초대 토큰입니다"),
-    ALREADY_FAMILY_MEMBER(HttpStatus.CONFLICT, "I005", "이미 해당 가족의 구성원입니다");
+    ALREADY_FAMILY_MEMBER(HttpStatus.CONFLICT, "I005", "이미 해당 가족의 구성원입니다"),
+
+    // ============================================
+    // Notification Errors (8000~8999)
+    // ============================================
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "알림을 찾을 수 없습니다");
 
     private final HttpStatus httpStatus;
     private final String code;

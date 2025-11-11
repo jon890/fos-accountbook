@@ -26,13 +26,9 @@ public class UserProfileController {
      */
     @GetMapping
     public ResponseEntity<ApiSuccessResponse<UserProfileResponse>> getMyProfile(
-            @LoginUser LoginUserDto user
-            
-    ) {
+            @LoginUser LoginUserDto user) {
         UserProfileResponse profile = userProfileService.getOrCreateProfile(user.getUserUuid());
-        return ResponseEntity.ok(
-                ApiSuccessResponse.of("프로필을 조회했습니다", profile)
-        );
+        return ResponseEntity.ok(ApiSuccessResponse.of("프로필을 조회했습니다", profile));
     }
 
     /**
@@ -41,12 +37,9 @@ public class UserProfileController {
     @PutMapping
     public ResponseEntity<ApiSuccessResponse<UserProfileResponse>> updateMyProfile(
             @LoginUser LoginUserDto user,
-            @Valid @RequestBody UpdateUserProfileRequest request
-    ) {
+            @Valid @RequestBody UpdateUserProfileRequest request) {
         UserProfileResponse profile = userProfileService.updateProfile(user.getUserUuid(), request);
-        return ResponseEntity.ok(
-                ApiSuccessResponse.of("프로필이 수정되었습니다", profile)
-        );
+        return ResponseEntity.ok(ApiSuccessResponse.of("프로필이 수정되었습니다", profile));
     }
 }
 

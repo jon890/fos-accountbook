@@ -160,12 +160,13 @@ public class DashboardService {
         BigDecimal monthlyIncome = dashboardRepository.getMonthlyIncomeAmount(
                 familyCustomUuid, year, month);
 
-        // 예산 정보 (향후 예산 기능 구현 시 실제 데이터로 대체)
-        BigDecimal budget = BigDecimal.ZERO;
+        // 가족의 월 예산 조회
+        BigDecimal budget = family.getMonthlyBudget() != null 
+                ? family.getMonthlyBudget() 
+                : BigDecimal.ZERO;
+        
+        // 남은 예산 계산 (예산 - 지출)
         BigDecimal remainingBudget = budget.subtract(monthlyExpense);
-        if (remainingBudget.compareTo(BigDecimal.ZERO) < 0) {
-            remainingBudget = BigDecimal.ZERO;
-        }
 
         return MonthlyStatsResponse.builder()
                 .monthlyExpense(monthlyExpense)

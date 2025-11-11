@@ -32,6 +32,7 @@ public class DatabaseCleanupExtension implements AfterEachCallback {
      * 프로젝트의 모든 테이블 목록 (외래키 순서를 고려하여 역순으로)
      */
     private static final List<String> TABLES = Arrays.asList(
+            "notifications",
             "expenses",
             "incomes",
             "categories",
