@@ -46,8 +46,8 @@ public class FamilyMemberRepositoryImpl implements FamilyMemberRepository {
     }
 
     @Override
-    public boolean existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(CustomUuid familyUuid, CustomUuid userUuid) {
-        return jpaRepository.existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(familyUuid, userUuid);
+    public boolean existsActiveByFamilyUuidAndUserUuid(CustomUuid familyUuid, CustomUuid userUuid) {
+        return jpaRepository.existsByFamilyUuidAndUserUuidAndStatus(familyUuid, userUuid);
     }
 
     @Override

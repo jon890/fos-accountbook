@@ -1,6 +1,7 @@
 package com.bifos.accountbook.domain.entity;
 
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.domain.value.FamilyMemberStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -38,8 +39,13 @@ public class FamilyMember {
     @Builder.Default
     private LocalDateTime joinedAt = LocalDateTime.now();
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    /**
+     * 가족 구성원 상태
+     * FamilyMemberStatusConverter가 자동으로 코드값으로 변환하여 DB에 저장합니다.
+     */
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private FamilyMemberStatus status = FamilyMemberStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_uuid", referencedColumnName = "uuid", insertable = false, updatable = false)

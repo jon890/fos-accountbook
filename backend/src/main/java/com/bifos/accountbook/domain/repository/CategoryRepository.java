@@ -36,4 +36,9 @@ public interface CategoryRepository {
      * 가족 UUID와 이름으로 카테고리 조회
      */
     Optional<Category> findByFamilyUuidAndName(CustomUuid familyUuid, String name);
+
+    /**
+     * 가족 UUID로 카테고리 개수 조회 (삭제되지 않은)
+     */
+    int countByFamilyUuid(CustomUuid familyUuid);
 }

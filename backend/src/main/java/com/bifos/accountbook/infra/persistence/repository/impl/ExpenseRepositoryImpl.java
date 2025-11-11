@@ -67,4 +67,9 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
             Pageable pageable) {
         return jpaRepository.findByFamilyUuidWithFilters(familyUuid, categoryUuid, startDate, endDate, pageable);
     }
+
+    @Override
+    public int countByFamilyUuid(CustomUuid familyUuid) {
+        return jpaRepository.countByFamilyUuid(familyUuid);
+    }
 }

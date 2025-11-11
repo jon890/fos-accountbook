@@ -31,7 +31,7 @@ public class FamilyValidationService {
      */
     @Transactional(readOnly = true)
     public void validateFamilyAccess(CustomUuid userUuid, CustomUuid familyUuid) {
-        boolean isMember = familyMemberRepository.existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(
+        boolean isMember = familyMemberRepository.existsActiveByFamilyUuidAndUserUuid(
                 familyUuid, userUuid);
 
         if (!isMember) {
@@ -73,7 +73,7 @@ public class FamilyValidationService {
      */
     @Transactional(readOnly = true)
     public boolean isFamilyMember(CustomUuid userUuid, CustomUuid familyUuid) {
-        return familyMemberRepository.existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(
+        return familyMemberRepository.existsActiveByFamilyUuidAndUserUuid(
                 familyUuid, userUuid);
     }
 }

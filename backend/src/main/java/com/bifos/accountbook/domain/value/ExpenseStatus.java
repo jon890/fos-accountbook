@@ -1,0 +1,37 @@
+package com.bifos.accountbook.domain.value;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+import java.util.Arrays;
+
+/**
+ * 지출 상태
+ */
+@Getter
+@RequiredArgsConstructor
+public enum ExpenseStatus implements CodeEnum {
+    /**
+     * 활성 상태
+     */
+    ACTIVE("ACTIVE"),
+
+    /**
+     * 삭제됨
+     */
+    DELETED("DELETED");
+
+    private final String code;
+
+    public static ExpenseStatus fromCode(String code) {
+        if (code == null) {
+            throw new IllegalArgumentException("지출 상태 코드는 null일 수 없습니다");
+        }
+
+        return Arrays.stream(values())
+                .filter(status -> status.getCode().equals(code))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 지출 상태 코드: " + code));
+    }
+}
+

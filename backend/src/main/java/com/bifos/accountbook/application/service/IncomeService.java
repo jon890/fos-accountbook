@@ -13,6 +13,7 @@ import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.repository.IncomeRepository;
 import com.bifos.accountbook.domain.repository.UserRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.domain.value.IncomeStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -206,7 +207,7 @@ public class IncomeService {
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());
 
-        income.setDeletedAt(LocalDateTime.now());
+        income.setStatus(IncomeStatus.DELETED);
         // 더티 체킹으로 자동 업데이트
 
         log.info("Deleted income: {} by user: {}", incomeUuid, userUuid);

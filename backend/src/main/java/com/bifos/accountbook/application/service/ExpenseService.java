@@ -13,6 +13,7 @@ import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.UserRepository;
+import com.bifos.accountbook.domain.value.ExpenseStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.domain.value.ExpenseStatus;
 
 @Slf4j
 @Service
@@ -227,7 +229,7 @@ public class ExpenseService {
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
 
-        expense.setDeletedAt(LocalDateTime.now());
+        expense.setStatus(ExpenseStatus.DELETED);
         // 더티 체킹으로 자동 업데이트
 
         log.info("Deleted expense: {} by user: {}", expenseUuid, userUuid);

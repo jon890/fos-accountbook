@@ -17,10 +17,10 @@ public interface FamilyJpaRepository extends JpaRepository<Family, Long> {
 
     Optional<Family> findByUuid(CustomUuid uuid);
 
-    @Query("SELECT f FROM Family f WHERE f.uuid = :uuid AND f.deletedAt IS NULL")
+    @Query("SELECT f FROM Family f WHERE f.uuid = :uuid AND f.status = com.bifos.accountbook.domain.value.FamilyStatus.ACTIVE")
     Optional<Family> findActiveByUuid(@Param("uuid") CustomUuid uuid);
 
-    @Query("SELECT f FROM Family f WHERE f.deletedAt IS NULL")
+    @Query("SELECT f FROM Family f WHERE f.status = com.bifos.accountbook.domain.value.FamilyStatus.ACTIVE")
     List<Family> findAllActive();
 }
 

@@ -1,6 +1,7 @@
 package com.bifos.accountbook.domain.entity;
 
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.domain.value.IncomeStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -57,8 +58,13 @@ public class Income {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    /**
+     * 수입 상태
+     * IncomeStatusConverter가 자동으로 코드값으로 변환하여 DB에 저장합니다.
+     */
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private IncomeStatus status = IncomeStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_uuid", referencedColumnName = "uuid", insertable = false, updatable = false)

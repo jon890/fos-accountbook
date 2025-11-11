@@ -38,9 +38,9 @@ public interface FamilyMemberRepository {
     List<FamilyMember> findAllByUserUuid(CustomUuid userUuid);
 
     /**
-     * 가족 UUID와 사용자 UUID로 구성원 존재 여부 확인 (삭제되지 않은)
+     * 가족 UUID와 사용자 UUID로 활성 구성원 존재 여부 확인
      */
-    boolean existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(CustomUuid familyUuid, CustomUuid userUuid);
+    boolean existsActiveByFamilyUuidAndUserUuid(CustomUuid familyUuid, CustomUuid userUuid);
 
     /**
      * 가족 UUID로 구성원 수 조회

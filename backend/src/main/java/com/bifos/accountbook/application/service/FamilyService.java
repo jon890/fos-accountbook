@@ -8,10 +8,14 @@ import com.bifos.accountbook.common.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.Family;
 import com.bifos.accountbook.domain.entity.FamilyMember;
 import com.bifos.accountbook.domain.entity.User;
+import com.bifos.accountbook.domain.repository.CategoryRepository;
+import com.bifos.accountbook.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.repository.UserRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.domain.value.FamilyStatus;
+import com.bifos.accountbook.domain.value.FamilyStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,6 +37,8 @@ public class FamilyService {
     private final CategoryService categoryService;
     private final FamilyValidationService familyValidationService;
     private final UserProfileService userProfileService;
+    private final ExpenseRepository expenseRepository;
+    private final CategoryRepository categoryRepository;
 
     /**
      * 가족 생성 (생성자를 owner로 자동 추가 + 기본 카테고리 생성)
@@ -88,7 +94,7 @@ public class FamilyService {
         // 사용자가 속한 가족 멤버십 조회
         List<FamilyMember> memberships = familyMemberRepository.findAllByUserUuid(user.getUuid());
 
-        // 가족 정보 조회 (memberCount 포함)
+        // 가족 정보 조회 (memberCount, expenseCount, categoryCount 포함)
         return memberships.stream()
                 .map(FamilyMember::getFamilyUuid)
                 .map(familyUuid -> {
@@ -97,7 +103,10 @@ public class FamilyService {
                         return null;
 
                     int memberCount = familyMemberRepository.countByFamilyUuid(familyUuid);
-                    return FamilyResponse.fromWithMemberCount(family, memberCount);
+                    int expenseCount = expenseRepository.countByFamilyUuid(familyUuid);
+                    int categoryCount = categoryRepository.countByFamilyUuid(familyUuid);
+                    
+                    return FamilyResponse.fromWithCounts(family, memberCount, expenseCount, categoryCount);
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
@@ -155,7 +164,7 @@ public class FamilyService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
                         .addParameter("familyUuid", familyUuid));
 
-        family.setDeletedAt(LocalDateTime.now());
+        family.setStatus(FamilyStatus.DELETED);
         // 더티 체킹으로 자동 업데이트
 
         log.info("Deleted family: {} by user: {}", familyUuid, userUuid);

@@ -20,12 +20,12 @@ public interface InvitationJpaRepository extends JpaRepository<Invitation, Long>
 
     Optional<Invitation> findByUuid(CustomUuid uuid);
 
-    @Query("SELECT i FROM Invitation i WHERE i.familyUuid = :familyUuid AND i.status = 'PENDING' AND i.expiresAt > :now AND i.deletedAt IS NULL")
+    @Query("SELECT i FROM Invitation i WHERE i.familyUuid = :familyUuid AND i.status = 'PENDING' AND i.expiresAt > :now")
     List<Invitation> findActiveByFamilyUuid(
             @Param("familyUuid") CustomUuid familyUuid,
             @Param("now") LocalDateTime now);
 
-    @Query("SELECT i FROM Invitation i WHERE i.token = :token AND i.status = 'PENDING' AND i.expiresAt > :now AND i.deletedAt IS NULL")
+    @Query("SELECT i FROM Invitation i WHERE i.token = :token AND i.status = 'PENDING' AND i.expiresAt > :now")
     Optional<Invitation> findValidByToken(
             @Param("token") String token,
             @Param("now") LocalDateTime now);

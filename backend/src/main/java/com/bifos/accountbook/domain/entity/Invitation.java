@@ -48,9 +48,6 @@ public class Invitation {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_uuid", referencedColumnName = "uuid", insertable = false, updatable = false)
     private Family family;

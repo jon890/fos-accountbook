@@ -89,7 +89,7 @@ class FamilyServiceIntegrationTest {
             assertThat(category.getFamilyUuid()).isEqualTo(familyUuid);
             assertThat(category.getColor()).isNotBlank();
             assertThat(category.getIcon()).isNotBlank();
-            assertThat(category.getDeletedAt()).isNull();
+            assertThat(category.getStatus()).isEqualTo(com.bifos.accountbook.domain.value.CategoryStatus.ACTIVE);
         });
     }
 

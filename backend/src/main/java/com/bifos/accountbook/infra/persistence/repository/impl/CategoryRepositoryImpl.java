@@ -44,5 +44,10 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     public Optional<Category> findByFamilyUuidAndName(CustomUuid familyUuid, String name) {
         return jpaRepository.findByFamilyUuidAndName(familyUuid, name);
     }
+
+    @Override
+    public int countByFamilyUuid(CustomUuid familyUuid) {
+        return jpaRepository.countByFamilyUuid(familyUuid);
+    }
 }
 

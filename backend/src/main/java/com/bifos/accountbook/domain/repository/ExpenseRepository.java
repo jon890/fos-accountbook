@@ -59,4 +59,9 @@ public interface ExpenseRepository {
             LocalDateTime startDate,
             LocalDateTime endDate,
             Pageable pageable);
+
+    /**
+     * 가족 UUID로 지출 개수 조회 (삭제되지 않은)
+     */
+    int countByFamilyUuid(CustomUuid familyUuid);
 }

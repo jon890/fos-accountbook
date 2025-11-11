@@ -120,7 +120,7 @@ public class InvitationService {
                                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않거나 만료된 초대장입니다"));
 
                 // 이미 가족 멤버인지 확인
-                boolean alreadyMember = familyMemberRepository.existsByFamilyUuidAndUserUuidAndDeletedAtIsNull(
+                boolean alreadyMember = familyMemberRepository.existsActiveByFamilyUuidAndUserUuid(
                                 invitation.getFamilyUuid(), user.getUuid());
 
                 if (alreadyMember) {

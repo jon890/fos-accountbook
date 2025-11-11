@@ -1,5 +1,6 @@
 package com.bifos.accountbook.domain.entity;
 
+import com.bifos.accountbook.domain.value.CategoryStatus;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import jakarta.persistence.*;
 import lombok.*;
@@ -49,8 +50,13 @@ public class Category {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    /**
+     * 카테고리 상태
+     * CategoryStatusConverter가 자동으로 코드값으로 변환하여 DB에 저장합니다.
+     */
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private CategoryStatus status = CategoryStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_uuid", referencedColumnName = "uuid", insertable = false, updatable = false)

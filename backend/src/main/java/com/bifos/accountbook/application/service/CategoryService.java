@@ -8,6 +8,7 @@ import com.bifos.accountbook.common.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
+import com.bifos.accountbook.domain.value.CategoryStatus;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -142,7 +143,7 @@ public class CategoryService {
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
 
-        category.setDeletedAt(LocalDateTime.now());
+        category.setStatus(CategoryStatus.DELETED);
 
         log.info("Deleted category: {} by user: {}", categoryUuid, userUuid);
     }
