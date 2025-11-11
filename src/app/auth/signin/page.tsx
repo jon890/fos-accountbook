@@ -93,6 +93,8 @@ function getErrorMessage(error: string): string {
       return "서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.";
     case "auth":
       return "인증이 만료되었습니다. 다시 로그인해주세요.";
+    case "profile":
+      return "사용자 프로필을 불러올 수 없습니다. 다시 로그인해주세요.";
     case "OAuthSignin":
       return "OAuth 제공자와 연결하는 중 오류가 발생했습니다.";
     case "OAuthCallback":

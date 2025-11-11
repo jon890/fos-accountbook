@@ -7,12 +7,44 @@ import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  // 1. 사용자 프로필 조회 (기본 가족 확인)
+  // 1. 사용자 프로필 조회 (없으면 백엔드에서 자동 생성)
   const profileResult = await getUserProfileAction();
+
+  // 프로필 조회 실패 시 에러 처리
+  if (!profileResult.success) {
+    // 네트워크 연결 오류
+    if (profileResult.error.code === "C004") {
+      redirect(
+        `/auth/signin?error=network&message=${encodeURIComponent(
+          profileResult.error.message
+        )}`
+      );
+    }
+
+    // 인증 오류
+    if (
+      profileResult.error.code === "A001" ||
+      profileResult.error.code === "A002"
+    ) {
+      redirect(
+        `/auth/signin?error=auth&message=${encodeURIComponent(
+          profileResult.error.message
+        )}`
+      );
+    }
+
+    // 기타 오류 - 로그인 페이지로
+    redirect(
+      `/auth/signin?error=profile&message=${encodeURIComponent(
+        profileResult.error.message
+      )}`
+    );
+  }
 
   // 2. 가족 목록 조회
   const familiesResult = await getFamiliesAction();
 
+  // 가족 목록 조회 실패 시 에러 처리
   if (!familiesResult.success) {
     // 네트워크 연결 오류 (서버 다운)
     if (familiesResult.error.code === "C004") {
@@ -42,9 +74,7 @@ export default async function SettingsPage() {
   return (
     <SettingsPageClient
       families={familiesResult.data}
-      defaultFamilyUuid={
-        profileResult.success ? profileResult.data.defaultFamilyUuid : null
-      }
+      defaultFamilyUuid={profileResult.data.defaultFamilyUuid}
     />
   );
 }
