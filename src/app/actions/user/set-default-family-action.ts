@@ -10,6 +10,7 @@ import {
 
 /**
  * 기본 가족 설정 Server Action
+ * UserProfile의 defaultFamilyUuid를 업데이트
  */
 export async function setDefaultFamilyAction(
   familyUuid: string
@@ -18,10 +19,10 @@ export async function setDefaultFamilyAction(
     // 1. 인증 확인
     await requireAuth();
 
-    // 2. 백엔드 API 호출
-    await serverApiClient("/users/me/default-family", {
+    // 2. 백엔드 API 호출: /users/me/profile PUT으로 통합
+    await serverApiClient("/users/me/profile", {
       method: "PUT",
-      body: JSON.stringify({ familyUuid }),
+      body: JSON.stringify({ defaultFamilyUuid: familyUuid }),
     });
 
     return successResult(undefined);

@@ -1,36 +1,30 @@
 "use server";
 
-import { requireAuth } from "@/lib/server/auth-helpers";
-import { serverApiClient } from "@/lib/server/api/client";
+import { getUserProfileAction } from "./get-user-profile-action";
 import {
   successResult,
   handleActionError,
   type ActionResult,
 } from "@/lib/errors";
 
-interface DefaultFamilyResponse {
-  defaultFamilyUuid: string;
-}
-
 /**
  * 기본 가족 조회 Server Action
+ * getUserProfileAction을 사용하여 프로필에서 defaultFamilyUuid 추출
+ *
+ * @deprecated getUserProfileAction()을 직접 사용하는 것을 권장합니다
  */
 export async function getDefaultFamilyAction(): Promise<
   ActionResult<string | null>
 > {
   try {
-    // 1. 인증 확인
-    await requireAuth();
+    // UserProfile에서 기본 가족 UUID 조회
+    const profileResult = await getUserProfileAction();
 
-    // 2. 백엔드 API 호출
-    const response = await serverApiClient<DefaultFamilyResponse>(
-      "/users/me/default-family",
-      {
-        method: "GET",
-      }
-    );
+    if (!profileResult.success) {
+      return profileResult;
+    }
 
-    return successResult(response.defaultFamilyUuid || null);
+    return successResult(profileResult.data.defaultFamilyUuid);
   } catch (error) {
     console.error("기본 가족 조회 실패:", error);
     return handleActionError(error, "기본 가족 조회에 실패했습니다");
