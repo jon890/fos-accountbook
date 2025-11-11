@@ -37,7 +37,6 @@ public class AuthService {
             return loginExistingUserByProvider(request.getProvider(), request.getProviderId());
         }
 
-        // 새 사용자 생성 (ID는 AUTO_INCREMENT로 자동 생성)
         User user = User.builder()
                 .provider(request.getProvider())
                 .providerId(request.getProviderId())
@@ -47,7 +46,6 @@ public class AuthService {
                 .build();
 
         user = userRepository.save(user);
-        log.info("Registered new user: {} ({}) - ID: {}", user.getProvider(), user.getEmail(), user.getId());
 
         return generateAuthResponse(user);
     }
@@ -80,7 +78,7 @@ public class AuthService {
 
         if (user.getStatus() == UserStatus.DELETED) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND, "삭제된 사용자입니다")
-                    .addParameter("userUuid", user.getUuid().toString());
+                    .addParameter("userUuid", user.getUuid().getValue());
         }
 
         return generateAuthResponse(user);
