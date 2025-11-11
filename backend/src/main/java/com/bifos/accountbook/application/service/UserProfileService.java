@@ -48,9 +48,40 @@ public class UserProfileService {
         if (request.getCurrency() != null) {
             profile.updateCurrency(request.getCurrency());
         }
+        if (request.getDefaultFamilyUuid() != null) {
+            profile.updateDefaultFamily(CustomUuid.from(request.getDefaultFamilyUuid()));
+        }
 
         UserProfile saved = userProfileRepository.save(profile);
         return UserProfileResponse.from(saved);
+    }
+
+    /**
+     * 기본 가족 설정
+     */
+    @Transactional
+    public UserProfileResponse setDefaultFamily(CustomUuid userUuid, String familyUuid) {
+        UserProfile profile = userProfileRepository.findByUserUuid(userUuid)
+                .orElseGet(() -> createDefaultProfile(userUuid));
+
+        if (familyUuid == null || familyUuid.isBlank()) {
+            profile.updateDefaultFamily(null);
+        } else {
+            profile.updateDefaultFamily(CustomUuid.from(familyUuid));
+        }
+
+        UserProfile saved = userProfileRepository.save(profile);
+        return UserProfileResponse.from(saved);
+    }
+
+    /**
+     * 기본 가족 조회
+     */
+    public String getDefaultFamily(CustomUuid userUuid) {
+        return userProfileRepository.findByUserUuid(userUuid)
+                .map(UserProfile::getDefaultFamilyUuid)
+                .map(CustomUuid::getValue)
+                .orElse(null);
     }
 
     /**

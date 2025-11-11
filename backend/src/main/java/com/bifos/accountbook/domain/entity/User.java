@@ -58,12 +58,6 @@ public class User {
     @Column(name = "deletedAt")
     private LocalDateTime deletedAt;
 
-    @Column(name = "default_family_uuid", length = 36)
-    private CustomUuid defaultFamilyUuid; // 사용자의 기본 가족
-
-    // NextAuth.js가 Account, Session 테이블을 관리하므로
-    // 백엔드에서는 관계를 제거합니다.
-
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<FamilyMember> familyMembers = new ArrayList<>();

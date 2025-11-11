@@ -21,6 +21,7 @@ public class UserProfileResponse {
     private String timezone;
     private String language;
     private String currency;
+    private String defaultFamilyUuid;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -33,6 +34,8 @@ public class UserProfileResponse {
                 .timezone(profile.getTimezone())
                 .language(profile.getLanguage())
                 .currency(profile.getCurrency())
+                .defaultFamilyUuid(profile.getDefaultFamilyUuid() != null ? 
+                        profile.getDefaultFamilyUuid().getValue() : null)
                 .createdAt(profile.getCreatedAt())
                 .updatedAt(profile.getUpdatedAt())
                 .build();

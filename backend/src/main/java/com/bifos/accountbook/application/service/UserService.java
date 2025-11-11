@@ -19,10 +19,13 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final FamilyMemberRepository familyMemberRepository;
+    private final UserProfileService userProfileService;
 
     /**
      * 사용자의 기본 가족 설정
+     * @deprecated UserProfileService.setDefaultFamily를 직접 사용하세요
      */
+    @Deprecated
     @Transactional
     public void setDefaultFamily(CustomUuid userUuid, String familyUuid) {
         CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
@@ -39,24 +42,26 @@ public class UserService {
                         .addParameter("familyUuid", familyUuid)
                         .addParameter("userUuid", userUuid.toString()));
 
-        // 기본 가족 설정
-        user.setDefaultFamilyUuid(familyCustomUuid);
-        userRepository.save(user);
+        // UserProfileService를 통해 기본 가족 설정
+        userProfileService.setDefaultFamily(userUuid, familyUuid);
 
         log.info("Set default family for user: {} to family: {}", userUuid, familyUuid);
     }
 
     /**
      * 사용자의 기본 가족 조회
+     * @deprecated UserProfileService.getDefaultFamily를 직접 사용하세요
      */
+    @Deprecated
     @Transactional(readOnly = true)
     public String getDefaultFamily(CustomUuid userUuid) {
-        User user = userRepository.findByUuid(userUuid)
+        // 사용자 확인
+        userRepository.findByUuid(userUuid)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
                         .addParameter("userUuid", userUuid.toString()));
 
-        CustomUuid defaultFamilyUuid = user.getDefaultFamilyUuid();
-        return defaultFamilyUuid != null ? defaultFamilyUuid.getValue() : null;
+        // UserProfileService를 통해 기본 가족 조회
+        return userProfileService.getDefaultFamily(userUuid);
     }
 
     /**

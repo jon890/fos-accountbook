@@ -35,5 +35,13 @@ public class UpdateUserProfileRequest {
      */
     @Pattern(regexp = "^[A-Z]{3}$", message = "통화 코드는 3자리 대문자여야 합니다")
     private String currency;
+
+    /**
+     * 기본 가족 UUID
+     * 선택 사항
+     */
+    @Pattern(regexp = "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$", 
+            message = "유효한 UUID 형식이 아닙니다")
+    private String defaultFamilyUuid;
 }
 

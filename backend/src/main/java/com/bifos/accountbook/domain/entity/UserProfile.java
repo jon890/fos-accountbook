@@ -57,6 +57,13 @@ public class UserProfile {
     @Builder.Default
     private String currency = "KRW";
 
+    /**
+     * 기본 가족 UUID
+     * 사용자가 마지막으로 선택한 가족/그룹의 UUID
+     */
+    @Column(name = "default_family_uuid", length = 36)
+    private CustomUuid defaultFamilyUuid;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -96,6 +103,13 @@ public class UserProfile {
      */
     public void updateCurrency(String currency) {
         this.currency = currency;
+    }
+
+    /**
+     * 기본 가족 설정
+     */
+    public void updateDefaultFamily(CustomUuid familyUuid) {
+        this.defaultFamilyUuid = familyUuid;
     }
 }
 
