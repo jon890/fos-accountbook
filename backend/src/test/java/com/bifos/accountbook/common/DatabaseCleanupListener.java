@@ -11,7 +11,6 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -98,7 +97,7 @@ public class DatabaseCleanupListener extends AbstractTestExecutionListener {
      * Hibernate Metamodel에서 모든 엔티티의 실제 테이블 이름 추출
      *
      * @param em EntityManager
-     * @return 테이블 이름 목록 (역순으로 정렬하여 외래키 제약 조건 고려)
+     * @return 테이블 이름 목록
      */
     private List<String> getTableNames(EntityManager em) {
         Set<EntityType<?>> entities = em.getMetamodel().getEntities();
@@ -121,9 +120,6 @@ public class DatabaseCleanupListener extends AbstractTestExecutionListener {
 
             tableNames.add(tableName);
         }
-
-        // 역순으로 정렬 (외래키 제약 조건 고려 - 자식 테이블 먼저 삭제)
-        Collections.reverse(tableNames);
 
         log.debug("추출된 테이블 목록: {}", tableNames);
 
