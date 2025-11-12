@@ -1,7 +1,7 @@
 package com.bifos.accountbook.presentation.controller;
 
 import com.bifos.accountbook.application.dto.family.CreateFamilyRequest;
-import com.bifos.accountbook.common.DatabaseCleanupExtension;
+import com.bifos.accountbook.common.DatabaseCleanupListener;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.entity.UserProfile;
 import com.bifos.accountbook.domain.repository.UserProfileRepository;
@@ -11,13 +11,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,7 +27,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ExtendWith(DatabaseCleanupExtension.class)
+@TestExecutionListeners(
+    value = DatabaseCleanupListener.class,
+    mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
+)
 @DisplayName("가족 컨트롤러 통합 테스트")
 class FamilyControllerTest {
 

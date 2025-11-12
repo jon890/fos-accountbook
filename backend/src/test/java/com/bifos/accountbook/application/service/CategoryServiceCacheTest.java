@@ -3,7 +3,7 @@ package com.bifos.accountbook.application.service;
 import com.bifos.accountbook.application.dto.category.CategoryResponse;
 import com.bifos.accountbook.application.dto.category.CreateCategoryRequest;
 import com.bifos.accountbook.application.dto.category.UpdateCategoryRequest;
-import com.bifos.accountbook.common.DatabaseCleanupExtension;
+import com.bifos.accountbook.common.DatabaseCleanupListener;
 import com.bifos.accountbook.common.TestUserHolder;
 import com.bifos.accountbook.config.CacheConfig;
 import com.bifos.accountbook.domain.entity.Category;
@@ -18,11 +18,11 @@ import com.bifos.accountbook.domain.value.FamilyMemberStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
+import org.springframework.test.context.TestExecutionListeners;
 
 import java.util.List;
 
@@ -44,7 +44,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * - DatabaseCleanupExtension: 각 테스트 후 데이터 자동 정리
  */
 @SpringBootTest
-@ExtendWith(DatabaseCleanupExtension.class)
+@TestExecutionListeners(
+    value = DatabaseCleanupListener.class,
+    mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
+)
 @DisplayName("카테고리 서비스 캐시 테스트")
 class CategoryServiceCacheTest {
 

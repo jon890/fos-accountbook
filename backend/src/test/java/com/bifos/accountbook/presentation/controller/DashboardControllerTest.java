@@ -1,7 +1,7 @@
 package com.bifos.accountbook.presentation.controller;
 
 import com.bifos.accountbook.common.TestUserHolder;
-import com.bifos.accountbook.common.DatabaseCleanupExtension;
+import com.bifos.accountbook.common.DatabaseCleanupListener;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Expense;
 import com.bifos.accountbook.domain.entity.Family;
@@ -20,13 +20,13 @@ import com.bifos.accountbook.domain.value.ExpenseStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -44,7 +44,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@ExtendWith(DatabaseCleanupExtension.class)
+@TestExecutionListeners(
+    value = DatabaseCleanupListener.class,
+    mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
+)
 @DisplayName("DashboardController 통합 테스트")
 class DashboardControllerTest {
 
