@@ -7,18 +7,21 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestExecutionListeners;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * DatabaseCleanupExtension 테스트
+ * DatabaseCleanupListener 테스트
  */
 @SpringBootTest
-@ExtendWith(DatabaseCleanupExtension.class)
-@DisplayName("데이터베이스 정리 Extension 테스트")
+@TestExecutionListeners(
+    value = DatabaseCleanupListener.class,
+    mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
+)
+@DisplayName("데이터베이스 정리 Listener 테스트")
 class DatabaseCleanupTest {
 
     @Autowired
@@ -56,7 +59,7 @@ class DatabaseCleanupTest {
     @DisplayName("두 번째 테스트 - 이전 데이터가 정리되었는지 확인")
     void test2_CheckCleanup() {
         // Given & When
-        // DatabaseCleanupExtension이 test1 이후 데이터를 정리했어야 함
+        // DatabaseCleanupListener가 test1 이후 데이터를 정리했어야 함
 
         // Then
         assertThat(userRepository.findByEmail("test1@example.com")).isEmpty();
