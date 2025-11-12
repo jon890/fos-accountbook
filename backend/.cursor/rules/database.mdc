@@ -1,0 +1,47 @@
+---
+alwaysApply: true
+description: 데이터베이스 및 Flyway 마이그레이션 규칙
+tags: [database, flyway, migration, mysql]
+version: "1.0"
+---
+
+# 데이터베이스 규칙
+
+## Flyway 마이그레이션
+
+```sql
+-- V1__init.sql
+CREATE TABLE user_profiles (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_uuid VARCHAR(36) NOT NULL UNIQUE,
+    timezone VARCHAR(50) NOT NULL DEFAULT 'Asia/Seoul',
+    language VARCHAR(2) NOT NULL DEFAULT 'ko',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME,
+    deleted_at DATETIME,
+    INDEX idx_user_uuid (user_uuid),
+    INDEX idx_deleted_at (deleted_at)
+);
+```
+
+## 규칙
+
+- **파일명**: `V{version}__{description}.sql`
+- **테이블/컬럼**: `snake_case`
+- **PK**: `id BIGINT AUTO_INCREMENT`
+- **UUID**: `VARCHAR(36)` + UNIQUE 인덱스
+- **Soft Delete**: `deleted_at DATETIME`
+- **생성/수정 시간**: `created_at`, `updated_at`
+- **필요한 컬럼에 인덱스 추가**
+
+---
+
+## ⚠️ 주의사항
+
+### 절대 금지 ❌
+
+1. **Production DB 직접 수정 금지**
+   - 반드시 Flyway 마이그레이션으로만 스키마 변경
+
+2. **@Transactional 테스트 금지**
+   - 통합 테스트에서는 `DatabaseCleanupExtension` 사용

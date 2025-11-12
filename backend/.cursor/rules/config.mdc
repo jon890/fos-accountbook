@@ -1,0 +1,248 @@
+---
+alwaysApply: true
+description: Spring Config 관리 규칙
+tags: [config, properties, spring, configuration]
+version: "1.0"
+---
+
+# Spring Config 관리 규칙
+
+## ⚙️ ConfigurationProperties 패턴
+
+### ✅ 올바른 방법
+
+```java
+@Getter
+@ConfigurationProperties(prefix = "cors")
+public class CorsProperties {
+
+    private final List<String> allowedOrigins;
+    private final boolean allowCredentials;
+    private final long maxAge;
+
+    /**
+     * Constructor Binding (Spring Boot 3.x 자동 적용)
+     * 모든 값은 application.yml에서 주입됩니다.
+     */
+    public CorsProperties(
+            List<String> allowedOrigins,
+            boolean allowCredentials,
+            long maxAge
+    ) {
+        this.allowedOrigins = allowedOrigins;
+        this.allowCredentials = allowCredentials;
+        this.maxAge = maxAge;
+    }
+}
+```
+
+### ❌ 피해야 할 패턴
+
+```java
+// ❌ @Setter 사용 금지 (런타임 변경 가능)
+@Setter
+private List<String> allowedOrigins;
+
+// ❌ 코드에 기본값 하드코딩 금지
+this.allowedOrigins = allowedOrigins != null ? allowedOrigins : 
+    List.of("http://localhost:3000");
+
+// ❌ @Component 사용 금지 (자동 빈 등록 불필요)
+@Component
+@ConfigurationProperties(prefix = "cors")
+public class CorsProperties { }
+
+// ❌ Boolean, Long 래퍼 타입 사용 금지
+public CorsProperties(Boolean allowCredentials, Long maxAge) { }
+
+// ✅ primitive 타입 사용
+public CorsProperties(boolean allowCredentials, long maxAge) { }
+```
+
+---
+
+## 📝 application.yml 관리
+
+### 기본값 관리 원칙
+
+**✅ 올바른 방법:**
+
+```yaml
+# application.yml
+cors:
+  allowed-origins: []  # 프로파일별 오버라이드
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+  allow-credentials: true
+  max-age: 3600  # 1시간 (초)
+
+jwt:
+  secret: ${AUTH_SECRET}  # 환경변수 필수
+  expiration: ${JWT_EXPIRATION:86400000}  # 기본값 포함
+```
+
+**❌ 피해야 할 패턴:**
+
+```java
+// ❌ 코드에 기본값 하드코딩
+this.maxAge = maxAge != null ? maxAge : 3600L;
+
+// ✅ application.yml에서 관리
+// cors.max-age: 3600
+```
+
+---
+
+## 🏗️ Config 클래스 작성 규칙
+
+### 1. 클래스 구조
+
+```java
+/**
+ * Spring Security 설정
+ * 
+ * 관련 Properties: CorsProperties, JwtProperties
+ * 의존성: JwtAuthenticationFilter, NextAuthTokenFilter
+ */
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+@RequiredArgsConstructor
+public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CorsProperties corsProperties;
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) {
+        // 설정 로직
+        return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // Properties에서 값 주입
+        configuration.setAllowedOrigins(corsProperties.getAllowedOrigins());
+        configuration.setAllowedMethods(corsProperties.getAllowedMethods());
+        configuration.setAllowCredentials(corsProperties.isAllowCredentials());
+        
+        return source;
+    }
+}
+```
+
+### 2. JavaDoc 필수
+
+```java
+/**
+ * CORS 설정을 application.yml에서 관리하기 위한 Properties 클래스
+ * 
+ * 모든 기본값은 application.yml에서 관리됩니다.
+ * Immutable하게 관리되며, 애플리케이션 시작 시 한 번만 바인딩됩니다.
+ * 
+ * @see SecurityConfig
+ */
+@Getter
+@ConfigurationProperties(prefix = "cors")
+public class CorsProperties {
+    // ...
+}
+```
+
+---
+
+## 📂 Config 클래스 배치 원칙
+
+| 설정 타입 | 위치 | 예시 |
+|-----------|------|------|
+| Spring 프레임워크 설정 | `config/` | SecurityConfig, WebMvcConfig |
+| Properties 클래스 | `config/` | CorsProperties, JwtProperties |
+| Infrastructure 구현 | `infra/security/` | JwtAuthenticationFilter |
+| DB 설정 | `config/` | QueryDslConfig |
+
+**패키지 구조:**
+
+```
+com/bifos/accountbook/
+├── config/                    # ✅ Spring 설정
+│   ├── AsyncConfig.java
+│   ├── CorsProperties.java
+│   ├── OpenApiConfig.java
+│   ├── QueryDslConfig.java
+│   ├── SecurityConfig.java
+│   └── WebMvcConfig.java
+│
+└── infra/                     # ✅ Infrastructure 구현
+    ├── persistence/           # DB 레이어
+    ├── security/              # JWT, 필터 구현체
+    ├── filter/                # HTTP 필터
+    └── exception/             # 예외 처리
+```
+
+---
+
+## 🔐 환경변수 관리
+
+### 민감한 정보는 환경변수로
+
+```yaml
+# ✅ 올바른 방법
+jwt:
+  secret: ${AUTH_SECRET}  # 필수 환경변수
+  expiration: ${JWT_EXPIRATION:86400000}  # 선택적 (기본값)
+
+# ❌ 절대 금지
+jwt:
+  secret: "hardcoded-secret-key-12345"  # 위험!
+```
+
+### 프로파일별 오버라이드
+
+```yaml
+# application.yml (공통)
+cors:
+  allowed-origins: []
+  max-age: 3600
+
+# application-local.yml
+cors:
+  allowed-origins:
+    - http://localhost:3000
+
+# application-prod.yml
+cors:
+  allowed-origins:
+    - https://your-domain.vercel.app
+```
+
+---
+
+## ✅ 체크리스트
+
+Config 클래스 작성 시 다음을 확인하세요:
+
+- [ ] `@ConfigurationProperties` 사용
+- [ ] `@Getter`만 사용 (`@Setter` 금지)
+- [ ] 모든 필드를 `final`로 선언
+- [ ] Constructor Binding 패턴 사용
+- [ ] 기본값은 application.yml에 정의
+- [ ] JavaDoc 작성
+- [ ] primitive 타입 사용 (Boolean → boolean)
+- [ ] 환경변수 + 기본값 패턴: `${ENV:default}`
+- [ ] 민감한 정보는 환경변수로만
+- [ ] `config/` 패키지에 배치
+
+---
+
+## 🎯 핵심 원칙
+
+1. **불변성**: Properties는 불변 객체 (`final` + Constructor)
+2. **중앙화**: 모든 기본값은 application.yml에서 관리
+3. **환경변수**: 민감한 정보는 코드에 포함 금지
+4. **타입 안전성**: primitive 타입 사용
+5. **분리**: Config(설정) vs Infra(구현체) 명확히 구분

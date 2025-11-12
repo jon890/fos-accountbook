@@ -1,0 +1,62 @@
+---
+alwaysApply: true
+description: 테스트 작성 규칙 및 전략
+tags: [testing, test, junit, mockito]
+version: "1.0"
+---
+
+# 테스트 전략
+
+## 통합 테스트 (Controller)
+
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+@ExtendWith(DatabaseCleanupExtension.class)  // ✅ 필수
+@DisplayName("사용자 프로필 컨트롤러 통합 테스트")
+class UserProfileControllerTest {
+
+    @Autowired private MockMvc mockMvc;
+    @Autowired private UserRepository userRepository;
+
+    @Test
+    @DisplayName("프로필 조회 - 성공")
+    void getProfile_Success() throws Exception {
+        // Given: 실제 DB에 데이터 생성
+        User user = userRepository.save(createUser());
+
+        // When: API 호출 (실제 커밋 발생)
+        mockMvc.perform(get("/api/users/me/profile")
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.userUuid").value(user.getUuid().getValue()));
+
+        // Then: DB 상태 검증
+        assertThat(userRepository.findByUuid(user.getUuid())).isPresent();
+    }
+    // DatabaseCleanupExtension이 자동으로 테이블 정리
+}
+```
+
+## 핵심 원칙
+
+- ✅ **@SpringBootTest 사용** (실제 Spring 컨텍스트)
+- ✅ **실제 Bean 사용** (Service, Repository 모두 실제)
+- ✅ **실제 DB 사용** (H2 테스트 DB)
+- ✅ **외부 API만 모킹** (우리가 제어 불가능한 것만)
+- ✅ **@ExtendWith(DatabaseCleanupExtension.class)** 필수
+- ❌ **@Transactional 사용 금지** (실제 커밋 테스트를 위해)
+
+---
+
+## 📝 커밋 규칙
+
+- **신규 코드 = 테스트 필수**
+  - Controller 추가 → 통합 테스트 추가
+  - Service 추가 → 단위/통합 테스트 추가
+  - Repository 추가 → 테스트 추가
+
+- **커밋 전 확인**
+  ```bash
+  ./gradlew test  # 모든 테스트 통과 확인
+  ```
