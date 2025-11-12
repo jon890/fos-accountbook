@@ -26,12 +26,19 @@ public class ExpenseResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static ExpenseResponse from(Expense expense) {
+    /**
+     * Expense 엔티티로부터 응답 생성 (카테고리 정보 포함)
+     * 
+     * @param expense 지출 엔티티
+     * @param category 카테고리 정보 (CategoryService의 캐시에서 조회)
+     * @return ExpenseResponse
+     */
+    public static ExpenseResponse from(Expense expense, CategoryInfo category) {
         return ExpenseResponse.builder()
                 .uuid(expense.getUuid().getValue())
                 .familyUuid(expense.getFamilyUuid().getValue())
                 .categoryUuid(expense.getCategoryUuid().getValue())
-                .category(CategoryInfo.from(expense.getCategory()))
+                .category(category)
                 .amount(expense.getAmount())
                 .description(expense.getDescription())
                 .date(expense.getDate())
@@ -40,6 +47,12 @@ public class ExpenseResponse {
                 .build();
     }
 
+    /**
+     * Expense 엔티티로부터 응답 생성 (카테고리 정보 제외)
+     * 
+     * @param expense 지출 엔티티
+     * @return ExpenseResponse
+     */
     public static ExpenseResponse fromWithoutCategory(Expense expense) {
         return ExpenseResponse.builder()
                 .uuid(expense.getUuid().getValue())

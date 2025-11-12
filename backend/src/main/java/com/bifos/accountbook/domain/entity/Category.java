@@ -9,8 +9,6 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "categories")
@@ -57,13 +55,12 @@ public class Category {
     @Builder.Default
     private CategoryStatus status = CategoryStatus.ACTIVE;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "family_uuid", referencedColumnName = "uuid", insertable = false, updatable = false)
-    private Family family;
-
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Expense> expenses = new ArrayList<>();
+    // JPA 연관관계 제거
+    // family, expenses는 UUID로만 참조하고 필요 시 Service 계층에서 조회
+    // 장점:
+    // 1. N+1 문제 원천 차단
+    // 2. 명확한 책임 분리
+    // 3. 캐시 활용 최적화
 
     @PrePersist
     public void prePersist() {

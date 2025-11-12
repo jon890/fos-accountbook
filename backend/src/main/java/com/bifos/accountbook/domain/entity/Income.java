@@ -65,17 +65,12 @@ public class Income {
     @Builder.Default
     private IncomeStatus status = IncomeStatus.ACTIVE;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "family_uuid", referencedColumnName = "uuid", insertable = false, updatable = false)
-    private Family family;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_uuid", referencedColumnName = "uuid", insertable = false, updatable = false)
-    private Category category;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_uuid", referencedColumnName = "uuid", insertable = false, updatable = false)
-    private User user;
+    // JPA 연관관계 제거
+    // category, family, user는 UUID로만 참조하고 필요 시 Service 계층에서 조회
+    // 장점:
+    // 1. N+1 문제 원천 차단
+    // 2. 카테고리는 CategoryService의 캐시 활용
+    // 3. 명확한 책임 분리
 
     @PrePersist
     public void prePersist() {

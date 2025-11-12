@@ -26,12 +26,19 @@ public class IncomeResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static IncomeResponse from(Income income) {
+    /**
+     * Income 엔티티로부터 응답 생성 (카테고리 정보 포함)
+     * 
+     * @param income 수입 엔티티
+     * @param category 카테고리 정보 (CategoryService의 캐시에서 조회)
+     * @return IncomeResponse
+     */
+    public static IncomeResponse from(Income income, CategoryInfo category) {
         return IncomeResponse.builder()
                 .uuid(income.getUuid().getValue())
                 .familyUuid(income.getFamilyUuid().getValue())
                 .categoryUuid(income.getCategoryUuid().getValue())
-                .category(CategoryInfo.from(income.getCategory()))
+                .category(category)
                 .amount(income.getAmount())
                 .description(income.getDescription())
                 .date(income.getDate())
@@ -40,6 +47,12 @@ public class IncomeResponse {
                 .build();
     }
 
+    /**
+     * Income 엔티티로부터 응답 생성 (카테고리 정보 제외)
+     * 
+     * @param income 수입 엔티티
+     * @return IncomeResponse
+     */
     public static IncomeResponse fromWithoutCategory(Income income) {
         return IncomeResponse.builder()
                 .uuid(income.getUuid().getValue())
