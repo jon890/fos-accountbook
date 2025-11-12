@@ -12,7 +12,9 @@ import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.repository.UserRepository;
+import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.domain.value.FamilyMemberStatus;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,9 +36,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 2. 생성 시 캐시 무효화 확인
  * 3. 수정 시 캐시 무효화 확인
  * 4. 삭제 시 캐시 무효화 확인
+ * 5. findByUuidCached 메서드의 캐시 활용 확인
+ * 6. 메서드 간 캐시 재사용 확인
  */
 @SpringBootTest
-@ActiveProfiles("test")
 @DisplayName("카테고리 서비스 캐시 테스트")
 class CategoryServiceCacheTest {
 
@@ -57,6 +60,9 @@ class CategoryServiceCacheTest {
 
     @Autowired
     private CacheManager cacheManager;
+
+    @Autowired
+    private EntityManager entityManager;
 
     private User testUser;
     private Family testFamily;
@@ -240,6 +246,91 @@ class CategoryServiceCacheTest {
 
         // Then: 캐시가 무효화됨
         assertThat(cache.get(newFamilyUuidStr)).isNull();
+    }
+
+    @Test
+    @DisplayName("findByUuidCached는 캐시를 활용하여 조회한다")
+    @Transactional
+    void findByUuidCachedUsesCache() {
+        // Given: 두 개의 카테고리 생성
+        Category category1 = Category.builder()
+                .familyUuid(testFamily.getUuid())
+                .name("Category 1")
+                .color("#ff0000")
+                .icon("🍎")
+                .build();
+        category1 = categoryRepository.save(category1);
+
+        Category category2 = Category.builder()
+                .familyUuid(testFamily.getUuid())
+                .name("Category 2")
+                .color("#00ff00")
+                .icon("🍏")
+                .build();
+        category2 = categoryRepository.save(category2);
+
+        // DB 커밋을 위한 flush
+        entityManager.flush();
+        entityManager.clear();
+
+        String familyUuidStr = testFamily.getUuid().getValue();
+        CustomUuid category1Uuid = category1.getUuid();
+        CustomUuid category2Uuid = category2.getUuid();
+        var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
+
+        // When: findByUuidCached로 첫 번째 카테고리 조회
+        CategoryResponse result1 = categoryService.findByUuidCached(category1Uuid);
+
+        // Then: 캐시에 가족의 전체 카테고리가 저장되어야 함
+        assertThat(cache.get(familyUuidStr)).isNotNull();
+        assertThat(result1).isNotNull();
+        assertThat(result1.getName()).isEqualTo("Category 1");
+
+        // When: 같은 가족의 다른 카테고리를 findByUuidCached로 조회
+        CategoryResponse result2 = categoryService.findByUuidCached(category2Uuid);
+
+        // Then: 캐시에서 조회되어야 함 (추가 DB 조회 없이)
+        assertThat(result2).isNotNull();
+        assertThat(result2.getName()).isEqualTo("Category 2");
+        assertThat(cache.get(familyUuidStr)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("findByUuidCached로 조회 후 getFamilyCategories 호출 시 캐시가 재사용된다")
+    @Transactional
+    void cachedCategoryIsReusedAcrossMethods() {
+        // Given: 카테고리 생성
+        Category category = Category.builder()
+                .familyUuid(testFamily.getUuid())
+                .name("Test Category")
+                .color("#ff0000")
+                .icon("🍎")
+                .build();
+        category = categoryRepository.save(category);
+
+        // DB 커밋을 위한 flush
+        entityManager.flush();
+        entityManager.clear();
+
+        String familyUuidStr = testFamily.getUuid().getValue();
+        CustomUuid categoryUuid = category.getUuid();
+        var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
+
+        // When: findByUuidCached로 조회 (캐시 생성)
+        categoryService.findByUuidCached(categoryUuid);
+
+        // Then: 캐시가 생성되어 있어야 함
+        assertThat(cache.get(familyUuidStr)).isNotNull();
+
+        // When: getFamilyCategories로 조회 (캐시 재사용)
+        List<CategoryResponse> categories = categoryService.getFamilyCategories(
+                testUser.getUuid(),
+                familyUuidStr
+        );
+
+        // Then: 동일한 캐시를 사용하여 결과 반환
+        assertThat(categories).hasSize(1);
+        assertThat(categories.get(0).getUuid()).isEqualTo(categoryUuid.getValue());
     }
 }
 

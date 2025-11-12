@@ -16,21 +16,34 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final FamilyValidationService familyValidationService; // 가족 검증 로직
     private final CacheManager cacheManager; // 캐시 관리자
+    private final CategoryService self; // Self-injection for @Cacheable to work in same-class calls
+
+    // Constructor with @Lazy for self-injection to avoid circular dependency
+    public CategoryService(
+            CategoryRepository categoryRepository,
+            FamilyValidationService familyValidationService,
+            CacheManager cacheManager,
+            @Lazy CategoryService self
+    ) {
+        this.categoryRepository = categoryRepository;
+        this.familyValidationService = familyValidationService;
+        this.cacheManager = cacheManager;
+        this.self = self;
+    }
 
     /**
      * 카테고리 생성
@@ -108,8 +121,9 @@ public class CategoryService {
                         .addParameter("categoryUuid", categoryUuid.getValue()));
 
         // 2. 해당 가족의 전체 카테고리 조회 (캐시 활용)
+        // Self-injection을 통해 프록시를 거쳐 캐시가 동작하도록 함
         String familyUuidStr = category.getFamilyUuid().getValue();
-        List<CategoryResponse> familyCategories = getFamilyCategoriesCached(familyUuidStr);
+        List<CategoryResponse> familyCategories = self.getFamilyCategoriesCached(familyUuidStr);
 
         // 3. UUID로 필터링하여 반환
         return familyCategories.stream()
@@ -120,42 +134,10 @@ public class CategoryService {
     }
 
     /**
-     * 여러 카테고리를 한번에 조회 (캐시 활용)
-     * 
-     * Expense나 Income 목록을 조회한 후, 카테고리 정보를 효율적으로 가져올 때 사용합니다.
-     * 가족의 전체 카테고리를 캐시에서 조회한 후 Map으로 반환하여 O(1) 조회를 가능하게 합니다.
-     * 
-     * @param familyUuid 가족 UUID
-     * @param categoryUuids 조회할 카테고리 UUID 목록
-     * @return UUID를 키로 하는 카테고리 응답 Map
-     */
-    @Transactional(readOnly = true)
-    public Map<String, CategoryResponse> findByUuidsInFamilyCached(
-            String familyUuid,
-            List<CustomUuid> categoryUuids
-    ) {
-        // 가족 전체 카테고리를 캐시에서 조회
-        List<CategoryResponse> familyCategories = getFamilyCategoriesCached(familyUuid);
-
-        // 요청된 UUID 목록을 Set으로 변환 (O(1) 조회)
-        Set<String> requestedUuids = categoryUuids.stream()
-                .map(CustomUuid::getValue)
-                .collect(Collectors.toSet());
-
-        // 필터링하여 Map으로 반환
-        return familyCategories.stream()
-                .filter(c -> requestedUuids.contains(c.getUuid()))
-                .collect(Collectors.toMap(
-                        CategoryResponse::getUuid,
-                        category -> category
-                ));
-    }
-
-    /**
      * 가족의 카테고리 목록 조회 (권한 검증 없이 캐시만 활용)
      * 
      * 내부 메서드로, 이미 권한이 검증된 상태에서 캐시만 활용하여 카테고리를 조회합니다.
-     * findByUuidCached()와 findByUuidsInFamilyCached()에서 사용됩니다.
+     * findByUuidCached()에서 사용됩니다.
      */
     @Transactional(readOnly = true)
     @Cacheable(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid")
