@@ -60,13 +60,12 @@ public class Family {
     @Builder.Default
     private List<FamilyMember> members = new ArrayList<>();
 
-    @OneToMany(mappedBy = "family", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Category> categories = new ArrayList<>();
-
-    @OneToMany(mappedBy = "family", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Expense> expenses = new ArrayList<>();
+    // JPA 연관관계 제거 (categories, expenses)
+    // categories, expenses는 UUID로만 참조하고 필요 시 Service 계층에서 조회
+    // 장점:
+    // 1. N+1 문제 원천 차단
+    // 2. 명확한 책임 분리
+    // 3. 캐시 활용 최적화
 
     @PrePersist
     public void prePersist() {

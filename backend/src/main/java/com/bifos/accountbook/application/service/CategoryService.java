@@ -20,8 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -84,6 +84,84 @@ public class CategoryService {
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
+        List<Category> categories = categoryRepository.findAllByFamilyUuid(familyCustomUuid);
+
+        return categories.stream()
+                .map(CategoryResponse::from)
+                .toList();
+    }
+
+    /**
+     * UUID로 단일 카테고리 조회 (캐시 활용)
+     * 
+     * 내부적으로 해당 가족의 전체 카테고리를 캐시에서 조회한 후 필터링합니다.
+     * 이를 통해 개별 카테고리 조회 시에도 캐시의 이점을 얻을 수 있습니다.
+     * 
+     * @param categoryUuid 조회할 카테고리 UUID
+     * @return 카테고리 응답 (없으면 예외)
+     */
+    @Transactional(readOnly = true)
+    public CategoryResponse findByUuidCached(CustomUuid categoryUuid) {
+        // 1. Category 엔티티 조회로 familyUuid 얻기
+        Category category = categoryRepository.findActiveByUuid(categoryUuid)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
+                        .addParameter("categoryUuid", categoryUuid.getValue()));
+
+        // 2. 해당 가족의 전체 카테고리 조회 (캐시 활용)
+        String familyUuidStr = category.getFamilyUuid().getValue();
+        List<CategoryResponse> familyCategories = getFamilyCategoriesCached(familyUuidStr);
+
+        // 3. UUID로 필터링하여 반환
+        return familyCategories.stream()
+                .filter(c -> c.getUuid().equals(categoryUuid.getValue()))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
+                        .addParameter("categoryUuid", categoryUuid.getValue()));
+    }
+
+    /**
+     * 여러 카테고리를 한번에 조회 (캐시 활용)
+     * 
+     * Expense나 Income 목록을 조회한 후, 카테고리 정보를 효율적으로 가져올 때 사용합니다.
+     * 가족의 전체 카테고리를 캐시에서 조회한 후 Map으로 반환하여 O(1) 조회를 가능하게 합니다.
+     * 
+     * @param familyUuid 가족 UUID
+     * @param categoryUuids 조회할 카테고리 UUID 목록
+     * @return UUID를 키로 하는 카테고리 응답 Map
+     */
+    @Transactional(readOnly = true)
+    public Map<String, CategoryResponse> findByUuidsInFamilyCached(
+            String familyUuid,
+            List<CustomUuid> categoryUuids
+    ) {
+        // 가족 전체 카테고리를 캐시에서 조회
+        List<CategoryResponse> familyCategories = getFamilyCategoriesCached(familyUuid);
+
+        // 요청된 UUID 목록을 Set으로 변환 (O(1) 조회)
+        Set<String> requestedUuids = categoryUuids.stream()
+                .map(CustomUuid::getValue)
+                .collect(Collectors.toSet());
+
+        // 필터링하여 Map으로 반환
+        return familyCategories.stream()
+                .filter(c -> requestedUuids.contains(c.getUuid()))
+                .collect(Collectors.toMap(
+                        CategoryResponse::getUuid,
+                        category -> category
+                ));
+    }
+
+    /**
+     * 가족의 카테고리 목록 조회 (권한 검증 없이 캐시만 활용)
+     * 
+     * 내부 메서드로, 이미 권한이 검증된 상태에서 캐시만 활용하여 카테고리를 조회합니다.
+     * findByUuidCached()와 findByUuidsInFamilyCached()에서 사용됩니다.
+     */
+    @Transactional(readOnly = true)
+    @Cacheable(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid")
+    public List<CategoryResponse> getFamilyCategoriesCached(String familyUuid) {
+        CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
+        
         List<Category> categories = categoryRepository.findAllByFamilyUuid(familyCustomUuid);
 
         return categories.stream()

@@ -1,5 +1,6 @@
 package com.bifos.accountbook.application.service;
 
+import com.bifos.accountbook.application.dto.category.CategoryResponse;
 import com.bifos.accountbook.application.dto.expense.CreateExpenseRequest;
 import com.bifos.accountbook.application.dto.expense.ExpenseResponse;
 import com.bifos.accountbook.application.dto.expense.ExpenseSearchRequest;
@@ -8,10 +9,8 @@ import com.bifos.accountbook.application.event.ExpenseCreatedEvent;
 import com.bifos.accountbook.application.event.ExpenseUpdatedEvent;
 import com.bifos.accountbook.application.exception.BusinessException;
 import com.bifos.accountbook.application.exception.ErrorCode;
-import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Expense;
 import com.bifos.accountbook.domain.entity.User;
-import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.UserRepository;
@@ -37,7 +36,7 @@ import java.util.List;
 public class ExpenseService {
 
     private final ExpenseRepository expenseRepository;
-    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService; // 카테고리 조회 (캐시 활용)
     private final UserRepository userRepository;
     private final FamilyValidationService familyValidationService; // 가족 검증 로직
     private final ApplicationEventPublisher eventPublisher; // 이벤트 발행
@@ -58,14 +57,13 @@ public class ExpenseService {
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
-        // 카테고리 확인
-        Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
-                        .addParameter("categoryUuid", categoryCustomUuid.getValue()));
+        // 카테고리 확인 (캐시 활용)
+        CategoryResponse category = categoryService.findByUuidCached(categoryCustomUuid);
 
-        if (!category.getFamilyUuid().equals(familyCustomUuid)) {
+        // 카테고리가 해당 가족의 것인지 확인
+        if (!category.getFamilyUuid().equals(familyCustomUuid.getValue())) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 가족의 카테고리가 아닙니다")
-                    .addParameter("categoryFamilyUuid", category.getFamilyUuid().getValue())
+                    .addParameter("categoryFamilyUuid", category.getFamilyUuid())
                     .addParameter("requestFamilyUuid", familyCustomUuid.getValue());
         }
 
@@ -194,18 +192,16 @@ public class ExpenseService {
         // 이벤트 발행을 위해 기존 금액 저장
         BigDecimal oldAmount = expense.getAmount();
 
-        // 카테고리 변경 검증
+        // 카테고리 변경 검증 (캐시 활용)
         CustomUuid categoryCustomUuid = null;
         if (request.getCategoryUuid() != null) {
             categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
-            final String categoryUuidStr = categoryCustomUuid.getValue(); // final 변수 생성
-            Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
-                            .addParameter("categoryUuid", categoryUuidStr));
+            CategoryResponse category = categoryService.findByUuidCached(categoryCustomUuid);
 
-            if (!category.getFamilyUuid().equals(expense.getFamilyUuid())) {
+            // 카테고리가 해당 가족의 것인지 확인
+            if (!category.getFamilyUuid().equals(expense.getFamilyUuid().getValue())) {
                 throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 가족의 카테고리가 아닙니다")
-                        .addParameter("categoryFamilyUuid", category.getFamilyUuid().getValue())
+                        .addParameter("categoryFamilyUuid", category.getFamilyUuid())
                         .addParameter("expenseFamilyUuid", expense.getFamilyUuid().getValue());
             }
         }

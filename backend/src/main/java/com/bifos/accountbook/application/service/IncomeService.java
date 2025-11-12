@@ -1,15 +1,14 @@
 package com.bifos.accountbook.application.service;
 
+import com.bifos.accountbook.application.dto.category.CategoryResponse;
 import com.bifos.accountbook.application.dto.income.CreateIncomeRequest;
 import com.bifos.accountbook.application.dto.income.IncomeResponse;
 import com.bifos.accountbook.application.dto.income.IncomeSearchRequest;
 import com.bifos.accountbook.application.dto.income.UpdateIncomeRequest;
 import com.bifos.accountbook.application.exception.BusinessException;
 import com.bifos.accountbook.application.exception.ErrorCode;
-import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Income;
 import com.bifos.accountbook.domain.entity.User;
-import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.repository.IncomeRepository;
 import com.bifos.accountbook.domain.repository.UserRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
@@ -31,7 +30,7 @@ import java.time.LocalDateTime;
 public class IncomeService {
 
     private final IncomeRepository incomeRepository;
-    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService; // 카테고리 조회 (캐시 활용)
     private final UserRepository userRepository;
     private final FamilyValidationService familyValidationService;
 
@@ -51,14 +50,13 @@ public class IncomeService {
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
-        // 카테고리 확인
-        Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
-                        .addParameter("categoryUuid", categoryCustomUuid.getValue()));
+        // 카테고리 확인 (캐시 활용)
+        CategoryResponse category = categoryService.findByUuidCached(categoryCustomUuid);
 
-        if (!category.getFamilyUuid().equals(familyCustomUuid)) {
+        // 카테고리가 해당 가족의 것인지 확인
+        if (!category.getFamilyUuid().equals(familyCustomUuid.getValue())) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 가족의 카테고리가 아닙니다")
-                    .addParameter("categoryFamilyUuid", category.getFamilyUuid().getValue())
+                    .addParameter("categoryFamilyUuid", category.getFamilyUuid())
                     .addParameter("requestFamilyUuid", familyCustomUuid.getValue());
         }
 
@@ -74,7 +72,7 @@ public class IncomeService {
 
         income = incomeRepository.save(income);
 
-        return IncomeResponse.from(income);
+        return IncomeResponse.fromWithoutCategory(income);
     }
 
     /**
@@ -121,7 +119,7 @@ public class IncomeService {
             incomes = incomeRepository.findAllByFamilyUuid(familyCustomUuid, pageable);
         }
 
-        return incomes.map(IncomeResponse::from);
+        return incomes.map(IncomeResponse::fromWithoutCategory);
     }
 
     /**
@@ -138,7 +136,7 @@ public class IncomeService {
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());
 
-        return IncomeResponse.from(income);
+        return IncomeResponse.fromWithoutCategory(income);
     }
 
     /**
@@ -155,18 +153,16 @@ public class IncomeService {
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());
 
-        // 카테고리 변경 검증
+        // 카테고리 변경 검증 (캐시 활용)
         CustomUuid categoryCustomUuid = null;
         if (request.getCategoryUuid() != null) {
             categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
-            final String categoryUuidStr = categoryCustomUuid.getValue(); // final 변수 생성
-            Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
-                            .addParameter("categoryUuid", categoryUuidStr));
+            CategoryResponse category = categoryService.findByUuidCached(categoryCustomUuid);
 
-            if (!category.getFamilyUuid().equals(income.getFamilyUuid())) {
+            // 카테고리가 해당 가족의 것인지 확인
+            if (!category.getFamilyUuid().equals(income.getFamilyUuid().getValue())) {
                 throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 가족의 카테고리가 아닙니다")
-                        .addParameter("categoryFamilyUuid", category.getFamilyUuid().getValue())
+                        .addParameter("categoryFamilyUuid", category.getFamilyUuid())
                         .addParameter("incomeFamilyUuid", income.getFamilyUuid().getValue());
             }
         }
@@ -179,7 +175,7 @@ public class IncomeService {
             request.getDate()
         );
 
-        return IncomeResponse.from(income);
+        return IncomeResponse.fromWithoutCategory(income);
     }
 
     /**
