@@ -5,27 +5,17 @@ import com.bifos.accountbook.common.FosSpringBootTest;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Expense;
 import com.bifos.accountbook.domain.entity.Family;
-import com.bifos.accountbook.domain.entity.FamilyMember;
 import com.bifos.accountbook.domain.entity.Income;
 import com.bifos.accountbook.domain.entity.User;
-import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.repository.ExpenseRepository;
-import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
-import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.repository.IncomeRepository;
-import com.bifos.accountbook.domain.repository.UserRepository;
-import com.bifos.accountbook.domain.value.CategoryStatus;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.domain.value.ExpenseStatus;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -40,26 +30,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * - 대시보드 통계 API 검증
  * - 카테고리별 지출 요약
  * - 실제 API 엔드포인트 테스트
+ * - TestUserHolder로 테스트 데이터 관리
  */
 @FosSpringBootTest
 @AutoConfigureMockMvc
 @DisplayName("DashboardController 통합 테스트")
 class DashboardControllerTest {
 
+    @org.junit.jupiter.api.extension.RegisterExtension
+    TestUserHolder testUserHolder = new TestUserHolder();
+
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private FamilyRepository familyRepository;
-
-    @Autowired
-    private FamilyMemberRepository familyMemberRepository;
-
-    @Autowired
-    private CategoryRepository categoryRepository;
 
     @Autowired
     private ExpenseRepository expenseRepository;
@@ -67,85 +49,28 @@ class DashboardControllerTest {
     @Autowired
     private IncomeRepository incomeRepository;
 
-    private User testUser;
-    private Family testFamily;
-    private Category foodCategory;
-    private Category transportCategory;
-    private CustomUuid userUuid;
-    private CustomUuid familyUuid;
-
-    @BeforeEach
-    void setUp() {
-        // Given: 테스트 사용자 및 가족 생성
-        userUuid = CustomUuid.generate();
-        testUser = User.builder()
-                .uuid(userUuid)
-                .email("test@example.com")
-                .name("테스트 사용자")
-                .provider("GOOGLE")
-                .providerId("google-123")
-                .build();
-        testUser = userRepository.save(testUser);
-
-        familyUuid = CustomUuid.generate();
-        testFamily = Family.builder()
-                .uuid(familyUuid)
-                .name("테스트 가족")
-                .monthlyBudget(BigDecimal.ZERO) // 기본 예산 0
-                .build();
-        testFamily = familyRepository.save(testFamily);
-
-        // 가족 멤버 추가
-        FamilyMember member = FamilyMember.builder()
-                .familyUuid(familyUuid)
-                .userUuid(userUuid)
-                .build();
-        familyMemberRepository.save(member);
-
-        // 카테고리 생성
-        foodCategory = Category.builder()
-                .uuid(CustomUuid.generate())
-                .familyUuid(familyUuid)
-                .name("식비")
-                .icon("🍕")
-                .color("#FF5733")
-                .status(CategoryStatus.ACTIVE)
-                .build();
-        foodCategory = categoryRepository.save(foodCategory);
-
-        transportCategory = Category.builder()
-                .uuid(CustomUuid.generate())
-                .familyUuid(familyUuid)
-                .name("교통비")
-                .icon("🚗")
-                .color("#3498DB")
-                .status(CategoryStatus.ACTIVE)
-                .build();
-        transportCategory = categoryRepository.save(transportCategory);
-
-        // 로그인 사용자 설정 (SecurityContext에 인증 정보 설정)
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(testUser.getUuid().getValue(), null, null);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-    }
-
     @Test
     @DisplayName("카테고리별 지출 요약 조회 - 성공")
     void getCategoryExpenseSummary_Success() throws Exception {
-        // Given: 여러 지출 데이터 생성
+        // Given: 테스트 데이터 생성
+        User user = testUserHolder.getUser();
+        Family family = testUserHolder.getFamily();
+        Category foodCategory = testUserHolder.createCategory(family, "식비", "#FF5733", "🍕");
+        Category transportCategory = testUserHolder.createCategory(family, "교통비", "#3498DB", "🚗");
+        
         LocalDateTime now = LocalDateTime.now();
 
         // 식비 지출 3건
-        createExpense(familyUuid, userUuid, foodCategory.getUuid(), BigDecimal.valueOf(15000), now.minusDays(1));
-        createExpense(familyUuid, userUuid, foodCategory.getUuid(), BigDecimal.valueOf(20000), now.minusDays(2));
-        createExpense(familyUuid, userUuid, foodCategory.getUuid(), BigDecimal.valueOf(25000), now.minusDays(3));
+        createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(), BigDecimal.valueOf(15000), now.minusDays(1));
+        createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(), BigDecimal.valueOf(20000), now.minusDays(2));
+        createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(), BigDecimal.valueOf(25000), now.minusDays(3));
 
         // 교통비 지출 2건
-        createExpense(familyUuid, userUuid, transportCategory.getUuid(), BigDecimal.valueOf(5000), now.minusDays(1));
-        createExpense(familyUuid, userUuid, transportCategory.getUuid(), BigDecimal.valueOf(10000), now.minusDays(2));
+        createExpense(family.getUuid(), user.getUuid(), transportCategory.getUuid(), BigDecimal.valueOf(5000), now.minusDays(1));
+        createExpense(family.getUuid(), user.getUuid(), transportCategory.getUuid(), BigDecimal.valueOf(10000), now.minusDays(2));
 
         // When & Then: 대시보드 API 호출
-        mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/expenses/by-category", familyUuid.getValue())
+        mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/expenses/by-category", family.getUuid().getValue())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -167,14 +92,18 @@ class DashboardControllerTest {
     @Test
     @DisplayName("카테고리별 지출 요약 - 날짜 필터링")
     void getCategoryExpenseSummary_WithDateFilter() throws Exception {
-        // Given: 다양한 날짜의 지출 데이터
+        // Given: 테스트 데이터 생성
+        User user = testUserHolder.getUser();
+        Family family = testUserHolder.getFamily();
+        Category foodCategory = testUserHolder.getCategory();
+        
         LocalDateTime now = LocalDateTime.now();
 
-        createExpense(familyUuid, userUuid, foodCategory.getUuid(), BigDecimal.valueOf(10000), now.minusDays(1));
-        createExpense(familyUuid, userUuid, foodCategory.getUuid(), BigDecimal.valueOf(20000), now.minusDays(10)); // 오래됨
+        createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(), BigDecimal.valueOf(10000), now.minusDays(1));
+        createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(), BigDecimal.valueOf(20000), now.minusDays(10)); // 오래됨
 
         // When & Then: 최근 5일만 필터링
-        mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/expenses/by-category", familyUuid.getValue())
+        mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/expenses/by-category", family.getUuid().getValue())
                         .param("startDate", now.minusDays(5).toString())
                         .param("endDate", now.toString())
                         .contentType(MediaType.APPLICATION_JSON))
@@ -186,14 +115,19 @@ class DashboardControllerTest {
     @Test
     @DisplayName("카테고리별 지출 요약 - 카테고리 필터링")
     void getCategoryExpenseSummary_WithCategoryFilter() throws Exception {
-        // Given: 여러 카테고리 지출
+        // Given: 테스트 데이터 생성
+        User user = testUserHolder.getUser();
+        Family family = testUserHolder.getFamily();
+        Category foodCategory = testUserHolder.createCategory(family, "식비", "#FF5733", "🍕");
+        Category transportCategory = testUserHolder.createCategory(family, "교통비", "#3498DB", "🚗");
+        
         LocalDateTime now = LocalDateTime.now();
 
-        createExpense(familyUuid, userUuid, foodCategory.getUuid(), BigDecimal.valueOf(10000), now);
-        createExpense(familyUuid, userUuid, transportCategory.getUuid(), BigDecimal.valueOf(5000), now);
+        createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(), BigDecimal.valueOf(10000), now);
+        createExpense(family.getUuid(), user.getUuid(), transportCategory.getUuid(), BigDecimal.valueOf(5000), now);
 
         // When & Then: 식비만 조회
-        mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/expenses/by-category", familyUuid.getValue())
+        mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/expenses/by-category", family.getUuid().getValue())
                         .param("categoryUuid", foodCategory.getUuid().getValue())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -205,10 +139,11 @@ class DashboardControllerTest {
     @Test
     @DisplayName("카테고리별 지출 요약 - 지출이 없을 때")
     void getCategoryExpenseSummary_NoExpenses() throws Exception {
-        // Given: 지출 데이터 없음
+        // Given: 빈 가족
+        Family family = testUserHolder.getFamily();
 
         // When & Then: 빈 통계 반환
-        mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/expenses/by-category", familyUuid.getValue())
+        mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/expenses/by-category", family.getUuid().getValue())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.totalExpense").value(0))
@@ -218,14 +153,9 @@ class DashboardControllerTest {
     @Test
     @DisplayName("카테고리별 지출 요약 - 권한 없는 가족 조회 실패")
     void getCategoryExpenseSummary_UnauthorizedFamily() throws Exception {
-        // Given: 다른 가족 생성
+        // Given: 다른 가족 생성 (현재 사용자를 멤버로 추가하지 않음)
         CustomUuid otherFamilyUuid = CustomUuid.generate();
-        Family otherFamily = Family.builder()
-                .uuid(otherFamilyUuid)
-                .name("다른 가족")
-                .build();
-        familyRepository.save(otherFamily);
-
+        
         // When & Then: 권한 없는 가족 조회 시 에러
         mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/expenses/by-category", otherFamilyUuid.getValue())
                         .contentType(MediaType.APPLICATION_JSON))
@@ -235,27 +165,32 @@ class DashboardControllerTest {
     @Test
     @DisplayName("월별 통계 조회 - 성공 (QueryDSL 집계)")
     void getMonthlyStats_Success() throws Exception {
-        // Given: 이번 달 지출/수입 데이터 생성
+        // Given: 테스트 데이터 생성
+        User user = testUserHolder.getUser();
+        Family family = testUserHolder.getFamily();
+        Category foodCategory = testUserHolder.createCategory(family, "식비", "#FF5733", "🍕");
+        Category transportCategory = testUserHolder.createCategory(family, "교통비", "#3498DB", "🚗");
+        
         LocalDateTime now = LocalDateTime.now();
         int year = now.getYear();
         int month = now.getMonthValue();
 
         // 이번 달 지출: 50,000원 (음식) + 30,000원 (교통) = 80,000원
-        createExpense(familyUuid, userUuid, foodCategory.getUuid(), 
+        createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(), 
                 BigDecimal.valueOf(50000), now);
-        createExpense(familyUuid, userUuid, transportCategory.getUuid(), 
+        createExpense(family.getUuid(), user.getUuid(), transportCategory.getUuid(), 
                 BigDecimal.valueOf(30000), now);
 
         // 이번 달 수입: 100,000원
-        createIncome(familyUuid, userUuid, foodCategory.getUuid(), 
+        createIncome(family.getUuid(), user.getUuid(), foodCategory.getUuid(), 
                 BigDecimal.valueOf(100000), now);
 
         // 다른 달 지출 (집계에서 제외되어야 함)
-        createExpense(familyUuid, userUuid, foodCategory.getUuid(), 
+        createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(), 
                 BigDecimal.valueOf(20000), now.minusMonths(1));
 
         // When & Then: 월별 통계 조회
-        mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly", familyUuid.getValue())
+        mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly", family.getUuid().getValue())
                         .param("year", String.valueOf(year))
                         .param("month", String.valueOf(month))
                         .contentType(MediaType.APPLICATION_JSON))
@@ -271,10 +206,11 @@ class DashboardControllerTest {
     @Test
     @DisplayName("월별 통계 조회 - 기본값 (현재 연월)")
     void getMonthlyStats_DefaultValues() throws Exception {
-        // Given: 데이터 없음
+        // Given: 빈 가족
+        Family family = testUserHolder.getFamily();
 
         // When & Then: 파라미터 없이 조회 (현재 연월 사용)
-        mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly", familyUuid.getValue())
+        mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly", family.getUuid().getValue())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -287,26 +223,28 @@ class DashboardControllerTest {
     @Test
     @DisplayName("월별 통계 조회 - 예산 설정된 경우")
     void getMonthlyStats_WithBudget() throws Exception {
-        // Given: 예산이 설정된 가족
-        testFamily.updateMonthlyBudget(BigDecimal.valueOf(500000)); // 50만원 예산
-        familyRepository.save(testFamily);
-
+        // Given: 테스트 데이터 생성
+        User user = testUserHolder.getUser();
+        Family family = testUserHolder.createFamily("우리집", BigDecimal.valueOf(500000)); // 50만원 예산
+        Category foodCategory = testUserHolder.createCategory(family, "식비", "#FF5733", "🍕");
+        Category transportCategory = testUserHolder.createCategory(family, "교통비", "#3498DB", "🚗");
+        
         LocalDateTime now = LocalDateTime.now();
         int year = now.getYear();
         int month = now.getMonthValue();
 
         // 이번 달 지출: 200,000원
-        createExpense(familyUuid, userUuid, foodCategory.getUuid(), 
+        createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(), 
                 BigDecimal.valueOf(150000), now);
-        createExpense(familyUuid, userUuid, transportCategory.getUuid(), 
+        createExpense(family.getUuid(), user.getUuid(), transportCategory.getUuid(), 
                 BigDecimal.valueOf(50000), now);
 
         // 이번 달 수입: 300,000원
-        createIncome(familyUuid, userUuid, foodCategory.getUuid(), 
+        createIncome(family.getUuid(), user.getUuid(), foodCategory.getUuid(), 
                 BigDecimal.valueOf(300000), now);
 
         // When & Then: 월별 통계 조회
-        mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly", familyUuid.getValue())
+        mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly", family.getUuid().getValue())
                         .param("year", String.valueOf(year))
                         .param("month", String.valueOf(month))
                         .contentType(MediaType.APPLICATION_JSON))
@@ -324,20 +262,21 @@ class DashboardControllerTest {
     @Test
     @DisplayName("월별 통계 조회 - 예산 초과한 경우")
     void getMonthlyStats_BudgetExceeded() throws Exception {
-        // Given: 예산이 설정된 가족
-        testFamily.updateMonthlyBudget(BigDecimal.valueOf(100000)); // 10만원 예산
-        familyRepository.save(testFamily);
-
+        // Given: 테스트 데이터 생성
+        User user = testUserHolder.getUser();
+        Family family = testUserHolder.createFamily("우리집", BigDecimal.valueOf(100000)); // 10만원 예산
+        Category foodCategory = testUserHolder.getCategory(family);
+        
         LocalDateTime now = LocalDateTime.now();
         int year = now.getYear();
         int month = now.getMonthValue();
 
         // 이번 달 지출: 150,000원 (예산 초과)
-        createExpense(familyUuid, userUuid, foodCategory.getUuid(), 
+        createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(), 
                 BigDecimal.valueOf(150000), now);
 
         // When & Then: 남은 예산이 음수로 표시됨
-        mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly", familyUuid.getValue())
+        mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly", family.getUuid().getValue())
                         .param("year", String.valueOf(year))
                         .param("month", String.valueOf(month))
                         .contentType(MediaType.APPLICATION_JSON))
@@ -351,7 +290,7 @@ class DashboardControllerTest {
     // ===== Helper Methods =====
 
     private Expense createExpense(CustomUuid familyUuid, CustomUuid userUuid, CustomUuid categoryUuid,
-                                   BigDecimal amount, LocalDateTime date) {
+                                  BigDecimal amount, LocalDateTime date) {
         Expense expense = Expense.builder()
                 .uuid(CustomUuid.generate())
                 .familyUuid(familyUuid)
@@ -366,7 +305,7 @@ class DashboardControllerTest {
     }
 
     private Income createIncome(CustomUuid familyUuid, CustomUuid userUuid, CustomUuid categoryUuid,
-                                 BigDecimal amount, LocalDateTime date) {
+                                BigDecimal amount, LocalDateTime date) {
         Income income = Income.builder()
                 .uuid(CustomUuid.generate())
                 .familyUuid(familyUuid)
@@ -379,4 +318,3 @@ class DashboardControllerTest {
         return incomeRepository.save(income);
     }
 }
-

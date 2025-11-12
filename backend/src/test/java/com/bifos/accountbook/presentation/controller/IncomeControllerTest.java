@@ -1,22 +1,11 @@
 package com.bifos.accountbook.presentation.controller;
 
 import com.bifos.accountbook.application.dto.income.CreateIncomeRequest;
-import com.bifos.accountbook.application.dto.income.IncomeResponse;
 import com.bifos.accountbook.application.dto.income.UpdateIncomeRequest;
-import com.bifos.accountbook.common.DatabaseCleanupListener;
+import com.bifos.accountbook.common.FosSpringBootTest;
 import com.bifos.accountbook.common.TestUserHolder;
-import com.bifos.accountbook.application.exception.ErrorCode;
-import com.bifos.accountbook.domain.entity.Category;
-import com.bifos.accountbook.domain.entity.Family;
-import com.bifos.accountbook.domain.entity.FamilyMember;
-import com.bifos.accountbook.domain.entity.Income;
-import com.bifos.accountbook.domain.entity.User;
-import com.bifos.accountbook.domain.repository.CategoryRepository;
-import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
-import com.bifos.accountbook.domain.repository.FamilyRepository;
-import com.bifos.accountbook.domain.repository.IncomeRepository;
-import com.bifos.accountbook.domain.repository.UserRepository;
-import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.domain.entity.*;
+import com.bifos.accountbook.domain.repository.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,28 +13,22 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@FosSpringBootTest
 @AutoConfigureMockMvc
-@TestExecutionListeners(
-    value = DatabaseCleanupListener.class,
-    mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
-)
 @DisplayName("IncomeController 통합 테스트")
 class IncomeControllerTest {
 
@@ -138,7 +121,7 @@ class IncomeControllerTest {
     void getFamilyIncomes_Success() throws Exception {
         // Given
         User testUser = testUserHolder.getUser();
-        
+
         Income income1 = Income.builder()
                 .familyUuid(testFamily.getUuid())
                 .categoryUuid(testCategory.getUuid())
@@ -175,7 +158,7 @@ class IncomeControllerTest {
     void getFamilyIncomes_WithPaging() throws Exception {
         // Given
         User testUser = testUserHolder.getUser();
-        
+
         for (int i = 0; i < 25; i++) {
             Income income = Income.builder()
                     .familyUuid(testFamily.getUuid())
@@ -204,7 +187,7 @@ class IncomeControllerTest {
     void getIncome_Success() throws Exception {
         // Given
         User testUser = testUserHolder.getUser();
-        
+
         Income income = Income.builder()
                 .familyUuid(testFamily.getUuid())
                 .categoryUuid(testCategory.getUuid())
@@ -231,7 +214,7 @@ class IncomeControllerTest {
     void updateIncome_Success() throws Exception {
         // Given
         User testUser = testUserHolder.getUser();
-        
+
         Income income = Income.builder()
                 .familyUuid(testFamily.getUuid())
                 .categoryUuid(testCategory.getUuid())
@@ -270,7 +253,7 @@ class IncomeControllerTest {
     void deleteIncome_Success() throws Exception {
         // Given
         User testUser = testUserHolder.getUser();
-        
+
         Income income = Income.builder()
                 .familyUuid(testFamily.getUuid())
                 .categoryUuid(testCategory.getUuid())
@@ -306,8 +289,8 @@ class IncomeControllerTest {
         unauthorizedUser = userRepository.save(unauthorizedUser);
 
         // SecurityContext에 권한 없는 사용자 설정
-        UsernamePasswordAuthenticationToken unauthorizedAuth = 
-            new UsernamePasswordAuthenticationToken(unauthorizedUser.getUuid().getValue(), null, null);
+        UsernamePasswordAuthenticationToken unauthorizedAuth =
+                new UsernamePasswordAuthenticationToken(unauthorizedUser.getUuid().getValue(), null, null);
         SecurityContextHolder.getContext().setAuthentication(unauthorizedAuth);
 
         // When & Then
