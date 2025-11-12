@@ -5,6 +5,7 @@ import com.bifos.accountbook.application.dto.category.CreateCategoryRequest;
 import com.bifos.accountbook.application.dto.category.UpdateCategoryRequest;
 import com.bifos.accountbook.application.exception.BusinessException;
 import com.bifos.accountbook.application.exception.ErrorCode;
+import com.bifos.accountbook.config.CacheConfig;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
@@ -12,6 +13,9 @@ import com.bifos.accountbook.domain.value.CategoryStatus;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,11 +30,15 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final FamilyValidationService familyValidationService; // 가족 검증 로직
+    private final CacheManager cacheManager; // 캐시 관리자
 
     /**
      * 카테고리 생성
+     * 
+     * 카테고리 생성 후 해당 가족의 캐시를 무효화하여 다음 조회 시 최신 데이터를 반환합니다.
      */
     @Transactional
+    @CacheEvict(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid")
     public CategoryResponse createCategory(CustomUuid userUuid, String familyUuid, CreateCategoryRequest request) {
         CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
 
@@ -60,8 +68,16 @@ public class CategoryService {
 
     /**
      * 가족의 카테고리 목록 조회
+     * 
+     * 캐싱 전략:
+     * - 캐시 이름: categories
+     * - 캐시 키: familyUuid
+     * - TTL: 1시간 (CacheConfig에서 설정)
+     * 
+     * 카테고리는 자주 조회되지만 변경이 적으므로 캐싱으로 DB 부하 감소
      */
     @Transactional(readOnly = true)
+    @Cacheable(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid")
     public List<CategoryResponse> getFamilyCategories(CustomUuid userUuid, String familyUuid) {
         CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
 
@@ -94,6 +110,8 @@ public class CategoryService {
 
     /**
      * 카테고리 수정
+     * 
+     * 카테고리 수정 후 해당 가족의 캐시를 무효화합니다.
      */
     @Transactional
     public CategoryResponse updateCategory(CustomUuid userUuid, String categoryUuid, UpdateCategoryRequest request) {
@@ -105,10 +123,12 @@ public class CategoryService {
 
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
+        
+        // 캐시 무효화를 위해 familyUuid 저장
+        String familyUuidStr = category.getFamilyUuid().getValue();
 
         // 이름 변경 시 중복 확인
         if (request.getName() != null && !request.getName().equals(category.getName())) {
-            final String familyUuidStr = category.getFamilyUuid().getValue(); // final 변수 생성
             categoryRepository.findByFamilyUuidAndName(category.getFamilyUuid(), request.getName())
                     .ifPresent(c -> {
                         throw new BusinessException(ErrorCode.CATEGORY_ALREADY_EXISTS)
@@ -126,11 +146,16 @@ public class CategoryService {
             category.updateIcon(request.getIcon());
         }
 
+        // 캐시 무효화 (CacheManager를 직접 사용)
+        evictFamilyCache(familyUuidStr);
+        
         return CategoryResponse.from(category);
     }
 
     /**
      * 카테고리 삭제 (Soft Delete)
+     * 
+     * 카테고리 삭제 후 해당 가족의 캐시를 무효화합니다.
      */
     @Transactional
     public void deleteCategory(CustomUuid userUuid, String categoryUuid) {
@@ -143,16 +168,25 @@ public class CategoryService {
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
 
+        // 캐시 무효화를 위해 familyUuid 저장
+        String familyUuidStr = category.getFamilyUuid().getValue();
+        
         category.delete();
 
+        // 캐시 무효화 (CacheManager를 직접 사용)
+        evictFamilyCache(familyUuidStr);
+        
         log.info("Deleted category: {} by user: {}", categoryUuid, userUuid);
     }
 
     /**
      * 가족 생성 시 기본 카테고리 자동 생성
      * FamilyService에서 호출됨 (권한 검증 불필요 - 가족 생성 시점)
+     * 
+     * 기본 카테고리 생성 후 캐시를 무효화합니다.
      */
     @Transactional
+    @CacheEvict(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid.value")
     public void createDefaultCategoriesForFamily(CustomUuid familyUuid) {
         List<DefaultCategory> defaultCategories = Arrays.asList(
                 new DefaultCategory("식비", "#ef4444", "🍚"),
@@ -190,6 +224,23 @@ public class CategoryService {
             this.name = name;
             this.color = color;
             this.icon = icon;
+        }
+    }
+    
+    /**
+     * 가족의 카테고리 캐시를 무효화하는 헬퍼 메서드
+     * 
+     * updateCategory와 deleteCategory에서 사용
+     * 
+     * CacheManager를 직접 사용하여 캐시를 무효화합니다.
+     * 같은 클래스 내에서 @CacheEvict 메서드를 호출하면 프록시를 거치지 않아
+     * 캐시 무효화가 동작하지 않기 때문에 CacheManager를 직접 사용합니다.
+     */
+    private void evictFamilyCache(String familyUuid) {
+        var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
+        if (cache != null) {
+            cache.evict(familyUuid);
+            log.debug("Evicted category cache for family: {}", familyUuid);
         }
     }
 }

@@ -39,6 +39,9 @@ dependencies {
     // OpenAPI (Swagger)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
     
+    // Cache
+    implementation(libs.caffeine)
+    
     // Lombok
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
