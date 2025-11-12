@@ -21,7 +21,7 @@ p6spy = "1.12.0"
 springdoc-openapi = "2.8.14"
 
 # Utilities
-lombok = "1.18.34"
+lombok = "1.18.42"
 querydsl = "5.1.0"
 
 # Testing
