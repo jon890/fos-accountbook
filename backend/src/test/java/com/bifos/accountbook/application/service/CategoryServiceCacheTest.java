@@ -263,7 +263,7 @@ class CategoryServiceCacheTest {
         var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
 
         // When: findByUuidCached로 첫 번째 카테고리 조회
-        CategoryResponse result1 = categoryService.findByUuidCached(category1Uuid);
+        CategoryResponse result1 = categoryService.findByUuidCached(familyUuidStr, category1Uuid);
 
         // Then: 캐시에 가족의 전체 카테고리가 저장되어야 함
         assertThat(cache.get(familyUuidStr)).isNotNull();
@@ -271,7 +271,7 @@ class CategoryServiceCacheTest {
         assertThat(result1.getName()).isEqualTo("Category 1");
 
         // When: 같은 가족의 다른 카테고리를 findByUuidCached로 조회
-        CategoryResponse result2 = categoryService.findByUuidCached(category2Uuid);
+        CategoryResponse result2 = categoryService.findByUuidCached(familyUuidStr, category2Uuid);
 
         // Then: 캐시에서 조회되어야 함 (추가 DB 조회 없이)
         assertThat(result2).isNotNull();
@@ -296,7 +296,7 @@ class CategoryServiceCacheTest {
         var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
 
         // When: findByUuidCached로 조회 (캐시 생성)
-        categoryService.findByUuidCached(categoryUuid);
+        categoryService.findByUuidCached(familyUuidStr, categoryUuid);
 
         // Then: 캐시가 생성되어 있어야 함
         assertThat(cache.get(familyUuidStr)).isNotNull();

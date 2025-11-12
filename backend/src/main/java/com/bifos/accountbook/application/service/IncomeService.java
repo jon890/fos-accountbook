@@ -50,8 +50,8 @@ public class IncomeService {
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
-        // 카테고리 확인 (캐시 활용)
-        CategoryResponse category = categoryService.findByUuidCached(categoryCustomUuid);
+        // 카테고리 확인 (캐시 활용, DB 조회 없음)
+        CategoryResponse category = categoryService.findByUuidCached(familyUuid, categoryCustomUuid);
 
         // 카테고리가 해당 가족의 것인지 확인
         if (!category.getFamilyUuid().equals(familyCustomUuid.getValue())) {
@@ -153,11 +153,13 @@ public class IncomeService {
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());
 
-        // 카테고리 변경 검증 (캐시 활용)
+        // 카테고리 변경 검증 (캐시 활용, DB 조회 없음)
         CustomUuid categoryCustomUuid = null;
         if (request.getCategoryUuid() != null) {
             categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
-            CategoryResponse category = categoryService.findByUuidCached(categoryCustomUuid);
+            CategoryResponse category = categoryService.findByUuidCached(
+                    income.getFamilyUuid().getValue(),
+                    categoryCustomUuid);
 
             // 카테고리가 해당 가족의 것인지 확인
             if (!category.getFamilyUuid().equals(income.getFamilyUuid().getValue())) {

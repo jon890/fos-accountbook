@@ -106,30 +106,26 @@ public class CategoryService {
 
     /**
      * UUID로 단일 카테고리 조회 (캐시 활용)
-     * 
-     * 내부적으로 해당 가족의 전체 카테고리를 캐시에서 조회한 후 필터링합니다.
-     * 이를 통해 개별 카테고리 조회 시에도 캐시의 이점을 얻을 수 있습니다.
-     * 
-     * @param categoryUuid 조회할 카테고리 UUID
+     *
+     * 해당 가족의 전체 카테고리를 캐시에서 조회한 후 UUID로 필터링합니다.
+     * DB 조회 없이 순수하게 캐시만 활용하여 성능을 최적화합니다.
+     *
+     * @param familyUuid 가족 UUID (캐시 키)
+     * @param categoryUuid 조회할 카테고리 UUID (필터링)
      * @return 카테고리 응답 (없으면 예외)
      */
     @Transactional(readOnly = true)
-    public CategoryResponse findByUuidCached(CustomUuid categoryUuid) {
-        // 1. Category 엔티티 조회로 familyUuid 얻기
-        Category category = categoryRepository.findActiveByUuid(categoryUuid)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
-                        .addParameter("categoryUuid", categoryUuid.getValue()));
-
-        // 2. 해당 가족의 전체 카테고리 조회 (캐시 활용)
+    public CategoryResponse findByUuidCached(String familyUuid, CustomUuid categoryUuid) {
+        // 1. 해당 가족의 전체 카테고리 조회 (캐시 활용, DB 조회 없음)
         // Self-injection을 통해 프록시를 거쳐 캐시가 동작하도록 함
-        String familyUuidStr = category.getFamilyUuid().getValue();
-        List<CategoryResponse> familyCategories = self.getFamilyCategoriesCached(familyUuidStr);
+        List<CategoryResponse> familyCategories = self.getFamilyCategoriesCached(familyUuid);
 
-        // 3. UUID로 필터링하여 반환
+        // 2. UUID로 필터링하여 반환
         return familyCategories.stream()
                 .filter(c -> c.getUuid().equals(categoryUuid.getValue()))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
+                        .addParameter("familyUuid", familyUuid)
                         .addParameter("categoryUuid", categoryUuid.getValue()));
     }
 
