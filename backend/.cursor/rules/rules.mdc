@@ -1,0 +1,482 @@
+---
+alwaysApply: true
+description: 우리집 가계부 백엔드 프로젝트 개발 규칙 및 컨벤션
+version: "1.0"
+---
+
+# 우리집 가계부 Backend - Spring Boot 개발 규칙
+
+## 🎯 프로젝트 개요
+
+- **Framework**: Spring Boot 3.x + Java 21
+- **Build Tool**: Gradle (Version Catalogs)
+- **Database**: MySQL 8.0+
+- **ORM**: Spring Data JPA (Hibernate)
+- **Migration**: Flyway
+- **API Docs**: SpringDoc OpenAPI 3.0
+- **Deployment**: Railway
+
+---
+
+## 📂 패키지 구조
+
+### Layered Architecture
+
+```
+com/bifos/accountbook/
+├── config/                    # Spring 프레임워크 설정
+│   ├── AsyncConfig.java
+│   ├── CorsProperties.java
+│   ├── OpenApiConfig.java
+│   ├── QueryDslConfig.java
+│   ├── SecurityConfig.java
+│   └── WebMvcConfig.java
+│
+├── presentation/              # REST API 레이어
+│   ├── controller/
+│   ├── dto/
+│   ├── annotation/
+│   └── resolver/
+│
+├── application/               # 비즈니스 로직 레이어
+│   ├── service/
+│   ├── dto/
+│   └── event/
+│
+├── domain/                    # 도메인 레이어
+│   ├── entity/
+│   ├── repository/           # 인터페이스만
+│   └── value/                # Value Object
+│
+├── infra/                     # Infrastructure 레이어
+│   ├── persistence/          # DB 접근 (Repository 구현체)
+│   ├── security/             # 보안 구현 (JWT, 필터)
+│   ├── filter/               # HTTP 필터
+│   ├── exception/            # 전역 예외 처리
+│   └── event/                # 이벤트 리스너
+│
+└── common/                    # 공통 유틸리티
+    └── exception/
+```
+
+### 패키지별 역할
+
+| 패키지 | 역할 | 예시 |
+|--------|------|------|
+| `config/` | Spring 프레임워크 설정 | Security, WebMvc, QueryDSL |
+| `presentation/` | HTTP 요청/응답 처리 | Controller, DTO, Resolver |
+| `application/` | 비즈니스 로직 | Service, DTO, Event |
+| `domain/` | 도메인 모델 | Entity, Repository Interface |
+| `infra/` | 외부 시스템 통합 | DB, Security 구현체 |
+
+---
+
+## ⚙️ Config 관리 규칙
+
+### 1. ConfigurationProperties 패턴
+
+**✅ 올바른 방법:**
+
+```java
+@Getter
+@ConfigurationProperties(prefix = "cors")
+public class CorsProperties {
+
+    private final List<String> allowedOrigins;
+    private final boolean allowCredentials;
+    private final long maxAge;
+
+    /**
+     * Constructor Binding (Spring Boot 3.x 자동 적용)
+     * 모든 값은 application.yml에서 주입됩니다.
+     */
+    public CorsProperties(
+            List<String> allowedOrigins,
+            boolean allowCredentials,
+            long maxAge
+    ) {
+        this.allowedOrigins = allowedOrigins;
+        this.allowCredentials = allowCredentials;
+        this.maxAge = maxAge;
+    }
+}
+```
+
+**application.yml:**
+
+```yaml
+cors:
+  allowed-origins:
+    - http://localhost:3000
+    - https://your-domain.vercel.app
+  allowed-credentials: true
+  max-age: 3600
+```
+
+**❌ 피해야 할 패턴:**
+
+```java
+// ❌ @Setter 사용 금지 (런타임 변경 가능)
+@Setter
+private List<String> allowedOrigins;
+
+// ❌ 코드에 기본값 하드코딩 금지
+this.allowedOrigins = allowedOrigins != null ? allowedOrigins : 
+    List.of("http://localhost:3000");
+
+// ❌ @Component 사용 금지 (자동 빈 등록 불필요)
+@Component
+@ConfigurationProperties(prefix = "cors")
+public class CorsProperties { }
+```
+
+### 2. Config 클래스 작성 규칙
+
+```java
+/**
+ * Spring Security 설정
+ * 
+ * 관련 Properties: CorsProperties, JwtProperties
+ * 의존성: JwtAuthenticationFilter, NextAuthTokenFilter
+ */
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+@RequiredArgsConstructor
+public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CorsProperties corsProperties;
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) {
+        // 설정 로직
+        return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        // CORS 설정은 CorsProperties에서 주입
+        configuration.setAllowedOrigins(corsProperties.getAllowedOrigins());
+        return source;
+    }
+}
+```
+
+### 3. application.yml 구조
+
+```yaml
+# ============================================
+# 공통 설정 (모든 프로파일에 적용)
+# ============================================
+
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: fos-accountbook-backend
+
+# JWT 설정 (환경변수 기반)
+jwt:
+  secret: ${AUTH_SECRET}
+  expiration: ${JWT_EXPIRATION:86400000}      # 24시간
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7일
+
+# CORS 설정 (기본값 제공)
+cors:
+  allowed-origins: []  # 프로파일별 오버라이드 필수
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  allowed-headers:
+    - Authorization
+    - Content-Type
+  allow-credentials: true
+  max-age: 3600  # 1시간
+```
+
+### 4. Config 클래스 배치 원칙
+
+| 설정 타입 | 위치 | 예시 |
+|-----------|------|------|
+| Spring 프레임워크 설정 | `config/` | SecurityConfig, WebMvcConfig |
+| Properties 클래스 | `config/` | CorsProperties, JwtProperties |
+| Infrastructure 구현 | `infra/security/` | JwtAuthenticationFilter |
+| DB 관련 | `infra/persistence/` | Repository 구현체 |
+
+---
+
+## 📏 코딩 컨벤션
+
+### 1. Entity 규칙
+
+```java
+@Entity
+@Table(name = "expenses")  // ✅ snake_case 필수
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Expense {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;  // ✅ PK는 Long auto_increment
+
+    @Column(name = "uuid", unique = true, nullable = false)
+    private CustomUuid uuid;  // ✅ UUID 타입
+
+    @Column(name = "family_uuid", nullable = false)
+    private CustomUuid familyUuid;  // ✅ 관계는 UUID 기반
+
+    @Column(name = "amount", nullable = false)
+    private BigDecimal amount;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "deleted_at")  // ✅ Soft Delete
+    private LocalDateTime deletedAt;
+}
+```
+
+### 2. DTO 규칙
+
+```java
+// Request DTO
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class CreateExpenseRequest {
+
+    @NotNull(message = "금액은 필수입니다")
+    @Positive(message = "금액은 0보다 커야 합니다")
+    private BigDecimal amount;
+
+    @NotBlank(message = "카테고리는 필수입니다")
+    private String categoryUuid;
+
+    @Size(max = 1000, message = "설명은 1000자 이하여야 합니다")
+    private String description;
+}
+
+// Response DTO
+@Getter
+@Builder
+public class ExpenseResponse {
+    private String uuid;
+    private BigDecimal amount;
+    private String categoryName;
+    private LocalDateTime date;
+
+    public static ExpenseResponse from(Expense expense) {
+        return ExpenseResponse.builder()
+            .uuid(expense.getUuid().getValue())
+            .amount(expense.getAmount())
+            .build();
+    }
+}
+```
+
+**핵심 원칙:**
+- ❌ `@Data` 사용 금지 (불변성 위반)
+- ✅ `@Getter` + `@Builder` + `@NoArgsConstructor` + `@AllArgsConstructor`
+- ✅ Setter 없이 불변 객체로 관리
+- ✅ `from()` 정적 팩토리 메서드로 변환
+
+### 3. Service 규칙
+
+```java
+@Service
+@RequiredArgsConstructor  // ✅ Lombok 생성자 주입
+@Transactional(readOnly = true)  // ✅ 기본 readOnly
+public class ExpenseService {
+
+    private final ExpenseRepository expenseRepository;
+    private final CategoryRepository categoryRepository;
+
+    @Transactional  // ✅ 쓰기 작업만 @Transactional
+    public ExpenseResponse createExpense(
+            CustomUuid userUuid,
+            String familyUuid,
+            CreateExpenseRequest request
+    ) {
+        // 1. 검증
+        Category category = categoryRepository.findByUuid(request.getCategoryUuid())
+            .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
+
+        // 2. 비즈니스 로직
+        Expense expense = Expense.builder()
+            .uuid(CustomUuid.generate())
+            .amount(request.getAmount())
+            .build();
+
+        // 3. 저장
+        Expense saved = expenseRepository.save(expense);
+
+        return ExpenseResponse.from(saved);
+    }
+}
+```
+
+### 4. Controller 규칙
+
+```java
+@RestController
+@RequestMapping("/api/v1/families/{familyUuid}/expenses")
+@RequiredArgsConstructor
+public class ExpenseController {
+
+    private final ExpenseService expenseService;
+
+    @PostMapping
+    public ResponseEntity<ApiSuccessResponse<ExpenseResponse>> createExpense(
+        @LoginUser LoginUserDto user,  // ✅ 커스텀 애노테이션
+        @PathVariable String familyUuid,
+        @Valid @RequestBody CreateExpenseRequest request  // ✅ @Valid 검증
+    ) {
+        ExpenseResponse response = expenseService.createExpense(
+            user.getUserUuid(),
+            familyUuid,
+            request
+        );
+
+        return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(ApiSuccessResponse.of("지출이 등록되었습니다", response));
+    }
+}
+```
+
+---
+
+## 🧪 테스트 전략
+
+### 통합 테스트 (Controller)
+
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+@ExtendWith(DatabaseCleanupExtension.class)  // ✅ 필수
+@DisplayName("지출 컨트롤러 통합 테스트")
+class ExpenseControllerTest {
+
+    @Autowired private MockMvc mockMvc;
+    @Autowired private ExpenseRepository expenseRepository;
+
+    @Test
+    @DisplayName("지출 생성 - 성공")
+    void createExpense_Success() throws Exception {
+        // Given: 실제 DB에 데이터 생성
+        String requestBody = objectMapper.writeValueAsString(request);
+
+        // When: API 호출 (실제 커밋 발생)
+        mockMvc.perform(post("/api/v1/families/{familyUuid}/expenses", familyUuid)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.data.amount").value(50000));
+
+        // Then: DB 상태 검증
+        List<Expense> expenses = expenseRepository.findAll();
+        assertThat(expenses).hasSize(1);
+    }
+    // DatabaseCleanupExtension이 자동으로 테이블 정리
+}
+```
+
+**핵심 원칙:**
+- ✅ `@SpringBootTest` 사용 (실제 Spring 컨텍스트)
+- ✅ 실제 Bean 사용 (Service, Repository 모두 실제)
+- ✅ 실제 DB 사용 (H2 테스트 DB)
+- ✅ 외부 API만 모킹
+- ✅ `@ExtendWith(DatabaseCleanupExtension.class)` 필수
+- ❌ `@Transactional` 사용 금지 (실제 커밋 테스트)
+
+---
+
+## 🗄️ 데이터베이스
+
+### Flyway 마이그레이션
+
+```sql
+-- V1__init.sql
+CREATE TABLE expenses (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    uuid VARCHAR(36) NOT NULL UNIQUE,
+    family_uuid VARCHAR(36) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME,
+    deleted_at DATETIME,
+    INDEX idx_family_uuid (family_uuid),
+    INDEX idx_deleted_at (deleted_at)
+);
+```
+
+**규칙:**
+- 파일명: `V{version}__{description}.sql`
+- 테이블/컬럼: `snake_case`
+- PK: `id BIGINT AUTO_INCREMENT`
+- UUID: `VARCHAR(36)` + UNIQUE 인덱스
+- Soft Delete: `deleted_at DATETIME`
+- 필요한 컬럼에 인덱스 추가
+
+---
+
+## ⚠️ 주의사항
+
+### 절대 금지 ❌
+
+1. **Production DB 직접 수정 금지**
+   - 반드시 Flyway 마이그레이션으로만 스키마 변경
+
+2. **풀패키지 경로 사용 금지**
+   ```java
+   // ❌ 나쁨
+   org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
+
+   // ✅ 좋음
+   import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
+   UserDetailsServiceAutoConfiguration.class
+   ```
+
+3. **@Transactional 테스트 금지**
+   - 통합 테스트에서는 `DatabaseCleanupExtension` 사용
+
+4. **Service/Repository 모킹 금지**
+   - 외부 API만 모킹
+   - 내부 컴포넌트는 실제 빈 사용
+
+---
+
+## 📝 커밋 규칙
+
+- **신규 코드 = 테스트 필수**
+  - Controller 추가 → 통합 테스트 추가
+  - Service 추가 → 단위/통합 테스트 추가
+
+- **커밋 전 확인**
+  ```bash
+  ./gradlew test  # 모든 테스트 통과 확인
+  ```
+
+---
+
+## 🎯 핵심 원칙
+
+1. **계층 분리**: Presentation → Application → Domain → Infrastructure
+2. **snake_case**: 모든 DB 테이블/컬럼
+3. **UUID 기반**: 테이블 간 관계
+4. **Soft Delete**: `deleted_at` 사용
+5. **Flyway**: 스키마 변경은 마이그레이션으로만
+6. **실제 통합 테스트**: @SpringBootTest + DatabaseCleanupExtension
+7. **외부만 모킹**: 내부 컴포넌트는 실제 빈 사용
+8. **Config 중앙화**: 모든 설정은 application.yml에서 관리
+9. **불변성**: ConfigurationProperties와 DTO는 불변 객체로
