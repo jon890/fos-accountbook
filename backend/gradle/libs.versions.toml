@@ -9,7 +9,7 @@ spring-dependency-management = "1.1.6"
 # Database
 mysql-connector = "9.1.0"
 flyway = "11.16.0"
-h2 = "2.3.232"
+h2 = "2.4.240"
 
 # Security & JWT
 jjwt = "0.13.0"
