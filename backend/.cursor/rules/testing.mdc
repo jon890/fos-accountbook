@@ -7,7 +7,50 @@ version: "1.0"
 
 # 테스트 전략
 
-## 통합 테스트 (Controller)
+## Presentation Layer 테스트 (Controller)
+
+### AbstractControllerTest 사용 (⭐ 권장)
+
+모든 Controller 테스트는 `AbstractControllerTest`를 상속받아 간결하게 작성합니다.
+
+```java
+@DisplayName("User API 통합 테스트")
+class UserControllerTest extends AbstractControllerTest {
+
+    @Test
+    @DisplayName("사용자 생성 - 성공")
+    void createUser_Success() throws Exception {
+        // Given: TestUserHolder를 통해 테스트 데이터 생성
+        User user = testUserHolder.getUser();
+        Family family = testUserHolder.getFamily();
+        
+        CreateUserRequest request = new CreateUserRequest("John");
+        
+        // When & Then: MockMvc로 API 호출 및 검증
+        mockMvc.perform(post("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.success").value(true));
+    }
+}
+```
+
+**AbstractControllerTest가 제공하는 것:**
+- `@FosSpringBootTest` + `@AutoConfigureMockMvc` 자동 적용
+- `testUserHolder`: 테스트 사용자 및 데이터 생성
+- `mockMvc`: API 테스트용 MockMvc
+- `objectMapper`: JSON 직렬화/역직렬화
+- 데이터베이스 자동 정리 (각 테스트 후)
+
+**장점:**
+- 반복적인 애노테이션 제거
+- 일관된 테스트 환경
+- 간결한 테스트 코드
+
+---
+
+## 통합 테스트 (Controller) - 수동 설정
 
 ```java
 @SpringBootTest

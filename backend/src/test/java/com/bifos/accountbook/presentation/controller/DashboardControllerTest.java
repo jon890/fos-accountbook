@@ -1,7 +1,6 @@
 package com.bifos.accountbook.presentation.controller;
 
-import com.bifos.accountbook.common.TestUserHolder;
-import com.bifos.accountbook.common.FosSpringBootTest;
+import com.bifos.accountbook.common.AbstractControllerTest;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Expense;
 import com.bifos.accountbook.domain.entity.Family;
@@ -14,9 +13,7 @@ import com.bifos.accountbook.domain.value.ExpenseStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -30,18 +27,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * - 대시보드 통계 API 검증
  * - 카테고리별 지출 요약
  * - 실제 API 엔드포인트 테스트
- * - TestUserHolder로 테스트 데이터 관리
+ * - AbstractControllerTest를 상속받아 테스트 환경 자동 설정
  */
-@FosSpringBootTest
-@AutoConfigureMockMvc
 @DisplayName("DashboardController 통합 테스트")
-class DashboardControllerTest {
-
-    @org.junit.jupiter.api.extension.RegisterExtension
-    TestUserHolder testUserHolder = new TestUserHolder();
-
-    @Autowired
-    private MockMvc mockMvc;
+class DashboardControllerTest extends AbstractControllerTest {
 
     @Autowired
     private ExpenseRepository expenseRepository;
