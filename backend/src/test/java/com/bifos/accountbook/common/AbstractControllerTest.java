@@ -1,9 +1,12 @@
 package com.bifos.accountbook.common;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.context.ApplicationContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
@@ -14,7 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
  *     <li>Spring Boot 테스트 컨텍스트 로딩 ({@link FosSpringBootTest})</li>
  *     <li>MockMvc 자동 설정 ({@link AutoConfigureMockMvc})</li>
  *     <li>ObjectMapper 자동 주입 (JSON 직렬화/역직렬화)</li>
- *     <li>TestUserHolder 자동 등록 (테스트 사용자 및 데이터 생성)</li>
+ *     <li>TestFixtures 자동 초기화 (Fluent API로 테스트 데이터 생성)</li>
  *     <li>데이터베이스 자동 정리 (각 테스트 메서드 후)</li>
  * </ul>
  * 
@@ -25,9 +28,16 @@ import org.springframework.test.web.servlet.MockMvc;
  * 
  *     @Test
  *     void createUser_Success() throws Exception {
- *         // Given: TestUserHolder를 통해 테스트 데이터 생성
- *         User user = testUserHolder.getUser();
- *         Family family = testUserHolder.getFamily();
+ *         // Given: TestFixtures로 테스트 데이터 생성 (Fluent API)
+ *         User user = fixtures.getDefaultUser();
+ *         Family family = fixtures.family()
+ *             .name("My Family")
+ *             .budget(BigDecimal.valueOf(1000000))
+ *             .build();
+ *         
+ *         Category category = fixtures.category(family)
+ *             .name("식비")
+ *             .build();
  *         
  *         CreateUserRequest request = new CreateUserRequest("John");
  *         
@@ -44,28 +54,32 @@ import org.springframework.test.web.servlet.MockMvc;
  * <h3>주의사항:</h3>
  * <ul>
  *     <li>각 테스트 메서드는 독립적으로 실행됩니다 (데이터베이스 자동 정리)</li>
- *     <li>TestUserHolder는 각 테스트마다 새로운 사용자를 생성합니다</li>
- *     <li>필요한 테스트 데이터는 TestUserHolder의 메서드를 활용하세요</li>
+ *     <li>TestFixtures는 각 테스트마다 초기화됩니다</li>
+ *     <li>Fluent API로 필요한 테스트 데이터를 체이닝 방식으로 생성하세요</li>
  * </ul>
  * 
  * @see FosSpringBootTest
- * @see TestUserHolder
+ * @see TestFixtures
  * @see DatabaseCleanupListener
  */
 @FosSpringBootTest
 @AutoConfigureMockMvc
 public abstract class AbstractControllerTest {
 
+    @Autowired
+    protected ApplicationContext applicationContext;
+
     /**
-     * 테스트용 사용자 및 데이터 관리 Extension
+     * 테스트용 Fixture - Fluent API로 테스트 데이터 생성
      * 
-     * 각 테스트마다 자동으로:
-     * - 새로운 테스트 사용자 생성
-     * - SecurityContext에 인증 정보 설정
-     * - 필요 시 Family, Category 등 lazy 생성
+     * 사용 예시:
+     * - fixtures.getDefaultUser() - 기본 사용자
+     * - fixtures.user().email("custom@example.com").build() - 커스텀 사용자
+     * - fixtures.family().owner(user).budget(amount).build() - 가족 생성
+     * - fixtures.category(family).name("식비").build() - 카테고리 생성
+     * - fixtures.expense(family, category).amount(amount).build() - 지출 생성
      */
-    @RegisterExtension
-    protected TestUserHolder testUserHolder = new TestUserHolder();
+    protected TestFixtures fixtures;
 
     /**
      * Spring MockMvc 인스턴스
@@ -88,5 +102,21 @@ public abstract class AbstractControllerTest {
      */
     @Autowired
     protected ObjectMapper objectMapper;
+    
+    @BeforeEach
+    void setUpFixtures() {
+        this.fixtures = new TestFixtures(applicationContext);
+    }
+    
+    @AfterEach
+    void tearDownFixtures() {
+        // SecurityContext 정리
+        SecurityContextHolder.clearContext();
+        
+        // Fixtures 캐시 정리
+        if (fixtures != null) {
+            fixtures.clear();
+        }
+    }
 }
 

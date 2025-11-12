@@ -41,22 +41,22 @@ class DashboardControllerTest extends AbstractControllerTest {
     @Test
     @DisplayName("카테고리별 지출 요약 조회 - 성공")
     void getCategoryExpenseSummary_Success() throws Exception {
-        // Given: 테스트 데이터 생성
-        User user = testUserHolder.getUser();
-        Family family = testUserHolder.getFamily();
-        Category foodCategory = testUserHolder.createCategory(family, "식비", "#FF5733", "🍕");
-        Category transportCategory = testUserHolder.createCategory(family, "교통비", "#3498DB", "🚗");
+        // Given: 테스트 데이터 생성 (Fluent API)
+        User user = fixtures.getDefaultUser();
+        Family family = fixtures.getDefaultFamily();
+        Category foodCategory = fixtures.category(family).name("식비").color("#FF5733").icon("🍕").build();
+        Category transportCategory = fixtures.category(family).name("교통비").color("#3498DB").icon("🚗").build();
         
         LocalDateTime now = LocalDateTime.now();
 
         // 식비 지출 3건
-        createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(), BigDecimal.valueOf(15000), now.minusDays(1));
-        createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(), BigDecimal.valueOf(20000), now.minusDays(2));
-        createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(), BigDecimal.valueOf(25000), now.minusDays(3));
+        fixtures.expense(family, foodCategory).amount(BigDecimal.valueOf(15000)).date(now.minusDays(1)).build();
+        fixtures.expense(family, foodCategory).amount(BigDecimal.valueOf(20000)).date(now.minusDays(2)).build();
+        fixtures.expense(family, foodCategory).amount(BigDecimal.valueOf(25000)).date(now.minusDays(3)).build();
 
         // 교통비 지출 2건
-        createExpense(family.getUuid(), user.getUuid(), transportCategory.getUuid(), BigDecimal.valueOf(5000), now.minusDays(1));
-        createExpense(family.getUuid(), user.getUuid(), transportCategory.getUuid(), BigDecimal.valueOf(10000), now.minusDays(2));
+        fixtures.expense(family, transportCategory).amount(BigDecimal.valueOf(5000)).date(now.minusDays(1)).build();
+        fixtures.expense(family, transportCategory).amount(BigDecimal.valueOf(10000)).date(now.minusDays(2)).build();
 
         // When & Then: 대시보드 API 호출
         mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/expenses/by-category", family.getUuid().getValue())
@@ -81,15 +81,14 @@ class DashboardControllerTest extends AbstractControllerTest {
     @Test
     @DisplayName("카테고리별 지출 요약 - 날짜 필터링")
     void getCategoryExpenseSummary_WithDateFilter() throws Exception {
-        // Given: 테스트 데이터 생성
-        User user = testUserHolder.getUser();
-        Family family = testUserHolder.getFamily();
-        Category foodCategory = testUserHolder.getCategory();
+        // Given: 테스트 데이터 생성 (Fluent API)
+        Family family = fixtures.getDefaultFamily();
+        Category foodCategory = fixtures.getDefaultCategory();
         
         LocalDateTime now = LocalDateTime.now();
 
-        createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(), BigDecimal.valueOf(10000), now.minusDays(1));
-        createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(), BigDecimal.valueOf(20000), now.minusDays(10)); // 오래됨
+        fixtures.expense(family, foodCategory).amount(BigDecimal.valueOf(10000)).date(now.minusDays(1)).build();
+        fixtures.expense(family, foodCategory).amount(BigDecimal.valueOf(20000)).date(now.minusDays(10)).build(); // 오래됨
 
         // When & Then: 최근 5일만 필터링
         mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/expenses/by-category", family.getUuid().getValue())
@@ -104,16 +103,15 @@ class DashboardControllerTest extends AbstractControllerTest {
     @Test
     @DisplayName("카테고리별 지출 요약 - 카테고리 필터링")
     void getCategoryExpenseSummary_WithCategoryFilter() throws Exception {
-        // Given: 테스트 데이터 생성
-        User user = testUserHolder.getUser();
-        Family family = testUserHolder.getFamily();
-        Category foodCategory = testUserHolder.createCategory(family, "식비", "#FF5733", "🍕");
-        Category transportCategory = testUserHolder.createCategory(family, "교통비", "#3498DB", "🚗");
+        // Given: 테스트 데이터 생성 (Fluent API)
+        Family family = fixtures.getDefaultFamily();
+        Category foodCategory = fixtures.category(family).name("식비").color("#FF5733").icon("🍕").build();
+        Category transportCategory = fixtures.category(family).name("교통비").color("#3498DB").icon("🚗").build();
         
         LocalDateTime now = LocalDateTime.now();
 
-        createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(), BigDecimal.valueOf(10000), now);
-        createExpense(family.getUuid(), user.getUuid(), transportCategory.getUuid(), BigDecimal.valueOf(5000), now);
+        fixtures.expense(family, foodCategory).amount(BigDecimal.valueOf(10000)).date(now).build();
+        fixtures.expense(family, transportCategory).amount(BigDecimal.valueOf(5000)).date(now).build();
 
         // When & Then: 식비만 조회
         mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/expenses/by-category", family.getUuid().getValue())
@@ -129,7 +127,7 @@ class DashboardControllerTest extends AbstractControllerTest {
     @DisplayName("카테고리별 지출 요약 - 지출이 없을 때")
     void getCategoryExpenseSummary_NoExpenses() throws Exception {
         // Given: 빈 가족
-        Family family = testUserHolder.getFamily();
+        Family family = fixtures.getDefaultFamily();
 
         // When & Then: 빈 통계 반환
         mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/expenses/by-category", family.getUuid().getValue())
@@ -154,11 +152,11 @@ class DashboardControllerTest extends AbstractControllerTest {
     @Test
     @DisplayName("월별 통계 조회 - 성공 (QueryDSL 집계)")
     void getMonthlyStats_Success() throws Exception {
-        // Given: 테스트 데이터 생성
-        User user = testUserHolder.getUser();
-        Family family = testUserHolder.getFamily();
-        Category foodCategory = testUserHolder.createCategory(family, "식비", "#FF5733", "🍕");
-        Category transportCategory = testUserHolder.createCategory(family, "교통비", "#3498DB", "🚗");
+        // Given: 테스트 데이터 생성 (Fluent API)
+        User user = fixtures.getDefaultUser();
+        Family family = fixtures.getDefaultFamily();
+        Category foodCategory = fixtures.category(family).name("식비").color("#FF5733").icon("🍕").build();
+        Category transportCategory = fixtures.category(family).name("교통비").color("#3498DB").icon("🚗").build();
         
         LocalDateTime now = LocalDateTime.now();
         int year = now.getYear();
@@ -196,7 +194,7 @@ class DashboardControllerTest extends AbstractControllerTest {
     @DisplayName("월별 통계 조회 - 기본값 (현재 연월)")
     void getMonthlyStats_DefaultValues() throws Exception {
         // Given: 빈 가족
-        Family family = testUserHolder.getFamily();
+        Family family = fixtures.getDefaultFamily();
 
         // When & Then: 파라미터 없이 조회 (현재 연월 사용)
         mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly", family.getUuid().getValue())
@@ -212,11 +210,11 @@ class DashboardControllerTest extends AbstractControllerTest {
     @Test
     @DisplayName("월별 통계 조회 - 예산 설정된 경우")
     void getMonthlyStats_WithBudget() throws Exception {
-        // Given: 테스트 데이터 생성
-        User user = testUserHolder.getUser();
-        Family family = testUserHolder.createFamily("우리집", BigDecimal.valueOf(500000)); // 50만원 예산
-        Category foodCategory = testUserHolder.createCategory(family, "식비", "#FF5733", "🍕");
-        Category transportCategory = testUserHolder.createCategory(family, "교통비", "#3498DB", "🚗");
+        // Given: 테스트 데이터 생성 (Fluent API)
+        User user = fixtures.getDefaultUser();
+        Family family = fixtures.family().name("우리집").budget(BigDecimal.valueOf(500000)).build(); // 50만원 예산
+        Category foodCategory = fixtures.category(family).name("식비").color("#FF5733").icon("🍕").build();
+        Category transportCategory = fixtures.category(family).name("교통비").color("#3498DB").icon("🚗").build();
         
         LocalDateTime now = LocalDateTime.now();
         int year = now.getYear();
@@ -251,10 +249,10 @@ class DashboardControllerTest extends AbstractControllerTest {
     @Test
     @DisplayName("월별 통계 조회 - 예산 초과한 경우")
     void getMonthlyStats_BudgetExceeded() throws Exception {
-        // Given: 테스트 데이터 생성
-        User user = testUserHolder.getUser();
-        Family family = testUserHolder.createFamily("우리집", BigDecimal.valueOf(100000)); // 10만원 예산
-        Category foodCategory = testUserHolder.getCategory(family);
+        // Given: 테스트 데이터 생성 (Fluent API)
+        User user = fixtures.getDefaultUser();
+        Family family = fixtures.family().name("우리집").budget(BigDecimal.valueOf(100000)).build(); // 10만원 예산
+        Category foodCategory = fixtures.category(family).build();
         
         LocalDateTime now = LocalDateTime.now();
         int year = now.getYear();
