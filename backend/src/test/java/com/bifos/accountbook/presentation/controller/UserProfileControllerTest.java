@@ -1,23 +1,14 @@
 package com.bifos.accountbook.presentation.controller;
 
 import com.bifos.accountbook.application.dto.profile.UpdateUserProfileRequest;
-import com.bifos.accountbook.common.FosSpringBootTest;
+import com.bifos.accountbook.common.AbstractControllerTest;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.entity.UserProfile;
 import com.bifos.accountbook.domain.repository.UserProfileRepository;
-import com.bifos.accountbook.domain.repository.UserRepository;
-import com.bifos.accountbook.domain.value.CustomUuid;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -27,59 +18,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * UserProfileController 통합 테스트
- * @FosSpringBootTest + DatabaseCleanupListener를 사용하여 실제 DB와 함께 테스트
- * 외부 API만 모킹하고, 내부 컴포넌트는 모두 실제로 동작
- * 각 테스트 메서드 실행 후 DatabaseCleanupListener가 자동으로 데이터 정리
+ * AbstractControllerTest 상속으로 TestFixtures 및 DB 정리 자동화
  */
-@FosSpringBootTest
-@AutoConfigureMockMvc
 @DisplayName("사용자 프로필 컨트롤러 통합 테스트")
-class UserProfileControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private UserRepository userRepository;
+class UserProfileControllerTest extends AbstractControllerTest {
 
     @Autowired
     private UserProfileRepository userProfileRepository;
 
-    private User testUser;
     private static final String API_BASE_URL = "/api/v1/users/me/profile";
-
-    @BeforeEach
-    void setUp() {
-        SecurityContextHolder.clearContext();
-
-        // 테스트 사용자 생성
-        testUser = User.builder()
-                .uuid(CustomUuid.generate())
-                .provider("google")
-                .providerId("test-provider-id-" + System.currentTimeMillis())
-                .email("test@example.com")
-                .name("테스트 사용자")
-                .build();
-        testUser = userRepository.save(testUser);
-    }
-
-    /**
-     * 인증된 사용자 컨텍스트 설정
-     */
-    private void setAuthentication() {
-        SecurityContextHolder.getContext().setAuthentication(
-            new UsernamePasswordAuthenticationToken(testUser.getUuid().getValue(), null, null)
-        );
-    }
 
     @Test
     @DisplayName("내 프로필 조회 - 성공 (기존 프로필)")
     void getMyProfile_Success_ExistingProfile() throws Exception {
-        // Given
-        setAuthentication();
+        // Given: TestFixtures로 유저 생성
+        User testUser = fixtures.getDefaultUser();
 
         // 프로필 미리 생성
         UserProfile profile = UserProfile.builder()
@@ -112,8 +65,8 @@ class UserProfileControllerTest {
     @Test
     @DisplayName("내 프로필 조회 - 성공 (신규 프로필 자동 생성)")
     void getMyProfile_Success_CreateNewProfile() throws Exception {
-        // Given
-        setAuthentication();
+        // Given: TestFixtures로 유저 생성
+        User testUser = fixtures.getDefaultUser();
         // 프로필이 없는 상태
 
         // When & Then
@@ -139,8 +92,8 @@ class UserProfileControllerTest {
     @Test
     @DisplayName("내 프로필 수정 - 성공 (모든 필드)")
     void updateMyProfile_Success_AllFields() throws Exception {
-        // Given
-        setAuthentication();
+        // Given: TestFixtures로 유저 생성
+        User testUser = fixtures.getDefaultUser();
 
         // 프로필 미리 생성
         UserProfile profile = UserProfile.builder()
@@ -179,8 +132,8 @@ class UserProfileControllerTest {
     @Test
     @DisplayName("내 프로필 수정 - 성공 (부분 업데이트)")
     void updateMyProfile_Success_PartialUpdate() throws Exception {
-        // Given
-        setAuthentication();
+        // Given: TestFixtures로 유저 생성
+        User testUser = fixtures.getDefaultUser();
 
         // 프로필 미리 생성
         UserProfile profile = UserProfile.builder()
@@ -216,8 +169,8 @@ class UserProfileControllerTest {
     @Test
     @DisplayName("내 프로필 수정 - 실패 (잘못된 시간대 형식)")
     void updateMyProfile_Fail_InvalidTimezone() throws Exception {
-        // Given
-        setAuthentication();
+        // Given: TestFixtures로 유저 생성
+        fixtures.getDefaultUser();
 
         UpdateUserProfileRequest request = UpdateUserProfileRequest.builder()
                 .timezone("Invalid@Timezone#123")
@@ -234,8 +187,8 @@ class UserProfileControllerTest {
     @Test
     @DisplayName("내 프로필 수정 - 실패 (잘못된 언어 코드)")
     void updateMyProfile_Fail_InvalidLanguage() throws Exception {
-        // Given
-        setAuthentication();
+        // Given: TestFixtures로 유저 생성
+        fixtures.getDefaultUser();
 
         UpdateUserProfileRequest request = UpdateUserProfileRequest.builder()
                 .language("korean")
@@ -252,8 +205,8 @@ class UserProfileControllerTest {
     @Test
     @DisplayName("내 프로필 수정 - 실패 (잘못된 통화 코드)")
     void updateMyProfile_Fail_InvalidCurrency() throws Exception {
-        // Given
-        setAuthentication();
+        // Given: TestFixtures로 유저 생성
+        fixtures.getDefaultUser();
 
         UpdateUserProfileRequest request = UpdateUserProfileRequest.builder()
                 .currency("won")
@@ -270,8 +223,8 @@ class UserProfileControllerTest {
     @Test
     @DisplayName("내 프로필 수정 - 실패 (프로필이 없는 경우)")
     void updateMyProfile_Fail_ProfileNotFound() throws Exception {
-        // Given
-        setAuthentication();
+        // Given: TestFixtures로 유저 생성
+        fixtures.getDefaultUser();
         // 프로필을 생성하지 않음
 
         UpdateUserProfileRequest request = UpdateUserProfileRequest.builder()

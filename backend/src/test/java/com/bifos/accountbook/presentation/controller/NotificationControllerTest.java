@@ -5,8 +5,7 @@ import com.bifos.accountbook.application.dto.family.CreateFamilyRequest;
 import com.bifos.accountbook.application.dto.family.FamilyResponse;
 import com.bifos.accountbook.application.service.ExpenseService;
 import com.bifos.accountbook.application.service.FamilyService;
-import com.bifos.accountbook.common.DatabaseCleanupListener;
-import com.bifos.accountbook.common.TestUserHolder;
+import com.bifos.accountbook.common.AbstractControllerTest;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.CategoryRepository;
@@ -15,13 +14,8 @@ import com.bifos.accountbook.domain.value.CustomUuid;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -36,20 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * NotificationController 통합 테스트
  */
-@SpringBootTest
-@AutoConfigureMockMvc
-@TestExecutionListeners(
-    value = DatabaseCleanupListener.class,
-    mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
-)
 @DisplayName("알림 컨트롤러 통합 테스트")
-class NotificationControllerTest {
-
-    @RegisterExtension
-    TestUserHolder testUserHolder = new TestUserHolder();
-
-    @Autowired
-    private MockMvc mockMvc;
+class NotificationControllerTest extends AbstractControllerTest {
 
     @Autowired
     private FamilyService familyService;
@@ -63,12 +45,14 @@ class NotificationControllerTest {
     @Autowired
     private NotificationRepository notificationRepository;
 
+    private User testUser;
     private FamilyResponse testFamily;
     private Category testCategory;
 
     @BeforeEach
     void setUp() {
-        User testUser = testUserHolder.getUser();
+        // TestFixtures로 기본 유저 생성
+        testUser = fixtures.getDefaultUser();
 
         // 예산이 설정된 가족 생성
         CreateFamilyRequest familyRequest = CreateFamilyRequest.builder()
@@ -104,9 +88,7 @@ class NotificationControllerTest {
 
     @Test
     @DisplayName("가족 알림 목록을 조회할 수 있다")
-    void getFamilyNotifications_Success(TestUserHolder testUserHolder) throws Exception {
-        User testUser = testUserHolder.getUser();
-        
+    void getFamilyNotifications_Success() throws Exception {
         // When & Then
         mockMvc.perform(get("/api/v1/families/{familyUuid}/notifications", testFamily.getUuid())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -120,9 +102,7 @@ class NotificationControllerTest {
 
     @Test
     @DisplayName("읽지 않은 알림 수를 조회할 수 있다")
-    void getUnreadCount_Success(TestUserHolder testUserHolder) throws Exception {
-        User testUser = testUserHolder.getUser();
-        
+    void getUnreadCount_Success() throws Exception {
         // When & Then
         mockMvc.perform(get("/api/v1/families/{familyUuid}/notifications/unread-count", testFamily.getUuid())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -134,9 +114,7 @@ class NotificationControllerTest {
 
     @Test
     @DisplayName("알림을 읽음 처리할 수 있다")
-    void markAsRead_Success(TestUserHolder testUserHolder) throws Exception {
-        User testUser = testUserHolder.getUser();
-        
+    void markAsRead_Success() throws Exception {
         // Given: 알림 조회
         String notificationUuid = notificationRepository
                 .findAllByFamilyUuidOrderByCreatedAtDesc(CustomUuid.from(testFamily.getUuid()))
@@ -156,9 +134,7 @@ class NotificationControllerTest {
 
     @Test
     @DisplayName("모든 알림을 읽음 처리할 수 있다")
-    void markAllAsRead_Success(TestUserHolder testUserHolder) throws Exception {
-        User testUser = testUserHolder.getUser();
-        
+    void markAllAsRead_Success() throws Exception {
         // When & Then
         mockMvc.perform(post("/api/v1/families/{familyUuid}/notifications/mark-all-read", testFamily.getUuid())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -177,9 +153,7 @@ class NotificationControllerTest {
 
     @Test
     @DisplayName("존재하지 않는 알림을 조회하면 404 에러가 발생한다")
-    void getNotification_NotFound(TestUserHolder testUserHolder) throws Exception {
-        User testUser = testUserHolder.getUser();
-        
+    void getNotification_NotFound() throws Exception {
         // Given: 존재하지 않는 UUID
         String nonExistentUuid = CustomUuid.generate().getValue();
 
@@ -192,9 +166,7 @@ class NotificationControllerTest {
 
     @Test
     @DisplayName("알림 상세 조회가 정상적으로 동작한다")
-    void getNotification_Success(TestUserHolder testUserHolder) throws Exception {
-        User testUser = testUserHolder.getUser();
-        
+    void getNotification_Success() throws Exception {
         // Given: 알림 조회
         String notificationUuid = notificationRepository
                 .findAllByFamilyUuidOrderByCreatedAtDesc(CustomUuid.from(testFamily.getUuid()))

@@ -2,21 +2,15 @@ package com.bifos.accountbook.presentation.controller;
 
 import com.bifos.accountbook.application.dto.income.CreateIncomeRequest;
 import com.bifos.accountbook.application.dto.income.UpdateIncomeRequest;
-import com.bifos.accountbook.common.FosSpringBootTest;
-import com.bifos.accountbook.common.TestUserHolder;
+import com.bifos.accountbook.common.AbstractControllerTest;
 import com.bifos.accountbook.domain.entity.*;
 import com.bifos.accountbook.domain.repository.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -27,28 +21,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@FosSpringBootTest
-@AutoConfigureMockMvc
 @DisplayName("IncomeController 통합 테스트")
-class IncomeControllerTest {
-
-    @RegisterExtension
-    TestUserHolder testUserHolder = new TestUserHolder();
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private FamilyRepository familyRepository;
-
-    @Autowired
-    private FamilyMemberRepository familyMemberRepository;
-
-    @Autowired
-    private CategoryRepository categoryRepository;
+class IncomeControllerTest extends AbstractControllerTest {
 
     @Autowired
     private IncomeRepository incomeRepository;
@@ -56,51 +30,27 @@ class IncomeControllerTest {
     @Autowired
     private UserRepository userRepository;
 
-    private Family testFamily;
-    private Category testCategory;
-
-    @BeforeEach
-    void setUp() {
-        // 테스트 사용자는 TestUserHolder가 자동으로 생성
-        User testUser = testUserHolder.getUser();
-
-        // 테스트 가족 생성
-        testFamily = Family.builder()
-                .name("Test Family")
-                .build();
-        testFamily = familyRepository.save(testFamily);
-
-        // 가족 구성원 추가
-        FamilyMember familyMember = FamilyMember.builder()
-                .familyUuid(testFamily.getUuid())  // FamilyMember는 UUID 사용
-                .userUuid(testUser.getUuid())
-                .role("owner")
-                .build();
-        familyMemberRepository.save(familyMember);
-
-        // 테스트 카테고리 생성
-        testCategory = Category.builder()
-                .familyUuid(testFamily.getUuid())  // Category는 UUID만 사용 (캐시 활용)
+    @Test
+    @DisplayName("수입 생성 - 성공")
+    void createIncome_Success() throws Exception {
+        // Given: TestFixtures로 테스트 데이터 생성
+        User user = fixtures.getDefaultUser();
+        Family family = fixtures.getDefaultFamily();
+        Category category = fixtures.category(family)
                 .name("급여")
                 .color("#00FF00")
                 .icon("💰")
                 .build();
-        testCategory = categoryRepository.save(testCategory);
-    }
-
-    @Test
-    @DisplayName("수입 생성 - 성공")
-    void createIncome_Success() throws Exception {
-        // Given
+        
         CreateIncomeRequest request = CreateIncomeRequest.builder()
-                .categoryUuid(testCategory.getUuid().getValue())
+                .categoryUuid(category.getUuid().getValue())
                 .amount(BigDecimal.valueOf(3000000))
                 .description("월급")
                 .date(LocalDateTime.now())
                 .build();
 
         // When & Then
-        mockMvc.perform(post("/api/v1/families/{familyUuid}/incomes", testFamily.getUuid().getValue())
+        mockMvc.perform(post("/api/v1/families/{familyUuid}/incomes", family.getUuid().getValue())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -111,39 +61,32 @@ class IncomeControllerTest {
                 .andExpect(jsonPath("$.data.uuid").exists());
 
         // 데이터베이스 검증
-        User testUser = testUserHolder.getUser();
-        assertThat(incomeRepository.findAllByFamilyUuid(testFamily.getUuid(),
+        assertThat(incomeRepository.findAllByFamilyUuid(family.getUuid(),
                 org.springframework.data.domain.PageRequest.of(0, 10)).getTotalElements()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("수입 목록 조회 - 성공")
     void getFamilyIncomes_Success() throws Exception {
-        // Given
-        User testUser = testUserHolder.getUser();
+        // Given: TestFixtures로 테스트 데이터 생성
+        Family family = fixtures.getDefaultFamily();
+        Category category = fixtures.getDefaultCategory();
 
-        Income income1 = Income.builder()
-                .family(testFamily)  // JPA 연관관계 사용
-                .categoryUuid(testCategory.getUuid())
-                .userUuid(testUser.getUuid())
+        // 수입 2개 생성
+        fixtures.income(family, category)
                 .amount(BigDecimal.valueOf(3000000))
                 .description("월급")
                 .date(LocalDateTime.now())
                 .build();
-        incomeRepository.save(income1);
 
-        Income income2 = Income.builder()
-                .family(testFamily)  // JPA 연관관계 사용
-                .categoryUuid(testCategory.getUuid())
-                .userUuid(testUser.getUuid())
+        fixtures.income(family, category)
                 .amount(BigDecimal.valueOf(500000))
                 .description("보너스")
                 .date(LocalDateTime.now().minusDays(1))
                 .build();
-        incomeRepository.save(income2);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/families/{familyUuid}/incomes", testFamily.getUuid().getValue()))
+        mockMvc.perform(get("/api/v1/families/{familyUuid}/incomes", family.getUuid().getValue()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.items").isArray())
@@ -156,23 +99,21 @@ class IncomeControllerTest {
     @Test
     @DisplayName("수입 목록 조회 - 페이징")
     void getFamilyIncomes_WithPaging() throws Exception {
-        // Given
-        User testUser = testUserHolder.getUser();
+        // Given: TestFixtures로 테스트 데이터 생성
+        Family family = fixtures.getDefaultFamily();
+        Category category = fixtures.getDefaultCategory();
 
+        // 25개 수입 생성
         for (int i = 0; i < 25; i++) {
-            Income income = Income.builder()
-                    .family(testFamily)  // JPA 연관관계 사용
-                    .categoryUuid(testCategory.getUuid())
-                    .userUuid(testUser.getUuid())
+            fixtures.income(family, category)
                     .amount(BigDecimal.valueOf(100000 * (i + 1)))
                     .description("수입 " + (i + 1))
                     .date(LocalDateTime.now().minusDays(i))
                     .build();
-            incomeRepository.save(income);
         }
 
         // When & Then
-        mockMvc.perform(get("/api/v1/families/{familyUuid}/incomes", testFamily.getUuid().getValue())
+        mockMvc.perform(get("/api/v1/families/{familyUuid}/incomes", family.getUuid().getValue())
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -185,22 +126,19 @@ class IncomeControllerTest {
     @Test
     @DisplayName("수입 상세 조회 - 성공")
     void getIncome_Success() throws Exception {
-        // Given
-        User testUser = testUserHolder.getUser();
+        // Given: TestFixtures로 테스트 데이터 생성
+        Family family = fixtures.getDefaultFamily();
+        Category category = fixtures.getDefaultCategory();
 
-        Income income = Income.builder()
-                .family(testFamily)  // JPA 연관관계 사용
-                .categoryUuid(testCategory.getUuid())
-                .userUuid(testUser.getUuid())
+        Income income = fixtures.income(family, category)
                 .amount(BigDecimal.valueOf(3000000))
                 .description("월급")
                 .date(LocalDateTime.now())
                 .build();
-        income = incomeRepository.save(income);
 
         // When & Then
         mockMvc.perform(get("/api/v1/families/{familyUuid}/incomes/{incomeUuid}",
-                        testFamily.getUuid().getValue(),
+                        family.getUuid().getValue(),
                         income.getUuid().getValue()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -212,18 +150,15 @@ class IncomeControllerTest {
     @Test
     @DisplayName("수입 수정 - 성공")
     void updateIncome_Success() throws Exception {
-        // Given
-        User testUser = testUserHolder.getUser();
+        // Given: TestFixtures로 테스트 데이터 생성
+        Family family = fixtures.getDefaultFamily();
+        Category category = fixtures.getDefaultCategory();
 
-        Income income = Income.builder()
-                .family(testFamily)  // JPA 연관관계 사용
-                .categoryUuid(testCategory.getUuid())
-                .userUuid(testUser.getUuid())
+        Income income = fixtures.income(family, category)
                 .amount(BigDecimal.valueOf(3000000))
                 .description("월급")
                 .date(LocalDateTime.now())
                 .build();
-        income = incomeRepository.save(income);
 
         UpdateIncomeRequest request = UpdateIncomeRequest.builder()
                 .amount(BigDecimal.valueOf(3500000))
@@ -232,7 +167,7 @@ class IncomeControllerTest {
 
         // When & Then
         mockMvc.perform(put("/api/v1/families/{familyUuid}/incomes/{incomeUuid}",
-                        testFamily.getUuid().getValue(),
+                        family.getUuid().getValue(),
                         income.getUuid().getValue())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -251,22 +186,19 @@ class IncomeControllerTest {
     @Test
     @DisplayName("수입 삭제 - 성공")
     void deleteIncome_Success() throws Exception {
-        // Given
-        User testUser = testUserHolder.getUser();
+        // Given: TestFixtures로 테스트 데이터 생성
+        Family family = fixtures.getDefaultFamily();
+        Category category = fixtures.getDefaultCategory();
 
-        Income income = Income.builder()
-                .family(testFamily)  // JPA 연관관계 사용
-                .categoryUuid(testCategory.getUuid())
-                .userUuid(testUser.getUuid())
+        Income income = fixtures.income(family, category)
                 .amount(BigDecimal.valueOf(3000000))
                 .description("월급")
                 .date(LocalDateTime.now())
                 .build();
-        income = incomeRepository.save(income);
 
         // When & Then
         mockMvc.perform(delete("/api/v1/families/{familyUuid}/incomes/{incomeUuid}",
-                        testFamily.getUuid().getValue(),
+                        family.getUuid().getValue(),
                         income.getUuid().getValue()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -279,7 +211,10 @@ class IncomeControllerTest {
     @Test
     @DisplayName("권한 없는 사용자 - 수입 조회 실패")
     void getFamilyIncomes_UnauthorizedUser() throws Exception {
-        // Given
+        // Given: 기본 가족 생성 (다른 사용자의 가족)
+        Family family = fixtures.getDefaultFamily();
+        
+        // 권한 없는 새로운 사용자 생성
         User unauthorizedUser = User.builder()
                 .provider("google")
                 .providerId("unauthorized-user")
@@ -294,7 +229,7 @@ class IncomeControllerTest {
         SecurityContextHolder.getContext().setAuthentication(unauthorizedAuth);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/families/{familyUuid}/incomes", testFamily.getUuid().getValue()))
+        mockMvc.perform(get("/api/v1/families/{familyUuid}/incomes", family.getUuid().getValue()))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("F003")); // NOT_FAMILY_MEMBER
