@@ -38,6 +38,9 @@ class DashboardControllerTest extends AbstractControllerTest {
     @Autowired
     private IncomeRepository incomeRepository;
 
+    @Autowired
+    private com.bifos.accountbook.domain.repository.FamilyRepository familyRepository;
+
     @Test
     @DisplayName("카테고리별 지출 요약 조회 - 성공")
     void getCategoryExpenseSummary_Success() throws Exception {
@@ -278,9 +281,12 @@ class DashboardControllerTest extends AbstractControllerTest {
 
     private Expense createExpense(CustomUuid familyUuid, CustomUuid userUuid, CustomUuid categoryUuid,
                                   BigDecimal amount, LocalDateTime date) {
+        com.bifos.accountbook.domain.entity.Family family = familyRepository.findByUuid(familyUuid)
+                .orElseThrow(() -> new RuntimeException("Family not found"));
+        
         Expense expense = Expense.builder()
                 .uuid(CustomUuid.generate())
-                .familyUuid(familyUuid)
+                .family(family)  // JPA 연관관계 사용
                 .userUuid(userUuid)
                 .categoryUuid(categoryUuid)
                 .amount(amount)
@@ -293,9 +299,12 @@ class DashboardControllerTest extends AbstractControllerTest {
 
     private Income createIncome(CustomUuid familyUuid, CustomUuid userUuid, CustomUuid categoryUuid,
                                 BigDecimal amount, LocalDateTime date) {
+        com.bifos.accountbook.domain.entity.Family family = familyRepository.findByUuid(familyUuid)
+                .orElseThrow(() -> new RuntimeException("Family not found"));
+        
         Income income = Income.builder()
                 .uuid(CustomUuid.generate())
-                .familyUuid(familyUuid)
+                .family(family)  // JPA 연관관계 사용
                 .userUuid(userUuid)
                 .categoryUuid(categoryUuid)
                 .amount(amount)

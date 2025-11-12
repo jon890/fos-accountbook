@@ -72,7 +72,7 @@ class IncomeControllerTest {
 
         // 가족 구성원 추가
         FamilyMember familyMember = FamilyMember.builder()
-                .familyUuid(testFamily.getUuid())
+                .familyUuid(testFamily.getUuid())  // FamilyMember는 UUID 사용
                 .userUuid(testUser.getUuid())
                 .role("owner")
                 .build();
@@ -80,7 +80,7 @@ class IncomeControllerTest {
 
         // 테스트 카테고리 생성
         testCategory = Category.builder()
-                .familyUuid(testFamily.getUuid())
+                .familyUuid(testFamily.getUuid())  // Category는 UUID만 사용 (캐시 활용)
                 .name("급여")
                 .color("#00FF00")
                 .icon("💰")
@@ -123,7 +123,7 @@ class IncomeControllerTest {
         User testUser = testUserHolder.getUser();
 
         Income income1 = Income.builder()
-                .familyUuid(testFamily.getUuid())
+                .family(testFamily)  // JPA 연관관계 사용
                 .categoryUuid(testCategory.getUuid())
                 .userUuid(testUser.getUuid())
                 .amount(BigDecimal.valueOf(3000000))
@@ -133,7 +133,7 @@ class IncomeControllerTest {
         incomeRepository.save(income1);
 
         Income income2 = Income.builder()
-                .familyUuid(testFamily.getUuid())
+                .family(testFamily)  // JPA 연관관계 사용
                 .categoryUuid(testCategory.getUuid())
                 .userUuid(testUser.getUuid())
                 .amount(BigDecimal.valueOf(500000))
@@ -161,7 +161,7 @@ class IncomeControllerTest {
 
         for (int i = 0; i < 25; i++) {
             Income income = Income.builder()
-                    .familyUuid(testFamily.getUuid())
+                    .family(testFamily)  // JPA 연관관계 사용
                     .categoryUuid(testCategory.getUuid())
                     .userUuid(testUser.getUuid())
                     .amount(BigDecimal.valueOf(100000 * (i + 1)))
@@ -189,7 +189,7 @@ class IncomeControllerTest {
         User testUser = testUserHolder.getUser();
 
         Income income = Income.builder()
-                .familyUuid(testFamily.getUuid())
+                .family(testFamily)  // JPA 연관관계 사용
                 .categoryUuid(testCategory.getUuid())
                 .userUuid(testUser.getUuid())
                 .amount(BigDecimal.valueOf(3000000))
@@ -216,7 +216,7 @@ class IncomeControllerTest {
         User testUser = testUserHolder.getUser();
 
         Income income = Income.builder()
-                .familyUuid(testFamily.getUuid())
+                .family(testFamily)  // JPA 연관관계 사용
                 .categoryUuid(testCategory.getUuid())
                 .userUuid(testUser.getUuid())
                 .amount(BigDecimal.valueOf(3000000))
@@ -255,7 +255,7 @@ class IncomeControllerTest {
         User testUser = testUserHolder.getUser();
 
         Income income = Income.builder()
-                .familyUuid(testFamily.getUuid())
+                .family(testFamily)  // JPA 연관관계 사용
                 .categoryUuid(testCategory.getUuid())
                 .userUuid(testUser.getUuid())
                 .amount(BigDecimal.valueOf(3000000))

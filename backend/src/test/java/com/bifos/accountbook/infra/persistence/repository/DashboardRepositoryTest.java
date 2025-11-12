@@ -275,9 +275,12 @@ class DashboardRepositoryTest {
 
     private Expense createExpense(CustomUuid familyUuid, CustomUuid userUuid, CustomUuid categoryUuid,
                                    BigDecimal amount, LocalDateTime date) {
+        Family family = familyRepository.findByUuid(familyUuid)
+                .orElseThrow(() -> new RuntimeException("Family not found"));
+        
         Expense expense = Expense.builder()
                 .uuid(CustomUuid.generate())
-                .familyUuid(familyUuid)
+                .family(family)  // JPA 연관관계 사용
                 .userUuid(userUuid)
                 .categoryUuid(categoryUuid)
                 .amount(amount)

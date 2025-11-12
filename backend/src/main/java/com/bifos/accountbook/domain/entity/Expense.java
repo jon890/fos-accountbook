@@ -30,9 +30,18 @@ public class Expense {
     @Column(nullable = false, unique = true, length = 36)
     private CustomUuid uuid;
 
-    @Column(name = "family_uuid", nullable = false, length = 36)
-    private CustomUuid familyUuid;
+    /**
+     * 가족 연관관계 (JPA 연관관계 사용)
+     * LAZY 로딩으로 필요 시에만 로드
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "family_uuid", referencedColumnName = "uuid", nullable = false)
+    private Family family;
 
+    /**
+     * 카테고리 UUID (캐시 활용을 위해 연관관계 사용 안함)
+     * CategoryService의 캐시를 통해 조회
+     */
     @Column(name = "category_uuid", nullable = false, length = 36)
     private CustomUuid categoryUuid;
 
@@ -65,22 +74,27 @@ public class Expense {
     @Builder.Default
     private ExpenseStatus status = ExpenseStatus.ACTIVE;
 
-    // JPA 연관관계 제거
-    // category, family, user는 UUID로만 참조하고 필요 시 Service 계층에서 조회
-    // 장점:
-    // 1. N+1 문제 원천 차단
-    // 2. 카테고리는 CategoryService의 캐시 활용
-    // 3. 명확한 책임 분리
+    /**
+     * JPA 연관관계 정책:
+     * - Family: @ManyToOne 사용 (ORM의 장점 활용)
+     * - Category: UUID만 사용 (CategoryService 캐시 활용)
+     * - User: UUID만 사용 (복잡도 감소)
+     */
 
     @PrePersist
     public void prePersist() {
         if (uuid == null) {
             uuid = CustomUuid.generate();
         }
-        if (date == null) {
-            date = LocalDateTime.now();
-        }
-        // createdAt, updatedAt은 JPA Auditing이 자동 관리
+    }
+
+    // ========== 편의 메서드 ==========
+
+    /**
+     * Family UUID 조회 (편의 메서드)
+     */
+    public CustomUuid getFamilyUuid() {
+        return family != null ? family.getUuid() : null;
     }
 
     // ========== 비즈니스 메서드 ==========

@@ -24,21 +24,21 @@ public interface ExpenseJpaRepository extends JpaRepository<Expense, Long> {
         @Query("SELECT e FROM Expense e WHERE e.uuid = :uuid AND e.status = com.bifos.accountbook.domain.value.ExpenseStatus.ACTIVE")
         Optional<Expense> findActiveByUuid(@Param("uuid") CustomUuid uuid);
 
-        @Query("SELECT e FROM Expense e WHERE e.familyUuid = :familyUuid AND e.status = com.bifos.accountbook.domain.value.ExpenseStatus.ACTIVE ORDER BY e.date DESC")
+        @Query("SELECT e FROM Expense e WHERE e.family.uuid = :familyUuid AND e.status = com.bifos.accountbook.domain.value.ExpenseStatus.ACTIVE ORDER BY e.date DESC")
         Page<Expense> findAllByFamilyUuid(@Param("familyUuid") CustomUuid familyUuid, Pageable pageable);
 
-        @Query("SELECT e FROM Expense e WHERE e.familyUuid = :familyUuid AND e.date BETWEEN :startDate AND :endDate AND e.status = com.bifos.accountbook.domain.value.ExpenseStatus.ACTIVE ORDER BY e.date DESC")
+        @Query("SELECT e FROM Expense e WHERE e.family.uuid = :familyUuid AND e.date BETWEEN :startDate AND :endDate AND e.status = com.bifos.accountbook.domain.value.ExpenseStatus.ACTIVE ORDER BY e.date DESC")
         List<Expense> findByFamilyUuidAndDateBetween(
                         @Param("familyUuid") CustomUuid familyUuid,
                         @Param("startDate") LocalDateTime startDate,
                         @Param("endDate") LocalDateTime endDate);
 
-        @Query("SELECT e FROM Expense e WHERE e.familyUuid = :familyUuid AND e.categoryUuid = :categoryUuid AND e.status = com.bifos.accountbook.domain.value.ExpenseStatus.ACTIVE ORDER BY e.date DESC")
+        @Query("SELECT e FROM Expense e WHERE e.family.uuid = :familyUuid AND e.categoryUuid = :categoryUuid AND e.status = com.bifos.accountbook.domain.value.ExpenseStatus.ACTIVE ORDER BY e.date DESC")
         List<Expense> findByFamilyUuidAndCategoryUuid(
                         @Param("familyUuid") CustomUuid familyUuid,
                         @Param("categoryUuid") CustomUuid categoryUuid);
 
-        @Query("SELECT e FROM Expense e WHERE e.familyUuid = :familyUuid " +
+        @Query("SELECT e FROM Expense e WHERE e.family.uuid = :familyUuid " +
                         "AND (:categoryUuid IS NULL OR e.categoryUuid = :categoryUuid) " +
                         "AND (:startDate IS NULL OR e.date >= :startDate) " +
                         "AND (:endDate IS NULL OR e.date <= :endDate) " +
@@ -50,7 +50,7 @@ public interface ExpenseJpaRepository extends JpaRepository<Expense, Long> {
                         @Param("endDate") LocalDateTime endDate,
                         Pageable pageable);
 
-        @Query("SELECT COUNT(e) FROM Expense e WHERE e.familyUuid = :familyUuid AND e.status = com.bifos.accountbook.domain.value.ExpenseStatus.ACTIVE")
+        @Query("SELECT COUNT(e) FROM Expense e WHERE e.family.uuid = :familyUuid AND e.status = com.bifos.accountbook.domain.value.ExpenseStatus.ACTIVE")
         int countByFamilyUuid(@Param("familyUuid") CustomUuid familyUuid);
 
         /**
@@ -65,7 +65,7 @@ public interface ExpenseJpaRepository extends JpaRepository<Expense, Long> {
                        "COUNT(e.id) as count " +
                        "FROM Expense e " +
                        "LEFT JOIN Category c ON e.categoryUuid = c.uuid AND c.status = com.bifos.accountbook.domain.value.CategoryStatus.ACTIVE " +
-                       "WHERE e.familyUuid = :familyUuid " +
+                       "WHERE e.family.uuid = :familyUuid " +
                        "AND e.status = com.bifos.accountbook.domain.value.ExpenseStatus.ACTIVE " +
                        "AND (:categoryUuid IS NULL OR e.categoryUuid = :categoryUuid) " +
                        "AND (:startDate IS NULL OR e.date >= :startDate) " +
@@ -83,7 +83,7 @@ public interface ExpenseJpaRepository extends JpaRepository<Expense, Long> {
          */
         @Query("SELECT COALESCE(SUM(e.amount), 0) " +
                        "FROM Expense e " +
-                       "WHERE e.familyUuid = :familyUuid " +
+                       "WHERE e.family.uuid = :familyUuid " +
                        "AND e.status = com.bifos.accountbook.domain.value.ExpenseStatus.ACTIVE " +
                        "AND (:categoryUuid IS NULL OR e.categoryUuid = :categoryUuid) " +
                        "AND (:startDate IS NULL OR e.date >= :startDate) " +
@@ -100,7 +100,7 @@ public interface ExpenseJpaRepository extends JpaRepository<Expense, Long> {
          */
         @Query("SELECT COALESCE(SUM(e.amount), 0) " +
                        "FROM Expense e " +
-                       "WHERE e.familyUuid = :familyUuid " +
+                       "WHERE e.family.uuid = :familyUuid " +
                        "AND e.status = com.bifos.accountbook.domain.value.ExpenseStatus.ACTIVE " +
                        "AND e.date BETWEEN :startDate AND :endDate")
         BigDecimal sumAmountByFamilyUuidAndDateBetween(

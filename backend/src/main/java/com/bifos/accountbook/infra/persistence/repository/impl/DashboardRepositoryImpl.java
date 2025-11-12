@@ -64,7 +64,7 @@ public class DashboardRepositoryImpl implements DashboardRepository {
                 .on(expense.categoryUuid.eq(category.uuid)
                         .and(category.status.eq(CategoryStatus.ACTIVE)))
                 .where(
-                        expense.familyUuid.eq(familyUuid),
+                        expense.family.uuid.eq(familyUuid),
                         expense.status.eq(ExpenseStatus.ACTIVE),
                         categoryUuidEq(expense, categoryUuid),
                         dateGoe(expense, startDate),
@@ -116,7 +116,7 @@ public class DashboardRepositoryImpl implements DashboardRepository {
                 .select(expense.amount.sum().coalesce(BigDecimal.ZERO))
                 .from(expense)
                 .where(
-                        expense.familyUuid.eq(familyUuid),
+                        expense.family.uuid.eq(familyUuid),
                         expense.status.eq(ExpenseStatus.ACTIVE),
                         categoryUuidEq(expense, categoryUuid),
                         dateGoe(expense, startDate),
@@ -170,7 +170,7 @@ public class DashboardRepositoryImpl implements DashboardRepository {
                 .select(expense.amount.sum().coalesce(BigDecimal.ZERO))
                 .from(expense)
                 .where(
-                        expense.familyUuid.eq(familyUuid),
+                        expense.family.uuid.eq(familyUuid),
                         expense.status.eq(ExpenseStatus.ACTIVE),
                         expense.date.year().eq(year),
                         expense.date.month().eq(month)
@@ -197,7 +197,7 @@ public class DashboardRepositoryImpl implements DashboardRepository {
                 .select(income.amount.sum().coalesce(BigDecimal.ZERO))
                 .from(income)
                 .where(
-                        income.familyUuid.eq(familyUuid),
+                        income.family.uuid.eq(familyUuid),
                         income.status.eq(IncomeStatus.ACTIVE),
                         income.date.year().eq(year),
                         income.date.month().eq(month)

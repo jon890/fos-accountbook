@@ -2,8 +2,10 @@ package com.bifos.accountbook.application.service;
 
 import com.bifos.accountbook.application.exception.BusinessException;
 import com.bifos.accountbook.application.exception.ErrorCode;
+import com.bifos.accountbook.domain.entity.Family;
 import com.bifos.accountbook.domain.entity.FamilyMember;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
+import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class FamilyValidationService {
 
     private final FamilyMemberRepository familyMemberRepository;
+    private final FamilyRepository familyRepository;
 
     /**
      * 가족 접근 권한 확인
@@ -75,6 +78,21 @@ public class FamilyValidationService {
     public boolean isFamilyMember(CustomUuid userUuid, CustomUuid familyUuid) {
         return familyMemberRepository.existsActiveByFamilyUuidAndUserUuid(
                 familyUuid, userUuid);
+    }
+
+    /**
+     * 가족 엔티티 조회
+     * JPA 연관관계 설정을 위해 사용
+     *
+     * @param familyUuid 가족 UUID
+     * @return Family 엔티티
+     * @throws BusinessException 가족을 찾을 수 없는 경우
+     */
+    @Transactional(readOnly = true)
+    public Family getFamily(CustomUuid familyUuid) {
+        return familyRepository.findByUuid(familyUuid)
+                .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
+                        .addParameter("familyUuid", familyUuid.getValue()));
     }
 }
 

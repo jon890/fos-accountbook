@@ -60,10 +60,13 @@ public class IncomeService {
                     .addParameter("requestFamilyUuid", familyCustomUuid.getValue());
         }
 
+        // 가족 엔티티 조회 (JPA 연관관계 설정을 위해)
+        var family = familyValidationService.getFamily(familyCustomUuid);
+
         // 수입 생성
         Income income = Income.builder()
-                .familyUuid(familyCustomUuid)
-                .categoryUuid(categoryCustomUuid)
+                .family(family)  // JPA 연관관계 사용
+                .categoryUuid(categoryCustomUuid)  // Category는 UUID만 (캐시 활용)
                 .userUuid(user.getUuid())
                 .amount(request.getAmount())
                 .description(request.getDescription())

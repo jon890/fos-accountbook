@@ -12,10 +12,8 @@ import com.bifos.accountbook.application.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.Expense;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.ExpenseRepository;
-import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.UserRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
-import com.bifos.accountbook.domain.value.ExpenseStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -28,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -67,10 +64,13 @@ public class ExpenseService {
                     .addParameter("requestFamilyUuid", familyCustomUuid.getValue());
         }
 
+        // 가족 엔티티 조회 (JPA 연관관계 설정을 위해)
+        var family = familyValidationService.getFamily(familyCustomUuid);
+
         // 지출 생성
         Expense expense = Expense.builder()
-                .familyUuid(familyCustomUuid)
-                .categoryUuid(categoryCustomUuid)
+                .family(family)  // JPA 연관관계 사용
+                .categoryUuid(categoryCustomUuid)  // Category는 UUID만 (캐시 활용)
                 .userUuid(user.getUuid())
                 .amount(request.getAmount())
                 .description(request.getDescription())
@@ -210,10 +210,10 @@ public class ExpenseService {
 
         // 지출 정보 업데이트
         expense.update(
-            categoryCustomUuid,
-            request.getAmount(),
-            request.getDescription(),
-            request.getDate()
+                categoryCustomUuid,
+                request.getAmount(),
+                request.getDescription(),
+                request.getDate()
         );
 
         // 이벤트 발행 - 금액이 변경된 경우 예산 알림 체크를 트리거

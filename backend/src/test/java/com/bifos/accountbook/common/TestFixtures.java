@@ -138,11 +138,11 @@ public class TestFixtures {
     }
     
     public ExpenseFixture expense(Family family, Category category) {
-        return new ExpenseFixture(this, family, category);
+        return new ExpenseFixture(this, family, category, getDefaultUser());
     }
     
     public IncomeFixture income(Family family, Category category) {
-        return new IncomeFixture(this, family, category);
+        return new IncomeFixture(this, family, category, getDefaultUser());
     }
     
     // ============================================================
@@ -327,17 +327,17 @@ public class TestFixtures {
         private BigDecimal amount = BigDecimal.valueOf(10000);
         private String description = "Test Expense";
         private LocalDateTime date = LocalDateTime.now();
-        private ExpenseStatus status = ExpenseStatus.ACTIVE;
-        private User user;
         
         private final TestFixtures fixtures;
         private final Family family;
         private final Category category;
+        private User user;
         
-        ExpenseFixture(TestFixtures fixtures, Family family, Category category) {
+        ExpenseFixture(TestFixtures fixtures, Family family, Category category, User defaultUser) {
             this.fixtures = fixtures;
             this.family = family;
             this.category = category;
+            this.user = defaultUser;
         }
         
         public ExpenseFixture amount(BigDecimal amount) {
@@ -361,20 +361,8 @@ public class TestFixtures {
         }
         
         public Expense build() {
-            if (user == null) {
-                user = fixtures.getDefaultUser();
-            }
-            
-            Expense expense = Expense.builder()
-                .uuid(CustomUuid.generate())
-                .familyUuid(family.getUuid())
-                .userUuid(user.getUuid())
-                .categoryUuid(category.getUuid())
-                .amount(amount)
-                .description(description)
-                .date(date)
-                .status(status)
-                .build();
+            // ⭐ ORM의 장점 활용: family.addExpense() 편의 메서드 사용
+            Expense expense = family.addExpense(amount, category.getUuid(), user.getUuid(), description, date);
             return expenseRepository.save(expense);
         }
     }
@@ -387,16 +375,17 @@ public class TestFixtures {
         private BigDecimal amount = BigDecimal.valueOf(100000);
         private String description = "Test Income";
         private LocalDateTime date = LocalDateTime.now();
-        private User user;
         
         private final TestFixtures fixtures;
         private final Family family;
         private final Category category;
+        private User user;
         
-        IncomeFixture(TestFixtures fixtures, Family family, Category category) {
+        IncomeFixture(TestFixtures fixtures, Family family, Category category, User defaultUser) {
             this.fixtures = fixtures;
             this.family = family;
             this.category = category;
+            this.user = defaultUser;
         }
         
         public IncomeFixture amount(BigDecimal amount) {
@@ -420,19 +409,8 @@ public class TestFixtures {
         }
         
         public Income build() {
-            if (user == null) {
-                user = fixtures.getDefaultUser();
-            }
-            
-            Income income = Income.builder()
-                .uuid(CustomUuid.generate())
-                .familyUuid(family.getUuid())
-                .userUuid(user.getUuid())
-                .categoryUuid(category.getUuid())
-                .amount(amount)
-                .description(description)
-                .date(date)
-                .build();
+            // ⭐ ORM의 장점 활용: family.addIncome() 편의 메서드 사용
+            Income income = family.addIncome(amount, category.getUuid(), user.getUuid(), description, date);
             return incomeRepository.save(income);
         }
     }

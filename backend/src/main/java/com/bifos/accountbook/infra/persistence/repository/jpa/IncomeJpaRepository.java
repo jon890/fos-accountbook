@@ -27,21 +27,21 @@ public interface IncomeJpaRepository extends JpaRepository<Income, Long> {
     @Query("SELECT i FROM Income i WHERE i.uuid = :uuid AND i.status = com.bifos.accountbook.domain.value.IncomeStatus.ACTIVE")
     Optional<Income> findActiveByUuid(@Param("uuid") CustomUuid uuid);
 
-    @Query("SELECT i FROM Income i WHERE i.familyUuid = :familyUuid AND i.status = com.bifos.accountbook.domain.value.IncomeStatus.ACTIVE ORDER BY i.date DESC")
+    @Query("SELECT i FROM Income i WHERE i.family.uuid = :familyUuid AND i.status = com.bifos.accountbook.domain.value.IncomeStatus.ACTIVE ORDER BY i.date DESC")
     Page<Income> findAllByFamilyUuid(@Param("familyUuid") CustomUuid familyUuid, Pageable pageable);
 
-    @Query("SELECT i FROM Income i WHERE i.familyUuid = :familyUuid AND i.date BETWEEN :startDate AND :endDate AND i.status = com.bifos.accountbook.domain.value.IncomeStatus.ACTIVE ORDER BY i.date DESC")
+    @Query("SELECT i FROM Income i WHERE i.family.uuid = :familyUuid AND i.date BETWEEN :startDate AND :endDate AND i.status = com.bifos.accountbook.domain.value.IncomeStatus.ACTIVE ORDER BY i.date DESC")
     List<Income> findByFamilyUuidAndDateBetween(
             @Param("familyUuid") CustomUuid familyUuid,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
 
-    @Query("SELECT i FROM Income i WHERE i.familyUuid = :familyUuid AND i.categoryUuid = :categoryUuid AND i.status = com.bifos.accountbook.domain.value.IncomeStatus.ACTIVE ORDER BY i.date DESC")
+    @Query("SELECT i FROM Income i WHERE i.family.uuid = :familyUuid AND i.categoryUuid = :categoryUuid AND i.status = com.bifos.accountbook.domain.value.IncomeStatus.ACTIVE ORDER BY i.date DESC")
     List<Income> findByFamilyUuidAndCategoryUuid(
             @Param("familyUuid") CustomUuid familyUuid,
             @Param("categoryUuid") CustomUuid categoryUuid);
 
-    @Query("SELECT i FROM Income i WHERE i.familyUuid = :familyUuid " +
+    @Query("SELECT i FROM Income i WHERE i.family.uuid = :familyUuid " +
             "AND (:categoryUuid IS NULL OR i.categoryUuid = :categoryUuid) " +
             "AND (:startDate IS NULL OR i.date >= :startDate) " +
             "AND (:endDate IS NULL OR i.date <= :endDate) " +
