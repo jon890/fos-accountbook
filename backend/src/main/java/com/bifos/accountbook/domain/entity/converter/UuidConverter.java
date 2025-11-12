@@ -1,4 +1,4 @@
-package com.bifos.accountbook.domain.converter;
+package com.bifos.accountbook.domain.entity.converter;
 
 import com.bifos.accountbook.domain.value.CustomUuid;
 import jakarta.persistence.AttributeConverter;
