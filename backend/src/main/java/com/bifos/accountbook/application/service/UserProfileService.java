@@ -2,8 +2,8 @@ package com.bifos.accountbook.application.service;
 
 import com.bifos.accountbook.application.dto.profile.UpdateUserProfileRequest;
 import com.bifos.accountbook.application.dto.profile.UserProfileResponse;
-import com.bifos.accountbook.common.exception.BusinessException;
-import com.bifos.accountbook.common.exception.ErrorCode;
+import com.bifos.accountbook.application.exception.BusinessException;
+import com.bifos.accountbook.application.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.UserProfile;
 import com.bifos.accountbook.domain.repository.UserProfileRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;

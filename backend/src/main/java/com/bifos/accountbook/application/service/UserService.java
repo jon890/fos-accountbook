@@ -1,7 +1,7 @@
 package com.bifos.accountbook.application.service;
 
-import com.bifos.accountbook.common.exception.BusinessException;
-import com.bifos.accountbook.common.exception.ErrorCode;
+import com.bifos.accountbook.application.exception.BusinessException;
+import com.bifos.accountbook.application.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.UserRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;

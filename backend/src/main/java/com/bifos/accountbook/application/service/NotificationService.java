@@ -2,8 +2,8 @@ package com.bifos.accountbook.application.service;
 
 import com.bifos.accountbook.application.dto.notification.NotificationListResponse;
 import com.bifos.accountbook.application.dto.notification.NotificationResponse;
-import com.bifos.accountbook.common.exception.BusinessException;
-import com.bifos.accountbook.common.exception.ErrorCode;
+import com.bifos.accountbook.application.exception.BusinessException;
+import com.bifos.accountbook.application.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.Notification;
 import com.bifos.accountbook.domain.repository.NotificationRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;

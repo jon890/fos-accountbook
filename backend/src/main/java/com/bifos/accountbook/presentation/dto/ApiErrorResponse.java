@@ -1,7 +1,7 @@
 package com.bifos.accountbook.presentation.dto;
 
-import com.bifos.accountbook.common.exception.BusinessException;
-import com.bifos.accountbook.common.exception.ErrorCode;
+import com.bifos.accountbook.application.exception.BusinessException;
+import com.bifos.accountbook.application.exception.ErrorCode;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,4 +1,4 @@
-package com.bifos.accountbook.common.exception;
+package com.bifos.accountbook.application.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

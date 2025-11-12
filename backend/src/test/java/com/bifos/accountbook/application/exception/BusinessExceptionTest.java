@@ -1,4 +1,4 @@
-package com.bifos.accountbook.common.exception;
+package com.bifos.accountbook.application.exception;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -172,3 +172,4 @@ class BusinessExceptionTest {
         assertThat(exception.getParameters().get("familyId")).isEqualTo("family-456");
     }
 }
+

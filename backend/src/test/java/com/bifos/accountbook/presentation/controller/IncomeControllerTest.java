@@ -5,7 +5,7 @@ import com.bifos.accountbook.application.dto.income.IncomeResponse;
 import com.bifos.accountbook.application.dto.income.UpdateIncomeRequest;
 import com.bifos.accountbook.common.DatabaseCleanupExtension;
 import com.bifos.accountbook.common.TestUserHolder;
-import com.bifos.accountbook.common.exception.ErrorCode;
+import com.bifos.accountbook.application.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Family;
 import com.bifos.accountbook.domain.entity.FamilyMember;

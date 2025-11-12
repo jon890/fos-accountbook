@@ -1,6 +1,6 @@
-package com.bifos.accountbook.infra.exception;
+package com.bifos.accountbook.config;
 
-import com.bifos.accountbook.common.exception.BusinessException;
+import com.bifos.accountbook.application.exception.BusinessException;
 import com.bifos.accountbook.presentation.dto.ApiErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +23,19 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 전역 예외 처리 핸들러
+ * 
+ * Spring MVC의 모든 예외를 통합 처리하는 설정 클래스입니다.
+ * @RestControllerAdvice를 통해 모든 컨트롤러의 예외를 가로채어 표준화된 응답을 제공합니다.
+ * 
+ * 처리 예외 유형:
+ * - BusinessException: 비즈니스 로직 예외
+ * - Validation 예외: @Valid 검증 실패
+ * - 인증/인가 예외: Spring Security
+ * - IllegalArgumentException, IllegalStateException
+ * - 기타 모든 예외
+ */
 @Slf4j
 @RestControllerAdvice
 @RequiredArgsConstructor
@@ -229,3 +242,4 @@ public class GlobalExceptionHandler {
                 Arrays.asList(environment.getActiveProfiles()).contains("test");
     }
 }
+
