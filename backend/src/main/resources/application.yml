@@ -94,8 +94,10 @@ management:
     java:
       enabled: true
 
-# CORS 공통 설정 (allowed-origins는 각 프로파일에서 설정)
+# CORS 공통 설정
+# allowed-origins는 각 프로파일(local, prod)에서 환경별로 설정
 cors:
+  allowed-origins: [] # 프로파일별로 오버라이드 필수
   allowed-methods:
     - GET
     - POST
@@ -112,7 +114,7 @@ cors:
   exposed-headers:
     - Authorization
   allow-credentials: true
-  max-age: 3600
+  max-age: 3600 # 1시간 (초)
 
 # P6Spy SQL 로깅 설정 (DataSource Proxy)
 decorator:
