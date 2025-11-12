@@ -57,6 +57,17 @@ public CorsProperties(Boolean allowCredentials, Long maxAge) { }
 
 // ✅ primitive 타입 사용
 public CorsProperties(boolean allowCredentials, long maxAge) { }
+
+// ❌ @AllArgsConstructor 사용 금지 (JavaDoc 추가 불가)
+@AllArgsConstructor
+@ConfigurationProperties(prefix = "cors")
+public class CorsProperties { }
+
+// ✅ 명시적 생성자 + JavaDoc (application.yml 매핑 명시)
+/**
+ * @param allowedOrigins 허용할 Origin 목록 (application.yml에서 주입)
+ */
+public CorsProperties(List<String> allowedOrigins, ...) { }
 ```
 
 ---
