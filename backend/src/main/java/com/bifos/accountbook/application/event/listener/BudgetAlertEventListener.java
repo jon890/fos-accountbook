@@ -1,4 +1,4 @@
-package com.bifos.accountbook.infra.event;
+package com.bifos.accountbook.application.event.listener;
 
 import com.bifos.accountbook.application.event.ExpenseCreatedEvent;
 import com.bifos.accountbook.application.event.ExpenseUpdatedEvent;

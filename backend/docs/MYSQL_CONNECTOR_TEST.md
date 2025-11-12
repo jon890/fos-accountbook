@@ -74,30 +74,36 @@ docker-compose down -v
 ## 🧪 테스트 항목
 
 ### 1. 기본 연결 테스트
+
 - MySQL 연결 성공 여부
 - 드라이버 버전 확인
 
 ### 2. PreparedStatement 테스트 (9.5.0 버그 수정)
+
 - 따옴표 포함 문자열 처리
 - SQL 구문 오류 방지
 
 ### 3. DatabaseMetaData 테스트 (9.5.0 개선사항)
+
 - 스키마 조회 기능
 - 유효성 검사 동작 확인
 
 ### 4. CRUD 동작 테스트
+
 - 기본 쿼리 실행
 - 트랜잭션 격리 수준 확인
 
 ## 📝 버전별 주요 변경사항
 
 ### MySQL Connector/J 9.5.0
+
 - ✅ PreparedStatement 따옴표 이스케이프 버그 수정
 - ✅ DatabaseMetaDataInformationSchema 유효성 검사 추가
 - ✅ SequentialBalanceStrategy 로드 밸런싱 전략 추가
 - 🟢 **Breaking Changes 없음**
 
 ### 호환성
+
 - MySQL 8.0+: ✅ 완벽 지원
 - MySQL 5.7: ⚠️ 일부 기능 제한
 - Spring Boot 3.x: ✅ 완벽 지원
@@ -127,7 +133,7 @@ lsof -i :3306
 # 포트 변경 (docker-compose.yml)
 ports:
   - "3307:3306"  # 3307로 변경
-  
+
 # application-test-mysql.yml도 수정
 url: jdbc:mysql://localhost:3307/accountbook?...
 ```
@@ -146,11 +152,13 @@ ls -la src/main/resources/db/migration/
 ## 💡 Best Practices
 
 1. **버전 업그레이드 전 테스트**
+
    - 먼저 로컬에서 MySQL 테스트 실행
    - 모든 테스트 통과 확인
    - 릴리즈 노트 확인
 
 2. **프로덕션 적용 전**
+
    - 스테이징 환경에서 검증
    - 모니터링 강화
    - 롤백 계획 수립
@@ -165,4 +173,3 @@ ls -la src/main/resources/db/migration/
 - [MySQL Connector/J 9.5.0 Release Notes](https://dev.mysql.com/doc/relnotes/connector-j/en/news-9-5-0.html)
 - [MySQL Connector/J Documentation](https://dev.mysql.com/doc/connector-j/en/)
 - [Spring Boot Database Initialization](https://docs.spring.io/spring-boot/docs/current/reference/html/howto.html#howto.data-initialization)
-

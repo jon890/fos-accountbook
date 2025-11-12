@@ -1,5 +1,6 @@
 package com.bifos.accountbook;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +18,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * MySQL Connector 버전 호환성 테스트
  * 
  * 실행 방법:
- * 1. docker-compose up -d mysql
- * 2. ./gradlew test --tests MySQLConnectorVersionTest
- * 3. docker-compose down
+ * 1. @Disabled 주석 제거
+ * 2. docker compose up -d mysql
+ * 3. ./gradlew test --tests MySQLConnectorVersionTest
+ * 4. docker compose down
+ * 
+ * 주의: 일반 테스트에서는 MySQL 컨테이너가 필요하므로 @Disabled 처리
  */
+@Disabled("MySQL 컨테이너가 실행 중일 때만 활성화")
 @SpringBootTest
 @ActiveProfiles("test-mysql")
 @DisplayName("MySQL Connector 버전 호환성 테스트")
