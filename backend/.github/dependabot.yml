@@ -54,6 +54,11 @@ updates:
       - "docker"
     commit-message:
       prefix: "chore(docker)"
+    # Java 21 버전 고정 (25 버전 업그레이드 무시)
+    ignore:
+      - dependency-name: "eclipse-temurin"
+        update-types: ["version-update:semver-major"]
+        versions: [">=22"]
 
   # GitHub Actions 업데이트 (나중에 CI/CD 추가시 사용)
   - package-ecosystem: "github-actions"
