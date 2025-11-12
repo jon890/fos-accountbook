@@ -67,15 +67,14 @@ public class ExpenseService {
         // 가족 엔티티 조회 (JPA 연관관계 설정을 위해)
         var family = familyValidationService.getFamily(familyCustomUuid);
 
-        // 지출 생성
-        Expense expense = Expense.builder()
-                .family(family)  // JPA 연관관계 사용
-                .categoryUuid(categoryCustomUuid)  // Category는 UUID만 (캐시 활용)
-                .userUuid(user.getUuid())
-                .amount(request.getAmount())
-                .description(request.getDescription())
-                .date(request.getDate() != null ? request.getDate() : LocalDateTime.now())
-                .build();
+        // 지출 생성 (ORM 편의 메서드 활용)
+        Expense expense = family.addExpense(
+                request.getAmount(),
+                categoryCustomUuid,
+                user.getUuid(),
+                request.getDescription(),
+                request.getDate() != null ? request.getDate() : LocalDateTime.now()
+        );
 
         expense = expenseRepository.save(expense);
 
