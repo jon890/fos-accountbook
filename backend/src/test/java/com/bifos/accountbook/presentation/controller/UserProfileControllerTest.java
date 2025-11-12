@@ -28,9 +28,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * UserProfileController 통합 테스트
- * @SpringBootTest + DatabaseCleanupExtension을 사용하여 실제 DB와 함께 테스트
+ * @SpringBootTest + DatabaseCleanupListener를 사용하여 실제 DB와 함께 테스트
  * 외부 API만 모킹하고, 내부 컴포넌트는 모두 실제로 동작
- * 각 테스트 메서드 실행 후 DatabaseCleanupExtension이 자동으로 데이터 정리
+ * 각 테스트 메서드 실행 후 DatabaseCleanupListener가 자동으로 데이터 정리
  */
 @SpringBootTest
 @AutoConfigureMockMvc

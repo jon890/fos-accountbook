@@ -3,7 +3,7 @@ package com.bifos.accountbook.presentation.controller;
 import com.bifos.accountbook.application.dto.income.CreateIncomeRequest;
 import com.bifos.accountbook.application.dto.income.IncomeResponse;
 import com.bifos.accountbook.application.dto.income.UpdateIncomeRequest;
-import com.bifos.accountbook.common.DatabaseCleanupExtension;
+import com.bifos.accountbook.common.DatabaseCleanupListener;
 import com.bifos.accountbook.common.TestUserHolder;
 import com.bifos.accountbook.application.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.Category;
@@ -21,13 +21,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -41,9 +42,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ExtendWith({DatabaseCleanupExtension.class, TestUserHolder.class})
+@TestExecutionListeners(
+    value = DatabaseCleanupListener.class,
+    mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
+)
 @DisplayName("IncomeController 통합 테스트")
 class IncomeControllerTest {
+
+    @RegisterExtension
+    TestUserHolder testUserHolder = new TestUserHolder();
 
     @Autowired
     private MockMvc mockMvc;
@@ -66,15 +73,11 @@ class IncomeControllerTest {
     @Autowired
     private UserRepository userRepository;
 
-    private TestUserHolder testUserHolder;
     private Family testFamily;
     private Category testCategory;
 
     @BeforeEach
-    void setUp(TestUserHolder testUserHolder) {
-        // Extension을 파라미터로 주입받음
-        this.testUserHolder = testUserHolder;
-        
+    void setUp() {
         // 테스트 사용자는 TestUserHolder가 자동으로 생성
         User testUser = testUserHolder.getUser();
 

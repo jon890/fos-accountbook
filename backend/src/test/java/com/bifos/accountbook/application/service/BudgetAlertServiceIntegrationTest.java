@@ -3,7 +3,7 @@ package com.bifos.accountbook.application.service;
 import com.bifos.accountbook.application.dto.expense.CreateExpenseRequest;
 import com.bifos.accountbook.application.dto.family.CreateFamilyRequest;
 import com.bifos.accountbook.application.dto.family.FamilyResponse;
-import com.bifos.accountbook.common.DatabaseCleanupExtension;
+import com.bifos.accountbook.common.DatabaseCleanupListener;
 import com.bifos.accountbook.common.TestUserHolder;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Notification;
@@ -14,9 +14,10 @@ import com.bifos.accountbook.domain.value.CustomUuid;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestExecutionListeners;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -31,9 +32,15 @@ import static org.awaitility.Awaitility.await;
  * 실제 지출 생성을 통해 예산 알림이 정상적으로 생성되는지 검증합니다.
  */
 @SpringBootTest
-@ExtendWith({DatabaseCleanupExtension.class, TestUserHolder.class})
+@TestExecutionListeners(
+    value = DatabaseCleanupListener.class,
+    mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
+)
 @DisplayName("예산 알림 서비스 통합 테스트")
 class BudgetAlertServiceIntegrationTest {
+
+    @RegisterExtension
+    TestUserHolder testUserHolder = new TestUserHolder();
 
     @Autowired
     private ExpenseService expenseService;
@@ -51,7 +58,7 @@ class BudgetAlertServiceIntegrationTest {
     private Category testCategory;
 
     @BeforeEach
-    void setUp(TestUserHolder testUserHolder) {
+    void setUp() {
         User testUser = testUserHolder.getUser();
 
         // 예산이 설정된 가족 생성

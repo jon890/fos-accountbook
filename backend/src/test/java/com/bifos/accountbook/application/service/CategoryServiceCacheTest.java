@@ -41,7 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 
  * 주의:
  * - TestUserHolder: 테스트 사용자 자동 생성 및 관리
- * - DatabaseCleanupExtension: 각 테스트 후 데이터 자동 정리
+ * - DatabaseCleanupListener: 각 테스트 후 데이터 자동 정리
  */
 @SpringBootTest
 @TestExecutionListeners(

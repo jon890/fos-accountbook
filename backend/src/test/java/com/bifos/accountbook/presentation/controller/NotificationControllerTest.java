@@ -5,7 +5,7 @@ import com.bifos.accountbook.application.dto.family.CreateFamilyRequest;
 import com.bifos.accountbook.application.dto.family.FamilyResponse;
 import com.bifos.accountbook.application.service.ExpenseService;
 import com.bifos.accountbook.application.service.FamilyService;
-import com.bifos.accountbook.common.DatabaseCleanupExtension;
+import com.bifos.accountbook.common.DatabaseCleanupListener;
 import com.bifos.accountbook.common.TestUserHolder;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.User;
@@ -15,11 +15,12 @@ import com.bifos.accountbook.domain.value.CustomUuid;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -37,9 +38,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@ExtendWith({DatabaseCleanupExtension.class, TestUserHolder.class})
+@TestExecutionListeners(
+    value = DatabaseCleanupListener.class,
+    mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
+)
 @DisplayName("알림 컨트롤러 통합 테스트")
 class NotificationControllerTest {
+
+    @RegisterExtension
+    TestUserHolder testUserHolder = new TestUserHolder();
 
     @Autowired
     private MockMvc mockMvc;
@@ -60,7 +67,7 @@ class NotificationControllerTest {
     private Category testCategory;
 
     @BeforeEach
-    void setUp(TestUserHolder testUserHolder) {
+    void setUp() {
         User testUser = testUserHolder.getUser();
 
         // 예산이 설정된 가족 생성
