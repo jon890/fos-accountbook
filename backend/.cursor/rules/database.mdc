@@ -41,6 +41,7 @@ CREATE TABLE user_profiles (
 ### 절대 금지 ❌
 
 1. **Production DB 직접 수정 금지**
+
    - 반드시 Flyway 마이그레이션으로만 스키마 변경
 
 2. **@Transactional 테스트 금지**
