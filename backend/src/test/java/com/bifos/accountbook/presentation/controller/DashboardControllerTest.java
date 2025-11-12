@@ -1,7 +1,7 @@
 package com.bifos.accountbook.presentation.controller;
 
 import com.bifos.accountbook.common.TestUserHolder;
-import com.bifos.accountbook.common.DatabaseCleanupListener;
+import com.bifos.accountbook.common.FosSpringBootTest;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Expense;
 import com.bifos.accountbook.domain.entity.Family;
@@ -26,7 +26,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -42,12 +41,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * - 카테고리별 지출 요약
  * - 실제 API 엔드포인트 테스트
  */
-@SpringBootTest
+@FosSpringBootTest
 @AutoConfigureMockMvc
-@TestExecutionListeners(
-    value = DatabaseCleanupListener.class,
-    mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
-)
 @DisplayName("DashboardController 통합 테스트")
 class DashboardControllerTest {
 

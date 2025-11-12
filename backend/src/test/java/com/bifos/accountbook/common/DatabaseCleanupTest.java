@@ -9,18 +9,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestExecutionListeners;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * DatabaseCleanupListener 테스트
  */
-@SpringBootTest
-@TestExecutionListeners(
-    value = DatabaseCleanupListener.class,
-    mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
-)
+@FosSpringBootTest
 @DisplayName("데이터베이스 정리 Listener 테스트")
 class DatabaseCleanupTest {
 

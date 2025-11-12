@@ -1,6 +1,6 @@
 package com.bifos.accountbook.infra.persistence.repository;
 
-import com.bifos.accountbook.common.DatabaseCleanupListener;
+import com.bifos.accountbook.common.FosSpringBootTest;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Expense;
 import com.bifos.accountbook.domain.entity.Family;
@@ -19,7 +19,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestExecutionListeners;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -34,11 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * - 전체 지출 합계 조회
  * - 대시보드 전용 통계 쿼리 테스트
  */
-@SpringBootTest
-@TestExecutionListeners(
-    value = DatabaseCleanupListener.class,
-    mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
-)
+@FosSpringBootTest
 @DisplayName("DashboardRepository QueryDSL 통합 테스트")
 class DashboardRepositoryTest {
 
