@@ -1,4 +1,4 @@
-package com.bifos.accountbook.infra.config;
+package com.bifos.accountbook.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;

@@ -1,4 +1,4 @@
-package com.bifos.accountbook.infra.config;
+package com.bifos.accountbook.config;
 
 import com.bifos.accountbook.infra.filter.RequestResponseLoggingFilter;
 import com.bifos.accountbook.infra.security.JwtAuthenticationFilter;
@@ -16,10 +16,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.security.web.context.SecurityContextHolderFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -49,7 +49,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints (Actuator)
                         .requestMatchers("/actuator/**").permitAll()
-                        
+
                         // Public API endpoints
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/invitations/token/**").permitAll() // 초대장 조회
@@ -100,3 +100,4 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
+

@@ -1,4 +1,4 @@
-package com.bifos.accountbook.infra.config;
+package com.bifos.accountbook.config;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;

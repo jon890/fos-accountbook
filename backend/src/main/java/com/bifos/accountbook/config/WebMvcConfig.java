@@ -1,4 +1,4 @@
-package com.bifos.accountbook.infra.config;
+package com.bifos.accountbook.config;
 
 import java.util.List;
 
