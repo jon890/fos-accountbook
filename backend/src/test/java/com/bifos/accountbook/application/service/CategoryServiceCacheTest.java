@@ -3,6 +3,8 @@ package com.bifos.accountbook.application.service;
 import com.bifos.accountbook.application.dto.category.CategoryResponse;
 import com.bifos.accountbook.application.dto.category.CreateCategoryRequest;
 import com.bifos.accountbook.application.dto.category.UpdateCategoryRequest;
+import com.bifos.accountbook.common.DatabaseCleanupExtension;
+import com.bifos.accountbook.common.TestUserHolder;
 import com.bifos.accountbook.config.CacheConfig;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Family;
@@ -11,18 +13,16 @@ import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
-import com.bifos.accountbook.domain.repository.UserRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.domain.value.FamilyMemberStatus;
-import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -38,19 +38,24 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 4. 삭제 시 캐시 무효화 확인
  * 5. findByUuidCached 메서드의 캐시 활용 확인
  * 6. 메서드 간 캐시 재사용 확인
+ * 
+ * 주의:
+ * - TestUserHolder: 테스트 사용자 자동 생성 및 관리
+ * - DatabaseCleanupExtension: 각 테스트 후 데이터 자동 정리
  */
 @SpringBootTest
+@ExtendWith(DatabaseCleanupExtension.class)
 @DisplayName("카테고리 서비스 캐시 테스트")
 class CategoryServiceCacheTest {
+
+    @RegisterExtension
+    TestUserHolder testUserHolder = new TestUserHolder();
 
     @Autowired
     private CategoryService categoryService;
 
     @Autowired
     private CategoryRepository categoryRepository;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private FamilyRepository familyRepository;
@@ -61,27 +66,16 @@ class CategoryServiceCacheTest {
     @Autowired
     private CacheManager cacheManager;
 
-    @Autowired
-    private EntityManager entityManager;
-
     private User testUser;
     private Family testFamily;
 
     @BeforeEach
-    @Transactional
     void setUp() {
         // 캐시 초기화
         cacheManager.getCache(CacheConfig.CATEGORIES_CACHE).clear();
 
-        // 테스트 사용자 생성
-        testUser = User.builder()
-                .provider("google")
-                .providerId("cache-test-id")
-                .email("cache-test@example.com")
-                .name("Cache Test User")
-                .image("https://example.com/profile.jpg")
-                .build();
-        testUser = userRepository.save(testUser);
+        // TestUserHolder에서 생성된 사용자 가져오기
+        testUser = testUserHolder.getUser();
 
         // 테스트 가족 생성
         testFamily = Family.builder()
@@ -101,7 +95,6 @@ class CategoryServiceCacheTest {
 
     @Test
     @DisplayName("카테고리 조회 시 캐시가 적용된다")
-    @Transactional
     void getCategoriesWithCache() {
         // Given: 카테고리 생성
         Category category = Category.builder()
@@ -139,7 +132,6 @@ class CategoryServiceCacheTest {
 
     @Test
     @DisplayName("카테고리 생성 시 캐시가 무효화된다")
-    @Transactional
     void createCategoryClearsCache() {
         // Given: 캐시 데이터 생성
         String familyUuidStr = testFamily.getUuid().getValue();
@@ -162,7 +154,6 @@ class CategoryServiceCacheTest {
 
     @Test
     @DisplayName("카테고리 수정 시 캐시가 무효화된다")
-    @Transactional
     void updateCategoryClearsCache() {
         // Given: 카테고리 생성 및 캐시
         Category category = Category.builder()
@@ -193,7 +184,6 @@ class CategoryServiceCacheTest {
 
     @Test
     @DisplayName("카테고리 삭제 시 캐시가 무효화된다")
-    @Transactional
     void deleteCategoryClearsCache() {
         // Given: 카테고리 생성 및 캐시
         Category category = Category.builder()
@@ -219,7 +209,6 @@ class CategoryServiceCacheTest {
 
     @Test
     @DisplayName("기본 카테고리 생성 시 캐시가 무효화된다")
-    @Transactional
     void createDefaultCategoriesClearsCache() {
         // Given: 새로운 가족 생성 및 캐시
         Family newFamily = Family.builder()
@@ -250,7 +239,6 @@ class CategoryServiceCacheTest {
 
     @Test
     @DisplayName("findByUuidCached는 캐시를 활용하여 조회한다")
-    @Transactional
     void findByUuidCachedUsesCache() {
         // Given: 두 개의 카테고리 생성
         Category category1 = Category.builder()
@@ -268,10 +256,6 @@ class CategoryServiceCacheTest {
                 .icon("🍏")
                 .build();
         category2 = categoryRepository.save(category2);
-
-        // DB 커밋을 위한 flush
-        entityManager.flush();
-        entityManager.clear();
 
         String familyUuidStr = testFamily.getUuid().getValue();
         CustomUuid category1Uuid = category1.getUuid();
@@ -297,7 +281,6 @@ class CategoryServiceCacheTest {
 
     @Test
     @DisplayName("findByUuidCached로 조회 후 getFamilyCategories 호출 시 캐시가 재사용된다")
-    @Transactional
     void cachedCategoryIsReusedAcrossMethods() {
         // Given: 카테고리 생성
         Category category = Category.builder()
@@ -307,10 +290,6 @@ class CategoryServiceCacheTest {
                 .icon("🍎")
                 .build();
         category = categoryRepository.save(category);
-
-        // DB 커밋을 위한 flush
-        entityManager.flush();
-        entityManager.clear();
 
         String familyUuidStr = testFamily.getUuid().getValue();
         CustomUuid categoryUuid = category.getUuid();
