@@ -216,8 +216,11 @@ public class TestUserHolder implements BeforeEachCallback, AfterEachCallback, Pa
      */
     public Category getCategory(Family family) {
         String cacheKey = "default-" + family.getUuid().getValue();
-        return categoryCache.computeIfAbsent(cacheKey, 
-            k -> createCategory(family, "Test Category", "#6366f1", "🏷️"));
+        Category cached = categoryCache.get(cacheKey);
+        if (cached == null) {
+            cached = createCategory(family, "Test Category", "#6366f1", "🏷️");
+        }
+        return cached;
     }
     
     /**
