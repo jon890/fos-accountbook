@@ -12,7 +12,10 @@ version: "1.0"
 ```java
 @SpringBootTest
 @AutoConfigureMockMvc
-@ExtendWith(DatabaseCleanupExtension.class)  // ✅ 필수
+@TestExecutionListeners(
+    value = DatabaseCleanupListener.class,
+    mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS  // ✅ 필수
+)
 @DisplayName("사용자 프로필 컨트롤러 통합 테스트")
 class UserProfileControllerTest {
 
@@ -34,8 +37,15 @@ class UserProfileControllerTest {
         // Then: DB 상태 검증
         assertThat(userRepository.findByUuid(user.getUuid())).isPresent();
     }
-    // DatabaseCleanupExtension이 자동으로 테이블 정리
+    // DatabaseCleanupListener가 자동으로 테이블 정리
 }
+```
+
+**대안 (JUnit 5 Extension - 기존 코드 호환):**
+```java
+@SpringBootTest
+@ExtendWith(DatabaseCleanupExtension.class)  // ✅ 간단하지만 Spring 통합은 약함
+class MyTest { }
 ```
 
 ## 핵심 원칙
@@ -44,8 +54,37 @@ class UserProfileControllerTest {
 - ✅ **실제 Bean 사용** (Service, Repository 모두 실제)
 - ✅ **실제 DB 사용** (H2 테스트 DB)
 - ✅ **외부 API만 모킹** (우리가 제어 불가능한 것만)
-- ✅ **@ExtendWith(DatabaseCleanupExtension.class)** 필수
+- ✅ **DB 정리 필수**
+  - **권장**: `@TestExecutionListeners(value = DatabaseCleanupListener.class, mergeMode = MERGE_WITH_DEFAULTS)`
+  - 대안: `@ExtendWith(DatabaseCleanupExtension.class)`
 - ❌ **@Transactional 사용 금지** (실제 커밋 테스트를 위해)
+
+## DB 정리 방법 비교
+
+### DatabaseCleanupListener (⭐ 권장)
+- Spring TestExecutionListener 기반
+- Spring 테스트 컨텍스트와 완전히 통합
+- `TestContext`를 통한 직접적인 ApplicationContext 접근
+
+```java
+@TestExecutionListeners(
+    value = DatabaseCleanupListener.class,
+    mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS  // ⚠️ mergeMode 필수!
+)
+```
+
+### DatabaseCleanupExtension (대안)
+- JUnit 5 Extension 기반
+- 간단한 사용법
+- 기존 코드와의 호환성
+
+```java
+@ExtendWith(DatabaseCleanupExtension.class)
+```
+
+**주의:**
+- 두 방식 중 하나만 선택
+- `@Transactional`과 함께 사용 금지
 
 ---
 

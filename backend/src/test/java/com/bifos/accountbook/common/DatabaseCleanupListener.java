@@ -2,10 +2,8 @@ package com.bifos.accountbook.common;
 
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.extension.AfterEachCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.TestContext;
+import org.springframework.test.context.support.AbstractTestExecutionListener;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
@@ -14,23 +12,30 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 테스트 후 데이터베이스 정리 Extension (JUnit 5 Extension 기반)
+ * 테스트 후 데이터베이스 정리 Listener (Spring TestExecutionListener 기반)
  * 
  * 사용법:
- * @ExtendWith(DatabaseCleanupExtension.class)
+ * @TestExecutionListeners(
+ *     value = DatabaseCleanupListener.class,
+ *     mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
+ * )
  * class MyTest {
  *     // 테스트 메서드들
  * }
  * 
- * ⚠️ 더 나은 대안: DatabaseCleanupListener (Spring TestExecutionListener 기반)
- * - Spring 테스트 컨텍스트와 더 잘 통합됨
+ * 또는 @SpringBootTest에 자동으로 적용하려면:
+ * spring.factories에 등록 (권장하지 않음, 명시적 사용 권장)
+ * 
+ * 장점:
+ * - Spring 테스트 컨텍스트와 완전히 통합
  * - ApplicationContext 접근이 더 직접적이고 안정적
+ * - Spring의 테스트 라이프사이클 활용
  * 
  * 주의: @Transactional과 함께 사용하면 롤백되므로, 
- * @Transactional 제거하고 이 Extension만 사용하세요.
+ * @Transactional 제거하고 이 Listener만 사용하세요.
  */
 @Slf4j
-public class DatabaseCleanupExtension implements AfterEachCallback {
+public class DatabaseCleanupListener extends AbstractTestExecutionListener {
     
     /**
      * 프로젝트의 모든 테이블 목록 (외래키 순서를 고려하여 역순으로)
@@ -49,24 +54,25 @@ public class DatabaseCleanupExtension implements AfterEachCallback {
 
     /**
      * 각 테스트 메서드 실행 후 모든 테이블 데이터 삭제
+     * 
+     * Spring의 TestContext를 통해 ApplicationContext에 직접 접근
      */
     @Override
-    public void afterEach(ExtensionContext context) {
-        // Spring ApplicationContext 가져오기 (null 체크 포함)
-        ApplicationContext appContext = SpringExtension.getApplicationContext(context);
-
-        EntityManager em = appContext.getBean(EntityManager.class);
-        PlatformTransactionManager txManager = appContext.getBean(PlatformTransactionManager.class);
+    public void afterTestMethod(TestContext testContext) throws Exception {
+        // Spring TestContext에서 직접 Bean 가져오기
+        EntityManager em = testContext.getApplicationContext().getBean(EntityManager.class);
+        PlatformTransactionManager txManager = testContext.getApplicationContext()
+                .getBean(PlatformTransactionManager.class);
         
         // 트랜잭션 시작
         DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
         TransactionStatus txStatus = txManager.getTransaction(txDef);
 
         try {
-            // 외래키 제약 조건 비활성화
+            // 외래키 제약 조건 비활성화 (H2 전용)
             em.createNativeQuery("SET REFERENTIAL_INTEGRITY FALSE").executeUpdate();
 
-            // 각 테이블 TRUNCATE (외래키 순서를 고려하여 역순으로)
+            // 각 테이블 TRUNCATE
             int cleanedCount = 0;
             for (String tableName : TABLES) {
                 try {
@@ -79,7 +85,7 @@ public class DatabaseCleanupExtension implements AfterEachCallback {
                 }
             }
 
-            // 외래키 제약 조건 활성화
+            // 외래키 제약 조건 활성화 (H2 전용)
             em.createNativeQuery("SET REFERENTIAL_INTEGRITY TRUE").executeUpdate();
 
             // 트랜잭션 커밋
@@ -92,7 +98,19 @@ public class DatabaseCleanupExtension implements AfterEachCallback {
                 txManager.rollback(txStatus);
             }
             log.error("데이터베이스 정리 중 오류 발생", e);
+            throw e; // 테스트 실패로 처리
         }
+    }
+
+    /**
+     * Listener의 실행 순서 (낮을수록 먼저 실행)
+     * 
+     * 기본값: Ordered.LOWEST_PRECEDENCE (가장 나중에 실행)
+     * 다른 Listener들이 모두 실행된 후 정리하도록 함
+     */
+    @Override
+    public int getOrder() {
+        return LOWEST_PRECEDENCE;
     }
 }
 
