@@ -52,19 +52,41 @@ describe("SettingsPageClient", () => {
       uuid: "family-1",
       name: "김씨네 가족",
       monthlyBudget: 1000000,
-      members: [{ uuid: "user-1", name: "김철수", email: "kim@test.com" }],
+      members: [
+        {
+          uuid: "user-1",
+          userUuid: "user-1",
+          userName: "김철수",
+          userEmail: "kim@test.com",
+          role: "member",
+        },
+      ],
       categories: [],
       expenseCount: 10,
+      memberCount: 1,
+      categoryCount: 0,
       createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
     },
     {
       uuid: "family-2",
       name: "이씨네 가족",
       monthlyBudget: 2000000,
-      members: [{ uuid: "user-2", name: "이영희", email: "lee@test.com" }],
+      members: [
+        {
+          uuid: "user-2",
+          userUuid: "user-2",
+          userName: "이영희",
+          userEmail: "lee@test.com",
+          role: "member",
+        },
+      ],
       categories: [],
       expenseCount: 5,
+      memberCount: 1,
+      categoryCount: 0,
       createdAt: "2024-01-02T00:00:00Z",
+      updatedAt: "2024-01-02T00:00:00Z",
     },
     {
       uuid: "family-3",
@@ -73,7 +95,10 @@ describe("SettingsPageClient", () => {
       members: [],
       categories: [],
       expenseCount: 0,
+      memberCount: 0,
+      categoryCount: 0,
       createdAt: "2024-01-03T00:00:00Z",
+      updatedAt: "2024-01-03T00:00:00Z",
     },
   ];
 
@@ -240,7 +265,10 @@ describe("SettingsPageClient", () => {
           members: [],
           categories: [],
           expenseCount: 10,
+          memberCount: 1,
+          categoryCount: 0,
           createdAt: "2024-01-01T00:00:00Z",
+          updatedAt: "2024-01-01T00:00:00Z",
         },
       });
 
