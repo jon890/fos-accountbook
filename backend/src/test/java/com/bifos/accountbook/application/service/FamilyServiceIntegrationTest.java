@@ -134,7 +134,7 @@ class FamilyServiceIntegrationTest {
     assertThat(cafeCategory.getIcon()).isEqualTo("☕");
 
     Category transportCategory = categories.stream()
-                                           .filter(c -> "교통비".equals(c.getName()))
+      .filter(c -> "교통비".equals(c.getName()))
       .findFirst()
       .orElseThrow();
     assertThat(transportCategory.getColor()).isEqualTo("#3b82f6");
