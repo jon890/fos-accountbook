@@ -199,3 +199,63 @@ public class UserProfileResponse {
 3. **Service/Repository 모킹 금지**
    - 외부 API만 모킹
    - 내부 컴포넌트는 실제 빈 사용
+
+---
+
+## 6. 코드 스타일 (Google Java Style)
+
+### 들여쓰기
+- **기본 들여쓰기**: 2 spaces
+- **연속 들여쓰기(Continuation Indent)**: 4 spaces
+- **최대 줄 길이**: 150자
+
+```java
+// ✅ 메서드 체이닝
+var opt = Optional.ofNullable(value)
+    .map(v -> v.toString())
+    .orElseThrow();
+
+User user = userRepository
+    .findByEmail(email)
+    .orElseThrow(() -> new UserNotFoundException());
+
+// ✅ 긴 파라미터
+public void someMethod(
+    String firstParameter,
+    String secondParameter,
+    String thirdParameter) {
+  // 메서드 본문 (2 spaces)
+}
+```
+
+### 중괄호
+- 모든 제어문(if, for, while)에서 중괄호 필수
+- K&R 스타일
+
+```java
+// ✅ 올바른 예시
+if (condition) {
+  doSomething();
+}
+
+// ❌ 잘못된 예시
+if (condition)
+  doSomething();
+```
+
+### 메서드 체이닝
+- `.`은 새 줄의 시작 부분에
+- 연속 들여쓰기 4 spaces 적용
+
+```java
+// ✅ 올바른 예시
+list.stream()
+    .filter(x -> x > 0)
+    .map(x -> x * 2)
+    .collect(Collectors.toList());
+```
+
+### Checkstyle
+- Google Java Style 기반 Checkstyle 적용
+- 빌드 시 자동 검사
+- 위치: `config/checkstyle/google_checks.xml`

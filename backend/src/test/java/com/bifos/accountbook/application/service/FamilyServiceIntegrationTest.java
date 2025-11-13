@@ -7,6 +7,7 @@ import com.bifos.accountbook.common.TestFixtures;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.CategoryRepository;
+import com.bifos.accountbook.domain.value.CategoryStatus;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,225 +30,225 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("FamilyService 통합 테스트")
 class FamilyServiceIntegrationTest {
 
-    @Autowired
-    private ApplicationContext applicationContext;
+  @Autowired
+  private ApplicationContext applicationContext;
 
-    @Autowired
-    private FamilyService familyService;
+  @Autowired
+  private FamilyService familyService;
 
-    @Autowired
-    private CategoryRepository categoryRepository;
-    
-    private TestFixtures fixtures;
+  @Autowired
+  private CategoryRepository categoryRepository;
 
-    @BeforeEach
-    void setUp() {
-        // TestFixtures 초기화
-        this.fixtures = new TestFixtures(applicationContext);
+  private TestFixtures fixtures;
+
+  @BeforeEach
+  void setUp() {
+    // TestFixtures 초기화
+    this.fixtures = new TestFixtures(applicationContext);
+  }
+
+  @AfterEach
+  void tearDown() {
+    // SecurityContext 정리
+    SecurityContextHolder.clearContext();
+
+    // Fixtures 캐시 정리
+    if (fixtures != null) {
+      fixtures.clear();
     }
-    
-    @AfterEach
-    void tearDown() {
-        // SecurityContext 정리
-        SecurityContextHolder.clearContext();
-        
-        // Fixtures 캐시 정리
-        if (fixtures != null) {
-            fixtures.clear();
-        }
-    }
+  }
 
-    @Test
-    @DisplayName("가족 생성 시 기본 카테고리 10개가 자동으로 생성되어야 한다")
-    void createFamily_ShouldCreateDefaultCategories() {
-        // Given: TestFixtures로 사용자 생성
-        User testUser = fixtures.getDefaultUser();
-        
-        CreateFamilyRequest request = CreateFamilyRequest.builder()
-                .name("통합테스트 가족")
-                .build();
+  @Test
+  @DisplayName("가족 생성 시 기본 카테고리 10개가 자동으로 생성되어야 한다")
+  void createFamily_ShouldCreateDefaultCategories() {
+    // Given: TestFixtures로 사용자 생성
+    User testUser = fixtures.getDefaultUser();
 
-        // When
-        FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
+    CreateFamilyRequest request = CreateFamilyRequest.builder()
+        .name("통합테스트 가족")
+        .build();
 
-        // Then
-        // 1. 가족이 정상적으로 생성되었는지 확인
-        assertThat(family).isNotNull();
-        assertThat(family.getName()).isEqualTo("통합테스트 가족");
+    // When
+    FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
 
-        // 2. 실제 데이터베이스에서 카테고리 조회
-        CustomUuid familyUuid = CustomUuid.from(family.getUuid());
-        List<Category> categories = categoryRepository.findAllByFamilyUuid(familyUuid);
+    // Then
+    // 1. 가족이 정상적으로 생성되었는지 확인
+    assertThat(family).isNotNull();
+    assertThat(family.getName()).isEqualTo("통합테스트 가족");
 
-        // 3. 기본 카테고리가 10개 생성되었는지 확인
-        assertThat(categories).hasSize(10);
+    // 2. 실제 데이터베이스에서 카테고리 조회
+    CustomUuid familyUuid = CustomUuid.from(family.getUuid());
+    List<Category> categories = categoryRepository.findAllByFamilyUuid(familyUuid);
 
-        // 4. 각 카테고리의 이름과 속성 검증
-        List<String> categoryNames = categories.stream()
-                .map(Category::getName)
-                .toList();
+    // 3. 기본 카테고리가 10개 생성되었는지 확인
+    assertThat(categories).hasSize(10);
 
-        assertThat(categoryNames).containsExactlyInAnyOrder(
-                "식비", "카페", "간식", "생활비", "교통비",
-                "쇼핑", "의료", "문화생활", "교육", "기타");
+    // 4. 각 카테고리의 이름과 속성 검증
+    List<String> categoryNames = categories.stream()
+        .map(Category::getName)
+        .toList();
 
-        // 5. 각 카테고리가 올바른 가족에 속해있는지 확인
-        categories.forEach(category -> {
-            assertThat(category.getFamilyUuid()).isEqualTo(familyUuid);
-            assertThat(category.getColor()).isNotBlank();
-            assertThat(category.getIcon()).isNotBlank();
-            assertThat(category.getStatus()).isEqualTo(com.bifos.accountbook.domain.value.CategoryStatus.ACTIVE);
-        });
-    }
+    assertThat(categoryNames).containsExactlyInAnyOrder(
+        "식비", "카페", "간식", "생활비", "교통비",
+        "쇼핑", "의료", "문화생활", "교육", "기타");
 
-    @Test
-    @DisplayName("가족 생성 시 각 카테고리가 올바른 색상과 아이콘을 가져야 한다")
-    void createFamily_ShouldCreateCategoriesWithCorrectColorsAndIcons() {
-        // Given: TestFixtures로 사용자 생성
-        User testUser = fixtures.getDefaultUser();
-        
-        CreateFamilyRequest request = CreateFamilyRequest.builder()
-                .name("카테고리 속성 테스트 가족")
-                .build();
+    // 5. 각 카테고리가 올바른 가족에 속해있는지 확인
+    categories.forEach(category -> {
+      assertThat(category.getFamilyUuid()).isEqualTo(familyUuid);
+      assertThat(category.getColor()).isNotBlank();
+      assertThat(category.getIcon()).isNotBlank();
+      assertThat(category.getStatus()).isEqualTo(CategoryStatus.ACTIVE);
+    });
+  }
 
-        // When
-        FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
+  @Test
+  @DisplayName("가족 생성 시 각 카테고리가 올바른 색상과 아이콘을 가져야 한다")
+  void createFamily_ShouldCreateCategoriesWithCorrectColorsAndIcons() {
+    // Given: TestFixtures로 사용자 생성
+    User testUser = fixtures.getDefaultUser();
 
-        // Then
-        CustomUuid familyUuid = CustomUuid.from(family.getUuid());
-        List<Category> categories = categoryRepository.findAllByFamilyUuid(familyUuid);
+    CreateFamilyRequest request = CreateFamilyRequest.builder()
+        .name("카테고리 속성 테스트 가족")
+        .build();
 
-        // 특정 카테고리의 색상과 아이콘 검증
-        Category foodCategory = categories.stream()
-                .filter(c -> "식비".equals(c.getName()))
-                .findFirst()
-                .orElseThrow();
-        assertThat(foodCategory.getColor()).isEqualTo("#ef4444");
-        assertThat(foodCategory.getIcon()).isEqualTo("🍚");
+    // When
+    FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
 
-        Category cafeCategory = categories.stream()
-                .filter(c -> "카페".equals(c.getName()))
-                .findFirst()
-                .orElseThrow();
-        assertThat(cafeCategory.getColor()).isEqualTo("#f59e0b");
-        assertThat(cafeCategory.getIcon()).isEqualTo("☕");
+    // Then
+    CustomUuid familyUuid = CustomUuid.from(family.getUuid());
+    List<Category> categories = categoryRepository.findAllByFamilyUuid(familyUuid);
 
-        Category transportCategory = categories.stream()
-                .filter(c -> "교통비".equals(c.getName()))
-                .findFirst()
-                .orElseThrow();
-        assertThat(transportCategory.getColor()).isEqualTo("#3b82f6");
-        assertThat(transportCategory.getIcon()).isEqualTo("🚗");
-    }
+    // 특정 카테고리의 색상과 아이콘 검증
+    Category foodCategory = categories.stream()
+        .filter(c -> "식비".equals(c.getName()))
+        .findFirst()
+        .orElseThrow();
+    assertThat(foodCategory.getColor()).isEqualTo("#ef4444");
+    assertThat(foodCategory.getIcon()).isEqualTo("🍚");
 
-    @Test
-    @DisplayName("여러 가족을 생성해도 각각 독립적인 카테고리를 가져야 한다")
-    void createMultipleFamilies_ShouldHaveIndependentCategories() {
-        // Given: TestFixtures로 사용자 생성
-        User testUser = fixtures.getDefaultUser();
-        
-        CreateFamilyRequest request1 = CreateFamilyRequest.builder()
-                .name("첫 번째 가족")
-                .build();
-        CreateFamilyRequest request2 = CreateFamilyRequest.builder()
-                .name("두 번째 가족")
-                .build();
+    Category cafeCategory = categories.stream()
+        .filter(c -> "카페".equals(c.getName()))
+        .findFirst()
+        .orElseThrow();
+    assertThat(cafeCategory.getColor()).isEqualTo("#f59e0b");
+    assertThat(cafeCategory.getIcon()).isEqualTo("☕");
 
-        // When
-        FamilyResponse family1 = familyService.createFamily(testUser.getUuid(), request1);
-        FamilyResponse family2 = familyService.createFamily(testUser.getUuid(), request2);
+    Category transportCategory = categories.stream()
+        .filter(c -> "교통비".equals(c.getName()))
+        .findFirst()
+        .orElseThrow();
+    assertThat(transportCategory.getColor()).isEqualTo("#3b82f6");
+    assertThat(transportCategory.getIcon()).isEqualTo("🚗");
+  }
 
-        // Then
-        CustomUuid family1Uuid = CustomUuid.from(family1.getUuid());
-        CustomUuid family2Uuid = CustomUuid.from(family2.getUuid());
+  @Test
+  @DisplayName("여러 가족을 생성해도 각각 독립적인 카테고리를 가져야 한다")
+  void createMultipleFamilies_ShouldHaveIndependentCategories() {
+    // Given: TestFixtures로 사용자 생성
+    User testUser = fixtures.getDefaultUser();
 
-        List<Category> family1Categories = categoryRepository.findAllByFamilyUuid(family1Uuid);
-        List<Category> family2Categories = categoryRepository.findAllByFamilyUuid(family2Uuid);
+    CreateFamilyRequest request1 = CreateFamilyRequest.builder()
+        .name("첫 번째 가족")
+        .build();
+    CreateFamilyRequest request2 = CreateFamilyRequest.builder()
+        .name("두 번째 가족")
+        .build();
 
-        // 각 가족이 독립적으로 10개의 카테고리를 가져야 함
-        assertThat(family1Categories).hasSize(10);
-        assertThat(family2Categories).hasSize(10);
+    // When
+    FamilyResponse family1 = familyService.createFamily(testUser.getUuid(), request1);
+    FamilyResponse family2 = familyService.createFamily(testUser.getUuid(), request2);
 
-        // 두 가족의 카테고리 UUID는 서로 달라야 함
-        List<String> family1CategoryUuids = family1Categories.stream()
-                .map(c -> c.getUuid().getValue())
-                .toList();
-        List<String> family2CategoryUuids = family2Categories.stream()
-                .map(c -> c.getUuid().getValue())
-                .toList();
+    // Then
+    CustomUuid family1Uuid = CustomUuid.from(family1.getUuid());
+    CustomUuid family2Uuid = CustomUuid.from(family2.getUuid());
 
-        assertThat(family1CategoryUuids).doesNotContainAnyElementsOf(family2CategoryUuids);
-    }
+    List<Category> family1Categories = categoryRepository.findAllByFamilyUuid(family1Uuid);
+    List<Category> family2Categories = categoryRepository.findAllByFamilyUuid(family2Uuid);
 
-    @Test
-    @DisplayName("가족 생성 후 카테고리를 조회할 수 있어야 한다")
-    void createFamily_DefaultCategoriesShouldBeAccessible() {
-        // Given: TestFixtures로 사용자 생성
-        User testUser = fixtures.getDefaultUser();
-        
-        CreateFamilyRequest request = CreateFamilyRequest.builder()
-                .name("카테고리 조회 테스트 가족")
-                .build();
+    // 각 가족이 독립적으로 10개의 카테고리를 가져야 함
+    assertThat(family1Categories).hasSize(10);
+    assertThat(family2Categories).hasSize(10);
 
-        // When
-        FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
+    // 두 가족의 카테고리 UUID는 서로 달라야 함
+    List<String> family1CategoryUuids = family1Categories.stream()
+        .map(c -> c.getUuid().getValue())
+        .toList();
+    List<String> family2CategoryUuids = family2Categories.stream()
+        .map(c -> c.getUuid().getValue())
+        .toList();
 
-        // Then
-        CustomUuid familyUuid = CustomUuid.from(family.getUuid());
-        List<Category> categories = categoryRepository.findAllByFamilyUuid(familyUuid);
+    assertThat(family1CategoryUuids).doesNotContainAnyElementsOf(family2CategoryUuids);
+  }
 
-        // 카테고리 조회 확인
-        assertThat(categories).hasSize(10);
-        Category firstCategory = categories.get(0);
-        assertThat(firstCategory).isNotNull();
-        assertThat(firstCategory.getUuid()).isNotNull();
-        assertThat(firstCategory.getName()).isNotBlank();
-        assertThat(firstCategory.getColor()).isNotBlank();
-        assertThat(firstCategory.getIcon()).isNotBlank();
+  @Test
+  @DisplayName("가족 생성 후 카테고리를 조회할 수 있어야 한다")
+  void createFamily_DefaultCategoriesShouldBeAccessible() {
+    // Given: TestFixtures로 사용자 생성
+    User testUser = fixtures.getDefaultUser();
 
-        // UUID로 특정 카테고리 조회 테스트
-        Category foundCategory = categoryRepository.findByUuid(firstCategory.getUuid())
-                .orElseThrow();
-        assertThat(foundCategory.getUuid()).isEqualTo(firstCategory.getUuid());
-        assertThat(foundCategory.getName()).isEqualTo(firstCategory.getName());
-    }
+    CreateFamilyRequest request = CreateFamilyRequest.builder()
+        .name("카테고리 조회 테스트 가족")
+        .build();
 
-    @Test
-    @DisplayName("가족 생성 시 월 예산을 설정할 수 있다")
-    void createFamily_WithMonthlyBudget() {
-        // Given: TestFixtures로 사용자 생성
-        User testUser = fixtures.getDefaultUser();
-        
-        BigDecimal budget = new BigDecimal("1000000.00");
-        CreateFamilyRequest request = CreateFamilyRequest.builder()
-                .name("예산 설정 가족")
-                .monthlyBudget(budget)
-                .build();
+    // When
+    FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
 
-        // When
-        FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
+    // Then
+    CustomUuid familyUuid = CustomUuid.from(family.getUuid());
+    List<Category> categories = categoryRepository.findAllByFamilyUuid(familyUuid);
 
-        // Then
-        assertThat(family).isNotNull();
-        assertThat(family.getName()).isEqualTo("예산 설정 가족");
-        assertThat(family.getMonthlyBudget()).isEqualByComparingTo(budget);
-    }
+    // 카테고리 조회 확인
+    assertThat(categories).hasSize(10);
+    Category firstCategory = categories.get(0);
+    assertThat(firstCategory).isNotNull();
+    assertThat(firstCategory.getUuid()).isNotNull();
+    assertThat(firstCategory.getName()).isNotBlank();
+    assertThat(firstCategory.getColor()).isNotBlank();
+    assertThat(firstCategory.getIcon()).isNotBlank();
 
-    @Test
-    @DisplayName("가족 생성 시 월 예산을 설정하지 않으면 0으로 초기화된다")
-    void createFamily_WithoutMonthlyBudget_DefaultsToZero() {
-        // Given: TestFixtures로 사용자 생성
-        User testUser = fixtures.getDefaultUser();
-        
-        CreateFamilyRequest request = CreateFamilyRequest.builder()
-                .name("예산 미설정 가족")
-                .build();
+    // UUID로 특정 카테고리 조회 테스트
+    Category foundCategory = categoryRepository.findByUuid(firstCategory.getUuid())
+        .orElseThrow();
+    assertThat(foundCategory.getUuid()).isEqualTo(firstCategory.getUuid());
+    assertThat(foundCategory.getName()).isEqualTo(firstCategory.getName());
+  }
 
-        // When
-        FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
+  @Test
+  @DisplayName("가족 생성 시 월 예산을 설정할 수 있다")
+  void createFamily_WithMonthlyBudget() {
+    // Given: TestFixtures로 사용자 생성
+    User testUser = fixtures.getDefaultUser();
 
-        // Then
-        assertThat(family).isNotNull();
-        assertThat(family.getMonthlyBudget()).isEqualByComparingTo(BigDecimal.ZERO);
-    }
+    BigDecimal budget = new BigDecimal("1000000.00");
+    CreateFamilyRequest request = CreateFamilyRequest.builder()
+        .name("예산 설정 가족")
+        .monthlyBudget(budget)
+        .build();
+
+    // When
+    FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
+
+    // Then
+    assertThat(family).isNotNull();
+    assertThat(family.getName()).isEqualTo("예산 설정 가족");
+    assertThat(family.getMonthlyBudget()).isEqualByComparingTo(budget);
+  }
+
+  @Test
+  @DisplayName("가족 생성 시 월 예산을 설정하지 않으면 0으로 초기화된다")
+  void createFamily_WithoutMonthlyBudget_DefaultsToZero() {
+    // Given: TestFixtures로 사용자 생성
+    User testUser = fixtures.getDefaultUser();
+
+    CreateFamilyRequest request = CreateFamilyRequest.builder()
+        .name("예산 미설정 가족")
+        .build();
+
+    // When
+    FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
+
+    // Then
+    assertThat(family).isNotNull();
+    assertThat(family.getMonthlyBudget()).isEqualByComparingTo(BigDecimal.ZERO);
+  }
 }

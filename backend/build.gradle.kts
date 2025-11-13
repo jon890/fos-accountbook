@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("checkstyle")
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
 }
@@ -83,6 +84,21 @@ tasks.clean {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+// Checkstyle 설정 (Google Java Style)
+checkstyle {
+    toolVersion = "10.12.5"
+    configFile = file("${rootDir}/config/checkstyle/google_checks.xml")
+    isIgnoreFailures = false
+    maxWarnings = 0
+}
+
+tasks.withType<Checkstyle> {
+    reports {
+        xml.required.set(false)
+        html.required.set(true)
+    }
 }
 
 // Disable plain jar (only create executable boot jar)
