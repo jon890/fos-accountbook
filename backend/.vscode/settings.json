@@ -1,0 +1,57 @@
+{
+  // ============================================================================
+  // Cursor IDE / VSCode 설정
+  // ============================================================================
+  // 이 파일은 .editorconfig와 함께 작동하여 일관된 코드 스타일을 유지합니다.
+  
+  // 에디터 기본 설정
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.rulers": [156],
+  "editor.trimAutoWhitespace": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.encoding": "utf8",
+  "files.eol": "\n",
+
+  // Java 언어 서버 설정
+  "[java]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "redhat.java"
+  },
+
+  // Java 포맷팅 설정 (Language Support for Java)
+  "java.format.settings.url": ".vscode/java-formatter.xml",
+  "java.format.settings.profile": "GoogleStyle",
+  "java.format.enabled": true,
+  "java.format.comments.enabled": false,
+
+  // Import 관리
+  "java.completion.importOrder": [
+    "com.bifos",
+    "java",
+    "javax",
+    "org",
+    ""
+  ],
+
+  // 기타 Java 설정
+  "java.saveActions.organizeImports": true,
+
+  // Checkstyle 설정 (Checkstyle for Java 확장 필요)
+  "java.checkstyle.configuration": "${workspaceFolder}/config/checkstyle/google_checks.xml",
+  "java.checkstyle.version": "10.12.4",
+
+  // 추천 확장 프로그램
+  "recommendations": [
+    "redhat.java",
+    "vscjava.vscode-java-pack",
+    "vscjava.vscode-java-debug",
+    "vscjava.vscode-maven",
+    "shengchen.vscode-checkstyle"
+  ]
+}
+

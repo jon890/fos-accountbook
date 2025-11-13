@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  Google Java Style Guide 기반 포맷터 설정
+  Cursor IDE / VSCode에서 사용
+  참고: https://google.github.io/styleguide/javaguide.html
+-->
+<profiles version="13">
+  <profile kind="CodeFormatterProfile" name="GoogleStyle" version="13">
+    <!-- 들여쓰기 -->
+    <setting id="org.eclipse.jdt.core.formatter.tabulation.char" value="space"/>
+    <setting id="org.eclipse.jdt.core.formatter.tabulation.size" value="2"/>
+    <setting id="org.eclipse.jdt.core.formatter.indentation.size" value="2"/>
+    <setting id="org.eclipse.jdt.core.formatter.continuation_indentation" value="2"/>
+    <setting id="org.eclipse.jdt.core.formatter.continuation_indentation_for_array_initializer" value="2"/>
+    
+    <!-- 줄 길이 -->
+    <setting id="org.eclipse.jdt.core.formatter.lineSplit" value="156"/>
+    
+    <!-- 중괄호 스타일 (K&R) -->
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_type_declaration" value="end_of_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_method_declaration" value="end_of_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_constructor_declaration" value="end_of_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_block" value="end_of_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_block_in_case" value="end_of_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_switch" value="end_of_line"/>
+    
+    <!-- else, catch, finally 위치 -->
+    <setting id="org.eclipse.jdt.core.formatter.insert_new_line_before_catch_in_try_statement" value="do not insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_new_line_before_else_in_if_statement" value="do not insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_new_line_before_finally_in_try_statement" value="do not insert"/>
+    
+    <!-- 빈 줄 -->
+    <setting id="org.eclipse.jdt.core.formatter.blank_lines_after_package" value="1"/>
+    <setting id="org.eclipse.jdt.core.formatter.blank_lines_after_imports" value="1"/>
+    <setting id="org.eclipse.jdt.core.formatter.blank_lines_before_package" value="0"/>
+    <setting id="org.eclipse.jdt.core.formatter.blank_lines_between_type_declarations" value="1"/>
+    <setting id="org.eclipse.jdt.core.formatter.blank_lines_before_method" value="1"/>
+    <setting id="org.eclipse.jdt.core.formatter.blank_lines_before_member_type" value="1"/>
+    
+    <!-- Import 정리 -->
+    <setting id="org.eclipse.jdt.core.formatter.blank_lines_between_import_groups" value="1"/>
+    
+    <!-- 공백 -->
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_if" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_for" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_while" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_catch" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_method_invocation" value="do not insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_method_declaration" value="do not insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_after_comma_in_method_invocation_arguments" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_after_comma_in_method_declaration_parameters" value="insert"/>
+    
+    <!-- 연산자 공백 -->
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_before_assignment_operator" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_after_assignment_operator" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_before_binary_operator" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_after_binary_operator" value="insert"/>
+    
+    <!-- 타입 캐스팅 -->
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_after_closing_paren_in_cast" value="insert"/>
+    
+    <!-- 줄바꿈 -->
+    <setting id="org.eclipse.jdt.core.formatter.alignment_for_selector_in_method_invocation" value="16"/>
+    <setting id="org.eclipse.jdt.core.formatter.wrap_before_binary_operator" value="false"/>
+    
+    <!-- JavaDoc -->
+    <setting id="org.eclipse.jdt.core.formatter.comment.format_javadoc_comments" value="false"/>
+    
+    <!-- 기타 -->
+    <setting id="org.eclipse.jdt.core.formatter.keep_simple_if_on_one_line" value="false"/>
+    <setting id="org.eclipse.jdt.core.formatter.keep_then_statement_on_same_line" value="false"/>
+    <setting id="org.eclipse.jdt.core.formatter.keep_else_statement_on_same_line" value="false"/>
+  </profile>
+</profiles>
+

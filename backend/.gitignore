@@ -26,8 +26,8 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
-# VS Code
-.vscode/
+# VS Code (프로젝트 공유 설정은 커밋)
+# .vscode/
 
 # Mac
 .DS_Store
