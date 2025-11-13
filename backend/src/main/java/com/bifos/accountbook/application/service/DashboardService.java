@@ -56,8 +56,7 @@ public class DashboardService {
         : null;
 
     // 전체 지출 합계 조회
-    BigDecimal totalExpense = dashboardRepository.getTotalExpenseAmount(
-        familyCustomUuid,
+    BigDecimal totalExpense = dashboardRepository.getTotalExpenseAmount(familyCustomUuid,
         categoryCustomUuid,
         searchRequest.getStartDate(),
         searchRequest.getEndDate());

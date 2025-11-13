@@ -202,7 +202,9 @@ public class UserProfileResponse {
 
 ---
 
-## 6. 코드 스타일 (Google Java Style)
+## 6. 코드 스타일 (Google Java Style + Naver Convention)
+
+> 참고: [네이버 핵데이 Java 코딩 컨벤션](https://naver.github.io/hackday-conventions-java/)
 
 ### 들여쓰기
 - **기본 들여쓰기**: 2 spaces
@@ -210,15 +212,6 @@ public class UserProfileResponse {
 - **최대 줄 길이**: 150자
 
 ```java
-// ✅ 메서드 체이닝
-var opt = Optional.ofNullable(value)
-    .map(v -> v.toString())
-    .orElseThrow();
-
-User user = userRepository
-    .findByEmail(email)
-    .orElseThrow(() -> new UserNotFoundException());
-
 // ✅ 긴 파라미터
 public void someMethod(
     String firstParameter,
@@ -228,34 +221,190 @@ public void someMethod(
 }
 ```
 
-### 중괄호
+### 중괄호 (K&R 스타일)
 - 모든 제어문(if, for, while)에서 중괄호 필수
-- K&R 스타일
+- 여는 중괄호 `{`는 선언문과 같은 줄에
+- 닫는 중괄호 `}`는 새로운 줄에
+- `else`, `catch`, `finally`, `while`은 닫는 중괄호와 같은 줄에
 
 ```java
 // ✅ 올바른 예시
 if (condition) {
   doSomething();
+} else {
+  doOtherThing();
+}
+
+try {
+  process();
+} catch (Exception e) {
+  handleError(e);
+} finally {
+  cleanup();
 }
 
 // ❌ 잘못된 예시
 if (condition)
-  doSomething();
+  doSomething();  // 중괄호 없음
 ```
 
 ### 메서드 체이닝
-- `.`은 새 줄의 시작 부분에
+- **`.`은 앞 줄의 끝에 위치**
 - 연속 들여쓰기 4 spaces 적용
 
 ```java
 // ✅ 올바른 예시
-list.stream()
-    .filter(x -> x > 0)
-    .map(x -> x * 2)
-    .collect(Collectors.toList());
+var opt = Optional.ofNullable(value).
+    map(v -> v.toString()).
+    orElseThrow();
+
+User user = userRepository.
+    findByEmail(email).
+    orElseThrow(() -> new UserNotFoundException());
+
+List<Integer> result = list.stream().
+    filter(x -> x > 0).
+    map(x -> x * 2).
+    collect(Collectors.toList());
+```
+
+### 이름 규칙 (Naming Convention)
+
+#### 식별자 규칙
+- 영문, 숫자, 언더스코어만 허용
+- ❌ **한국어 발음 표기 금지**
+  ```java
+  // ❌ 나쁨
+  String jibun;
+  int danwi;
+  
+  // ✅ 좋음
+  String address;
+  int unit;
+  ```
+
+#### 대문자 약어 명시
+- 2글자 약어: 모두 대문자 (예: `IO`, `UI`)
+- 3글자 이상: 첫 글자만 대문자 (예: `Xml`, `Json`, `Html`)
+
+```java
+// ✅ 올바른 예시
+IOUtils
+parseXml()
+convertJsonToMap()
+
+// ❌ 잘못된 예시
+IoUtils
+parseXML()
+convertJSONToMap()
+```
+
+#### 상수 명명 규칙
+- 대문자와 언더스코어로 구성
+- `static final`로 선언된 불변 객체
+
+```java
+public static final int MAX_SIZE = 100;
+public static final String DEFAULT_NAME = "Unknown";
+```
+
+### 선언 규칙 (Declarations)
+
+#### 제한자 순서
+```java
+// ✅ 올바른 순서
+public static final synchronized void method() { }
+private static final String CONSTANT = "value";
+```
+
+**순서**: public → protected → private → abstract → static → final → transient → volatile → synchronized → native → strictfp
+
+#### 애너테이션 선언
+- 애너테이션은 선언 후 새줄 사용
+- 파라미터 없는 애너테이션은 같은 줄에 나열 가능
+
+```java
+// ✅ 올바른 예시
+@Override
+@Deprecated
+public void method() { }
+
+@Getter @Setter @ToString
+public class User { }
+
+// ❌ 잘못된 예시
+@Override @Deprecated public void method() { }  // 파라미터 있는 애너테이션 같은 줄
+```
+
+#### import 규칙
+- static import에만 와일드카드(`*`) 허용
+- 일반 import는 개별 클래스 명시
+
+```java
+// ✅ 올바른 예시
+import static org.junit.jupiter.api.Assertions.*;
+import java.util.List;
+import java.util.ArrayList;
+
+// ❌ 잘못된 예시
+import java.util.*;  // 일반 import에 와일드카드
+```
+
+### 공백 규칙 (Whitespace)
+
+#### 제어문 키워드
+```java
+// ✅ 키워드와 여는 소괄호 사이 공백
+if (condition) { }
+for (int i = 0; i < 10; i++) { }
+while (running) { }
+```
+
+#### 연산자
+```java
+// ✅ 이항/삼항 연산자 앞뒤 공백
+int sum = a + b;
+String result = (x > 0) ? "positive" : "negative";
+
+// ✅ 단항 연산자는 공백 없음
+i++;
+!flag;
+```
+
+#### 괄호
+```java
+// ✅ 메서드 선언/호출 시 식별자와 여는 소괄호 사이 공백 없음
+public void method(int param) { }
+method(10);
+
+// ✅ 타입 캐스팅 소괄호 내부 공백 없음
+String s = (String)object;
+```
+
+### 빈 줄 (Blank Lines)
+
+```java
+// ✅ 올바른 예시
+package com.example;
+
+import java.util.List;  // package 후 빈 줄
+
+import org.springframework.stereotype.Service;  // import 그룹 사이 빈 줄
+
+public class MyService {
+  
+  public void method1() {
+    // 구현
+  }
+  
+  public void method2() {  // 메서드 사이 빈 줄
+    // 구현
+  }
+}
 ```
 
 ### Checkstyle
 - Google Java Style 기반 Checkstyle 적용
 - 빌드 시 자동 검사
 - 위치: `config/checkstyle/google_checks.xml`
+- 실행: `./gradlew checkstyleMain`

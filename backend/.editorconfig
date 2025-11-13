@@ -1,4 +1,6 @@
 # EditorConfig is awesome: https://EditorConfig.org
+# 참고: Google Java Style + 네이버 핵데이 Java 코딩 컨벤션
+# https://naver.github.io/hackday-conventions-java/
 
 # top-most EditorConfig file
 root = true
@@ -10,12 +12,15 @@ end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-# Java files - Google Style
+# Java files - Google Style + Naver Convention
 [*.java]
+charset = utf-8
 indent_style = space
 indent_size = 2
 continuation_indent_size = 4
 max_line_length = 150
+insert_final_newline = true
+trim_trailing_whitespace = true
 
 # Gradle files
 [*.gradle]
