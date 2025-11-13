@@ -24,6 +24,7 @@ import java.util.Collections;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final UserService userService; // 사용자 조회
     private final JwtTokenProvider jwtTokenProvider;
 
     /**
@@ -98,9 +99,7 @@ public class AuthService {
             throw new BusinessException(ErrorCode.INVALID_TOKEN, "토큰에서 사용자 UUID를 추출할 수 없습니다");
         }
 
-        User user = userRepository.findByUuid(CustomUuid.from(userUuid))
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
-                        .addParameter("userUuid", userUuid));
+        User user = userService.getUser(CustomUuid.from(userUuid));
 
         if (user.getStatus() == UserStatus.DELETED) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND, "삭제된 사용자입니다")
@@ -115,9 +114,7 @@ public class AuthService {
      */
     @Transactional(readOnly = true)
     public AuthResponse.UserInfo getCurrentUser(String userUuid) {
-        User user = userRepository.findByUuid(CustomUuid.from(userUuid))
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
-                                .addParameter("userUuid", userUuid));
+        User user = userService.getUser(CustomUuid.from(userUuid));
 
         return AuthResponse.UserInfo.builder()
                 .id(user.getId().toString())

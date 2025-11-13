@@ -12,7 +12,6 @@ import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
-import com.bifos.accountbook.domain.repository.UserRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.domain.value.FamilyStatus;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +32,7 @@ public class FamilyService {
 
     private final FamilyRepository familyRepository;
     private final FamilyMemberRepository familyMemberRepository;
-    private final UserRepository userRepository;
+    private final UserService userService; // 사용자 조회
     private final CategoryService categoryService;
     private final FamilyValidationService familyValidationService;
     private final UserProfileService userProfileService;
@@ -47,9 +46,7 @@ public class FamilyService {
     @Transactional
     public FamilyResponse createFamily(CustomUuid userUuid, CreateFamilyRequest request) {
         // 사용자 조회
-        User user = userRepository.findByUuid(userUuid)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
-                        .addParameter("userUuid", userUuid.getValue()));
+        User user = userService.getUser(userUuid);
 
         // 가족 생성
         Family family = Family.builder()
@@ -86,9 +83,7 @@ public class FamilyService {
      */
     @Transactional(readOnly = true)
     public List<FamilyResponse> getUserFamilies(CustomUuid userUuid) {
-        User user = userRepository.findByUuid(userUuid)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
-                        .addParameter("userUuid", userUuid.getValue()));
+        User user = userService.getUser(userUuid);
 
         // 사용자가 속한 가족 멤버십 조회
         List<FamilyMember> memberships = familyMemberRepository.findAllByUserUuid(user.getUuid());

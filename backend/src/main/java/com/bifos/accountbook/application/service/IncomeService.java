@@ -10,7 +10,6 @@ import com.bifos.accountbook.application.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.Income;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.IncomeRepository;
-import com.bifos.accountbook.domain.repository.UserRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.domain.value.IncomeStatus;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +30,7 @@ public class IncomeService {
 
     private final IncomeRepository incomeRepository;
     private final CategoryService categoryService; // 카테고리 조회 (캐시 활용)
-    private final UserRepository userRepository;
+    private final UserService userService; // 사용자 조회
     private final FamilyValidationService familyValidationService;
 
     /**
@@ -43,9 +42,7 @@ public class IncomeService {
         CustomUuid categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
 
         // 사용자 확인
-        User user = userRepository.findByUuid(userUuid)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
-                        .addParameter("userUuid", userUuid.getValue()));
+        User user = userService.getUser(userUuid);
 
         // 권한 확인 + Family 엔티티 조회 (DB 조회 1번으로 최적화)
         var family = familyValidationService.validateAndGetFamily(userUuid, familyCustomUuid);

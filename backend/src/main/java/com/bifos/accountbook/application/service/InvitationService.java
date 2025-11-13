@@ -11,7 +11,6 @@ import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.repository.InvitationRepository;
-import com.bifos.accountbook.domain.repository.UserRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +30,7 @@ public class InvitationService {
         private final InvitationRepository invitationRepository;
         private final FamilyRepository familyRepository;
         private final FamilyMemberRepository familyMemberRepository;
-        private final UserRepository userRepository;
+        private final UserService userService; // 사용자 조회
         private final FamilyValidationService familyValidationService; // 가족 검증 로직
 
         private static final String TOKEN_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -47,9 +46,7 @@ public class InvitationService {
                 CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
 
                 // 권한 확인 (가족 멤버만 초대 가능)
-                User user = userRepository.findByUuid(userUuid)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
-                                                .addParameter("userUuid", userUuid.getValue()));
+                User user = userService.getUser(userUuid);
 
                 familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
@@ -118,9 +115,7 @@ public class InvitationService {
          */
         @Transactional
         public void acceptInvitation(CustomUuid userUuid, String token) {
-                User user = userRepository.findByUuid(userUuid)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
-                                                .addParameter("userUuid", userUuid.getValue()));
+                User user = userService.getUser(userUuid);
 
                 Invitation invitation = invitationRepository.findValidByToken(token, LocalDateTime.now())
                                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INVITATION_TOKEN)
@@ -154,9 +149,7 @@ public class InvitationService {
         public void deleteInvitation(CustomUuid userUuid, String invitationUuid) {
                 CustomUuid invitationCustomUuid = CustomUuid.from(invitationUuid);
 
-                User user = userRepository.findByUuid(userUuid)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
-                                                .addParameter("userUuid", userUuid.getValue()));
+                User user = userService.getUser(userUuid);
 
                 Invitation invitation = invitationRepository.findByUuid(invitationCustomUuid)
                                 .orElseThrow(() -> new BusinessException(ErrorCode.INVITATION_NOT_FOUND)
