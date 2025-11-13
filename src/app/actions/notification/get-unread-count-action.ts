@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/server/auth-helpers";
 import type { ApiResponse } from "@/lib/server/api/types";
 import type { ActionResult } from "@/lib/errors";
 import { ErrorCode } from "@/lib/errors/error-code";
+import type { UnreadCountResponse } from "@/types/actions/notification";
 
 /**
  * 가족의 읽지 않은 알림 수를 조회합니다.
@@ -17,16 +18,18 @@ export async function getUnreadCountAction(
     await requireAuth();
 
     // 백엔드 API 호출
-    const response = await serverApiClient<ApiResponse<number>>(
+    // 백엔드는 { unreadCount: number } 형태로 반환
+    const response = await serverApiClient<ApiResponse<UnreadCountResponse>>(
       `/families/${familyUuid}/notifications/unread-count`,
       {
         method: "GET",
       }
     );
 
+    // response.data는 { unreadCount: number } 형태
     return {
       success: true,
-      data: response.data ?? 0,
+      data: response.data?.unreadCount ?? 0,
     };
   } catch (error) {
     console.error("[getUnreadCountAction] Error:", error);
