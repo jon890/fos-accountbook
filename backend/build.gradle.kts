@@ -60,7 +60,7 @@ dependencies {
     testRuntimeOnly(libs.h2.database)
 
     // Awaitility for async testing
-    testImplementation("org.awaitility:awaitility:4.2.0")
+    testImplementation(libs.awaitility)
 }
 
 // QueryDSL 컴파일 설정
@@ -95,10 +95,18 @@ checkstyle {
 }
 
 tasks.withType<Checkstyle> {
+    // Generated 파일 제외 (QueryDSL Q클래스 등)
+    exclude("**/generated/**", "**/build/generated/**", "**/Q*.java")
+
     reports {
         xml.required.set(false)
         html.required.set(true)
     }
+}
+
+// checkstyleMain은 compileJava 이후에만 실행
+tasks.named("checkstyleMain") {
+    mustRunAfter(tasks.named("compileJava"))
 }
 
 // checkstyleTest 비활성화 (main 소스만 검사)
