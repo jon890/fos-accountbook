@@ -65,8 +65,8 @@ class FamilyServiceIntegrationTest {
     User testUser = fixtures.getDefaultUser();
 
     CreateFamilyRequest request = CreateFamilyRequest.builder()
-        .name("통합테스트 가족")
-        .build();
+      .name("통합테스트 가족")
+      .build();
 
     // When
     FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
@@ -85,12 +85,12 @@ class FamilyServiceIntegrationTest {
 
     // 4. 각 카테고리의 이름과 속성 검증
     List<String> categoryNames = categories.stream()
-        .map(Category::getName)
-        .toList();
+      .map(Category::getName)
+      .toList();
 
     assertThat(categoryNames).containsExactlyInAnyOrder(
-        "식비", "카페", "간식", "생활비", "교통비",
-        "쇼핑", "의료", "문화생활", "교육", "기타");
+      "식비", "카페", "간식", "생활비", "교통비",
+      "쇼핑", "의료", "문화생활", "교육", "기타");
 
     // 5. 각 카테고리가 올바른 가족에 속해있는지 확인
     categories.forEach(category -> {
@@ -108,8 +108,8 @@ class FamilyServiceIntegrationTest {
     User testUser = fixtures.getDefaultUser();
 
     CreateFamilyRequest request = CreateFamilyRequest.builder()
-        .name("카테고리 속성 테스트 가족")
-        .build();
+      .name("카테고리 속성 테스트 가족")
+      .build();
 
     // When
     FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
@@ -120,23 +120,23 @@ class FamilyServiceIntegrationTest {
 
     // 특정 카테고리의 색상과 아이콘 검증
     Category foodCategory = categories.stream()
-        .filter(c -> "식비".equals(c.getName()))
-        .findFirst()
-        .orElseThrow();
+      .filter(c -> "식비".equals(c.getName()))
+      .findFirst()
+      .orElseThrow();
     assertThat(foodCategory.getColor()).isEqualTo("#ef4444");
     assertThat(foodCategory.getIcon()).isEqualTo("🍚");
 
     Category cafeCategory = categories.stream()
-        .filter(c -> "카페".equals(c.getName()))
-        .findFirst()
-        .orElseThrow();
+      .filter(c -> "카페".equals(c.getName()))
+      .findFirst()
+      .orElseThrow();
     assertThat(cafeCategory.getColor()).isEqualTo("#f59e0b");
     assertThat(cafeCategory.getIcon()).isEqualTo("☕");
 
     Category transportCategory = categories.stream()
-        .filter(c -> "교통비".equals(c.getName()))
-        .findFirst()
-        .orElseThrow();
+                                           .filter(c -> "교통비".equals(c.getName()))
+      .findFirst()
+      .orElseThrow();
     assertThat(transportCategory.getColor()).isEqualTo("#3b82f6");
     assertThat(transportCategory.getIcon()).isEqualTo("🚗");
   }
@@ -148,11 +148,11 @@ class FamilyServiceIntegrationTest {
     User testUser = fixtures.getDefaultUser();
 
     CreateFamilyRequest request1 = CreateFamilyRequest.builder()
-        .name("첫 번째 가족")
-        .build();
+      .name("첫 번째 가족")
+      .build();
     CreateFamilyRequest request2 = CreateFamilyRequest.builder()
-        .name("두 번째 가족")
-        .build();
+      .name("두 번째 가족")
+      .build();
 
     // When
     FamilyResponse family1 = familyService.createFamily(testUser.getUuid(), request1);
@@ -171,11 +171,11 @@ class FamilyServiceIntegrationTest {
 
     // 두 가족의 카테고리 UUID는 서로 달라야 함
     List<String> family1CategoryUuids = family1Categories.stream()
-        .map(c -> c.getUuid().getValue())
-        .toList();
+      .map(c -> c.getUuid().getValue())
+      .toList();
     List<String> family2CategoryUuids = family2Categories.stream()
-        .map(c -> c.getUuid().getValue())
-        .toList();
+      .map(c -> c.getUuid().getValue())
+      .toList();
 
     assertThat(family1CategoryUuids).doesNotContainAnyElementsOf(family2CategoryUuids);
   }
@@ -187,8 +187,8 @@ class FamilyServiceIntegrationTest {
     User testUser = fixtures.getDefaultUser();
 
     CreateFamilyRequest request = CreateFamilyRequest.builder()
-        .name("카테고리 조회 테스트 가족")
-        .build();
+      .name("카테고리 조회 테스트 가족")
+      .build();
 
     // When
     FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
@@ -208,7 +208,7 @@ class FamilyServiceIntegrationTest {
 
     // UUID로 특정 카테고리 조회 테스트
     Category foundCategory = categoryRepository.findByUuid(firstCategory.getUuid())
-        .orElseThrow();
+      .orElseThrow();
     assertThat(foundCategory.getUuid()).isEqualTo(firstCategory.getUuid());
     assertThat(foundCategory.getName()).isEqualTo(firstCategory.getName());
   }
@@ -221,9 +221,9 @@ class FamilyServiceIntegrationTest {
 
     BigDecimal budget = new BigDecimal("1000000.00");
     CreateFamilyRequest request = CreateFamilyRequest.builder()
-        .name("예산 설정 가족")
-        .monthlyBudget(budget)
-        .build();
+      .name("예산 설정 가족")
+      .monthlyBudget(budget)
+      .build();
 
     // When
     FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
@@ -241,8 +241,8 @@ class FamilyServiceIntegrationTest {
     User testUser = fixtures.getDefaultUser();
 
     CreateFamilyRequest request = CreateFamilyRequest.builder()
-        .name("예산 미설정 가족")
-        .build();
+      .name("예산 미설정 가족")
+      .build();
 
     // When
     FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);

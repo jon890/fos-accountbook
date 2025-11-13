@@ -408,3 +408,51 @@ public class MyService {
 - 빌드 시 자동 검사
 - 위치: `config/checkstyle/google_checks.xml`
 - 실행: `./gradlew checkstyleMain`
+
+---
+
+## 7. IntelliJ IDEA 설정
+
+### 메서드 체이닝 스타일 설정
+
+메서드 체이닝에서 `.`이 앞 줄 끝에 오도록 설정:
+
+1. `File > Settings > Editor > Code Style > Java` (Mac: `Preferences > Editor > Code Style > Java`)
+2. `Wrapping and Braces` 탭 선택
+3. `Chained method calls` 항목 찾기
+4. 다음과 같이 설정:
+   - **Wrap if long**: 선택
+   - **Wrap first call**: 선택 해제
+   - **Align when multiline**: 선택 해제
+   - **Take '.' on new line**: **선택 해제** ⚠️ 중요!
+
+또는 XML 설정:
+
+`File > Settings > Editor > Code Style > Java > ⚙️ > Export > IntelliJ IDEA code style XML`
+
+```xml
+<code_scheme name="Project" version="173">
+  <JavaCodeStyleSettings>
+    <option name="METHOD_CALL_CHAIN_WRAP" value="5" />
+  </JavaCodeStyleSettings>
+  <codeStyleSettings language="JAVA">
+    <option name="METHOD_CALL_CHAIN_WRAP" value="5" />
+    <option name="WRAP_FIRST_METHOD_IN_CALL_CHAIN" value="false" />
+  </codeStyleSettings>
+</code_scheme>
+```
+
+### 적용 방법
+
+1. **수동 포맷팅**: `Cmd + Option + L` (Mac) / `Ctrl + Alt + L` (Windows/Linux)
+2. **자동 포맷팅**: `File > Settings > Tools > Actions on Save` → `Reformat code` 선택
+
+### 결과 예시
+
+```java
+// ✅ 설정 후 포맷팅 결과
+Category transportCategory = categories.stream().
+    filter(c -> "교통비".equals(c.getName())).
+    findFirst().
+    orElse(null);
+```
