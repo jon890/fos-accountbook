@@ -21,13 +21,20 @@ import org.springframework.test.context.TestExecutionListeners;
  * <pre>{@code
  * @FosSpringBootTest
  * class MyControllerTest {
- *     @RegisterExtension
- *     TestUserHolder testUserHolder = new TestUserHolder();
+ *     @Autowired
+ *     ApplicationContext applicationContext;
+ *
+ *     TestFixtures fixtures;
+ *
+ *     @BeforeEach
+ *     void setUp() {
+ *         fixtures = new TestFixtures(applicationContext);
+ *     }
  *
  *     @Test
  *     void test() {
- *         Family family = testUserHolder.getFamily();
- *         Category category = testUserHolder.getCategory();
+ *         Family family = fixtures.families.family().build();
+ *         Category category = fixtures.categories.category(family).build();
  *         // 테스트 로직
  *     }
  * }
@@ -43,7 +50,7 @@ import org.springframework.test.context.TestExecutionListeners;
  *
  * @see SpringBootTest
  * @see DatabaseCleanupListener
- * @see TestUserHolder
+ * @see TestFixtures
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

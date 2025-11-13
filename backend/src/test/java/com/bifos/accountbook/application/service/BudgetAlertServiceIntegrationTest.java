@@ -3,8 +3,7 @@ package com.bifos.accountbook.application.service;
 import com.bifos.accountbook.application.dto.expense.CreateExpenseRequest;
 import com.bifos.accountbook.application.dto.family.CreateFamilyRequest;
 import com.bifos.accountbook.application.dto.family.FamilyResponse;
-import com.bifos.accountbook.common.FosSpringBootTest;
-import com.bifos.accountbook.common.TestFixtures;
+import com.bifos.accountbook.common.TestFixturesSupport;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Notification;
 import com.bifos.accountbook.domain.entity.User;
@@ -15,24 +14,16 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * BudgetAlertService 통합 테스트
  * 실제 지출 생성을 통해 예산 알림이 정상적으로 생성되는지 검증합니다.
  */
-@FosSpringBootTest
 @DisplayName("예산 알림 서비스 통합 테스트")
-class BudgetAlertServiceIntegrationTest {
-
-  @Autowired
-  private ApplicationContext applicationContext;
+class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
 
   @Autowired
   private ExpenseService expenseService;
@@ -42,25 +33,6 @@ class BudgetAlertServiceIntegrationTest {
 
   @Autowired
   private NotificationRepository notificationRepository;
-
-  private TestFixtures fixtures;
-
-  @BeforeEach
-  void setUp() {
-    // TestFixtures 초기화
-    this.fixtures = new TestFixtures(applicationContext);
-  }
-
-  @AfterEach
-  void tearDown() {
-    // SecurityContext 정리
-    SecurityContextHolder.clearContext();
-
-    // Fixtures 캐시 정리
-    if (fixtures != null) {
-      fixtures.clear();
-    }
-  }
 
   /**
    * 예산이 설정된 가족 + 기본 카테고리 생성 헬퍼 메서드

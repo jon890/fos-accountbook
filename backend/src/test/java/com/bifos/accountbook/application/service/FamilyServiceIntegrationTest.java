@@ -2,8 +2,7 @@ package com.bifos.accountbook.application.service;
 
 import com.bifos.accountbook.application.dto.family.CreateFamilyRequest;
 import com.bifos.accountbook.application.dto.family.FamilyResponse;
-import com.bifos.accountbook.common.FosSpringBootTest;
-import com.bifos.accountbook.common.TestFixtures;
+import com.bifos.accountbook.common.TestFixturesSupport;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.CategoryRepository;
@@ -12,49 +11,22 @@ import com.bifos.accountbook.domain.value.CustomUuid;
 import java.math.BigDecimal;
 import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * FamilyService 통합 테스트
  * 실제 데이터베이스와 함께 동작하며, 가족 생성 시 기본 카테고리가 정상적으로 생성되는지 검증합니다.
  */
-@FosSpringBootTest
 @DisplayName("FamilyService 통합 테스트")
-class FamilyServiceIntegrationTest {
-
-  @Autowired
-  private ApplicationContext applicationContext;
+class FamilyServiceIntegrationTest extends TestFixturesSupport {
 
   @Autowired
   private FamilyService familyService;
 
   @Autowired
   private CategoryRepository categoryRepository;
-
-  private TestFixtures fixtures;
-
-  @BeforeEach
-  void setUp() {
-    // TestFixtures 초기화
-    this.fixtures = new TestFixtures(applicationContext);
-  }
-
-  @AfterEach
-  void tearDown() {
-    // SecurityContext 정리
-    SecurityContextHolder.clearContext();
-
-    // Fixtures 캐시 정리
-    if (fixtures != null) {
-      fixtures.clear();
-    }
-  }
 
   @Test
   @DisplayName("가족 생성 시 기본 카테고리 10개가 자동으로 생성되어야 한다")

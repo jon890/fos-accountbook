@@ -3,22 +3,18 @@ package com.bifos.accountbook.application.service;
 import com.bifos.accountbook.application.dto.category.CategoryResponse;
 import com.bifos.accountbook.application.dto.category.CreateCategoryRequest;
 import com.bifos.accountbook.application.dto.category.UpdateCategoryRequest;
-import com.bifos.accountbook.common.FosSpringBootTest;
-import com.bifos.accountbook.common.TestFixtures;
+import com.bifos.accountbook.common.TestFixturesSupport;
 import com.bifos.accountbook.config.CacheConfig;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Family;
 import com.bifos.accountbook.domain.entity.User;
 import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
-import org.springframework.context.ApplicationContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * CategoryService 캐시 동작 검증 테스트
@@ -31,12 +27,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
  * 5. findByUuidCached 메서드의 캐시 활용 확인
  * 6. 메서드 간 캐시 재사용 확인
  */
-@FosSpringBootTest
 @DisplayName("카테고리 서비스 캐시 테스트")
-class CategoryServiceCacheTest {
-
-  @Autowired
-  private ApplicationContext applicationContext;
+class CategoryServiceCacheTest extends TestFixturesSupport {
 
   @Autowired
   private CategoryService categoryService;
@@ -44,26 +36,10 @@ class CategoryServiceCacheTest {
   @Autowired
   private CacheManager cacheManager;
 
-  private TestFixtures fixtures;
-
   @BeforeEach
-  void setUp() {
-    // TestFixtures 초기화
-    this.fixtures = new TestFixtures(applicationContext);
-
+  void clearCacheBeforeTest() {
     // 캐시 초기화
     cacheManager.getCache(CacheConfig.CATEGORIES_CACHE).clear();
-  }
-
-  @AfterEach
-  void tearDown() {
-    // SecurityContext 정리
-    SecurityContextHolder.clearContext();
-
-    // Fixtures 캐시 정리
-    if (fixtures != null) {
-      fixtures.clear();
-    }
   }
 
   @Test
@@ -72,11 +48,11 @@ class CategoryServiceCacheTest {
     // Given: TestFixtures로 데이터 생성
     User testUser = fixtures.getDefaultUser();
     Family testFamily = fixtures.getDefaultFamily();
-    Category category = fixtures.category(testFamily)
-                                .name("Test Category")
-                                .color("#ff0000")
-                                .icon("🍎")
-                                .build();
+    Category category = fixtures.categories.category(testFamily)
+                                           .name("Test Category")
+                                           .color("#ff0000")
+                                           .icon("🍎")
+                                           .build();
 
     String familyUuidStr = testFamily.getUuid().getValue();
 
@@ -134,11 +110,11 @@ class CategoryServiceCacheTest {
     // Given: TestFixtures로 데이터 생성 + 캐시 준비
     User testUser = fixtures.getDefaultUser();
     Family testFamily = fixtures.getDefaultFamily();
-    Category category = fixtures.category(testFamily)
-                                .name("Original Category")
-                                .color("#ff0000")
-                                .icon("🍎")
-                                .build();
+    Category category = fixtures.categories.category(testFamily)
+                                           .name("Original Category")
+                                           .color("#ff0000")
+                                           .icon("🍎")
+                                           .build();
 
     String familyUuidStr = testFamily.getUuid().getValue();
     categoryService.getFamilyCategories(testUser.getUuid(), familyUuidStr);
@@ -164,11 +140,11 @@ class CategoryServiceCacheTest {
     // Given: TestFixtures로 데이터 생성 + 캐시 준비
     User testUser = fixtures.getDefaultUser();
     Family testFamily = fixtures.getDefaultFamily();
-    Category category = fixtures.category(testFamily)
-                                .name("To Delete Category")
-                                .color("#ff0000")
-                                .icon("🍎")
-                                .build();
+    Category category = fixtures.categories.category(testFamily)
+                                           .name("To Delete Category")
+                                           .color("#ff0000")
+                                           .icon("🍎")
+                                           .build();
 
     String familyUuidStr = testFamily.getUuid().getValue();
     categoryService.getFamilyCategories(testUser.getUuid(), familyUuidStr);
@@ -188,10 +164,10 @@ class CategoryServiceCacheTest {
   void createDefaultCategoriesClearsCache() {
     // Given: TestFixtures로 새 가족 생성 + 캐시 준비
     User testUser = fixtures.getDefaultUser();
-    Family newFamily = fixtures.family()
-                               .name("New Family")
-                               .owner(testUser)
-                               .build();
+    Family newFamily = fixtures.families.family()
+                                        .name("New Family")
+                                        .owner(testUser)
+                                        .build();
 
     String newFamilyUuidStr = newFamily.getUuid().getValue();
     categoryService.getFamilyCategories(testUser.getUuid(), newFamilyUuidStr);
@@ -211,17 +187,17 @@ class CategoryServiceCacheTest {
   void findByUuidCachedUsesCache() {
     // Given: TestFixtures로 두 개의 카테고리 생성
     Family testFamily = fixtures.getDefaultFamily();
-    Category category1 = fixtures.category(testFamily)
-                                 .name("Category 1")
-                                 .color("#ff0000")
-                                 .icon("🍎")
-                                 .build();
+    Category category1 = fixtures.categories.category(testFamily)
+                                            .name("Category 1")
+                                            .color("#ff0000")
+                                            .icon("🍎")
+                                            .build();
 
-    Category category2 = fixtures.category(testFamily)
-                                 .name("Category 2")
-                                 .color("#00ff00")
-                                 .icon("🍏")
-                                 .build();
+    Category category2 = fixtures.categories.category(testFamily)
+                                            .name("Category 2")
+                                            .color("#00ff00")
+                                            .icon("🍏")
+                                            .build();
 
     String familyUuidStr = testFamily.getUuid().getValue();
     com.bifos.accountbook.domain.value.CustomUuid category1Uuid = category1.getUuid();
@@ -251,11 +227,11 @@ class CategoryServiceCacheTest {
     // Given: TestFixtures로 데이터 생성
     User testUser = fixtures.getDefaultUser();
     Family testFamily = fixtures.getDefaultFamily();
-    Category category = fixtures.category(testFamily)
-                                .name("Test Category")
-                                .color("#ff0000")
-                                .icon("🍎")
-                                .build();
+    Category category = fixtures.categories.category(testFamily)
+                                           .name("Test Category")
+                                           .color("#ff0000")
+                                           .icon("🍎")
+                                           .build();
 
     String familyUuidStr = testFamily.getUuid().getValue();
     com.bifos.accountbook.domain.value.CustomUuid categoryUuid = category.getUuid();
@@ -275,7 +251,7 @@ class CategoryServiceCacheTest {
 
     // Then: 동일한 캐시를 사용하여 결과 반환
     assertThat(categories).hasSize(1);
-    assertThat(categories.get(0).getUuid()).isEqualTo(categoryUuid.getValue());
+    assertThat(categories.getFirst().getUuid()).isEqualTo(categoryUuid.getValue());
   }
 }
 

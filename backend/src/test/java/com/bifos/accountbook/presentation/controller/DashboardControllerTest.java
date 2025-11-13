@@ -1,6 +1,5 @@
 package com.bifos.accountbook.presentation.controller;
 
-import com.bifos.accountbook.common.AbstractControllerTest;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Expense;
 import com.bifos.accountbook.domain.entity.Family;
@@ -46,19 +45,19 @@ class DashboardControllerTest extends AbstractControllerTest {
     // Given: 테스트 데이터 생성 (Fluent API)
     User user = fixtures.getDefaultUser();
     Family family = fixtures.getDefaultFamily();
-    Category foodCategory = fixtures.category(family).name("식비").color("#FF5733").icon("🍕").build();
-    Category transportCategory = fixtures.category(family).name("교통비").color("#3498DB").icon("🚗").build();
+    Category foodCategory = fixtures.categories.category(family).name("식비").color("#FF5733").icon("🍕").build();
+    Category transportCategory = fixtures.categories.category(family).name("교통비").color("#3498DB").icon("🚗").build();
 
     LocalDateTime now = LocalDateTime.now();
 
     // 식비 지출 3건
-    fixtures.expense(family, foodCategory).amount(BigDecimal.valueOf(15000)).date(now.minusDays(1)).build();
-    fixtures.expense(family, foodCategory).amount(BigDecimal.valueOf(20000)).date(now.minusDays(2)).build();
-    fixtures.expense(family, foodCategory).amount(BigDecimal.valueOf(25000)).date(now.minusDays(3)).build();
+    fixtures.expenses.expense(family, foodCategory).amount(BigDecimal.valueOf(15000)).date(now.minusDays(1)).build();
+    fixtures.expenses.expense(family, foodCategory).amount(BigDecimal.valueOf(20000)).date(now.minusDays(2)).build();
+    fixtures.expenses.expense(family, foodCategory).amount(BigDecimal.valueOf(25000)).date(now.minusDays(3)).build();
 
     // 교통비 지출 2건
-    fixtures.expense(family, transportCategory).amount(BigDecimal.valueOf(5000)).date(now.minusDays(1)).build();
-    fixtures.expense(family, transportCategory).amount(BigDecimal.valueOf(10000)).date(now.minusDays(2)).build();
+    fixtures.expenses.expense(family, transportCategory).amount(BigDecimal.valueOf(5000)).date(now.minusDays(1)).build();
+    fixtures.expenses.expense(family, transportCategory).amount(BigDecimal.valueOf(10000)).date(now.minusDays(2)).build();
 
     // When & Then: 대시보드 API 호출
     mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/expenses/by-category", family.getUuid().getValue())
@@ -89,8 +88,8 @@ class DashboardControllerTest extends AbstractControllerTest {
 
     LocalDateTime now = LocalDateTime.now();
 
-    fixtures.expense(family, foodCategory).amount(BigDecimal.valueOf(10000)).date(now.minusDays(1)).build();
-    fixtures.expense(family, foodCategory).amount(BigDecimal.valueOf(20000)).date(now.minusDays(10)).build(); // 오래됨
+    fixtures.expenses.expense(family, foodCategory).amount(BigDecimal.valueOf(10000)).date(now.minusDays(1)).build();
+    fixtures.expenses.expense(family, foodCategory).amount(BigDecimal.valueOf(20000)).date(now.minusDays(10)).build(); // 오래됨
 
     // When & Then: 최근 5일만 필터링
     mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/expenses/by-category", family.getUuid().getValue())
@@ -107,13 +106,13 @@ class DashboardControllerTest extends AbstractControllerTest {
   void getCategoryExpenseSummary_WithCategoryFilter() throws Exception {
     // Given: 테스트 데이터 생성 (Fluent API)
     Family family = fixtures.getDefaultFamily();
-    Category foodCategory = fixtures.category(family).name("식비").color("#FF5733").icon("🍕").build();
-    Category transportCategory = fixtures.category(family).name("교통비").color("#3498DB").icon("🚗").build();
+    Category foodCategory = fixtures.categories.category(family).name("식비").color("#FF5733").icon("🍕").build();
+    Category transportCategory = fixtures.categories.category(family).name("교통비").color("#3498DB").icon("🚗").build();
 
     LocalDateTime now = LocalDateTime.now();
 
-    fixtures.expense(family, foodCategory).amount(BigDecimal.valueOf(10000)).date(now).build();
-    fixtures.expense(family, transportCategory).amount(BigDecimal.valueOf(5000)).date(now).build();
+    fixtures.expenses.expense(family, foodCategory).amount(BigDecimal.valueOf(10000)).date(now).build();
+    fixtures.expenses.expense(family, transportCategory).amount(BigDecimal.valueOf(5000)).date(now).build();
 
     // When & Then: 식비만 조회
     mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/expenses/by-category", family.getUuid().getValue())
@@ -157,8 +156,8 @@ class DashboardControllerTest extends AbstractControllerTest {
     // Given: 테스트 데이터 생성 (Fluent API)
     User user = fixtures.getDefaultUser();
     Family family = fixtures.getDefaultFamily();
-    Category foodCategory = fixtures.category(family).name("식비").color("#FF5733").icon("🍕").build();
-    Category transportCategory = fixtures.category(family).name("교통비").color("#3498DB").icon("🚗").build();
+    Category foodCategory = fixtures.categories.category(family).name("식비").color("#FF5733").icon("🍕").build();
+    Category transportCategory = fixtures.categories.category(family).name("교통비").color("#3498DB").icon("🚗").build();
 
     LocalDateTime now = LocalDateTime.now();
     int year = now.getYear();
@@ -214,9 +213,9 @@ class DashboardControllerTest extends AbstractControllerTest {
   void getMonthlyStats_WithBudget() throws Exception {
     // Given: 테스트 데이터 생성 (Fluent API)
     User user = fixtures.getDefaultUser();
-    Family family = fixtures.family().name("우리집").budget(BigDecimal.valueOf(500000)).build(); // 50만원 예산
-    Category foodCategory = fixtures.category(family).name("식비").color("#FF5733").icon("🍕").build();
-    Category transportCategory = fixtures.category(family).name("교통비").color("#3498DB").icon("🚗").build();
+    Family family = fixtures.families.family().name("우리집").budget(BigDecimal.valueOf(500000)).build(); // 50만원 예산
+    Category foodCategory = fixtures.categories.category(family).name("식비").color("#FF5733").icon("🍕").build();
+    Category transportCategory = fixtures.categories.category(family).name("교통비").color("#3498DB").icon("🚗").build();
 
     LocalDateTime now = LocalDateTime.now();
     int year = now.getYear();
@@ -253,8 +252,8 @@ class DashboardControllerTest extends AbstractControllerTest {
   void getMonthlyStats_BudgetExceeded() throws Exception {
     // Given: 테스트 데이터 생성 (Fluent API)
     User user = fixtures.getDefaultUser();
-    Family family = fixtures.family().name("우리집").budget(BigDecimal.valueOf(100000)).build(); // 10만원 예산
-    Category foodCategory = fixtures.category(family).build();
+    Family family = fixtures.families.family().name("우리집").budget(BigDecimal.valueOf(100000)).build(); // 10만원 예산
+    Category foodCategory = fixtures.categories.category(family).build();
 
     LocalDateTime now = LocalDateTime.now();
     int year = now.getYear();

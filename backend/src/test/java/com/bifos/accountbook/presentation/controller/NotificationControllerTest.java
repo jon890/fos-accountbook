@@ -5,7 +5,6 @@ import com.bifos.accountbook.application.dto.family.CreateFamilyRequest;
 import com.bifos.accountbook.application.dto.family.FamilyResponse;
 import com.bifos.accountbook.application.service.ExpenseService;
 import com.bifos.accountbook.application.service.FamilyService;
-import com.bifos.accountbook.common.AbstractControllerTest;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.CategoryRepository;

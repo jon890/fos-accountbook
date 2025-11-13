@@ -1,7 +1,6 @@
 package com.bifos.accountbook.presentation.controller;
 
 import com.bifos.accountbook.application.dto.family.CreateFamilyRequest;
-import com.bifos.accountbook.common.AbstractControllerTest;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.entity.UserProfile;
 import com.bifos.accountbook.domain.repository.UserProfileRepository;

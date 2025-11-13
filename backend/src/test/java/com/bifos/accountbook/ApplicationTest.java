@@ -1,7 +1,7 @@
 package com.bifos.accountbook;
 
+import com.bifos.accountbook.common.FosSpringBootTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
 /**
  * Spring Application Context 초기화 테스트
@@ -12,7 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
  * - 설정 파일 오류
  * 등의 문제를 조기에 발견할 수 있습니다.
  */
-@SpringBootTest
+@FosSpringBootTest
 class ApplicationTest {
 
   /**
