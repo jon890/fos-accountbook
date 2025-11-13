@@ -2,18 +2,19 @@ package com.bifos.accountbook.application.service;
 
 import com.bifos.accountbook.application.dto.family.CreateFamilyRequest;
 import com.bifos.accountbook.application.dto.family.FamilyResponse;
+import com.bifos.accountbook.common.FosSpringBootTest;
+import com.bifos.accountbook.common.TestFixtures;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.CategoryRepository;
-import com.bifos.accountbook.domain.repository.FamilyRepository;
-import com.bifos.accountbook.domain.repository.UserRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -24,41 +25,44 @@ import static org.assertj.core.api.Assertions.assertThat;
  * FamilyService 통합 테스트
  * 실제 데이터베이스와 함께 동작하며, 가족 생성 시 기본 카테고리가 정상적으로 생성되는지 검증합니다.
  */
-@SpringBootTest
-@Transactional // 각 테스트 후 자동 롤백
+@FosSpringBootTest
 @DisplayName("FamilyService 통합 테스트")
 class FamilyServiceIntegrationTest {
+
+    @Autowired
+    private ApplicationContext applicationContext;
 
     @Autowired
     private FamilyService familyService;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private FamilyRepository familyRepository;
-
-    @Autowired
     private CategoryRepository categoryRepository;
-
-    private User testUser;
+    
+    private TestFixtures fixtures;
 
     @BeforeEach
     void setUp() {
-        // 테스트 사용자 생성
-        testUser = User.builder()
-                .email("integration-test@example.com")
-                .name("통합테스트 사용자")
-                .provider("google")
-                .providerId("integration-test-provider-id")
-                .build();
-        testUser = userRepository.save(testUser);
+        // TestFixtures 초기화
+        this.fixtures = new TestFixtures(applicationContext);
+    }
+    
+    @AfterEach
+    void tearDown() {
+        // SecurityContext 정리
+        SecurityContextHolder.clearContext();
+        
+        // Fixtures 캐시 정리
+        if (fixtures != null) {
+            fixtures.clear();
+        }
     }
 
     @Test
     @DisplayName("가족 생성 시 기본 카테고리 10개가 자동으로 생성되어야 한다")
     void createFamily_ShouldCreateDefaultCategories() {
-        // Given
+        // Given: TestFixtures로 사용자 생성
+        User testUser = fixtures.getDefaultUser();
+        
         CreateFamilyRequest request = CreateFamilyRequest.builder()
                 .name("통합테스트 가족")
                 .build();
@@ -99,7 +103,9 @@ class FamilyServiceIntegrationTest {
     @Test
     @DisplayName("가족 생성 시 각 카테고리가 올바른 색상과 아이콘을 가져야 한다")
     void createFamily_ShouldCreateCategoriesWithCorrectColorsAndIcons() {
-        // Given
+        // Given: TestFixtures로 사용자 생성
+        User testUser = fixtures.getDefaultUser();
+        
         CreateFamilyRequest request = CreateFamilyRequest.builder()
                 .name("카테고리 속성 테스트 가족")
                 .build();
@@ -137,7 +143,9 @@ class FamilyServiceIntegrationTest {
     @Test
     @DisplayName("여러 가족을 생성해도 각각 독립적인 카테고리를 가져야 한다")
     void createMultipleFamilies_ShouldHaveIndependentCategories() {
-        // Given
+        // Given: TestFixtures로 사용자 생성
+        User testUser = fixtures.getDefaultUser();
+        
         CreateFamilyRequest request1 = CreateFamilyRequest.builder()
                 .name("첫 번째 가족")
                 .build();
@@ -174,7 +182,9 @@ class FamilyServiceIntegrationTest {
     @Test
     @DisplayName("가족 생성 후 카테고리를 조회할 수 있어야 한다")
     void createFamily_DefaultCategoriesShouldBeAccessible() {
-        // Given
+        // Given: TestFixtures로 사용자 생성
+        User testUser = fixtures.getDefaultUser();
+        
         CreateFamilyRequest request = CreateFamilyRequest.builder()
                 .name("카테고리 조회 테스트 가족")
                 .build();
@@ -205,7 +215,9 @@ class FamilyServiceIntegrationTest {
     @Test
     @DisplayName("가족 생성 시 월 예산을 설정할 수 있다")
     void createFamily_WithMonthlyBudget() {
-        // Given
+        // Given: TestFixtures로 사용자 생성
+        User testUser = fixtures.getDefaultUser();
+        
         BigDecimal budget = new BigDecimal("1000000.00");
         CreateFamilyRequest request = CreateFamilyRequest.builder()
                 .name("예산 설정 가족")
@@ -224,7 +236,9 @@ class FamilyServiceIntegrationTest {
     @Test
     @DisplayName("가족 생성 시 월 예산을 설정하지 않으면 0으로 초기화된다")
     void createFamily_WithoutMonthlyBudget_DefaultsToZero() {
-        // Given
+        // Given: TestFixtures로 사용자 생성
+        User testUser = fixtures.getDefaultUser();
+        
         CreateFamilyRequest request = CreateFamilyRequest.builder()
                 .name("예산 미설정 가족")
                 .build();
