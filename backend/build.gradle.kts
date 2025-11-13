@@ -25,40 +25,40 @@ repositories {
 dependencies {
     // Spring Boot Starters (Bundle 사용)
     implementation(libs.bundles.spring.boot.starters)
-    
+
     // Database
     runtimeOnly(libs.mysql.connector.j)
     implementation(libs.bundles.flyway)
-    
+
     // SQL Logging (DataSource Proxy)
     implementation(libs.p6spy.spring.boot.starter)
-    
+
     // JWT (Bundle 사용)
     implementation(libs.jjwt.api)
     runtimeOnly(libs.bundles.jwt)
-    
+
     // OpenAPI (Swagger)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
-    
+
     // Cache
     implementation(libs.caffeine)
-    
+
     // Lombok
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
     testCompileOnly(libs.lombok)
     testAnnotationProcessor(libs.lombok)
-    
+
     // QueryDSL
     implementation("${libs.querydsl.jpa.get()}:jakarta")
     annotationProcessor("${libs.querydsl.apt.get()}:jakarta")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
-    
+
     // Test (Bundle 사용)
     testImplementation(libs.bundles.testing)
     testRuntimeOnly(libs.junit.platform.launcher)
     testRuntimeOnly(libs.h2.database)
-    
+
     // Awaitility for async testing
     testImplementation("org.awaitility:awaitility:4.2.0")
 }
@@ -98,6 +98,22 @@ tasks.withType<Checkstyle> {
     reports {
         xml.required.set(false)
         html.required.set(true)
+    }
+}
+
+// checkstyleTest 비활성화 (main 소스만 검사)
+tasks.named("checkstyleTest") {
+    enabled = false
+}
+
+// CD 환경(Railway)에서는 checkstyle 스킵, CI에서는 실행
+tasks.named("build") {
+    val isRailway = System.getenv("RAILWAY_ENVIRONMENT") != null
+    val skipCheckstyle = System.getenv("SKIP_CHECKSTYLE") == "true"
+
+    // Railway 배포 환경에서만 checkstyle 스킵
+    if (isRailway || skipCheckstyle) {
+        dependsOn.remove(tasks.named("checkstyleMain").get())
     }
 }
 

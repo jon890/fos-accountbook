@@ -38,11 +38,21 @@ jobs:
       - name: Initialize Gradle Wrapper
         run: gradle wrapper
 
+      - name: Run Checkstyle (코드 스타일 검사)
+        run: ./gradlew checkstyleMain --no-daemon
+
       - name: Run tests with Gradle
         run: ./gradlew test --no-daemon
 
       - name: Build with Gradle
-        run: ./gradlew build -x test --no-daemon
+        run: ./gradlew build -x test -x checkstyleMain --no-daemon
+
+      - name: Upload Checkstyle report
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: checkstyle-report
+          path: build/reports/checkstyle/**/*
 
       - name: Upload test results
         if: always()
