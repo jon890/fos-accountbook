@@ -113,6 +113,17 @@ public class TestFixtures {
     }
     
     /**
+     * 이름으로 카테고리 찾기 (기본 카테고리 중에서)
+     */
+    public Category findCategoryByName(Family family, String name) {
+        return categoryRepository.findAllByFamilyUuid(family.getUuid())
+                .stream()
+                .filter(c -> name.equals(c.getName()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다: " + name));
+    }
+    
+    /**
      * 캐시 초기화 (각 테스트 후 호출)
      */
     public void clear() {
@@ -361,8 +372,16 @@ public class TestFixtures {
         }
         
         public Expense build() {
-            // ⭐ ORM의 장점 활용: family.addExpense() 편의 메서드 사용
-            Expense expense = family.addExpense(amount, category.getUuid(), user.getUuid(), description, date);
+            // Expense 직접 생성 (@Transactional 없이도 동작)
+            Expense expense = Expense.builder()
+                    .family(family)
+                    .categoryUuid(category.getUuid())
+                    .userUuid(user.getUuid())
+                    .amount(amount)
+                    .description(description)
+                    .date(date)
+                    .status(ExpenseStatus.ACTIVE)
+                    .build();
             return expenseRepository.save(expense);
         }
     }
@@ -409,8 +428,15 @@ public class TestFixtures {
         }
         
         public Income build() {
-            // ⭐ ORM의 장점 활용: family.addIncome() 편의 메서드 사용
-            Income income = family.addIncome(amount, category.getUuid(), user.getUuid(), description, date);
+            // Income 직접 생성 (@Transactional 없이도 동작)
+            Income income = Income.builder()
+                    .family(family)
+                    .categoryUuid(category.getUuid())
+                    .userUuid(user.getUuid())
+                    .amount(amount)
+                    .description(description)
+                    .date(date)
+                    .build();
             return incomeRepository.save(income);
         }
     }

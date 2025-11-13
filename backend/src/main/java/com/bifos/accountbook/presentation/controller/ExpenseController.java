@@ -83,6 +83,7 @@ public class ExpenseController {
     @PutMapping("/{expenseUuid}")
     public ResponseEntity<ApiSuccessResponse<ExpenseResponse>> updateExpense(
             @LoginUser LoginUserDto loginUser,
+            @PathVariable String familyUuid,
             @PathVariable String expenseUuid,
             @Valid @RequestBody UpdateExpenseRequest request) {
         ExpenseResponse response = expenseService.updateExpense(loginUser.getUserUuid(), expenseUuid, request);

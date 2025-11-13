@@ -27,173 +27,173 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class InvitationService {
 
-        private final InvitationRepository invitationRepository;
-        private final FamilyRepository familyRepository;
-        private final FamilyMemberRepository familyMemberRepository;
-        private final UserService userService; // 사용자 조회
-        private final FamilyValidationService familyValidationService; // 가족 검증 로직
+    private final InvitationRepository invitationRepository;
+    private final FamilyRepository familyRepository;
+    private final FamilyMemberRepository familyMemberRepository;
+    private final UserService userService; // 사용자 조회
+    private final FamilyValidationService familyValidationService; // 가족 검증 로직
 
-        private static final String TOKEN_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        private static final int TOKEN_LENGTH = 32;
-        private static final SecureRandom RANDOM = new SecureRandom();
+    private static final String TOKEN_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    private static final int TOKEN_LENGTH = 32;
+    private static final SecureRandom RANDOM = new SecureRandom();
 
-        /**
-         * 초대장 생성
-         */
-        @Transactional
-        public InvitationResponse createInvitation(CustomUuid userUuid, String familyUuid,
-                        CreateInvitationRequest request) {
-                CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
+    /**
+     * 초대장 생성
+     */
+    @Transactional
+    public InvitationResponse createInvitation(CustomUuid userUuid, String familyUuid,
+                                               CreateInvitationRequest request) {
+        CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
 
-                // 권한 확인 (가족 멤버만 초대 가능)
-                User user = userService.getUser(userUuid);
+        // 권한 확인 (가족 멤버만 초대 가능)
+        User user = userService.getUser(userUuid);
 
-                familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
+        familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
-                Family family = familyRepository.findActiveByUuid(familyCustomUuid)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
-                                                .addParameter("familyUuid", familyUuid));
+        Family family = familyRepository.findActiveByUuid(familyCustomUuid)
+                .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
+                        .addParameter("familyUuid", familyUuid));
 
-                // 초대장 생성
-                int expirationHours = request.getExpirationHours() != null ? request.getExpirationHours() : 72; // 기본 3일
-                LocalDateTime expiresAt = LocalDateTime.now().plusHours(expirationHours);
+        // 초대장 생성
+        int expirationHours = request.getExpirationHours() != null ? request.getExpirationHours() : 72; // 기본 3일
+        LocalDateTime expiresAt = LocalDateTime.now().plusHours(expirationHours);
 
-                Invitation invitation = Invitation.builder()
-                                .familyUuid(familyCustomUuid)
-                                .inviterUserUuid(user.getUuid())
-                                .token(generateToken())
-                                .expiresAt(expiresAt)
-                                .build();
+        Invitation invitation = Invitation.builder()
+                .familyUuid(familyCustomUuid)
+                .inviterUserUuid(user.getUuid())
+                .token(generateToken())
+                .expiresAt(expiresAt)
+                .build();
 
-                invitation = invitationRepository.save(invitation);
-                log.info("Created invitation: {} for family: {} by user: {}", invitation.getUuid(), familyUuid,
-                                userUuid);
+        invitation = invitationRepository.save(invitation);
+        log.info("Created invitation: {} for family: {} by user: {}", invitation.getUuid(), familyUuid,
+                userUuid);
 
-                return InvitationResponse.fromWithFamilyName(invitation, family.getName());
+        return InvitationResponse.fromWithFamilyName(invitation, family.getName());
+    }
+
+    /**
+     * 가족의 활성 초대장 목록 조회
+     */
+    @Transactional(readOnly = true)
+    public List<InvitationResponse> getFamilyInvitations(CustomUuid userUuid, String familyUuid) {
+        CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
+
+        // 권한 확인
+        familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
+
+        Family family = familyRepository.findActiveByUuid(familyCustomUuid)
+                .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
+                        .addParameter("familyUuid", familyUuid));
+
+        List<Invitation> invitations = invitationRepository.findActiveByFamilyUuid(familyCustomUuid,
+                LocalDateTime.now());
+
+        return invitations.stream()
+                .map(inv -> InvitationResponse.fromWithFamilyName(inv, family.getName()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 초대장으로 가족 정보 조회 (공개 API - 인증 불필요)
+     */
+    @Transactional(readOnly = true)
+    public InvitationResponse getInvitationByToken(String token) {
+        Invitation invitation = invitationRepository.findValidByToken(token, LocalDateTime.now())
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INVITATION_TOKEN)
+                        .addParameter("token", token));
+
+        Family family = familyRepository.findActiveByUuid(invitation.getFamilyUuid())
+                .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
+                        .addParameter("familyUuid", invitation.getFamilyUuid().getValue()));
+
+        return InvitationResponse.fromWithFamilyName(invitation, family.getName());
+    }
+
+    /**
+     * 초대 수락
+     */
+    @Transactional
+    public void acceptInvitation(CustomUuid userUuid, String token) {
+        User user = userService.getUser(userUuid);
+
+        Invitation invitation = invitationRepository.findValidByToken(token, LocalDateTime.now())
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INVITATION_TOKEN)
+                        .addParameter("token", token));
+
+        // 이미 가족 멤버인지 확인
+        boolean alreadyMember = familyMemberRepository.existsActiveByFamilyUuidAndUserUuid(
+                invitation.getFamilyUuid(), user.getUuid());
+
+        if (alreadyMember) {
+            throw new BusinessException(ErrorCode.ALREADY_FAMILY_MEMBER)
+                    .addParameter("userUuid", userUuid.getValue())
+                    .addParameter("familyUuid", invitation.getFamilyUuid().getValue());
         }
 
-        /**
-         * 가족의 활성 초대장 목록 조회
-         */
-        @Transactional(readOnly = true)
-        public List<InvitationResponse> getFamilyInvitations(CustomUuid userUuid, String familyUuid) {
-                CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
+        // 가족 멤버로 추가
+        FamilyMember member = FamilyMember.builder()
+                .familyUuid(invitation.getFamilyUuid())
+                .userUuid(user.getUuid())
+                .role("member")
+                .build();
 
-                // 권한 확인
-                familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
+        familyMemberRepository.save(member);
+        invitation.accept();
+    }
 
-                Family family = familyRepository.findActiveByUuid(familyCustomUuid)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
-                                                .addParameter("familyUuid", familyUuid));
+    /**
+     * 초대장 삭제/취소
+     */
+    @Transactional
+    public void deleteInvitation(CustomUuid userUuid, String invitationUuid) {
+        CustomUuid invitationCustomUuid = CustomUuid.from(invitationUuid);
 
-                List<Invitation> invitations = invitationRepository.findActiveByFamilyUuid(familyCustomUuid,
-                                LocalDateTime.now());
+        User user = userService.getUser(userUuid);
 
-                return invitations.stream()
-                                .map(inv -> InvitationResponse.fromWithFamilyName(inv, family.getName()))
-                                .collect(Collectors.toList());
+        Invitation invitation = invitationRepository.findByUuid(invitationCustomUuid)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVITATION_NOT_FOUND)
+                        .addParameter("invitationUuid", invitationUuid));
+
+        // 권한 확인 (초대장 생성자 또는 가족 owner만 삭제 가능)
+        validateInvitationDeletePermission(user.getUuid(), invitation);
+
+        invitationRepository.delete(invitation);
+        log.info("Deleted invitation: {} by user: {}", invitationUuid, userUuid);
+    }
+
+    /**
+     * 랜덤 토큰 생성
+     */
+    private String generateToken() {
+        StringBuilder token = new StringBuilder(TOKEN_LENGTH);
+        for (int i = 0; i < TOKEN_LENGTH; i++) {
+            token.append(TOKEN_CHARS.charAt(RANDOM.nextInt(TOKEN_CHARS.length())));
+        }
+        return token.toString();
+    }
+
+    /**
+     * 초대장 삭제 권한 확인
+     */
+    private void validateInvitationDeletePermission(CustomUuid userUuid, Invitation invitation) {
+        // 초대장 생성자인지 확인
+        if (invitation.getInviterUserUuid().equals(userUuid)) {
+            return;
         }
 
-        /**
-         * 초대장으로 가족 정보 조회 (공개 API - 인증 불필요)
-         */
-        @Transactional(readOnly = true)
-        public InvitationResponse getInvitationByToken(String token) {
-                Invitation invitation = invitationRepository.findValidByToken(token, LocalDateTime.now())
-                                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INVITATION_TOKEN)
-                                                .addParameter("token", token));
+        // 가족 owner인지 확인
+        FamilyMember membership = familyMemberRepository.findByFamilyUuidAndUserUuid(
+                        invitation.getFamilyUuid(), userUuid)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FAMILY_MEMBER)
+                        .addParameter("userUuid", userUuid.getValue())
+                        .addParameter("familyUuid", invitation.getFamilyUuid().getValue()));
 
-                Family family = familyRepository.findActiveByUuid(invitation.getFamilyUuid())
-                                .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
-                                                .addParameter("familyUuid", invitation.getFamilyUuid().getValue()));
-
-                return InvitationResponse.fromWithFamilyName(invitation, family.getName());
+        if (!"owner".equals(membership.getRole())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "초대장을 삭제할 권한이 없습니다")
+                    .addParameter("userUuid", userUuid.getValue())
+                    .addParameter("familyUuid", invitation.getFamilyUuid().getValue())
+                    .addParameter("role", membership.getRole());
         }
-
-        /**
-         * 초대 수락
-         */
-        @Transactional
-        public void acceptInvitation(CustomUuid userUuid, String token) {
-                User user = userService.getUser(userUuid);
-
-                Invitation invitation = invitationRepository.findValidByToken(token, LocalDateTime.now())
-                                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INVITATION_TOKEN)
-                                                .addParameter("token", token));
-
-                // 이미 가족 멤버인지 확인
-                boolean alreadyMember = familyMemberRepository.existsActiveByFamilyUuidAndUserUuid(
-                                invitation.getFamilyUuid(), user.getUuid());
-
-                if (alreadyMember) {
-                        throw new BusinessException(ErrorCode.ALREADY_FAMILY_MEMBER)
-                                        .addParameter("userUuid", userUuid.getValue())
-                                        .addParameter("familyUuid", invitation.getFamilyUuid().getValue());
-                }
-
-                // 가족 멤버로 추가
-                FamilyMember member = FamilyMember.builder()
-                                .familyUuid(invitation.getFamilyUuid())
-                                .userUuid(user.getUuid())
-                                .role("member")
-                                .build();
-
-                familyMemberRepository.save(member);
-                invitation.accept();
-        }
-
-        /**
-         * 초대장 삭제/취소
-         */
-        @Transactional
-        public void deleteInvitation(CustomUuid userUuid, String invitationUuid) {
-                CustomUuid invitationCustomUuid = CustomUuid.from(invitationUuid);
-
-                User user = userService.getUser(userUuid);
-
-                Invitation invitation = invitationRepository.findByUuid(invitationCustomUuid)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.INVITATION_NOT_FOUND)
-                                                .addParameter("invitationUuid", invitationUuid));
-
-                // 권한 확인 (초대장 생성자 또는 가족 owner만 삭제 가능)
-                validateInvitationDeletePermission(user.getUuid(), invitation);
-
-                invitationRepository.delete(invitation);
-                log.info("Deleted invitation: {} by user: {}", invitationUuid, userUuid);
-        }
-
-        /**
-         * 랜덤 토큰 생성
-         */
-        private String generateToken() {
-                StringBuilder token = new StringBuilder(TOKEN_LENGTH);
-                for (int i = 0; i < TOKEN_LENGTH; i++) {
-                        token.append(TOKEN_CHARS.charAt(RANDOM.nextInt(TOKEN_CHARS.length())));
-                }
-                return token.toString();
-        }
-
-        /**
-         * 초대장 삭제 권한 확인
-         */
-        private void validateInvitationDeletePermission(CustomUuid userUuid, Invitation invitation) {
-                // 초대장 생성자인지 확인
-                if (invitation.getInviterUserUuid().equals(userUuid)) {
-                        return;
-                }
-
-                // 가족 owner인지 확인
-                FamilyMember membership = familyMemberRepository.findByFamilyUuidAndUserUuid(
-                                invitation.getFamilyUuid(), userUuid)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FAMILY_MEMBER)
-                                                .addParameter("userUuid", userUuid.getValue())
-                                                .addParameter("familyUuid", invitation.getFamilyUuid().getValue()));
-
-                if (!"owner".equals(membership.getRole())) {
-                        throw new BusinessException(ErrorCode.FORBIDDEN, "초대장을 삭제할 권한이 없습니다")
-                                        .addParameter("userUuid", userUuid.getValue())
-                                        .addParameter("familyUuid", invitation.getFamilyUuid().getValue())
-                                        .addParameter("role", membership.getRole());
-                }
-        }
+    }
 }

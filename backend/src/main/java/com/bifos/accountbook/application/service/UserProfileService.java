@@ -39,7 +39,7 @@ public class UserProfileService {
     public UserProfileResponse updateProfile(CustomUuid userUuid, UpdateUserProfileRequest request) {
         UserProfile profile = userProfileRepository.findByUserUuid(userUuid)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND, "프로필을 찾을 수 없습니다")
-                                .addParameter("userUuid", userUuid.getValue()));
+                        .addParameter("userUuid", userUuid.getValue()));
 
         // 각 필드가 null이 아닐 때만 업데이트
         if (request.getTimezone() != null) {
@@ -73,16 +73,6 @@ public class UserProfileService {
         }
 
         return UserProfileResponse.from(profile);
-    }
-
-    /**
-     * 기본 가족 조회
-     */
-    public String getDefaultFamily(CustomUuid userUuid) {
-        return userProfileRepository.findByUserUuid(userUuid)
-                .map(UserProfile::getDefaultFamilyUuid)
-                .map(CustomUuid::getValue)
-                .orElse(null);
     }
 
     /**

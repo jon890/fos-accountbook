@@ -1,22 +1,23 @@
 package com.bifos.accountbook.application.service;
 
-import com.bifos.accountbook.application.dto.expense.CreateExpenseRequest;
 import com.bifos.accountbook.application.dto.expense.ExpenseResponse;
 import com.bifos.accountbook.application.dto.expense.ExpenseSearchRequest;
 import com.bifos.accountbook.application.dto.family.CreateFamilyRequest;
 import com.bifos.accountbook.application.dto.family.FamilyResponse;
+import com.bifos.accountbook.common.FosSpringBootTest;
+import com.bifos.accountbook.common.TestFixtures;
 import com.bifos.accountbook.domain.entity.Category;
+import com.bifos.accountbook.domain.entity.Family;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.CategoryRepository;
-import com.bifos.accountbook.domain.repository.UserRepository;
+import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -28,8 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * ExpenseService 통합 테스트
  * 지출 조회 시 필터링 및 정렬이 올바르게 동작하는지 검증합니다.
  */
-@SpringBootTest
-@Transactional // 각 테스트 후 자동 롤백
+@FosSpringBootTest
 @DisplayName("ExpenseService 통합 테스트")
 class ExpenseServiceIntegrationTest {
 
@@ -40,97 +40,81 @@ class ExpenseServiceIntegrationTest {
     private FamilyService familyService;
 
     @Autowired
-    private UserRepository userRepository;
+    private ApplicationContext applicationContext;
+
+    @Autowired
+    private FamilyRepository familyRepository;
 
     @Autowired
     private CategoryRepository categoryRepository;
 
+    private TestFixtures fixtures;
+
     private User testUser;
-    private FamilyResponse testFamily;
+    private Family testFamily;
     private Category foodCategory;
     private Category cafeCategory;
     private Category transportCategory;
 
     @BeforeEach
     void setUp() {
-        // 테스트 사용자 생성
-        testUser = User.builder()
-                .email("expense-test@example.com")
-                .name("지출 테스트 사용자")
-                .provider("google")
-                .providerId("expense-test-provider-id")
-                .build();
-        testUser = userRepository.save(testUser);
+        // TestFixtures 초기화
+        fixtures = new TestFixtures(applicationContext);
 
-        // 테스트 가족 생성 (기본 카테고리 포함)
-        CreateFamilyRequest familyRequest = CreateFamilyRequest.builder()
-                .name("지출 테스트 가족")
-                .build();
-        testFamily = familyService.createFamily(testUser.getUuid(), familyRequest);
-
-        // 카테고리 조회
-        CustomUuid familyUuid = CustomUuid.from(testFamily.getUuid());
-        List<Category> categories = categoryRepository.findAllByFamilyUuid(familyUuid);
-
-        foodCategory = categories.stream()
-                .filter(c -> "식비".equals(c.getName()))
-                .findFirst()
+        // 테스트 데이터 생성
+        testUser = fixtures.getDefaultUser();
+        
+        // FamilyService를 통해 가족 생성 (기본 카테고리 자동 생성)
+        FamilyResponse familyResponse = familyService.createFamily(testUser.getUuid(), 
+            CreateFamilyRequest.builder().name("Test Family").monthlyBudget(BigDecimal.ZERO).build());
+        testFamily = familyRepository.findByUuid(CustomUuid.from(familyResponse.getUuid()))
                 .orElseThrow();
 
-        cafeCategory = categories.stream()
-                .filter(c -> "카페".equals(c.getName()))
-                .findFirst()
-                .orElseThrow();
-
-        transportCategory = categories.stream()
-                .filter(c -> "교통비".equals(c.getName()))
-                .findFirst()
-                .orElseThrow();
+        // 기본 카테고리 조회
+        foodCategory = fixtures.findCategoryByName(testFamily, "식비");
+        cafeCategory = fixtures.findCategoryByName(testFamily, "카페");
+        transportCategory = fixtures.findCategoryByName(testFamily, "교통비");
 
         // 테스트 지출 데이터 생성
         createTestExpenses();
     }
 
     private void createTestExpenses() {
+        // TestFixtures를 사용하여 5개의 테스트 지출 데이터 생성
         // 2025-01-15 - 식비 30000원
-        CreateExpenseRequest expense1 = new CreateExpenseRequest(
-                foodCategory.getUuid().getValue(),
-                BigDecimal.valueOf(30000),
-                "점심 식사",
-                LocalDateTime.of(2025, 1, 15, 12, 0));
-        expenseService.createExpense(testUser.getUuid(), testFamily.getUuid(), expense1);
+        fixtures.expense(testFamily, foodCategory)
+                .amount(BigDecimal.valueOf(30000))
+                .description("점심 식사")
+                .date(LocalDateTime.of(2025, 1, 15, 12, 0))
+                .build();
 
         // 2025-01-20 - 카페 5000원
-        CreateExpenseRequest expense2 = new CreateExpenseRequest(
-                cafeCategory.getUuid().getValue(),
-                BigDecimal.valueOf(5000),
-                "커피",
-                LocalDateTime.of(2025, 1, 20, 15, 0));
-        expenseService.createExpense(testUser.getUuid(), testFamily.getUuid(), expense2);
+        fixtures.expense(testFamily, cafeCategory)
+                .amount(BigDecimal.valueOf(5000))
+                .description("커피")
+                .date(LocalDateTime.of(2025, 1, 20, 15, 0))
+                .build();
 
         // 2025-01-25 - 식비 50000원
-        CreateExpenseRequest expense3 = new CreateExpenseRequest(
-                foodCategory.getUuid().getValue(),
-                BigDecimal.valueOf(50000),
-                "저녁 식사",
-                LocalDateTime.of(2025, 1, 25, 19, 0));
-        expenseService.createExpense(testUser.getUuid(), testFamily.getUuid(), expense3);
+        fixtures.expense(testFamily, foodCategory)
+                .amount(BigDecimal.valueOf(50000))
+                .description("저녁 식사")
+                .date(LocalDateTime.of(2025, 1, 25, 19, 0))
+                .build();
 
         // 2025-02-05 - 교통비 20000원
-        CreateExpenseRequest expense4 = new CreateExpenseRequest(
-                transportCategory.getUuid().getValue(),
-                BigDecimal.valueOf(20000),
-                "택시",
-                LocalDateTime.of(2025, 2, 5, 10, 0));
-        expenseService.createExpense(testUser.getUuid(), testFamily.getUuid(), expense4);
+        fixtures.expense(testFamily, transportCategory)
+                .amount(BigDecimal.valueOf(20000))
+                .description("택시")
+                .date(LocalDateTime.of(2025, 2, 5, 10, 0))
+                .build();
 
         // 2025-02-10 - 식비 40000원
-        CreateExpenseRequest expense5 = new CreateExpenseRequest(
-                foodCategory.getUuid().getValue(),
-                BigDecimal.valueOf(40000),
-                "가족 식사",
-                LocalDateTime.of(2025, 2, 10, 18, 0));
-        expenseService.createExpense(testUser.getUuid(), testFamily.getUuid(), expense5);
+        fixtures.expense(testFamily, foodCategory)
+                .amount(BigDecimal.valueOf(40000))
+                .description("가족 식사")
+                .date(LocalDateTime.of(2025, 2, 10, 18, 0))
+                .build();
     }
 
     @Test
@@ -144,7 +128,7 @@ class ExpenseServiceIntegrationTest {
 
         // When
         Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid(), searchRequest);
+                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
 
         // Then
         assertThat(expenses.getContent()).hasSize(5);
@@ -170,7 +154,7 @@ class ExpenseServiceIntegrationTest {
 
         // When
         Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid(), searchRequest);
+                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
 
         // Then - 식비 카테고리 지출만 3개 조회되어야 함
         assertThat(expenses.getContent()).hasSize(3);
@@ -201,7 +185,7 @@ class ExpenseServiceIntegrationTest {
 
         // When
         Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid(), searchRequest);
+                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
 
         // Then - 1월 지출 3개만 조회되어야 함
         assertThat(expenses.getContent()).hasSize(3);
@@ -226,7 +210,7 @@ class ExpenseServiceIntegrationTest {
 
         // When
         Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid(), searchRequest);
+                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
 
         // Then - 4개 조회되어야 함 (1-15는 제외)
         assertThat(expenses.getContent()).hasSize(4);
@@ -250,7 +234,7 @@ class ExpenseServiceIntegrationTest {
 
         // When
         Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid(), searchRequest);
+                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
 
         // Then - 1월 지출 3개만 조회되어야 함
         assertThat(expenses.getContent()).hasSize(3);
@@ -276,7 +260,7 @@ class ExpenseServiceIntegrationTest {
 
         // When
         Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid(), searchRequest);
+                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
 
         // Then - 1월 식비 2개만 조회되어야 함
         assertThat(expenses.getContent()).hasSize(2);
@@ -301,7 +285,7 @@ class ExpenseServiceIntegrationTest {
 
         // When - 첫 번째 페이지 조회
         Page<ExpenseResponse> page1 = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid(), searchRequest1);
+                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest1);
 
         // Then
         assertThat(page1.getContent()).hasSize(2);
@@ -323,7 +307,7 @@ class ExpenseServiceIntegrationTest {
 
         // When - 두 번째 페이지 조회
         Page<ExpenseResponse> page2 = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid(), searchRequest2);
+                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest2);
 
         // Then
         assertThat(page2.getContent()).hasSize(2);
@@ -349,7 +333,7 @@ class ExpenseServiceIntegrationTest {
 
         // When
         Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid(), searchRequest);
+                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
 
         // Then
         assertThat(expenses.getContent()).isEmpty();
@@ -369,7 +353,7 @@ class ExpenseServiceIntegrationTest {
 
         // When
         Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid(), searchRequest);
+                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
 
         // Then
         assertThat(expenses.getContent()).isEmpty();
