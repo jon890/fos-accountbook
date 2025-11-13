@@ -22,10 +22,17 @@ updates:
       prefix: "chore(deps)"
       include: "scope"
     # Node.js 22 사용 중이므로 @types/node v23+ 무시
+    # Next.js 15 사용 중이므로 Next.js 16 버전 무시 (마이그레이션 가이드 참고)
     ignore:
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
         versions: [">=23.0.0"]
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+        versions: [">=16.0.0"]
+      - dependency-name: "eslint-config-next"
+        update-types: ["version-update:semver-major"]
+        versions: [">=16.0.0"]
     groups:
       # Next.js 관련 의존성을 하나의 PR로 그룹화
       nextjs:
