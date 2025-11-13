@@ -3,7 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { AddExpenseForm } from "@/components/expenses/forms/AddExpenseForm";
 import type { CategoryResponse } from "@/types/category";
 
@@ -35,6 +40,7 @@ export function ExpenseTabContent({
         <Button className="bg-blue-600 hover:bg-blue-700">+ 지출 추가</Button>
       </DialogTrigger>
       <DialogContent className="p-0 border-0 bg-transparent">
+        <DialogTitle className="sr-only">지출 추가</DialogTitle>
         <AddExpenseForm
           categories={categories}
           familyUuid={familyUuid}
