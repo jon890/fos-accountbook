@@ -68,34 +68,6 @@ public class FamilyValidationService {
     }
 
     /**
-     * 가족 멤버 여부 확인 (예외 발생 없이 boolean 반환)
-     *
-     * @param userUuid   사용자 UUID
-     * @param familyUuid 가족 UUID
-     * @return 가족 멤버 여부
-     */
-    @Transactional(readOnly = true)
-    public boolean isFamilyMember(CustomUuid userUuid, CustomUuid familyUuid) {
-        return familyMemberRepository.existsActiveByFamilyUuidAndUserUuid(
-                familyUuid, userUuid);
-    }
-
-    /**
-     * 가족 엔티티 조회
-     * JPA 연관관계 설정을 위해 사용
-     *
-     * @param familyUuid 가족 UUID
-     * @return Family 엔티티
-     * @throws BusinessException 가족을 찾을 수 없는 경우
-     */
-    @Transactional(readOnly = true)
-    public Family getFamily(CustomUuid familyUuid) {
-        return familyRepository.findByUuid(familyUuid)
-                .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
-                        .addParameter("familyUuid", familyUuid.getValue()));
-    }
-
-    /**
      * 가족 접근 권한 확인 + Family 엔티티 반환
      * 권한 확인과 엔티티 조회를 원자적으로 처리
      *
@@ -112,8 +84,7 @@ public class FamilyValidationService {
                         .addParameter("familyUuid", familyUuid.getValue()));
 
         // 2. 권한 확인
-        boolean isMember = familyMemberRepository.existsActiveByFamilyUuidAndUserUuid(
-                familyUuid, userUuid);
+        boolean isMember = familyMemberRepository.existsActiveByFamilyUuidAndUserUuid(familyUuid, userUuid);
 
         if (!isMember) {
             throw new BusinessException(ErrorCode.NOT_FAMILY_MEMBER)

@@ -54,15 +54,8 @@ public class ExpenseService {
         // 권한 확인 + Family 엔티티 조회 (DB 조회 1번으로 최적화)
         var family = familyValidationService.validateAndGetFamily(userUuid, familyCustomUuid);
 
-        // 카테고리 확인 (캐시 활용, DB 조회 없음)
-        CategoryResponse category = categoryService.findByUuidCached(familyUuid, categoryCustomUuid);
-
-        // 카테고리가 해당 가족의 것인지 확인
-        if (!category.getFamilyUuid().equals(familyCustomUuid.getValue())) {
-            throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 가족의 카테고리가 아닙니다")
-                    .addParameter("categoryFamilyUuid", category.getFamilyUuid())
-                    .addParameter("requestFamilyUuid", familyCustomUuid.getValue());
-        }
+        // 카테고리 확인 + 가족 소속 검증 (캐시 활용, DB 조회 없음)
+        categoryService.validateAndFindCached(familyUuid, categoryCustomUuid);
 
         // 지출 생성 (ORM 편의 메서드 활용)
         Expense expense = family.addExpense(
@@ -188,20 +181,13 @@ public class ExpenseService {
         // 이벤트 발행을 위해 기존 금액 저장
         BigDecimal oldAmount = expense.getAmount();
 
-        // 카테고리 변경 검증 (캐시 활용, DB 조회 없음)
+        // 카테고리 변경 검증 + 가족 소속 검증 (캐시 활용, DB 조회 없음)
         CustomUuid categoryCustomUuid = null;
         if (request.getCategoryUuid() != null) {
             categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
-            CategoryResponse category = categoryService.findByUuidCached(
+            categoryService.validateAndFindCached(
                     expense.getFamilyUuid().getValue(),
                     categoryCustomUuid);
-
-            // 카테고리가 해당 가족의 것인지 확인
-            if (!category.getFamilyUuid().equals(expense.getFamilyUuid().getValue())) {
-                throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 가족의 카테고리가 아닙니다")
-                        .addParameter("categoryFamilyUuid", category.getFamilyUuid())
-                        .addParameter("expenseFamilyUuid", expense.getFamilyUuid().getValue());
-            }
         }
 
         // 지출 정보 업데이트

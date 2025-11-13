@@ -50,15 +50,8 @@ public class IncomeService {
         // 권한 확인 + Family 엔티티 조회 (DB 조회 1번으로 최적화)
         var family = familyValidationService.validateAndGetFamily(userUuid, familyCustomUuid);
 
-        // 카테고리 확인 (캐시 활용, DB 조회 없음)
-        CategoryResponse category = categoryService.findByUuidCached(familyUuid, categoryCustomUuid);
-
-        // 카테고리가 해당 가족의 것인지 확인
-        if (!category.getFamilyUuid().equals(familyCustomUuid.getValue())) {
-            throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 가족의 카테고리가 아닙니다")
-                    .addParameter("categoryFamilyUuid", category.getFamilyUuid())
-                    .addParameter("requestFamilyUuid", familyCustomUuid.getValue());
-        }
+        // 카테고리 확인 + 가족 소속 검증 (캐시 활용, DB 조회 없음)
+        categoryService.validateAndFindCached(familyUuid, categoryCustomUuid);
 
         // 수입 생성 (ORM 편의 메서드 활용)
         Income income = family.addIncome(
@@ -152,20 +145,13 @@ public class IncomeService {
         // 권한 확인
         familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());
 
-        // 카테고리 변경 검증 (캐시 활용, DB 조회 없음)
+        // 카테고리 변경 검증 + 가족 소속 검증 (캐시 활용, DB 조회 없음)
         CustomUuid categoryCustomUuid = null;
         if (request.getCategoryUuid() != null) {
             categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
-            CategoryResponse category = categoryService.findByUuidCached(
+            categoryService.validateAndFindCached(
                     income.getFamilyUuid().getValue(),
                     categoryCustomUuid);
-
-            // 카테고리가 해당 가족의 것인지 확인
-            if (!category.getFamilyUuid().equals(income.getFamilyUuid().getValue())) {
-                throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 가족의 카테고리가 아닙니다")
-                        .addParameter("categoryFamilyUuid", category.getFamilyUuid())
-                        .addParameter("incomeFamilyUuid", income.getFamilyUuid().getValue());
-            }
         }
 
         // 수입 정보 업데이트
