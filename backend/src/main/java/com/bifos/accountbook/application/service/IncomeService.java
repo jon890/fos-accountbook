@@ -47,8 +47,8 @@ public class IncomeService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
                         .addParameter("userUuid", userUuid.getValue()));
 
-        // 권한 확인
-        familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
+        // 권한 확인 + Family 엔티티 조회 (DB 조회 1번으로 최적화)
+        var family = familyValidationService.validateAndGetFamily(userUuid, familyCustomUuid);
 
         // 카테고리 확인 (캐시 활용, DB 조회 없음)
         CategoryResponse category = categoryService.findByUuidCached(familyUuid, categoryCustomUuid);
@@ -59,9 +59,6 @@ public class IncomeService {
                     .addParameter("categoryFamilyUuid", category.getFamilyUuid())
                     .addParameter("requestFamilyUuid", familyCustomUuid.getValue());
         }
-
-        // 가족 엔티티 조회 (JPA 연관관계 설정을 위해)
-        var family = familyValidationService.getFamily(familyCustomUuid);
 
         // 수입 생성 (ORM 편의 메서드 활용)
         Income income = family.addIncome(

@@ -94,5 +94,34 @@ public class FamilyValidationService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
                         .addParameter("familyUuid", familyUuid.getValue()));
     }
+
+    /**
+     * 가족 접근 권한 확인 + Family 엔티티 반환
+     * 권한 확인과 엔티티 조회를 원자적으로 처리
+     *
+     * @param userUuid   사용자 UUID
+     * @param familyUuid 가족 UUID
+     * @return Family 엔티티
+     * @throws BusinessException 가족을 찾을 수 없거나 가족 멤버가 아닌 경우
+     */
+    @Transactional(readOnly = true)
+    public Family validateAndGetFamily(CustomUuid userUuid, CustomUuid familyUuid) {
+        // 1. Family 엔티티 조회
+        Family family = familyRepository.findByUuid(familyUuid)
+                .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
+                        .addParameter("familyUuid", familyUuid.getValue()));
+
+        // 2. 권한 확인
+        boolean isMember = familyMemberRepository.existsActiveByFamilyUuidAndUserUuid(
+                familyUuid, userUuid);
+
+        if (!isMember) {
+            throw new BusinessException(ErrorCode.NOT_FAMILY_MEMBER)
+                    .addParameter("userUuid", userUuid.getValue())
+                    .addParameter("familyUuid", familyUuid.getValue());
+        }
+
+        return family;
+    }
 }
 
