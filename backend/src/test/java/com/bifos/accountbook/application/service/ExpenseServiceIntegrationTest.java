@@ -12,18 +12,16 @@ import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * ExpenseService 통합 테스트
@@ -33,330 +31,330 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("ExpenseService 통합 테스트")
 class ExpenseServiceIntegrationTest {
 
-    @Autowired
-    private ExpenseService expenseService;
+  @Autowired
+  private ExpenseService expenseService;
 
-    @Autowired
-    private FamilyService familyService;
+  @Autowired
+  private FamilyService familyService;
 
-    @Autowired
-    private ApplicationContext applicationContext;
+  @Autowired
+  private ApplicationContext applicationContext;
 
-    @Autowired
-    private FamilyRepository familyRepository;
+  @Autowired
+  private FamilyRepository familyRepository;
 
-    @Autowired
-    private CategoryRepository categoryRepository;
+  @Autowired
+  private CategoryRepository categoryRepository;
 
-    private TestFixtures fixtures;
+  private TestFixtures fixtures;
 
-    private User testUser;
-    private Family testFamily;
-    private Category foodCategory;
-    private Category cafeCategory;
-    private Category transportCategory;
+  private User testUser;
+  private Family testFamily;
+  private Category foodCategory;
+  private Category cafeCategory;
+  private Category transportCategory;
 
-    @BeforeEach
-    void setUp() {
-        // TestFixtures 초기화
-        fixtures = new TestFixtures(applicationContext);
+  @BeforeEach
+  void setUp() {
+    // TestFixtures 초기화
+    fixtures = new TestFixtures(applicationContext);
 
-        // 테스트 데이터 생성
-        testUser = fixtures.getDefaultUser();
-        
-        // FamilyService를 통해 가족 생성 (기본 카테고리 자동 생성)
-        FamilyResponse familyResponse = familyService.createFamily(testUser.getUuid(), 
-            CreateFamilyRequest.builder().name("Test Family").monthlyBudget(BigDecimal.ZERO).build());
-        testFamily = familyRepository.findByUuid(CustomUuid.from(familyResponse.getUuid()))
-                .orElseThrow();
+    // 테스트 데이터 생성
+    testUser = fixtures.getDefaultUser();
 
-        // 기본 카테고리 조회
-        foodCategory = fixtures.findCategoryByName(testFamily, "식비");
-        cafeCategory = fixtures.findCategoryByName(testFamily, "카페");
-        transportCategory = fixtures.findCategoryByName(testFamily, "교통비");
+    // FamilyService를 통해 가족 생성 (기본 카테고리 자동 생성)
+    FamilyResponse familyResponse = familyService.createFamily(testUser.getUuid(),
+                                                               CreateFamilyRequest.builder().name("Test Family").monthlyBudget(BigDecimal.ZERO).build());
+    testFamily = familyRepository.findByUuid(CustomUuid.from(familyResponse.getUuid()))
+                                 .orElseThrow();
 
-        // 테스트 지출 데이터 생성
-        createTestExpenses();
-    }
+    // 기본 카테고리 조회
+    foodCategory = fixtures.findCategoryByName(testFamily, "식비");
+    cafeCategory = fixtures.findCategoryByName(testFamily, "카페");
+    transportCategory = fixtures.findCategoryByName(testFamily, "교통비");
 
-    private void createTestExpenses() {
-        // TestFixtures를 사용하여 5개의 테스트 지출 데이터 생성
-        // 2025-01-15 - 식비 30000원
-        fixtures.expense(testFamily, foodCategory)
-                .amount(BigDecimal.valueOf(30000))
-                .description("점심 식사")
-                .date(LocalDateTime.of(2025, 1, 15, 12, 0))
-                .build();
+    // 테스트 지출 데이터 생성
+    createTestExpenses();
+  }
 
-        // 2025-01-20 - 카페 5000원
-        fixtures.expense(testFamily, cafeCategory)
-                .amount(BigDecimal.valueOf(5000))
-                .description("커피")
-                .date(LocalDateTime.of(2025, 1, 20, 15, 0))
-                .build();
+  private void createTestExpenses() {
+    // TestFixtures를 사용하여 5개의 테스트 지출 데이터 생성
+    // 2025-01-15 - 식비 30000원
+    fixtures.expense(testFamily, foodCategory)
+            .amount(BigDecimal.valueOf(30000))
+            .description("점심 식사")
+            .date(LocalDateTime.of(2025, 1, 15, 12, 0))
+            .build();
 
-        // 2025-01-25 - 식비 50000원
-        fixtures.expense(testFamily, foodCategory)
-                .amount(BigDecimal.valueOf(50000))
-                .description("저녁 식사")
-                .date(LocalDateTime.of(2025, 1, 25, 19, 0))
-                .build();
+    // 2025-01-20 - 카페 5000원
+    fixtures.expense(testFamily, cafeCategory)
+            .amount(BigDecimal.valueOf(5000))
+            .description("커피")
+            .date(LocalDateTime.of(2025, 1, 20, 15, 0))
+            .build();
 
-        // 2025-02-05 - 교통비 20000원
-        fixtures.expense(testFamily, transportCategory)
-                .amount(BigDecimal.valueOf(20000))
-                .description("택시")
-                .date(LocalDateTime.of(2025, 2, 5, 10, 0))
-                .build();
+    // 2025-01-25 - 식비 50000원
+    fixtures.expense(testFamily, foodCategory)
+            .amount(BigDecimal.valueOf(50000))
+            .description("저녁 식사")
+            .date(LocalDateTime.of(2025, 1, 25, 19, 0))
+            .build();
 
-        // 2025-02-10 - 식비 40000원
-        fixtures.expense(testFamily, foodCategory)
-                .amount(BigDecimal.valueOf(40000))
-                .description("가족 식사")
-                .date(LocalDateTime.of(2025, 2, 10, 18, 0))
-                .build();
-    }
+    // 2025-02-05 - 교통비 20000원
+    fixtures.expense(testFamily, transportCategory)
+            .amount(BigDecimal.valueOf(20000))
+            .description("택시")
+            .date(LocalDateTime.of(2025, 2, 5, 10, 0))
+            .build();
 
-    @Test
-    @DisplayName("지출 조회 시 날짜 내림차순으로 정렬되어야 한다")
-    void getFamilyExpenses_ShouldBeSortedByDateDescending() {
-        // Given
-        ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
-                .page(0)
-                .size(10)
-                .build();
+    // 2025-02-10 - 식비 40000원
+    fixtures.expense(testFamily, foodCategory)
+            .amount(BigDecimal.valueOf(40000))
+            .description("가족 식사")
+            .date(LocalDateTime.of(2025, 2, 10, 18, 0))
+            .build();
+  }
 
-        // When
-        Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
+  @Test
+  @DisplayName("지출 조회 시 날짜 내림차순으로 정렬되어야 한다")
+  void getFamilyExpenses_ShouldBeSortedByDateDescending() {
+    // Given
+    ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
+                                                             .page(0)
+                                                             .size(10)
+                                                             .build();
 
-        // Then
-        assertThat(expenses.getContent()).hasSize(5);
+    // When
+    Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
+        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
 
-        // 날짜가 내림차순으로 정렬되어 있는지 확인 (최신 날짜가 먼저)
-        List<ExpenseResponse> expenseList = expenses.getContent();
-        assertThat(expenseList.get(0).getDescription()).isEqualTo("가족 식사"); // 2025-02-10
-        assertThat(expenseList.get(1).getDescription()).isEqualTo("택시"); // 2025-02-05
-        assertThat(expenseList.get(2).getDescription()).isEqualTo("저녁 식사"); // 2025-01-25
-        assertThat(expenseList.get(3).getDescription()).isEqualTo("커피"); // 2025-01-20
-        assertThat(expenseList.get(4).getDescription()).isEqualTo("점심 식사"); // 2025-01-15
-    }
+    // Then
+    assertThat(expenses.getContent()).hasSize(5);
 
-    @Test
-    @DisplayName("카테고리 필터링이 올바르게 동작해야 한다")
-    void getFamilyExpenses_ShouldFilterByCategory() {
-        // Given - 식비 카테고리로 필터링
-        ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
-                .page(0)
-                .size(10)
-                .categoryId(foodCategory.getUuid().getValue())
-                .build();
+    // 날짜가 내림차순으로 정렬되어 있는지 확인 (최신 날짜가 먼저)
+    List<ExpenseResponse> expenseList = expenses.getContent();
+    assertThat(expenseList.get(0).getDescription()).isEqualTo("가족 식사"); // 2025-02-10
+    assertThat(expenseList.get(1).getDescription()).isEqualTo("택시"); // 2025-02-05
+    assertThat(expenseList.get(2).getDescription()).isEqualTo("저녁 식사"); // 2025-01-25
+    assertThat(expenseList.get(3).getDescription()).isEqualTo("커피"); // 2025-01-20
+    assertThat(expenseList.get(4).getDescription()).isEqualTo("점심 식사"); // 2025-01-15
+  }
 
-        // When
-        Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
+  @Test
+  @DisplayName("카테고리 필터링이 올바르게 동작해야 한다")
+  void getFamilyExpenses_ShouldFilterByCategory() {
+    // Given - 식비 카테고리로 필터링
+    ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
+                                                             .page(0)
+                                                             .size(10)
+                                                             .categoryId(foodCategory.getUuid().getValue())
+                                                             .build();
 
-        // Then - 식비 카테고리 지출만 3개 조회되어야 함
-        assertThat(expenses.getContent()).hasSize(3);
-        assertThat(expenses.getTotalElements()).isEqualTo(3);
+    // When
+    Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
+        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
 
-        // 모든 지출이 식비 카테고리인지 확인
-        expenses.getContent().forEach(expense -> {
-            assertThat(expense.getCategoryUuid()).isEqualTo(foodCategory.getUuid().getValue());
-        });
+    // Then - 식비 카테고리 지출만 3개 조회되어야 함
+    assertThat(expenses.getContent()).hasSize(3);
+    assertThat(expenses.getTotalElements()).isEqualTo(3);
 
-        // 날짜 내림차순 정렬 확인
-        List<ExpenseResponse> expenseList = expenses.getContent();
-        assertThat(expenseList.get(0).getDescription()).isEqualTo("가족 식사"); // 2025-02-10
-        assertThat(expenseList.get(1).getDescription()).isEqualTo("저녁 식사"); // 2025-01-25
-        assertThat(expenseList.get(2).getDescription()).isEqualTo("점심 식사"); // 2025-01-15
-    }
+    // 모든 지출이 식비 카테고리인지 확인
+    expenses.getContent().forEach(expense -> {
+      assertThat(expense.getCategoryUuid()).isEqualTo(foodCategory.getUuid().getValue());
+    });
 
-    @Test
-    @DisplayName("날짜 범위 필터링이 올바르게 동작해야 한다")
-    void getFamilyExpenses_ShouldFilterByDateRange() {
-        // Given - 2025년 1월 지출만 조회
-        ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
-                .page(0)
-                .size(10)
-                .startDate("2025-01-01")
-                .endDate("2025-01-31")
-                .build();
+    // 날짜 내림차순 정렬 확인
+    List<ExpenseResponse> expenseList = expenses.getContent();
+    assertThat(expenseList.get(0).getDescription()).isEqualTo("가족 식사"); // 2025-02-10
+    assertThat(expenseList.get(1).getDescription()).isEqualTo("저녁 식사"); // 2025-01-25
+    assertThat(expenseList.get(2).getDescription()).isEqualTo("점심 식사"); // 2025-01-15
+  }
 
-        // When
-        Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
+  @Test
+  @DisplayName("날짜 범위 필터링이 올바르게 동작해야 한다")
+  void getFamilyExpenses_ShouldFilterByDateRange() {
+    // Given - 2025년 1월 지출만 조회
+    ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
+                                                             .page(0)
+                                                             .size(10)
+                                                             .startDate("2025-01-01")
+                                                             .endDate("2025-01-31")
+                                                             .build();
 
-        // Then - 1월 지출 3개만 조회되어야 함
-        assertThat(expenses.getContent()).hasSize(3);
-        assertThat(expenses.getTotalElements()).isEqualTo(3);
+    // When
+    Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
+        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
 
-        // 날짜 내림차순 정렬 확인
-        List<ExpenseResponse> expenseList = expenses.getContent();
-        assertThat(expenseList.get(0).getDescription()).isEqualTo("저녁 식사"); // 2025-01-25
-        assertThat(expenseList.get(1).getDescription()).isEqualTo("커피"); // 2025-01-20
-        assertThat(expenseList.get(2).getDescription()).isEqualTo("점심 식사"); // 2025-01-15
-    }
+    // Then - 1월 지출 3개만 조회되어야 함
+    assertThat(expenses.getContent()).hasSize(3);
+    assertThat(expenses.getTotalElements()).isEqualTo(3);
 
-    @Test
-    @DisplayName("시작 날짜만 지정한 경우 해당 날짜 이후 지출이 조회되어야 한다")
-    void getFamilyExpenses_ShouldFilterByStartDateOnly() {
-        // Given - 2025-01-20 이후 지출만 조회
-        ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
-                .page(0)
-                .size(10)
-                .startDate("2025-01-20")
-                .build();
+    // 날짜 내림차순 정렬 확인
+    List<ExpenseResponse> expenseList = expenses.getContent();
+    assertThat(expenseList.get(0).getDescription()).isEqualTo("저녁 식사"); // 2025-01-25
+    assertThat(expenseList.get(1).getDescription()).isEqualTo("커피"); // 2025-01-20
+    assertThat(expenseList.get(2).getDescription()).isEqualTo("점심 식사"); // 2025-01-15
+  }
 
-        // When
-        Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
+  @Test
+  @DisplayName("시작 날짜만 지정한 경우 해당 날짜 이후 지출이 조회되어야 한다")
+  void getFamilyExpenses_ShouldFilterByStartDateOnly() {
+    // Given - 2025-01-20 이후 지출만 조회
+    ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
+                                                             .page(0)
+                                                             .size(10)
+                                                             .startDate("2025-01-20")
+                                                             .build();
 
-        // Then - 4개 조회되어야 함 (1-15는 제외)
-        assertThat(expenses.getContent()).hasSize(4);
-        assertThat(expenses.getTotalElements()).isEqualTo(4);
+    // When
+    Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
+        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
 
-        // 1월 15일 지출은 포함되지 않아야 함
-        expenses.getContent().forEach(expense -> {
-            assertThat(expense.getDescription()).isNotEqualTo("점심 식사");
-        });
-    }
+    // Then - 4개 조회되어야 함 (1-15는 제외)
+    assertThat(expenses.getContent()).hasSize(4);
+    assertThat(expenses.getTotalElements()).isEqualTo(4);
 
-    @Test
-    @DisplayName("종료 날짜만 지정한 경우 해당 날짜 이전 지출이 조회되어야 한다")
-    void getFamilyExpenses_ShouldFilterByEndDateOnly() {
-        // Given - 2025-01-31 이전 지출만 조회
-        ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
-                .page(0)
-                .size(10)
-                .endDate("2025-01-31")
-                .build();
+    // 1월 15일 지출은 포함되지 않아야 함
+    expenses.getContent().forEach(expense -> {
+      assertThat(expense.getDescription()).isNotEqualTo("점심 식사");
+    });
+  }
 
-        // When
-        Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
+  @Test
+  @DisplayName("종료 날짜만 지정한 경우 해당 날짜 이전 지출이 조회되어야 한다")
+  void getFamilyExpenses_ShouldFilterByEndDateOnly() {
+    // Given - 2025-01-31 이전 지출만 조회
+    ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
+                                                             .page(0)
+                                                             .size(10)
+                                                             .endDate("2025-01-31")
+                                                             .build();
 
-        // Then - 1월 지출 3개만 조회되어야 함
-        assertThat(expenses.getContent()).hasSize(3);
-        assertThat(expenses.getTotalElements()).isEqualTo(3);
+    // When
+    Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
+        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
 
-        // 2월 지출은 포함되지 않아야 함
-        expenses.getContent().forEach(expense -> {
-            assertThat(expense.getDescription()).isNotIn("택시", "가족 식사");
-        });
-    }
+    // Then - 1월 지출 3개만 조회되어야 함
+    assertThat(expenses.getContent()).hasSize(3);
+    assertThat(expenses.getTotalElements()).isEqualTo(3);
 
-    @Test
-    @DisplayName("카테고리와 날짜 범위를 함께 필터링할 수 있어야 한다")
-    void getFamilyExpenses_ShouldFilterByCategoryAndDateRange() {
-        // Given - 1월 식비만 조회
-        ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
-                .page(0)
-                .size(10)
-                .categoryId(foodCategory.getUuid().getValue())
-                .startDate("2025-01-01")
-                .endDate("2025-01-31")
-                .build();
+    // 2월 지출은 포함되지 않아야 함
+    expenses.getContent().forEach(expense -> {
+      assertThat(expense.getDescription()).isNotIn("택시", "가족 식사");
+    });
+  }
 
-        // When
-        Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
+  @Test
+  @DisplayName("카테고리와 날짜 범위를 함께 필터링할 수 있어야 한다")
+  void getFamilyExpenses_ShouldFilterByCategoryAndDateRange() {
+    // Given - 1월 식비만 조회
+    ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
+                                                             .page(0)
+                                                             .size(10)
+                                                             .categoryId(foodCategory.getUuid().getValue())
+                                                             .startDate("2025-01-01")
+                                                             .endDate("2025-01-31")
+                                                             .build();
 
-        // Then - 1월 식비 2개만 조회되어야 함
-        assertThat(expenses.getContent()).hasSize(2);
-        assertThat(expenses.getTotalElements()).isEqualTo(2);
+    // When
+    Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
+        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
 
-        // 모두 식비 카테고리이고, 1월 지출인지 확인
-        List<ExpenseResponse> expenseList = expenses.getContent();
-        assertThat(expenseList.get(0).getDescription()).isEqualTo("저녁 식사"); // 2025-01-25
-        assertThat(expenseList.get(0).getCategoryUuid()).isEqualTo(foodCategory.getUuid().getValue());
-        assertThat(expenseList.get(1).getDescription()).isEqualTo("점심 식사"); // 2025-01-15
-        assertThat(expenseList.get(1).getCategoryUuid()).isEqualTo(foodCategory.getUuid().getValue());
-    }
+    // Then - 1월 식비 2개만 조회되어야 함
+    assertThat(expenses.getContent()).hasSize(2);
+    assertThat(expenses.getTotalElements()).isEqualTo(2);
 
-    @Test
-    @DisplayName("페이징이 올바르게 동작해야 한다")
-    void getFamilyExpenses_ShouldSupportPagination() {
-        // Given - 페이지 크기 2, 첫 번째 페이지
-        ExpenseSearchRequest searchRequest1 = ExpenseSearchRequest.builder()
-                .page(0)
-                .size(2)
-                .build();
+    // 모두 식비 카테고리이고, 1월 지출인지 확인
+    List<ExpenseResponse> expenseList = expenses.getContent();
+    assertThat(expenseList.get(0).getDescription()).isEqualTo("저녁 식사"); // 2025-01-25
+    assertThat(expenseList.get(0).getCategoryUuid()).isEqualTo(foodCategory.getUuid().getValue());
+    assertThat(expenseList.get(1).getDescription()).isEqualTo("점심 식사"); // 2025-01-15
+    assertThat(expenseList.get(1).getCategoryUuid()).isEqualTo(foodCategory.getUuid().getValue());
+  }
 
-        // When - 첫 번째 페이지 조회
-        Page<ExpenseResponse> page1 = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest1);
+  @Test
+  @DisplayName("페이징이 올바르게 동작해야 한다")
+  void getFamilyExpenses_ShouldSupportPagination() {
+    // Given - 페이지 크기 2, 첫 번째 페이지
+    ExpenseSearchRequest searchRequest1 = ExpenseSearchRequest.builder()
+                                                              .page(0)
+                                                              .size(2)
+                                                              .build();
 
-        // Then
-        assertThat(page1.getContent()).hasSize(2);
-        assertThat(page1.getTotalElements()).isEqualTo(5);
-        assertThat(page1.getTotalPages()).isEqualTo(3);
-        assertThat(page1.getNumber()).isEqualTo(0);
-        assertThat(page1.isFirst()).isTrue();
-        assertThat(page1.isLast()).isFalse();
+    // When - 첫 번째 페이지 조회
+    Page<ExpenseResponse> page1 = expenseService.getFamilyExpenses(
+        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest1);
 
-        // 최신 2개 지출인지 확인
-        assertThat(page1.getContent().get(0).getDescription()).isEqualTo("가족 식사"); // 2025-02-10
-        assertThat(page1.getContent().get(1).getDescription()).isEqualTo("택시"); // 2025-02-05
+    // Then
+    assertThat(page1.getContent()).hasSize(2);
+    assertThat(page1.getTotalElements()).isEqualTo(5);
+    assertThat(page1.getTotalPages()).isEqualTo(3);
+    assertThat(page1.getNumber()).isEqualTo(0);
+    assertThat(page1.isFirst()).isTrue();
+    assertThat(page1.isLast()).isFalse();
 
-        // Given - 두 번째 페이지
-        ExpenseSearchRequest searchRequest2 = ExpenseSearchRequest.builder()
-                .page(1)
-                .size(2)
-                .build();
+    // 최신 2개 지출인지 확인
+    assertThat(page1.getContent().get(0).getDescription()).isEqualTo("가족 식사"); // 2025-02-10
+    assertThat(page1.getContent().get(1).getDescription()).isEqualTo("택시"); // 2025-02-05
 
-        // When - 두 번째 페이지 조회
-        Page<ExpenseResponse> page2 = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest2);
+    // Given - 두 번째 페이지
+    ExpenseSearchRequest searchRequest2 = ExpenseSearchRequest.builder()
+                                                              .page(1)
+                                                              .size(2)
+                                                              .build();
 
-        // Then
-        assertThat(page2.getContent()).hasSize(2);
-        assertThat(page2.getNumber()).isEqualTo(1);
-        assertThat(page2.isFirst()).isFalse();
-        assertThat(page2.isLast()).isFalse();
+    // When - 두 번째 페이지 조회
+    Page<ExpenseResponse> page2 = expenseService.getFamilyExpenses(
+        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest2);
 
-        // 다음 2개 지출인지 확인
-        assertThat(page2.getContent().get(0).getDescription()).isEqualTo("저녁 식사"); // 2025-01-25
-        assertThat(page2.getContent().get(1).getDescription()).isEqualTo("커피"); // 2025-01-20
-    }
+    // Then
+    assertThat(page2.getContent()).hasSize(2);
+    assertThat(page2.getNumber()).isEqualTo(1);
+    assertThat(page2.isFirst()).isFalse();
+    assertThat(page2.isLast()).isFalse();
 
-    @Test
-    @DisplayName("필터 조건에 맞는 지출이 없으면 빈 결과를 반환해야 한다")
-    void getFamilyExpenses_ShouldReturnEmptyWhenNoMatch() {
-        // Given - 3월 지출 조회 (실제로는 없음)
-        ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
-                .page(0)
-                .size(10)
-                .startDate("2025-03-01")
-                .endDate("2025-03-31")
-                .build();
+    // 다음 2개 지출인지 확인
+    assertThat(page2.getContent().get(0).getDescription()).isEqualTo("저녁 식사"); // 2025-01-25
+    assertThat(page2.getContent().get(1).getDescription()).isEqualTo("커피"); // 2025-01-20
+  }
 
-        // When
-        Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
+  @Test
+  @DisplayName("필터 조건에 맞는 지출이 없으면 빈 결과를 반환해야 한다")
+  void getFamilyExpenses_ShouldReturnEmptyWhenNoMatch() {
+    // Given - 3월 지출 조회 (실제로는 없음)
+    ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
+                                                             .page(0)
+                                                             .size(10)
+                                                             .startDate("2025-03-01")
+                                                             .endDate("2025-03-31")
+                                                             .build();
 
-        // Then
-        assertThat(expenses.getContent()).isEmpty();
-        assertThat(expenses.getTotalElements()).isEqualTo(0);
-        assertThat(expenses.getTotalPages()).isEqualTo(0);
-    }
+    // When
+    Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
+        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
 
-    @Test
-    @DisplayName("존재하지 않는 카테고리로 필터링하면 빈 결과를 반환해야 한다")
-    void getFamilyExpenses_ShouldReturnEmptyWhenCategoryNotExists() {
-        // Given - 존재하지 않는 카테고리 UUID
-        ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
-                .page(0)
-                .size(10)
-                .categoryId("00000000-0000-0000-0000-000000000000")
-                .build();
+    // Then
+    assertThat(expenses.getContent()).isEmpty();
+    assertThat(expenses.getTotalElements()).isEqualTo(0);
+    assertThat(expenses.getTotalPages()).isEqualTo(0);
+  }
 
-        // When
-        Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-                testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
+  @Test
+  @DisplayName("존재하지 않는 카테고리로 필터링하면 빈 결과를 반환해야 한다")
+  void getFamilyExpenses_ShouldReturnEmptyWhenCategoryNotExists() {
+    // Given - 존재하지 않는 카테고리 UUID
+    ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
+                                                             .page(0)
+                                                             .size(10)
+                                                             .categoryId("00000000-0000-0000-0000-000000000000")
+                                                             .build();
 
-        // Then
-        assertThat(expenses.getContent()).isEmpty();
-        assertThat(expenses.getTotalElements()).isEqualTo(0);
-    }
+    // When
+    Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
+        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
+
+    // Then
+    assertThat(expenses.getContent()).isEmpty();
+    assertThat(expenses.getTotalElements()).isEqualTo(0);
+  }
 }

@@ -4,11 +4,10 @@ import com.bifos.accountbook.domain.entity.FamilyMember;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.infra.persistence.repository.jpa.FamilyMemberJpaRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
-
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
 
 /**
  * FamilyMemberRepository 구현체
@@ -18,46 +17,46 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class FamilyMemberRepositoryImpl implements FamilyMemberRepository {
 
-    private final FamilyMemberJpaRepository jpaRepository;
+  private final FamilyMemberJpaRepository jpaRepository;
 
-    @Override
-    public FamilyMember save(FamilyMember familyMember) {
-        return jpaRepository.save(familyMember);
-    }
+  @Override
+  public FamilyMember save(FamilyMember familyMember) {
+    return jpaRepository.save(familyMember);
+  }
 
-    @Override
-    public Optional<FamilyMember> findByUuid(CustomUuid uuid) {
-        return jpaRepository.findByUuid(uuid);
-    }
+  @Override
+  public Optional<FamilyMember> findByUuid(CustomUuid uuid) {
+    return jpaRepository.findByUuid(uuid);
+  }
 
-    @Override
-    public Optional<FamilyMember> findByFamilyUuidAndUserUuid(CustomUuid familyUuid, CustomUuid userUuid) {
-        return jpaRepository.findByFamilyUuidAndUserUuid(familyUuid, userUuid);
-    }
+  @Override
+  public Optional<FamilyMember> findByFamilyUuidAndUserUuid(CustomUuid familyUuid, CustomUuid userUuid) {
+    return jpaRepository.findByFamilyUuidAndUserUuid(familyUuid, userUuid);
+  }
 
-    @Override
-    public List<FamilyMember> findAllByFamilyUuid(CustomUuid familyUuid) {
-        return jpaRepository.findAllByFamilyUuid(familyUuid);
-    }
+  @Override
+  public List<FamilyMember> findAllByFamilyUuid(CustomUuid familyUuid) {
+    return jpaRepository.findAllByFamilyUuid(familyUuid);
+  }
 
-    @Override
-    public List<FamilyMember> findAllByUserUuid(CustomUuid userUuid) {
-        return jpaRepository.findAllByUserUuid(userUuid);
-    }
+  @Override
+  public List<FamilyMember> findAllByUserUuid(CustomUuid userUuid) {
+    return jpaRepository.findAllByUserUuid(userUuid);
+  }
 
-    @Override
-    public boolean existsActiveByFamilyUuidAndUserUuid(CustomUuid familyUuid, CustomUuid userUuid) {
-        return jpaRepository.existsByFamilyUuidAndUserUuidAndStatus(familyUuid, userUuid);
-    }
+  @Override
+  public boolean existsActiveByFamilyUuidAndUserUuid(CustomUuid familyUuid, CustomUuid userUuid) {
+    return jpaRepository.existsByFamilyUuidAndUserUuidAndStatus(familyUuid, userUuid);
+  }
 
-    @Override
-    public int countByFamilyUuid(CustomUuid familyUuid) {
-        return jpaRepository.countByFamilyUuid(familyUuid);
-    }
+  @Override
+  public int countByFamilyUuid(CustomUuid familyUuid) {
+    return jpaRepository.countByFamilyUuid(familyUuid);
+  }
 
-    @Override
-    public int countByUserUuid(CustomUuid userUuid) {
-        return jpaRepository.countByUserUuid(userUuid);
-    }
+  @Override
+  public int countByUserUuid(CustomUuid userUuid) {
+    return jpaRepository.countByUserUuid(userUuid);
+  }
 }
 

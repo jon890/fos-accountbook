@@ -15,16 +15,16 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserService {
 
-    private final UserRepository userRepository;
+  private final UserRepository userRepository;
 
-    /**
-     * 사용자 정보 조회
-     */
-    @Transactional(readOnly = true)
-    public User getUser(CustomUuid userUuid) {
-        return userRepository.findByUuid(userUuid)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
-                        .addParameter("userUuid", userUuid.getValue()));
-    }
+  /**
+   * 사용자 정보 조회
+   */
+  @Transactional(readOnly = true)
+  public User getUser(CustomUuid userUuid) {
+    return userRepository.findByUuid(userUuid)
+                         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
+                             .addParameter("userUuid", userUuid.getValue()));
+  }
 }
 

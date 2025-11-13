@@ -16,22 +16,22 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CategoryInfo {
 
-    private String uuid;
-    private String name;
-    private String color;
-    private String icon;
+  private String uuid;
+  private String name;
+  private String color;
+  private String icon;
 
-    public static CategoryInfo from(Category category) {
-        if (category == null) {
-            return null;
-        }
-
-        return CategoryInfo.builder()
-                .uuid(category.getUuid().getValue())
-                .name(category.getName())
-                .color(category.getColor())
-                .icon(category.getIcon())
-                .build();
+  public static CategoryInfo from(Category category) {
+    if (category == null) {
+      return null;
     }
+
+    return CategoryInfo.builder()
+                       .uuid(category.getUuid().getValue())
+                       .name(category.getName())
+                       .color(category.getColor())
+                       .icon(category.getIcon())
+                       .build();
+  }
 }
 

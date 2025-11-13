@@ -9,6 +9,8 @@ import com.bifos.accountbook.config.CacheConfig;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Family;
 import com.bifos.accountbook.domain.entity.User;
+import java.util.List;
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,13 +20,9 @@ import org.springframework.cache.CacheManager;
 import org.springframework.context.ApplicationContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 /**
  * CategoryService 캐시 동작 검증 테스트
- * 
+ *
  * 검증 항목:
  * 1. 조회 시 캐시 적용 확인
  * 2. 생성 시 캐시 무효화 확인
@@ -37,247 +35,247 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("카테고리 서비스 캐시 테스트")
 class CategoryServiceCacheTest {
 
-    @Autowired
-    private ApplicationContext applicationContext;
+  @Autowired
+  private ApplicationContext applicationContext;
 
-    @Autowired
-    private CategoryService categoryService;
+  @Autowired
+  private CategoryService categoryService;
 
-    @Autowired
-    private CacheManager cacheManager;
-    
-    private TestFixtures fixtures;
+  @Autowired
+  private CacheManager cacheManager;
 
-    @BeforeEach
-    void setUp() {
-        // TestFixtures 초기화
-        this.fixtures = new TestFixtures(applicationContext);
-        
-        // 캐시 초기화
-        cacheManager.getCache(CacheConfig.CATEGORIES_CACHE).clear();
+  private TestFixtures fixtures;
+
+  @BeforeEach
+  void setUp() {
+    // TestFixtures 초기화
+    this.fixtures = new TestFixtures(applicationContext);
+
+    // 캐시 초기화
+    cacheManager.getCache(CacheConfig.CATEGORIES_CACHE).clear();
+  }
+
+  @AfterEach
+  void tearDown() {
+    // SecurityContext 정리
+    SecurityContextHolder.clearContext();
+
+    // Fixtures 캐시 정리
+    if (fixtures != null) {
+      fixtures.clear();
     }
-    
-    @AfterEach
-    void tearDown() {
-        // SecurityContext 정리
-        SecurityContextHolder.clearContext();
-        
-        // Fixtures 캐시 정리
-        if (fixtures != null) {
-            fixtures.clear();
-        }
-    }
+  }
 
-    @Test
-    @DisplayName("카테고리 조회 시 캐시가 적용된다")
-    void getCategoriesWithCache() {
-        // Given: TestFixtures로 데이터 생성
-        User testUser = fixtures.getDefaultUser();
-        Family testFamily = fixtures.getDefaultFamily();
-        Category category = fixtures.category(testFamily)
-                .name("Test Category")
-                .color("#ff0000")
-                .icon("🍎")
-                .build();
+  @Test
+  @DisplayName("카테고리 조회 시 캐시가 적용된다")
+  void getCategoriesWithCache() {
+    // Given: TestFixtures로 데이터 생성
+    User testUser = fixtures.getDefaultUser();
+    Family testFamily = fixtures.getDefaultFamily();
+    Category category = fixtures.category(testFamily)
+                                .name("Test Category")
+                                .color("#ff0000")
+                                .icon("🍎")
+                                .build();
 
-        String familyUuidStr = testFamily.getUuid().getValue();
+    String familyUuidStr = testFamily.getUuid().getValue();
 
-        // When: 첫 번째 조회 (DB에서 조회)
-        List<CategoryResponse> firstCall = categoryService.getFamilyCategories(
-                testUser.getUuid(),
-                familyUuidStr
-        );
+    // When: 첫 번째 조회 (DB에서 조회)
+    List<CategoryResponse> firstCall = categoryService.getFamilyCategories(
+        testUser.getUuid(),
+        familyUuidStr
+    );
 
-        // Then: 캐시에 저장되어 있어야 함
-        var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
-        assertThat(cache).isNotNull();
-        assertThat(cache.get(familyUuidStr)).isNotNull();
+    // Then: 캐시에 저장되어 있어야 함
+    var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
+    assertThat(cache).isNotNull();
+    assertThat(cache.get(familyUuidStr)).isNotNull();
 
-        // When: 두 번째 조회 (캐시에서 조회)
-        List<CategoryResponse> secondCall = categoryService.getFamilyCategories(
-                testUser.getUuid(),
-                familyUuidStr
-        );
+    // When: 두 번째 조회 (캐시에서 조회)
+    List<CategoryResponse> secondCall = categoryService.getFamilyCategories(
+        testUser.getUuid(),
+        familyUuidStr
+    );
 
-        // Then: 동일한 결과 반환
-        assertThat(firstCall).hasSize(1);
-        assertThat(secondCall).hasSize(1);
-        assertThat(firstCall.get(0).getUuid()).isEqualTo(secondCall.get(0).getUuid());
-    }
+    // Then: 동일한 결과 반환
+    assertThat(firstCall).hasSize(1);
+    assertThat(secondCall).hasSize(1);
+    assertThat(firstCall.get(0).getUuid()).isEqualTo(secondCall.get(0).getUuid());
+  }
 
-    @Test
-    @DisplayName("카테고리 생성 시 캐시가 무효화된다")
-    void createCategoryClearsCache() {
-        // Given: TestFixtures로 데이터 생성 + 캐시 준비
-        User testUser = fixtures.getDefaultUser();
-        Family testFamily = fixtures.getDefaultFamily();
-        String familyUuidStr = testFamily.getUuid().getValue();
-        
-        categoryService.getFamilyCategories(testUser.getUuid(), familyUuidStr);
+  @Test
+  @DisplayName("카테고리 생성 시 캐시가 무효화된다")
+  void createCategoryClearsCache() {
+    // Given: TestFixtures로 데이터 생성 + 캐시 준비
+    User testUser = fixtures.getDefaultUser();
+    Family testFamily = fixtures.getDefaultFamily();
+    String familyUuidStr = testFamily.getUuid().getValue();
 
-        var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
-        assertThat(cache.get(familyUuidStr)).isNotNull();
+    categoryService.getFamilyCategories(testUser.getUuid(), familyUuidStr);
 
-        // When: 카테고리 생성
-        CreateCategoryRequest request = new CreateCategoryRequest(
-                "New Category",
-                "#00ff00",
-                "🍏"
-        );
-        categoryService.createCategory(testUser.getUuid(), familyUuidStr, request);
+    var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
+    assertThat(cache.get(familyUuidStr)).isNotNull();
 
-        // Then: 캐시가 무효화됨
-        assertThat(cache.get(familyUuidStr)).isNull();
-    }
+    // When: 카테고리 생성
+    CreateCategoryRequest request = new CreateCategoryRequest(
+        "New Category",
+        "#00ff00",
+        "🍏"
+    );
+    categoryService.createCategory(testUser.getUuid(), familyUuidStr, request);
 
-    @Test
-    @DisplayName("카테고리 수정 시 캐시가 무효화된다")
-    void updateCategoryClearsCache() {
-        // Given: TestFixtures로 데이터 생성 + 캐시 준비
-        User testUser = fixtures.getDefaultUser();
-        Family testFamily = fixtures.getDefaultFamily();
-        Category category = fixtures.category(testFamily)
-                .name("Original Category")
-                .color("#ff0000")
-                .icon("🍎")
-                .build();
+    // Then: 캐시가 무효화됨
+    assertThat(cache.get(familyUuidStr)).isNull();
+  }
 
-        String familyUuidStr = testFamily.getUuid().getValue();
-        categoryService.getFamilyCategories(testUser.getUuid(), familyUuidStr);
+  @Test
+  @DisplayName("카테고리 수정 시 캐시가 무효화된다")
+  void updateCategoryClearsCache() {
+    // Given: TestFixtures로 데이터 생성 + 캐시 준비
+    User testUser = fixtures.getDefaultUser();
+    Family testFamily = fixtures.getDefaultFamily();
+    Category category = fixtures.category(testFamily)
+                                .name("Original Category")
+                                .color("#ff0000")
+                                .icon("🍎")
+                                .build();
 
-        var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
-        assertThat(cache.get(familyUuidStr)).isNotNull();
+    String familyUuidStr = testFamily.getUuid().getValue();
+    categoryService.getFamilyCategories(testUser.getUuid(), familyUuidStr);
 
-        // When: 카테고리 수정
-        UpdateCategoryRequest request = new UpdateCategoryRequest(
-                "Updated Category",
-                null,
-                null
-        );
-        categoryService.updateCategory(testUser.getUuid(), category.getUuid().getValue(), request);
+    var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
+    assertThat(cache.get(familyUuidStr)).isNotNull();
 
-        // Then: 캐시가 무효화됨
-        assertThat(cache.get(familyUuidStr)).isNull();
-    }
+    // When: 카테고리 수정
+    UpdateCategoryRequest request = new UpdateCategoryRequest(
+        "Updated Category",
+        null,
+        null
+    );
+    categoryService.updateCategory(testUser.getUuid(), category.getUuid().getValue(), request);
 
-    @Test
-    @DisplayName("카테고리 삭제 시 캐시가 무효화된다")
-    void deleteCategoryClearsCache() {
-        // Given: TestFixtures로 데이터 생성 + 캐시 준비
-        User testUser = fixtures.getDefaultUser();
-        Family testFamily = fixtures.getDefaultFamily();
-        Category category = fixtures.category(testFamily)
-                .name("To Delete Category")
-                .color("#ff0000")
-                .icon("🍎")
-                .build();
+    // Then: 캐시가 무효화됨
+    assertThat(cache.get(familyUuidStr)).isNull();
+  }
 
-        String familyUuidStr = testFamily.getUuid().getValue();
-        categoryService.getFamilyCategories(testUser.getUuid(), familyUuidStr);
+  @Test
+  @DisplayName("카테고리 삭제 시 캐시가 무효화된다")
+  void deleteCategoryClearsCache() {
+    // Given: TestFixtures로 데이터 생성 + 캐시 준비
+    User testUser = fixtures.getDefaultUser();
+    Family testFamily = fixtures.getDefaultFamily();
+    Category category = fixtures.category(testFamily)
+                                .name("To Delete Category")
+                                .color("#ff0000")
+                                .icon("🍎")
+                                .build();
 
-        var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
-        assertThat(cache.get(familyUuidStr)).isNotNull();
+    String familyUuidStr = testFamily.getUuid().getValue();
+    categoryService.getFamilyCategories(testUser.getUuid(), familyUuidStr);
 
-        // When: 카테고리 삭제
-        categoryService.deleteCategory(testUser.getUuid(), category.getUuid().getValue());
+    var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
+    assertThat(cache.get(familyUuidStr)).isNotNull();
 
-        // Then: 캐시가 무효화됨
-        assertThat(cache.get(familyUuidStr)).isNull();
-    }
+    // When: 카테고리 삭제
+    categoryService.deleteCategory(testUser.getUuid(), category.getUuid().getValue());
 
-    @Test
-    @DisplayName("기본 카테고리 생성 시 캐시가 무효화된다")
-    void createDefaultCategoriesClearsCache() {
-        // Given: TestFixtures로 새 가족 생성 + 캐시 준비
-        User testUser = fixtures.getDefaultUser();
-        Family newFamily = fixtures.family()
-                .name("New Family")
-                .owner(testUser)
-                .build();
+    // Then: 캐시가 무효화됨
+    assertThat(cache.get(familyUuidStr)).isNull();
+  }
 
-        String newFamilyUuidStr = newFamily.getUuid().getValue();
-        categoryService.getFamilyCategories(testUser.getUuid(), newFamilyUuidStr);
+  @Test
+  @DisplayName("기본 카테고리 생성 시 캐시가 무효화된다")
+  void createDefaultCategoriesClearsCache() {
+    // Given: TestFixtures로 새 가족 생성 + 캐시 준비
+    User testUser = fixtures.getDefaultUser();
+    Family newFamily = fixtures.family()
+                               .name("New Family")
+                               .owner(testUser)
+                               .build();
 
-        var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
-        assertThat(cache.get(newFamilyUuidStr)).isNotNull();
+    String newFamilyUuidStr = newFamily.getUuid().getValue();
+    categoryService.getFamilyCategories(testUser.getUuid(), newFamilyUuidStr);
 
-        // When: 기본 카테고리 생성
-        categoryService.createDefaultCategoriesForFamily(newFamily.getUuid());
+    var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
+    assertThat(cache.get(newFamilyUuidStr)).isNotNull();
 
-        // Then: 캐시가 무효화됨
-        assertThat(cache.get(newFamilyUuidStr)).isNull();
-    }
+    // When: 기본 카테고리 생성
+    categoryService.createDefaultCategoriesForFamily(newFamily.getUuid());
 
-    @Test
-    @DisplayName("findByUuidCached는 캐시를 활용하여 조회한다")
-    void findByUuidCachedUsesCache() {
-        // Given: TestFixtures로 두 개의 카테고리 생성
-        Family testFamily = fixtures.getDefaultFamily();
-        Category category1 = fixtures.category(testFamily)
-                .name("Category 1")
-                .color("#ff0000")
-                .icon("🍎")
-                .build();
+    // Then: 캐시가 무효화됨
+    assertThat(cache.get(newFamilyUuidStr)).isNull();
+  }
 
-        Category category2 = fixtures.category(testFamily)
-                .name("Category 2")
-                .color("#00ff00")
-                .icon("🍏")
-                .build();
+  @Test
+  @DisplayName("findByUuidCached는 캐시를 활용하여 조회한다")
+  void findByUuidCachedUsesCache() {
+    // Given: TestFixtures로 두 개의 카테고리 생성
+    Family testFamily = fixtures.getDefaultFamily();
+    Category category1 = fixtures.category(testFamily)
+                                 .name("Category 1")
+                                 .color("#ff0000")
+                                 .icon("🍎")
+                                 .build();
 
-        String familyUuidStr = testFamily.getUuid().getValue();
-        com.bifos.accountbook.domain.value.CustomUuid category1Uuid = category1.getUuid();
-        com.bifos.accountbook.domain.value.CustomUuid category2Uuid = category2.getUuid();
-        var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
+    Category category2 = fixtures.category(testFamily)
+                                 .name("Category 2")
+                                 .color("#00ff00")
+                                 .icon("🍏")
+                                 .build();
 
-        // When: findByUuidCached로 첫 번째 카테고리 조회
-        CategoryResponse result1 = categoryService.findByUuidCached(familyUuidStr, category1Uuid);
+    String familyUuidStr = testFamily.getUuid().getValue();
+    com.bifos.accountbook.domain.value.CustomUuid category1Uuid = category1.getUuid();
+    com.bifos.accountbook.domain.value.CustomUuid category2Uuid = category2.getUuid();
+    var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
 
-        // Then: 캐시에 가족의 전체 카테고리가 저장되어야 함
-        assertThat(cache.get(familyUuidStr)).isNotNull();
-        assertThat(result1).isNotNull();
-        assertThat(result1.getName()).isEqualTo("Category 1");
+    // When: findByUuidCached로 첫 번째 카테고리 조회
+    CategoryResponse result1 = categoryService.findByUuidCached(familyUuidStr, category1Uuid);
 
-        // When: 같은 가족의 다른 카테고리를 findByUuidCached로 조회
-        CategoryResponse result2 = categoryService.findByUuidCached(familyUuidStr, category2Uuid);
+    // Then: 캐시에 가족의 전체 카테고리가 저장되어야 함
+    assertThat(cache.get(familyUuidStr)).isNotNull();
+    assertThat(result1).isNotNull();
+    assertThat(result1.getName()).isEqualTo("Category 1");
 
-        // Then: 캐시에서 조회되어야 함 (추가 DB 조회 없이)
-        assertThat(result2).isNotNull();
-        assertThat(result2.getName()).isEqualTo("Category 2");
-        assertThat(cache.get(familyUuidStr)).isNotNull();
-    }
+    // When: 같은 가족의 다른 카테고리를 findByUuidCached로 조회
+    CategoryResponse result2 = categoryService.findByUuidCached(familyUuidStr, category2Uuid);
 
-    @Test
-    @DisplayName("findByUuidCached로 조회 후 getFamilyCategories 호출 시 캐시가 재사용된다")
-    void cachedCategoryIsReusedAcrossMethods() {
-        // Given: TestFixtures로 데이터 생성
-        User testUser = fixtures.getDefaultUser();
-        Family testFamily = fixtures.getDefaultFamily();
-        Category category = fixtures.category(testFamily)
-                .name("Test Category")
-                .color("#ff0000")
-                .icon("🍎")
-                .build();
+    // Then: 캐시에서 조회되어야 함 (추가 DB 조회 없이)
+    assertThat(result2).isNotNull();
+    assertThat(result2.getName()).isEqualTo("Category 2");
+    assertThat(cache.get(familyUuidStr)).isNotNull();
+  }
 
-        String familyUuidStr = testFamily.getUuid().getValue();
-        com.bifos.accountbook.domain.value.CustomUuid categoryUuid = category.getUuid();
-        var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
+  @Test
+  @DisplayName("findByUuidCached로 조회 후 getFamilyCategories 호출 시 캐시가 재사용된다")
+  void cachedCategoryIsReusedAcrossMethods() {
+    // Given: TestFixtures로 데이터 생성
+    User testUser = fixtures.getDefaultUser();
+    Family testFamily = fixtures.getDefaultFamily();
+    Category category = fixtures.category(testFamily)
+                                .name("Test Category")
+                                .color("#ff0000")
+                                .icon("🍎")
+                                .build();
 
-        // When: findByUuidCached로 조회 (캐시 생성)
-        categoryService.findByUuidCached(familyUuidStr, categoryUuid);
+    String familyUuidStr = testFamily.getUuid().getValue();
+    com.bifos.accountbook.domain.value.CustomUuid categoryUuid = category.getUuid();
+    var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
 
-        // Then: 캐시가 생성되어 있어야 함
-        assertThat(cache.get(familyUuidStr)).isNotNull();
+    // When: findByUuidCached로 조회 (캐시 생성)
+    categoryService.findByUuidCached(familyUuidStr, categoryUuid);
 
-        // When: getFamilyCategories로 조회 (캐시 재사용)
-        List<CategoryResponse> categories = categoryService.getFamilyCategories(
-                testUser.getUuid(),
-                familyUuidStr
-        );
+    // Then: 캐시가 생성되어 있어야 함
+    assertThat(cache.get(familyUuidStr)).isNotNull();
 
-        // Then: 동일한 캐시를 사용하여 결과 반환
-        assertThat(categories).hasSize(1);
-        assertThat(categories.get(0).getUuid()).isEqualTo(categoryUuid.getValue());
-    }
+    // When: getFamilyCategories로 조회 (캐시 재사용)
+    List<CategoryResponse> categories = categoryService.getFamilyCategories(
+        testUser.getUuid(),
+        familyUuidStr
+    );
+
+    // Then: 동일한 캐시를 사용하여 결과 반환
+    assertThat(categories).hasSize(1);
+    assertThat(categories.get(0).getUuid()).isEqualTo(categoryUuid.getValue());
+  }
 }
 

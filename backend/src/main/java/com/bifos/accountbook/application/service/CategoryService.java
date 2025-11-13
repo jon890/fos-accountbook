@@ -9,6 +9,8 @@ import com.bifos.accountbook.config.CacheConfig;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import java.util.Arrays;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
@@ -17,308 +19,305 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
-import java.util.List;
-
 @Slf4j
 @Service
 public class CategoryService {
 
-    private final CategoryRepository categoryRepository;
-    private final FamilyValidationService familyValidationService; // 가족 검증 로직
-    private final CacheManager cacheManager; // 캐시 관리자
-    private final CategoryService self; // Self-injection for @Cacheable to work in same-class calls
+  private final CategoryRepository categoryRepository;
+  private final FamilyValidationService familyValidationService; // 가족 검증 로직
+  private final CacheManager cacheManager; // 캐시 관리자
+  private final CategoryService self; // Self-injection for @Cacheable to work in same-class calls
 
-    // Constructor with @Lazy for self-injection to avoid circular dependency
-    public CategoryService(
-            CategoryRepository categoryRepository,
-            FamilyValidationService familyValidationService,
-            CacheManager cacheManager,
-            @Lazy CategoryService self
-    ) {
-        this.categoryRepository = categoryRepository;
-        this.familyValidationService = familyValidationService;
-        this.cacheManager = cacheManager;
-        this.self = self;
-    }
+  // Constructor with @Lazy for self-injection to avoid circular dependency
+  public CategoryService(
+      CategoryRepository categoryRepository,
+      FamilyValidationService familyValidationService,
+      CacheManager cacheManager,
+      @Lazy CategoryService self
+  ) {
+    this.categoryRepository = categoryRepository;
+    this.familyValidationService = familyValidationService;
+    this.cacheManager = cacheManager;
+    this.self = self;
+  }
 
-    /**
-     * 카테고리 생성
-     * <p>
-     * 카테고리 생성 후 해당 가족의 캐시를 무효화하여 다음 조회 시 최신 데이터를 반환합니다.
-     */
-    @Transactional
-    @CacheEvict(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid")
-    public CategoryResponse createCategory(CustomUuid userUuid, String familyUuid, CreateCategoryRequest request) {
-        CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
+  /**
+   * 카테고리 생성
+   * <p>
+   * 카테고리 생성 후 해당 가족의 캐시를 무효화하여 다음 조회 시 최신 데이터를 반환합니다.
+   */
+  @Transactional
+  @CacheEvict(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid")
+  public CategoryResponse createCategory(CustomUuid userUuid, String familyUuid, CreateCategoryRequest request) {
+    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
 
-        // 권한 확인
-        familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
+    // 권한 확인
+    familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
-        // 중복 확인
-        categoryRepository.findByFamilyUuidAndName(familyCustomUuid, request.getName())
-                .ifPresent(c -> {
-                    throw new BusinessException(ErrorCode.CATEGORY_ALREADY_EXISTS)
+    // 중복 확인
+    categoryRepository.findByFamilyUuidAndName(familyCustomUuid, request.getName())
+                      .ifPresent(c -> {
+                        throw new BusinessException(ErrorCode.CATEGORY_ALREADY_EXISTS)
                             .addParameter("familyUuid", familyCustomUuid.getValue())
                             .addParameter("categoryName", request.getName());
-                });
+                      });
 
-        // 카테고리 생성
-        Category category = Category.builder()
-                .familyUuid(familyCustomUuid)
-                .name(request.getName())
-                .color(request.getColor() != null ? request.getColor() : "#6366f1")
-                .icon(request.getIcon())
-                .build();
+    // 카테고리 생성
+    Category category = Category.builder()
+                                .familyUuid(familyCustomUuid)
+                                .name(request.getName())
+                                .color(request.getColor() != null ? request.getColor() : "#6366f1")
+                                .icon(request.getIcon())
+                                .build();
 
-        category = categoryRepository.save(category);
+    category = categoryRepository.save(category);
 
-        return CategoryResponse.from(category);
+    return CategoryResponse.from(category);
+  }
+
+  /**
+   * 가족의 카테고리 목록 조회
+   * <p>
+   * 캐싱 전략:
+   * - 캐시 이름: categories
+   * - 캐시 키: familyUuid
+   * - TTL: 1시간 (CacheConfig에서 설정)
+   * <p>
+   * 카테고리는 자주 조회되지만 변경이 적으므로 캐싱으로 DB 부하 감소
+   */
+  @Transactional(readOnly = true)
+  @Cacheable(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid")
+  public List<CategoryResponse> getFamilyCategories(CustomUuid userUuid, String familyUuid) {
+    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
+
+    // 권한 확인
+    familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
+
+    List<Category> categories = categoryRepository.findAllByFamilyUuid(familyCustomUuid);
+
+    return categories.stream()
+                     .map(CategoryResponse::from)
+                     .toList();
+  }
+
+  /**
+   * UUID로 단일 카테고리 조회 (캐시 활용)
+   * <p>
+   * 해당 가족의 전체 카테고리를 캐시에서 조회한 후 UUID로 필터링합니다.
+   * DB 조회 없이 순수하게 캐시만 활용하여 성능을 최적화합니다.
+   *
+   * @param familyUuid   가족 UUID (캐시 키)
+   * @param categoryUuid 조회할 카테고리 UUID (필터링)
+   * @return 카테고리 응답 (없으면 예외)
+   */
+  @Transactional(readOnly = true)
+  public CategoryResponse findByUuidCached(String familyUuid, CustomUuid categoryUuid) {
+    // 1. 해당 가족의 전체 카테고리 조회 (캐시 활용, DB 조회 없음)
+    // Self-injection을 통해 프록시를 거쳐 캐시가 동작하도록 함
+    List<CategoryResponse> familyCategories = self.getFamilyCategoriesCached(familyUuid);
+
+    // 2. UUID로 필터링하여 반환
+    return familyCategories.stream()
+                           .filter(c -> c.getUuid().equals(categoryUuid.getValue()))
+                           .findFirst()
+                           .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
+                               .addParameter("familyUuid", familyUuid)
+                               .addParameter("categoryUuid", categoryUuid.getValue()));
+  }
+
+  /**
+   * UUID로 단일 카테고리 조회 + 가족 소속 검증 (캐시 활용)
+   * <p>
+   * findByUuidCached()와 동일하지만, 조회한 카테고리가 해당 가족에 속하는지 추가 검증합니다.
+   * ExpenseService, IncomeService에서 중복되는 검증 로직을 제거하기 위해 추가되었습니다.
+   *
+   * @param familyUuid   가족 UUID (캐시 키)
+   * @param categoryUuid 조회할 카테고리 UUID (필터링)
+   * @return 카테고리 응답 (없거나 가족에 속하지 않으면 예외)
+   * @throws BusinessException 카테고리가 해당 가족에 속하지 않는 경우
+   */
+  @Transactional(readOnly = true)
+  public CategoryResponse validateAndFindCached(String familyUuid, CustomUuid categoryUuid) {
+    CategoryResponse category = findByUuidCached(familyUuid, categoryUuid);
+
+    // 카테고리가 해당 가족의 것인지 확인
+    if (!category.getFamilyUuid().equals(familyUuid)) {
+      throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 가족의 카테고리가 아닙니다")
+          .addParameter("categoryFamilyUuid", category.getFamilyUuid())
+          .addParameter("requestFamilyUuid", familyUuid);
     }
 
-    /**
-     * 가족의 카테고리 목록 조회
-     * <p>
-     * 캐싱 전략:
-     * - 캐시 이름: categories
-     * - 캐시 키: familyUuid
-     * - TTL: 1시간 (CacheConfig에서 설정)
-     * <p>
-     * 카테고리는 자주 조회되지만 변경이 적으므로 캐싱으로 DB 부하 감소
-     */
-    @Transactional(readOnly = true)
-    @Cacheable(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid")
-    public List<CategoryResponse> getFamilyCategories(CustomUuid userUuid, String familyUuid) {
-        CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
+    return category;
+  }
 
-        // 권한 확인
-        familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
+  /**
+   * 가족의 카테고리 목록 조회 (권한 검증 없이 캐시만 활용)
+   * <p>
+   * 내부 메서드로, 이미 권한이 검증된 상태에서 캐시만 활용하여 카테고리를 조회합니다.
+   * findByUuidCached()에서 사용됩니다.
+   */
+  @Transactional(readOnly = true)
+  @Cacheable(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid")
+  public List<CategoryResponse> getFamilyCategoriesCached(String familyUuid) {
+    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
 
-        List<Category> categories = categoryRepository.findAllByFamilyUuid(familyCustomUuid);
+    List<Category> categories = categoryRepository.findAllByFamilyUuid(familyCustomUuid);
 
-        return categories.stream()
-                .map(CategoryResponse::from)
-                .toList();
+    return categories.stream()
+                     .map(CategoryResponse::from)
+                     .toList();
+  }
+
+  /**
+   * 카테고리 상세 조회
+   */
+  @Transactional(readOnly = true)
+  public CategoryResponse getCategory(CustomUuid userUuid, String categoryUuid) {
+    CustomUuid categoryCustomUuid = CustomUuid.from(categoryUuid);
+
+    Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
+                                          .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
+                                              .addParameter("categoryUuid", categoryCustomUuid.getValue()));
+
+    // 권한 확인
+    familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
+
+    return CategoryResponse.from(category);
+  }
+
+  /**
+   * 카테고리 수정
+   * <p>
+   * 카테고리 수정 후 해당 가족의 캐시를 무효화합니다.
+   */
+  @Transactional
+  public CategoryResponse updateCategory(CustomUuid userUuid, String categoryUuid, UpdateCategoryRequest request) {
+    CustomUuid categoryCustomUuid = CustomUuid.from(categoryUuid);
+
+    Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
+                                          .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
+                                              .addParameter("categoryUuid", categoryCustomUuid.getValue()));
+
+    // 권한 확인
+    familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
+
+    // 캐시 무효화를 위해 familyUuid 저장
+    String familyUuidStr = category.getFamilyUuid().getValue();
+
+    // 이름 변경 시 중복 확인
+    if (request.getName() != null && !request.getName().equals(category.getName())) {
+      categoryRepository.findByFamilyUuidAndName(category.getFamilyUuid(), request.getName())
+                        .ifPresent(c -> {
+                          throw new BusinessException(ErrorCode.CATEGORY_ALREADY_EXISTS)
+                              .addParameter("familyUuid", familyUuidStr)
+                              .addParameter("categoryName", request.getName());
+                        });
+      category.updateName(request.getName());
     }
 
-    /**
-     * UUID로 단일 카테고리 조회 (캐시 활용)
-     * <p>
-     * 해당 가족의 전체 카테고리를 캐시에서 조회한 후 UUID로 필터링합니다.
-     * DB 조회 없이 순수하게 캐시만 활용하여 성능을 최적화합니다.
-     *
-     * @param familyUuid   가족 UUID (캐시 키)
-     * @param categoryUuid 조회할 카테고리 UUID (필터링)
-     * @return 카테고리 응답 (없으면 예외)
-     */
-    @Transactional(readOnly = true)
-    public CategoryResponse findByUuidCached(String familyUuid, CustomUuid categoryUuid) {
-        // 1. 해당 가족의 전체 카테고리 조회 (캐시 활용, DB 조회 없음)
-        // Self-injection을 통해 프록시를 거쳐 캐시가 동작하도록 함
-        List<CategoryResponse> familyCategories = self.getFamilyCategoriesCached(familyUuid);
-
-        // 2. UUID로 필터링하여 반환
-        return familyCategories.stream()
-                .filter(c -> c.getUuid().equals(categoryUuid.getValue()))
-                .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
-                        .addParameter("familyUuid", familyUuid)
-                        .addParameter("categoryUuid", categoryUuid.getValue()));
+    if (request.getColor() != null) {
+      category.updateColor(request.getColor());
     }
 
-    /**
-     * UUID로 단일 카테고리 조회 + 가족 소속 검증 (캐시 활용)
-     * <p>
-     * findByUuidCached()와 동일하지만, 조회한 카테고리가 해당 가족에 속하는지 추가 검증합니다.
-     * ExpenseService, IncomeService에서 중복되는 검증 로직을 제거하기 위해 추가되었습니다.
-     *
-     * @param familyUuid   가족 UUID (캐시 키)
-     * @param categoryUuid 조회할 카테고리 UUID (필터링)
-     * @return 카테고리 응답 (없거나 가족에 속하지 않으면 예외)
-     * @throws BusinessException 카테고리가 해당 가족에 속하지 않는 경우
-     */
-    @Transactional(readOnly = true)
-    public CategoryResponse validateAndFindCached(String familyUuid, CustomUuid categoryUuid) {
-        CategoryResponse category = findByUuidCached(familyUuid, categoryUuid);
-
-        // 카테고리가 해당 가족의 것인지 확인
-        if (!category.getFamilyUuid().equals(familyUuid)) {
-            throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 가족의 카테고리가 아닙니다")
-                    .addParameter("categoryFamilyUuid", category.getFamilyUuid())
-                    .addParameter("requestFamilyUuid", familyUuid);
-        }
-
-        return category;
+    if (request.getIcon() != null) {
+      category.updateIcon(request.getIcon());
     }
 
-    /**
-     * 가족의 카테고리 목록 조회 (권한 검증 없이 캐시만 활용)
-     * <p>
-     * 내부 메서드로, 이미 권한이 검증된 상태에서 캐시만 활용하여 카테고리를 조회합니다.
-     * findByUuidCached()에서 사용됩니다.
-     */
-    @Transactional(readOnly = true)
-    @Cacheable(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid")
-    public List<CategoryResponse> getFamilyCategoriesCached(String familyUuid) {
-        CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
+    // 캐시 무효화 (CacheManager를 직접 사용)
+    evictFamilyCache(familyUuidStr);
 
-        List<Category> categories = categoryRepository.findAllByFamilyUuid(familyCustomUuid);
+    return CategoryResponse.from(category);
+  }
 
-        return categories.stream()
-                .map(CategoryResponse::from)
-                .toList();
+  /**
+   * 카테고리 삭제 (Soft Delete)
+   * <p>
+   * 카테고리 삭제 후 해당 가족의 캐시를 무효화합니다.
+   */
+  @Transactional
+  public void deleteCategory(CustomUuid userUuid, String categoryUuid) {
+    CustomUuid categoryCustomUuid = CustomUuid.from(categoryUuid);
+
+    Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
+                                          .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
+                                              .addParameter("categoryUuid", categoryCustomUuid.getValue()));
+
+    // 권한 확인
+    familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
+
+    // 캐시 무효화를 위해 familyUuid 저장
+    String familyUuidStr = category.getFamilyUuid().getValue();
+
+    category.delete();
+
+    // 캐시 무효화 (CacheManager를 직접 사용)
+    evictFamilyCache(familyUuidStr);
+
+    log.info("Deleted category: {} by user: {}", categoryUuid, userUuid);
+  }
+
+  /**
+   * 가족 생성 시 기본 카테고리 자동 생성
+   * FamilyService에서 호출됨 (권한 검증 불필요 - 가족 생성 시점)
+   * <p>
+   * 기본 카테고리 생성 후 캐시를 무효화합니다.
+   */
+  @Transactional
+  @CacheEvict(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid.value")
+  public void createDefaultCategoriesForFamily(CustomUuid familyUuid) {
+    List<DefaultCategory> defaultCategories = Arrays.asList(
+        new DefaultCategory("식비", "#ef4444", "🍚"),
+        new DefaultCategory("카페", "#f59e0b", "☕"),
+        new DefaultCategory("간식", "#ec4899", "🍰"),
+        new DefaultCategory("생활비", "#10b981", "🏠"),
+        new DefaultCategory("교통비", "#3b82f6", "🚗"),
+        new DefaultCategory("쇼핑", "#8b5cf6", "🛍️"),
+        new DefaultCategory("의료", "#06b6d4", "💊"),
+        new DefaultCategory("문화생활", "#f43f5e", "🎬"),
+        new DefaultCategory("교육", "#14b8a6", "📚"),
+        new DefaultCategory("기타", "#6b7280", "📦"));
+
+    for (DefaultCategory defaultCategory : defaultCategories) {
+      Category category = Category.builder()
+                                  .familyUuid(familyUuid)
+                                  .name(defaultCategory.name)
+                                  .color(defaultCategory.color)
+                                  .icon(defaultCategory.icon)
+                                  .build();
+
+      categoryRepository.save(category);
     }
+  }
 
-    /**
-     * 카테고리 상세 조회
-     */
-    @Transactional(readOnly = true)
-    public CategoryResponse getCategory(CustomUuid userUuid, String categoryUuid) {
-        CustomUuid categoryCustomUuid = CustomUuid.from(categoryUuid);
+  /**
+   * 기본 카테고리 정보를 담는 내부 클래스
+   */
+  private static class DefaultCategory {
+    String name;
+    String color;
+    String icon;
 
-        Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
-                        .addParameter("categoryUuid", categoryCustomUuid.getValue()));
-
-        // 권한 확인
-        familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
-
-        return CategoryResponse.from(category);
+    DefaultCategory(String name, String color, String icon) {
+      this.name = name;
+      this.color = color;
+      this.icon = icon;
     }
+  }
 
-    /**
-     * 카테고리 수정
-     * <p>
-     * 카테고리 수정 후 해당 가족의 캐시를 무효화합니다.
-     */
-    @Transactional
-    public CategoryResponse updateCategory(CustomUuid userUuid, String categoryUuid, UpdateCategoryRequest request) {
-        CustomUuid categoryCustomUuid = CustomUuid.from(categoryUuid);
-
-        Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
-                        .addParameter("categoryUuid", categoryCustomUuid.getValue()));
-
-        // 권한 확인
-        familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
-
-        // 캐시 무효화를 위해 familyUuid 저장
-        String familyUuidStr = category.getFamilyUuid().getValue();
-
-        // 이름 변경 시 중복 확인
-        if (request.getName() != null && !request.getName().equals(category.getName())) {
-            categoryRepository.findByFamilyUuidAndName(category.getFamilyUuid(), request.getName())
-                    .ifPresent(c -> {
-                        throw new BusinessException(ErrorCode.CATEGORY_ALREADY_EXISTS)
-                                .addParameter("familyUuid", familyUuidStr)
-                                .addParameter("categoryName", request.getName());
-                    });
-            category.updateName(request.getName());
-        }
-
-        if (request.getColor() != null) {
-            category.updateColor(request.getColor());
-        }
-
-        if (request.getIcon() != null) {
-            category.updateIcon(request.getIcon());
-        }
-
-        // 캐시 무효화 (CacheManager를 직접 사용)
-        evictFamilyCache(familyUuidStr);
-
-        return CategoryResponse.from(category);
+  /**
+   * 가족의 카테고리 캐시를 무효화하는 헬퍼 메서드
+   * <p>
+   * updateCategory와 deleteCategory에서 사용
+   * <p>
+   * CacheManager를 직접 사용하여 캐시를 무효화합니다.
+   * 같은 클래스 내에서 @CacheEvict 메서드를 호출하면 프록시를 거치지 않아
+   * 캐시 무효화가 동작하지 않기 때문에 CacheManager를 직접 사용합니다.
+   */
+  private void evictFamilyCache(String familyUuid) {
+    var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
+    if (cache != null) {
+      cache.evict(familyUuid);
+      log.debug("Evicted category cache for family: {}", familyUuid);
     }
-
-    /**
-     * 카테고리 삭제 (Soft Delete)
-     * <p>
-     * 카테고리 삭제 후 해당 가족의 캐시를 무효화합니다.
-     */
-    @Transactional
-    public void deleteCategory(CustomUuid userUuid, String categoryUuid) {
-        CustomUuid categoryCustomUuid = CustomUuid.from(categoryUuid);
-
-        Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
-                        .addParameter("categoryUuid", categoryCustomUuid.getValue()));
-
-        // 권한 확인
-        familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
-
-        // 캐시 무효화를 위해 familyUuid 저장
-        String familyUuidStr = category.getFamilyUuid().getValue();
-
-        category.delete();
-
-        // 캐시 무효화 (CacheManager를 직접 사용)
-        evictFamilyCache(familyUuidStr);
-
-        log.info("Deleted category: {} by user: {}", categoryUuid, userUuid);
-    }
-
-    /**
-     * 가족 생성 시 기본 카테고리 자동 생성
-     * FamilyService에서 호출됨 (권한 검증 불필요 - 가족 생성 시점)
-     * <p>
-     * 기본 카테고리 생성 후 캐시를 무효화합니다.
-     */
-    @Transactional
-    @CacheEvict(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid.value")
-    public void createDefaultCategoriesForFamily(CustomUuid familyUuid) {
-        List<DefaultCategory> defaultCategories = Arrays.asList(
-                new DefaultCategory("식비", "#ef4444", "🍚"),
-                new DefaultCategory("카페", "#f59e0b", "☕"),
-                new DefaultCategory("간식", "#ec4899", "🍰"),
-                new DefaultCategory("생활비", "#10b981", "🏠"),
-                new DefaultCategory("교통비", "#3b82f6", "🚗"),
-                new DefaultCategory("쇼핑", "#8b5cf6", "🛍️"),
-                new DefaultCategory("의료", "#06b6d4", "💊"),
-                new DefaultCategory("문화생활", "#f43f5e", "🎬"),
-                new DefaultCategory("교육", "#14b8a6", "📚"),
-                new DefaultCategory("기타", "#6b7280", "📦"));
-
-        for (DefaultCategory defaultCategory : defaultCategories) {
-            Category category = Category.builder()
-                    .familyUuid(familyUuid)
-                    .name(defaultCategory.name)
-                    .color(defaultCategory.color)
-                    .icon(defaultCategory.icon)
-                    .build();
-
-            categoryRepository.save(category);
-        }
-    }
-
-    /**
-     * 기본 카테고리 정보를 담는 내부 클래스
-     */
-    private static class DefaultCategory {
-        String name;
-        String color;
-        String icon;
-
-        DefaultCategory(String name, String color, String icon) {
-            this.name = name;
-            this.color = color;
-            this.icon = icon;
-        }
-    }
-
-    /**
-     * 가족의 카테고리 캐시를 무효화하는 헬퍼 메서드
-     * <p>
-     * updateCategory와 deleteCategory에서 사용
-     * <p>
-     * CacheManager를 직접 사용하여 캐시를 무효화합니다.
-     * 같은 클래스 내에서 @CacheEvict 메서드를 호출하면 프록시를 거치지 않아
-     * 캐시 무효화가 동작하지 않기 때문에 CacheManager를 직접 사용합니다.
-     */
-    private void evictFamilyCache(String familyUuid) {
-        var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
-        if (cache != null) {
-            cache.evict(familyUuid);
-            log.debug("Evicted category cache for family: {}", familyUuid);
-        }
-    }
+  }
 }

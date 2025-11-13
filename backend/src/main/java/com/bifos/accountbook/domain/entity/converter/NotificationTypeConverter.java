@@ -9,8 +9,8 @@ import jakarta.persistence.Converter;
 @Converter(autoApply = true)
 public class NotificationTypeConverter extends AbstractCodeEnumConverter<NotificationType> {
 
-    public NotificationTypeConverter() {
-        super(NotificationType.class);
-    }
+  public NotificationTypeConverter() {
+    super(NotificationType.class);
+  }
 }
 

@@ -2,7 +2,6 @@ package com.bifos.accountbook.domain.repository;
 
 import com.bifos.accountbook.domain.entity.Invitation;
 import com.bifos.accountbook.domain.value.CustomUuid;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -13,33 +12,33 @@ import java.util.Optional;
  */
 public interface InvitationRepository {
 
-    /**
-     * 초대 저장
-     */
-    Invitation save(Invitation invitation);
+  /**
+   * 초대 저장
+   */
+  Invitation save(Invitation invitation);
 
-    /**
-     * 토큰으로 초대 조회
-     */
-    Optional<Invitation> findByToken(String token);
+  /**
+   * 토큰으로 초대 조회
+   */
+  Optional<Invitation> findByToken(String token);
 
-    /**
-     * UUID로 초대 조회
-     */
-    Optional<Invitation> findByUuid(CustomUuid uuid);
+  /**
+   * UUID로 초대 조회
+   */
+  Optional<Invitation> findByUuid(CustomUuid uuid);
 
-    /**
-     * 가족 UUID로 활성 초대 목록 조회
-     */
-    List<Invitation> findActiveByFamilyUuid(CustomUuid familyUuid, LocalDateTime now);
+  /**
+   * 가족 UUID로 활성 초대 목록 조회
+   */
+  List<Invitation> findActiveByFamilyUuid(CustomUuid familyUuid, LocalDateTime now);
 
-    /**
-     * 토큰으로 유효한 초대 조회
-     */
-    Optional<Invitation> findValidByToken(String token, LocalDateTime now);
+  /**
+   * 토큰으로 유효한 초대 조회
+   */
+  Optional<Invitation> findValidByToken(String token, LocalDateTime now);
 
-    /**
-     * 초대 삭제
-     */
-    void delete(Invitation invitation);
+  /**
+   * 초대 삭제
+   */
+  void delete(Invitation invitation);
 }

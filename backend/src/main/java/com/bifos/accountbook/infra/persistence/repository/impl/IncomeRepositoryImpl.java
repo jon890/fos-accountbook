@@ -4,14 +4,13 @@ import com.bifos.accountbook.domain.entity.Income;
 import com.bifos.accountbook.domain.repository.IncomeRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.infra.persistence.repository.jpa.IncomeJpaRepository;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * IncomeRepository 구현체
@@ -21,51 +20,51 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class IncomeRepositoryImpl implements IncomeRepository {
 
-    private final IncomeJpaRepository jpaRepository;
+  private final IncomeJpaRepository jpaRepository;
 
-    @Override
-    public Income save(Income income) {
-        return jpaRepository.save(income);
-    }
+  @Override
+  public Income save(Income income) {
+    return jpaRepository.save(income);
+  }
 
-    @Override
-    public Optional<Income> findByUuid(CustomUuid uuid) {
-        return jpaRepository.findByUuid(uuid);
-    }
+  @Override
+  public Optional<Income> findByUuid(CustomUuid uuid) {
+    return jpaRepository.findByUuid(uuid);
+  }
 
-    @Override
-    public Optional<Income> findActiveByUuid(CustomUuid uuid) {
-        return jpaRepository.findActiveByUuid(uuid);
-    }
+  @Override
+  public Optional<Income> findActiveByUuid(CustomUuid uuid) {
+    return jpaRepository.findActiveByUuid(uuid);
+  }
 
-    @Override
-    public Page<Income> findAllByFamilyUuid(CustomUuid familyUuid, Pageable pageable) {
-        return jpaRepository.findAllByFamilyUuid(familyUuid, pageable);
-    }
+  @Override
+  public Page<Income> findAllByFamilyUuid(CustomUuid familyUuid, Pageable pageable) {
+    return jpaRepository.findAllByFamilyUuid(familyUuid, pageable);
+  }
 
-    @Override
-    public List<Income> findByFamilyUuidAndDateBetween(
-            CustomUuid familyUuid,
-            LocalDateTime startDate,
-            LocalDateTime endDate) {
-        return jpaRepository.findByFamilyUuidAndDateBetween(familyUuid, startDate, endDate);
-    }
+  @Override
+  public List<Income> findByFamilyUuidAndDateBetween(
+      CustomUuid familyUuid,
+      LocalDateTime startDate,
+      LocalDateTime endDate) {
+    return jpaRepository.findByFamilyUuidAndDateBetween(familyUuid, startDate, endDate);
+  }
 
-    @Override
-    public List<Income> findByFamilyUuidAndCategoryUuid(
-            CustomUuid familyUuid,
-            CustomUuid categoryUuid) {
-        return jpaRepository.findByFamilyUuidAndCategoryUuid(familyUuid, categoryUuid);
-    }
+  @Override
+  public List<Income> findByFamilyUuidAndCategoryUuid(
+      CustomUuid familyUuid,
+      CustomUuid categoryUuid) {
+    return jpaRepository.findByFamilyUuidAndCategoryUuid(familyUuid, categoryUuid);
+  }
 
-    @Override
-    public Page<Income> findByFamilyUuidWithFilters(
-            CustomUuid familyUuid,
-            CustomUuid categoryUuid,
-            LocalDateTime startDate,
-            LocalDateTime endDate,
-            Pageable pageable) {
-        return jpaRepository.findByFamilyUuidWithFilters(familyUuid, categoryUuid, startDate, endDate, pageable);
-    }
+  @Override
+  public Page<Income> findByFamilyUuidWithFilters(
+      CustomUuid familyUuid,
+      CustomUuid categoryUuid,
+      LocalDateTime startDate,
+      LocalDateTime endDate,
+      Pageable pageable) {
+    return jpaRepository.findByFamilyUuidWithFilters(familyUuid, categoryUuid, startDate, endDate, pageable);
+  }
 }
 

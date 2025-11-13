@@ -5,11 +5,11 @@ package com.bifos.accountbook.domain.value;
  * DB에 코드값으로 저장하고, 코드값으로부터 Enum을 복원할 수 있습니다.
  */
 public interface CodeEnum {
-    /**
-     * DB에 저장될 코드값을 반환합니다.
-     *
-     * @return 코드값
-     */
-    String getCode();
+  /**
+   * DB에 저장될 코드값을 반환합니다.
+   *
+   * @return 코드값
+   */
+  String getCode();
 }
 

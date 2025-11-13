@@ -16,33 +16,33 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UpdateUserProfileRequest {
 
-    /**
-     * 시간대 (예: "UTC", "Asia/Seoul", "America/New_York")
-     * 선택 사항
-     */
-    @Pattern(regexp = "^[A-Za-z_/]+$", message = "유효한 시간대 형식이 아닙니다")
-    private String timezone;
+  /**
+   * 시간대 (예: "UTC", "Asia/Seoul", "America/New_York")
+   * 선택 사항
+   */
+  @Pattern(regexp = "^[A-Za-z_/]+$", message = "유효한 시간대 형식이 아닙니다")
+  private String timezone;
 
-    /**
-     * 언어 코드 (예: "ko", "en", "ja")
-     * 선택 사항
-     */
-    @Pattern(regexp = "^[a-z]{2}$", message = "언어 코드는 2자리 소문자여야 합니다")
-    private String language;
+  /**
+   * 언어 코드 (예: "ko", "en", "ja")
+   * 선택 사항
+   */
+  @Pattern(regexp = "^[a-z]{2}$", message = "언어 코드는 2자리 소문자여야 합니다")
+  private String language;
 
-    /**
-     * 통화 코드 (예: "KRW", "USD", "JPY")
-     * 선택 사항
-     */
-    @Pattern(regexp = "^[A-Z]{3}$", message = "통화 코드는 3자리 대문자여야 합니다")
-    private String currency;
+  /**
+   * 통화 코드 (예: "KRW", "USD", "JPY")
+   * 선택 사항
+   */
+  @Pattern(regexp = "^[A-Z]{3}$", message = "통화 코드는 3자리 대문자여야 합니다")
+  private String currency;
 
-    /**
-     * 기본 가족 UUID
-     * 선택 사항
-     */
-    @Pattern(regexp = "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$", 
-            message = "유효한 UUID 형식이 아닙니다")
-    private String defaultFamilyUuid;
+  /**
+   * 기본 가족 UUID
+   * 선택 사항
+   */
+  @Pattern(regexp = "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+      message = "유효한 UUID 형식이 아닙니다")
+  private String defaultFamilyUuid;
 }
 

@@ -9,8 +9,8 @@ import jakarta.persistence.Converter;
 @Converter(autoApply = true)
 public class FamilyMemberStatusConverter extends AbstractCodeEnumConverter<FamilyMemberStatus> {
 
-    public FamilyMemberStatusConverter() {
-        super(FamilyMemberStatus.class);
-    }
+  public FamilyMemberStatusConverter() {
+    super(FamilyMemberStatus.class);
+  }
 }
 

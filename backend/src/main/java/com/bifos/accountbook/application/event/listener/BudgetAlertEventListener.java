@@ -18,49 +18,49 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class BudgetAlertEventListener {
 
-    private final BudgetAlertService budgetAlertService;
+  private final BudgetAlertService budgetAlertService;
 
-    /**
-     * 지출 생성 이벤트 처리
-     * 새로운 지출이 추가되면 예산 상태를 체크합니다.
-     */
-    @Async
-    @EventListener
-    public void handleExpenseCreated(ExpenseCreatedEvent event) {
-        log.info("Received ExpenseCreatedEvent - Expense: {}, Family: {}, Amount: {}",
-                event.getExpenseUuid(), event.getFamilyUuid(), event.getAmount());
+  /**
+   * 지출 생성 이벤트 처리
+   * 새로운 지출이 추가되면 예산 상태를 체크합니다.
+   */
+  @Async
+  @EventListener
+  public void handleExpenseCreated(ExpenseCreatedEvent event) {
+    log.info("Received ExpenseCreatedEvent - Expense: {}, Family: {}, Amount: {}",
+             event.expenseUuid(), event.familyUuid(), event.amount());
 
-        try {
-            budgetAlertService.checkAndCreateBudgetAlert(
-                    event.getFamilyUuid(),
-                    event.getDate()
-            );
-        } catch (Exception e) {
-            log.error("Failed to check budget alert for expense created event", e);
-            // 예외를 삼킴 - 알림 생성 실패가 지출 생성을 방해하지 않도록
-        }
+    try {
+      budgetAlertService.checkAndCreateBudgetAlert(
+          event.familyUuid(),
+          event.date()
+      );
+    } catch (Exception e) {
+      log.error("Failed to check budget alert for expense created event", e);
+      // 예외를 삼킴 - 알림 생성 실패가 지출 생성을 방해하지 않도록
     }
+  }
 
-    /**
-     * 지출 수정 이벤트 처리
-     * 지출이 수정되면 예산 상태를 재체크합니다.
-     */
-    @Async
-    @EventListener
-    public void handleExpenseUpdated(ExpenseUpdatedEvent event) {
-        log.info("Received ExpenseUpdatedEvent - Expense: {}, Family: {}, Old: {}, New: {}",
-                event.getExpenseUuid(), event.getFamilyUuid(),
-                event.getOldAmount(), event.getNewAmount());
+  /**
+   * 지출 수정 이벤트 처리
+   * 지출이 수정되면 예산 상태를 재체크합니다.
+   */
+  @Async
+  @EventListener
+  public void handleExpenseUpdated(ExpenseUpdatedEvent event) {
+    log.info("Received ExpenseUpdatedEvent - Expense: {}, Family: {}, Old: {}, New: {}",
+             event.expenseUuid(), event.familyUuid(),
+             event.oldAmount(), event.newAmount());
 
-        try {
-            budgetAlertService.checkAndCreateBudgetAlert(
-                    event.getFamilyUuid(),
-                    event.getDate()
-            );
-        } catch (Exception e) {
-            log.error("Failed to check budget alert for expense updated event", e);
-            // 예외를 삼킴 - 알림 생성 실패가 지출 수정을 방해하지 않도록
-        }
+    try {
+      budgetAlertService.checkAndCreateBudgetAlert(
+          event.familyUuid(),
+          event.date()
+      );
+    } catch (Exception e) {
+      log.error("Failed to check budget alert for expense updated event", e);
+      // 예외를 삼킴 - 알림 생성 실패가 지출 수정을 방해하지 않도록
     }
+  }
 }
 

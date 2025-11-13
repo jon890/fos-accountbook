@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateInvitationRequest {
-    
-    @Min(value = 1, message = "유효 기간은 최소 1시간 이상이어야 합니다")
-    private Integer expirationHours; // 만료 시간 (시간 단위), 기본값 72시간 (3일)
+
+  @Min(value = 1, message = "유효 기간은 최소 1시간 이상이어야 합니다")
+  private Integer expirationHours; // 만료 시간 (시간 단위), 기본값 72시간 (3일)
 }
 

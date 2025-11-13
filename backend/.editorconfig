@@ -46,6 +46,8 @@ ij_java_method_call_chain_wrap = normal
 ij_java_wrap_first_method_in_call_chain = false
 ij_java_binary_operation_sign_on_next_line = true
 ij_java_align_multiline_chained_methods = true
+ij_java_align_multiline_parameters = true
+ij_java_align_multiline_parameters_in_calls = true
 
 # 중괄호 스타일 (K&R)
 ij_java_block_brace_style = end_of_line

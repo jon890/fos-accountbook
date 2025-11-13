@@ -1,43 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
-    
-    <!-- 테스트용 로그 패턴 (간결하게, 색상 적용) -->
-    <property name="LOG_PATTERN" value="%clr(%d{HH:mm:ss.SSS}){cyan} %clr([%thread]){magenta} %clr(%-5level){highlight} %clr(%logger{36}){cyan} - %msg%n"/>
-    
-    <!-- Console Appender (테스트는 콘솔만 사용) -->
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>${LOG_PATTERN}</pattern>
-            <charset>UTF-8</charset>
-        </encoder>
-    </appender>
-    
-    <!-- 테스트 환경 로깅 설정 -->
-    <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
-    </root>
-    
-    <!-- 애플리케이션 로그는 DEBUG 레벨 -->
-    <logger name="com.bifos.accountbook" level="DEBUG"/>
-    
-    <!-- Spring Framework는 INFO 레벨 -->
-    <logger name="org.springframework" level="INFO"/>
-    <logger name="org.springframework.web" level="INFO"/>
-    <logger name="org.springframework.security" level="INFO"/>
-    
-    <!-- Hibernate SQL 로그 (p6spy 사용으로 비활성화) -->
-    <logger name="org.hibernate.SQL" level="OFF"/>
-    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="OFF"/>
-    <logger name="org.hibernate.orm.jdbc.bind" level="OFF"/>
-    
-    <!-- P6Spy SQL 로깅 -->
-    <logger name="p6spy" level="INFO"/>
-    
-    <!-- HikariCP 로그는 WARN으로 (너무 많은 로그 방지) -->
-    <logger name="com.zaxxer.hikari" level="WARN"/>
-    
-    <!-- H2 Database 로그 -->
-    <logger name="org.h2" level="INFO"/>
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+  <!-- 테스트용 로그 패턴 (간결하게, 색상 적용) -->
+  <property name="LOG_PATTERN" value="%clr(%d{HH:mm:ss.SSS}){cyan} %clr([%thread]){magenta} %clr(%-5level){highlight} %clr(%logger{36}){cyan} - %msg%n"/>
+
+  <!-- Console Appender (테스트는 콘솔만 사용) -->
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>${LOG_PATTERN}</pattern>
+      <charset>UTF-8</charset>
+    </encoder>
+  </appender>
+
+  <!-- 테스트 환경 로깅 설정 -->
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+  </root>
+
+  <!-- 애플리케이션 로그는 DEBUG 레벨 -->
+  <logger name="com.bifos.accountbook" level="DEBUG"/>
+
+  <!-- Spring Framework는 INFO 레벨 -->
+  <logger name="org.springframework" level="INFO"/>
+  <logger name="org.springframework.web" level="INFO"/>
+  <logger name="org.springframework.security" level="INFO"/>
+
+  <!-- Hibernate SQL 로그 (p6spy 사용으로 비활성화) -->
+  <logger name="org.hibernate.SQL" level="OFF"/>
+  <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="OFF"/>
+  <logger name="org.hibernate.orm.jdbc.bind" level="OFF"/>
+
+  <!-- P6Spy SQL 로깅 -->
+  <logger name="p6spy" level="INFO"/>
+
+  <!-- HikariCP 로그는 WARN으로 (너무 많은 로그 방지) -->
+  <logger name="com.zaxxer.hikari" level="WARN"/>
+
+  <!-- H2 Database 로그 -->
+  <logger name="org.h2" level="INFO"/>
 </configuration>
 

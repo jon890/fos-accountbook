@@ -9,8 +9,8 @@ import jakarta.persistence.Converter;
 @Converter(autoApply = true)
 public class IncomeStatusConverter extends AbstractCodeEnumConverter<IncomeStatus> {
 
-    public IncomeStatusConverter() {
-        super(IncomeStatus.class);
-    }
+  public IncomeStatusConverter() {
+    super(IncomeStatus.class);
+  }
 }
 

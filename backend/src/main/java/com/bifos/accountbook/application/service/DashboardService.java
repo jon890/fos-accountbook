@@ -9,15 +9,14 @@ import com.bifos.accountbook.domain.repository.DashboardRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.repository.projection.CategoryExpenseProjection;
 import com.bifos.accountbook.domain.value.CustomUuid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 대시보드 서비스 - 대시보드 통계 데이터 조회 - 지출/수입 요약 통계 - 카테고리별 집계
@@ -57,23 +56,23 @@ public class DashboardService {
 
     // 전체 지출 합계 조회
     BigDecimal totalExpense = dashboardRepository.getTotalExpenseAmount(familyCustomUuid,
-        categoryCustomUuid,
-        searchRequest.getStartDate(),
-        searchRequest.getEndDate());
+                                                                        categoryCustomUuid,
+                                                                        searchRequest.getStartDate(),
+                                                                        searchRequest.getEndDate());
 
     // 카테고리별 지출 통계 조회
     List<CategoryExpenseProjection> projections = dashboardRepository.getCategoryExpenseStats(familyCustomUuid,
-        categoryCustomUuid,
-        searchRequest.getStartDate(),
-        searchRequest.getEndDate());
+                                                                                              categoryCustomUuid,
+                                                                                              searchRequest.getStartDate(),
+                                                                                              searchRequest.getEndDate());
 
     // DTO 변환 및 비율 계산
     List<CategoryExpenseStat> categoryStats = convertToStats(projections, totalExpense);
 
     return CategoryExpenseSummaryResponse.builder()
-        .totalExpense(totalExpense)
-        .categoryStats(categoryStats)
-        .build();
+                                         .totalExpense(totalExpense)
+                                         .categoryStats(categoryStats)
+                                         .build();
   }
 
   /**
@@ -87,17 +86,17 @@ public class DashboardService {
 
     for (CategoryExpenseProjection projection : projections) {
       // 비율 계산 (소수점 2자리)
-      Double percentage = calculatePercentage(projection.getTotalAmount(), totalExpense);
+      Double percentage = calculatePercentage(projection.totalAmount(), totalExpense);
 
       CategoryExpenseStat stat = CategoryExpenseStat.builder()
-          .categoryUuid(projection.getCategoryUuid())
-          .categoryName(projection.getCategoryName())
-          .categoryIcon(projection.getCategoryIcon())
-          .categoryColor(projection.getCategoryColor())
-          .totalAmount(projection.getTotalAmount())
-          .count(projection.getCount())
-          .percentage(percentage)
-          .build();
+                                                    .categoryUuid(projection.categoryUuid())
+                                                    .categoryName(projection.categoryName())
+                                                    .categoryIcon(projection.categoryIcon())
+                                                    .categoryColor(projection.categoryColor())
+                                                    .totalAmount(projection.totalAmount())
+                                                    .count(projection.count())
+                                                    .percentage(percentage)
+                                                    .build();
 
       categoryStats.add(stat);
     }
@@ -141,7 +140,7 @@ public class DashboardService {
 
     // 가족 정보 조회 (구성원 수)
     Family family = familyRepository.findByUuid(familyCustomUuid)
-        .orElseThrow(() -> new IllegalArgumentException("가족을 찾을 수 없습니다"));
+                                    .orElseThrow(() -> new IllegalArgumentException("가족을 찾을 수 없습니다"));
 
     // QueryDSL로 월별 지출 합계 조회 (DB에서 직접 집계)
     BigDecimal monthlyExpense = dashboardRepository.getMonthlyExpenseAmount(
@@ -160,14 +159,14 @@ public class DashboardService {
     BigDecimal remainingBudget = budget.subtract(monthlyExpense);
 
     return MonthlyStatsResponse.builder()
-        .monthlyExpense(monthlyExpense)
-        .monthlyIncome(monthlyIncome)
-        .remainingBudget(remainingBudget)
-        .familyMembers(family.getMembers() != null ? family.getMembers().size() : 0)
-        .budget(budget)
-        .year(year)
-        .month(month)
-        .build();
+                               .monthlyExpense(monthlyExpense)
+                               .monthlyIncome(monthlyIncome)
+                               .remainingBudget(remainingBudget)
+                               .familyMembers(family.getMembers() != null ? family.getMembers().size() : 0)
+                               .budget(budget)
+                               .year(year)
+                               .month(month)
+                               .build();
   }
 }
 

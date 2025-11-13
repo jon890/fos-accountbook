@@ -2,7 +2,6 @@ package com.bifos.accountbook.domain.repository;
 
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.value.CustomUuid;
-
 import java.util.Optional;
 
 /**
@@ -11,33 +10,33 @@ import java.util.Optional;
  */
 public interface UserRepository {
 
-    /**
-     * 사용자 저장
-     */
-    User save(User user);
+  /**
+   * 사용자 저장
+   */
+  User save(User user);
 
-    /**
-     * ID로 사용자 조회
-     */
-    Optional<User> findById(Long id);
+  /**
+   * ID로 사용자 조회
+   */
+  Optional<User> findById(Long id);
 
-    /**
-     * 이메일로 사용자 조회
-     */
-    Optional<User> findByEmail(String email);
+  /**
+   * 이메일로 사용자 조회
+   */
+  Optional<User> findByEmail(String email);
 
-    /**
-     * UUID로 사용자 조회
-     */
-    Optional<User> findByUuid(CustomUuid uuid);
+  /**
+   * UUID로 사용자 조회
+   */
+  Optional<User> findByUuid(CustomUuid uuid);
 
-    /**
-     * Provider와 ProviderId로 사용자 조회
-     */
-    Optional<User> findByProviderAndProviderId(String provider, String providerId);
+  /**
+   * Provider와 ProviderId로 사용자 조회
+   */
+  Optional<User> findByProviderAndProviderId(String provider, String providerId);
 
-    /**
-     * Provider와 ProviderId 존재 여부 확인
-     */
-    boolean existsByProviderAndProviderId(String provider, String providerId);
+  /**
+   * Provider와 ProviderId 존재 여부 확인
+   */
+  boolean existsByProviderAndProviderId(String provider, String providerId);
 }

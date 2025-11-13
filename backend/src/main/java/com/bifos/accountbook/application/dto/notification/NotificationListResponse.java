@@ -1,11 +1,10 @@
 package com.bifos.accountbook.application.dto.notification;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 /**
  * 알림 목록 응답 DTO
@@ -16,18 +15,18 @@ import java.util.List;
 @AllArgsConstructor
 public class NotificationListResponse {
 
-    private List<NotificationResponse> notifications;
-    private Long unreadCount;
-    private Integer totalCount;
+  private List<NotificationResponse> notifications;
+  private Long unreadCount;
+  private Integer totalCount;
 
-    public static NotificationListResponse of(
-            List<NotificationResponse> notifications,
-            Long unreadCount) {
-        return NotificationListResponse.builder()
-                .notifications(notifications)
-                .unreadCount(unreadCount)
-                .totalCount(notifications.size())
-                .build();
-    }
+  public static NotificationListResponse of(
+      List<NotificationResponse> notifications,
+      Long unreadCount) {
+    return NotificationListResponse.builder()
+                                   .notifications(notifications)
+                                   .unreadCount(unreadCount)
+                                   .totalCount(notifications.size())
+                                   .build();
+  }
 }
 

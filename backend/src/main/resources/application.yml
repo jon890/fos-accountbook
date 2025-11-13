@@ -97,7 +97,7 @@ management:
 # CORS 공통 설정
 # allowed-origins는 각 프로파일(local, prod)에서 환경별로 설정
 cors:
-  allowed-origins: [] # 프로파일별로 오버라이드 필수
+  allowed-origins: [ ] # 프로파일별로 오버라이드 필수
   allowed-methods:
     - GET
     - POST

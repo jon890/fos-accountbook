@@ -2,7 +2,6 @@ package com.bifos.accountbook.domain.repository;
 
 import com.bifos.accountbook.domain.entity.FamilyMember;
 import com.bifos.accountbook.domain.value.CustomUuid;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -12,43 +11,43 @@ import java.util.Optional;
  */
 public interface FamilyMemberRepository {
 
-    /**
-     * 가족 구성원 저장
-     */
-    FamilyMember save(FamilyMember familyMember);
+  /**
+   * 가족 구성원 저장
+   */
+  FamilyMember save(FamilyMember familyMember);
 
-    /**
-     * UUID로 가족 구성원 조회
-     */
-    Optional<FamilyMember> findByUuid(CustomUuid uuid);
+  /**
+   * UUID로 가족 구성원 조회
+   */
+  Optional<FamilyMember> findByUuid(CustomUuid uuid);
 
-    /**
-     * 가족 UUID와 사용자 UUID로 구성원 조회
-     */
-    Optional<FamilyMember> findByFamilyUuidAndUserUuid(CustomUuid familyUuid, CustomUuid userUuid);
+  /**
+   * 가족 UUID와 사용자 UUID로 구성원 조회
+   */
+  Optional<FamilyMember> findByFamilyUuidAndUserUuid(CustomUuid familyUuid, CustomUuid userUuid);
 
-    /**
-     * 가족 UUID로 모든 구성원 조회
-     */
-    List<FamilyMember> findAllByFamilyUuid(CustomUuid familyUuid);
+  /**
+   * 가족 UUID로 모든 구성원 조회
+   */
+  List<FamilyMember> findAllByFamilyUuid(CustomUuid familyUuid);
 
-    /**
-     * 사용자 UUID로 모든 구성원 조회
-     */
-    List<FamilyMember> findAllByUserUuid(CustomUuid userUuid);
+  /**
+   * 사용자 UUID로 모든 구성원 조회
+   */
+  List<FamilyMember> findAllByUserUuid(CustomUuid userUuid);
 
-    /**
-     * 가족 UUID와 사용자 UUID로 활성 구성원 존재 여부 확인
-     */
-    boolean existsActiveByFamilyUuidAndUserUuid(CustomUuid familyUuid, CustomUuid userUuid);
+  /**
+   * 가족 UUID와 사용자 UUID로 활성 구성원 존재 여부 확인
+   */
+  boolean existsActiveByFamilyUuidAndUserUuid(CustomUuid familyUuid, CustomUuid userUuid);
 
-    /**
-     * 가족 UUID로 구성원 수 조회
-     */
-    int countByFamilyUuid(CustomUuid familyUuid);
+  /**
+   * 가족 UUID로 구성원 수 조회
+   */
+  int countByFamilyUuid(CustomUuid familyUuid);
 
-    /**
-     * 사용자 UUID로 가족 수 조회 (해당 사용자가 속한 가족 수)
-     */
-    int countByUserUuid(CustomUuid userUuid);
+  /**
+   * 사용자 UUID로 가족 수 조회 (해당 사용자가 속한 가족 수)
+   */
+  int countByUserUuid(CustomUuid userUuid);
 }

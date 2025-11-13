@@ -104,9 +104,10 @@ tasks.withType<Checkstyle> {
     }
 }
 
-// checkstyleMain은 compileJava 이후에만 실행
+// checkstyleMain은 compile 이후에만 실행
 tasks.named("checkstyleMain") {
     mustRunAfter(tasks.named("compileJava"))
+    mustRunAfter(tasks.named("compileTestJava"))
 }
 
 // checkstyleTest 비활성화 (main 소스만 검사)

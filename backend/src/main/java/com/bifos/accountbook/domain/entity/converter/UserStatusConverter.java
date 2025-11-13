@@ -12,8 +12,8 @@ import jakarta.persistence.Converter;
 @Converter(autoApply = true)
 public class UserStatusConverter extends AbstractCodeEnumConverter<UserStatus> {
 
-    public UserStatusConverter() {
-        super(UserStatus.class);
-    }
+  public UserStatusConverter() {
+    super(UserStatus.class);
+  }
 }
 

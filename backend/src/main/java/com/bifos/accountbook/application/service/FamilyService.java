@@ -13,175 +13,173 @@ import com.bifos.accountbook.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
-import com.bifos.accountbook.domain.value.FamilyStatus;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class FamilyService {
 
-    private final FamilyRepository familyRepository;
-    private final FamilyMemberRepository familyMemberRepository;
-    private final UserService userService; // 사용자 조회
-    private final CategoryService categoryService;
-    private final FamilyValidationService familyValidationService;
-    private final UserProfileService userProfileService;
-    private final ExpenseRepository expenseRepository;
-    private final CategoryRepository categoryRepository;
+  private final FamilyRepository familyRepository;
+  private final FamilyMemberRepository familyMemberRepository;
+  private final UserService userService; // 사용자 조회
+  private final CategoryService categoryService;
+  private final FamilyValidationService familyValidationService;
+  private final UserProfileService userProfileService;
+  private final ExpenseRepository expenseRepository;
+  private final CategoryRepository categoryRepository;
 
-    /**
-     * 가족 생성 (생성자를 owner로 자동 추가 + 기본 카테고리 생성)
-     * 첫 가족 생성 시 자동으로 기본 가족으로 설정
-     */
-    @Transactional
-    public FamilyResponse createFamily(CustomUuid userUuid, CreateFamilyRequest request) {
-        // 사용자 조회
-        User user = userService.getUser(userUuid);
+  /**
+   * 가족 생성 (생성자를 owner로 자동 추가 + 기본 카테고리 생성)
+   * 첫 가족 생성 시 자동으로 기본 가족으로 설정
+   */
+  @Transactional
+  public FamilyResponse createFamily(CustomUuid userUuid, CreateFamilyRequest request) {
+    // 사용자 조회
+    User user = userService.getUser(userUuid);
 
-        // 가족 생성
-        Family family = Family.builder()
-                .name(request.getName())
-                .monthlyBudget(request.getMonthlyBudget() != null ? request.getMonthlyBudget() : BigDecimal.ZERO)
-                .build();
+    // 가족 생성
+    Family family = Family.builder()
+                          .name(request.getName())
+                          .monthlyBudget(request.getMonthlyBudget() != null ? request.getMonthlyBudget() : BigDecimal.ZERO)
+                          .build();
 
-        family = familyRepository.save(family);
+    family = familyRepository.save(family);
 
-        // 생성자를 owner로 추가
-        FamilyMember member = FamilyMember.builder()
-                .familyUuid(family.getUuid())
-                .userUuid(user.getUuid())
-                .role("owner")
-                .build();
+    // 생성자를 owner로 추가
+    FamilyMember member = FamilyMember.builder()
+                                      .familyUuid(family.getUuid())
+                                      .userUuid(user.getUuid())
+                                      .role("owner")
+                                      .build();
 
-        familyMemberRepository.save(member);
+    familyMemberRepository.save(member);
 
-        // 기본 카테고리 생성 (CategoryService에 위임)
-        categoryService.createDefaultCategoriesForFamily(family.getUuid());
+    // 기본 카테고리 생성 (CategoryService에 위임)
+    categoryService.createDefaultCategoriesForFamily(family.getUuid());
 
-        // 첫 가족인 경우 자동으로 기본 가족으로 설정
-        int userFamilyCount = familyMemberRepository.countByUserUuid(userUuid);
-        if (userFamilyCount == 1) {
-            userProfileService.setDefaultFamily(userUuid, family.getUuid().getValue());
-        }
-
-        // memberCount 포함해서 반환 (방금 생성했으므로 1명)
-        return FamilyResponse.fromWithMemberCount(family, 1);
+    // 첫 가족인 경우 자동으로 기본 가족으로 설정
+    int userFamilyCount = familyMemberRepository.countByUserUuid(userUuid);
+    if (userFamilyCount == 1) {
+      userProfileService.setDefaultFamily(userUuid, family.getUuid().getValue());
     }
 
-    /**
-     * 사용자가 속한 가족 목록 조회
-     */
-    @Transactional(readOnly = true)
-    public List<FamilyResponse> getUserFamilies(CustomUuid userUuid) {
-        User user = userService.getUser(userUuid);
+    // memberCount 포함해서 반환 (방금 생성했으므로 1명)
+    return FamilyResponse.fromWithMemberCount(family, 1);
+  }
 
-        // 사용자가 속한 가족 멤버십 조회
-        List<FamilyMember> memberships = familyMemberRepository.findAllByUserUuid(user.getUuid());
+  /**
+   * 사용자가 속한 가족 목록 조회
+   */
+  @Transactional(readOnly = true)
+  public List<FamilyResponse> getUserFamilies(CustomUuid userUuid) {
+    User user = userService.getUser(userUuid);
 
-        // 가족 정보 조회 (memberCount, expenseCount, categoryCount 포함)
-        return memberships.stream()
-                .map(FamilyMember::getFamilyUuid)
-                .map(familyUuid -> {
-                    Family family = familyRepository.findActiveByUuid(familyUuid).orElse(null);
-                    if (family == null)
-                        return null;
+    // 사용자가 속한 가족 멤버십 조회
+    List<FamilyMember> memberships = familyMemberRepository.findAllByUserUuid(user.getUuid());
 
-                    int memberCount = familyMemberRepository.countByFamilyUuid(familyUuid);
-                    int expenseCount = expenseRepository.countByFamilyUuid(familyUuid);
-                    int categoryCount = categoryRepository.countByFamilyUuid(familyUuid);
-                    
-                    return FamilyResponse.fromWithCounts(family, memberCount, expenseCount, categoryCount);
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+    // 가족 정보 조회 (memberCount, expenseCount, categoryCount 포함)
+    return memberships.stream()
+                      .map(FamilyMember::getFamilyUuid)
+                      .map(familyUuid -> {
+                        Family family = familyRepository.findActiveByUuid(familyUuid).orElse(null);
+                        if (family == null) {
+                          return null;
+                        }
+
+                        int memberCount = familyMemberRepository.countByFamilyUuid(familyUuid);
+                        int expenseCount = expenseRepository.countByFamilyUuid(familyUuid);
+                        int categoryCount = categoryRepository.countByFamilyUuid(familyUuid);
+
+                        return FamilyResponse.fromWithCounts(family, memberCount, expenseCount, categoryCount);
+                      })
+                      .filter(Objects::nonNull)
+                      .collect(Collectors.toList());
+  }
+
+  /**
+   * 가족 상세 조회
+   */
+  @Transactional(readOnly = true)
+  public FamilyResponse getFamily(CustomUuid userUuid, String familyUuid) {
+    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
+
+    // 권한 확인
+    validateFamilyAccess(userUuid, familyCustomUuid);
+
+    Family family = familyRepository.findActiveByUuid(familyCustomUuid)
+                                    .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
+                                        .addParameter("familyUuid", familyUuid));
+
+    int memberCount = familyMemberRepository.countByFamilyUuid(familyCustomUuid);
+    return FamilyResponse.fromWithMemberCount(family, memberCount);
+  }
+
+  /**
+   * 가족 정보 수정
+   */
+  @Transactional
+  public FamilyResponse updateFamily(CustomUuid userUuid, String familyUuid, UpdateFamilyRequest request) {
+    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
+
+    // 권한 확인 (owner만 수정 가능)
+    validateFamilyOwner(userUuid, familyCustomUuid);
+
+    Family family = familyRepository.findActiveByUuid(familyCustomUuid)
+                                    .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
+                                        .addParameter("familyUuid", familyUuid));
+
+    family.updateName(request.getName());
+
+    // monthlyBudget이 제공된 경우에만 업데이트
+    if (request.getMonthlyBudget() != null) {
+      family.updateMonthlyBudget(request.getMonthlyBudget());
     }
 
-    /**
-     * 가족 상세 조회
-     */
-    @Transactional(readOnly = true)
-    public FamilyResponse getFamily(CustomUuid userUuid, String familyUuid) {
-        CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
+    int memberCount = familyMemberRepository.countByFamilyUuid(familyCustomUuid);
+    return FamilyResponse.fromWithMemberCount(family, memberCount);
+  }
 
-        // 권한 확인
-        validateFamilyAccess(userUuid, familyCustomUuid);
+  /**
+   * 가족 삭제 (Soft Delete)
+   */
+  @Transactional
+  public void deleteFamily(CustomUuid userUuid, String familyUuid) {
+    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
 
-        Family family = familyRepository.findActiveByUuid(familyCustomUuid)
-                .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
-                        .addParameter("familyUuid", familyUuid));
+    // 권한 확인 (owner만 삭제 가능)
+    validateFamilyOwner(userUuid, familyCustomUuid);
 
-        int memberCount = familyMemberRepository.countByFamilyUuid(familyCustomUuid);
-        return FamilyResponse.fromWithMemberCount(family, memberCount);
-    }
+    Family family = familyRepository.findActiveByUuid(familyCustomUuid)
+                                    .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
+                                        .addParameter("familyUuid", familyUuid));
 
-    /**
-     * 가족 정보 수정
-     */
-    @Transactional
-    public FamilyResponse updateFamily(CustomUuid userUuid, String familyUuid, UpdateFamilyRequest request) {
-        CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
+    family.delete();
+    // 더티 체킹으로 자동 업데이트
 
-        // 권한 확인 (owner만 수정 가능)
-        validateFamilyOwner(userUuid, familyCustomUuid);
+    log.info("Deleted family: {} by user: {}", familyUuid, userUuid);
+  }
 
-        Family family = familyRepository.findActiveByUuid(familyCustomUuid)
-                .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
-                        .addParameter("familyUuid", familyUuid));
+  /**
+   * 가족 접근 권한 확인
+   * FamilyValidationService로 위임
+   */
+  private void validateFamilyAccess(CustomUuid userUuid, CustomUuid familyUuid) {
+    familyValidationService.validateFamilyAccess(userUuid, familyUuid);
+  }
 
-        family.updateName(request.getName());
-        
-        // monthlyBudget이 제공된 경우에만 업데이트
-        if (request.getMonthlyBudget() != null) {
-            family.updateMonthlyBudget(request.getMonthlyBudget());
-        }
-
-        int memberCount = familyMemberRepository.countByFamilyUuid(familyCustomUuid);
-        return FamilyResponse.fromWithMemberCount(family, memberCount);
-    }
-
-    /**
-     * 가족 삭제 (Soft Delete)
-     */
-    @Transactional
-    public void deleteFamily(CustomUuid userUuid, String familyUuid) {
-        CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
-        // 권한 확인 (owner만 삭제 가능)
-        validateFamilyOwner(userUuid, familyCustomUuid);
-
-        Family family = familyRepository.findActiveByUuid(familyCustomUuid)
-                .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
-                        .addParameter("familyUuid", familyUuid));
-
-        family.delete();
-        // 더티 체킹으로 자동 업데이트
-
-        log.info("Deleted family: {} by user: {}", familyUuid, userUuid);
-    }
-
-    /**
-     * 가족 접근 권한 확인
-     * FamilyValidationService로 위임
-     */
-    private void validateFamilyAccess(CustomUuid userUuid, CustomUuid familyUuid) {
-        familyValidationService.validateFamilyAccess(userUuid, familyUuid);
-    }
-
-    /**
-     * 가족 소유자 권한 확인
-     * FamilyValidationService로 위임
-     */
-    private void validateFamilyOwner(CustomUuid userUuid, CustomUuid familyUuid) {
-        familyValidationService.validateFamilyOwner(userUuid, familyUuid);
-    }
+  /**
+   * 가족 소유자 권한 확인
+   * FamilyValidationService로 위임
+   */
+  private void validateFamilyOwner(CustomUuid userUuid, CustomUuid familyUuid) {
+    familyValidationService.validateFamilyOwner(userUuid, familyUuid);
+  }
 }

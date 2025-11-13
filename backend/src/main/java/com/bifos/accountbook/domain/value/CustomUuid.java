@@ -1,10 +1,9 @@
 package com.bifos.accountbook.domain.value;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-
 import java.io.Serializable;
 import java.util.UUID;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 /**
  * Custom UUID Value Object
@@ -16,32 +15,32 @@ import java.util.UUID;
 @EqualsAndHashCode
 public class CustomUuid implements Serializable {
 
-    private final String value;
+  private final String value;
 
-    private CustomUuid(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            throw new IllegalArgumentException("UUID value cannot be null or empty");
-        }
-        // UUID 형식 검증
-        try {
-            UUID.fromString(value);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid UUID format: " + value, e);
-        }
-        this.value = value;
+  private CustomUuid(String value) {
+    if (value == null || value.trim().isEmpty()) {
+      throw new IllegalArgumentException("UUID value cannot be null or empty");
     }
+    // UUID 형식 검증
+    try {
+      UUID.fromString(value);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("Invalid UUID format: " + value, e);
+    }
+    this.value = value;
+  }
 
-    /**
-     * 새로운 UUID 생성
-     */
-    public static CustomUuid generate() {
-        return new CustomUuid(UUID.randomUUID().toString());
-    }
+  /**
+   * 새로운 UUID 생성
+   */
+  public static CustomUuid generate() {
+    return new CustomUuid(UUID.randomUUID().toString());
+  }
 
-    /**
-     * 기존 UUID 문자열로부터 생성
-     */
-    public static CustomUuid from(String value) {
-        return new CustomUuid(value);
-    }
+  /**
+   * 기존 UUID 문자열로부터 생성
+   */
+  public static CustomUuid from(String value) {
+    return new CustomUuid(value);
+  }
 }

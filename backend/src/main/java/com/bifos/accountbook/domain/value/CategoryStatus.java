@@ -9,16 +9,16 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum CategoryStatus implements CodeEnum {
-    /**
-     * 활성 상태
-     */
-    ACTIVE("ACTIVE"),
+  /**
+   * 활성 상태
+   */
+  ACTIVE("ACTIVE"),
 
-    /**
-     * 삭제됨
-     */
-    DELETED("DELETED");
+  /**
+   * 삭제됨
+   */
+  DELETED("DELETED");
 
-    private final String code;
+  private final String code;
 }
 

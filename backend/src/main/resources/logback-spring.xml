@@ -1,88 +1,88 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
-    <!-- 로그 파일 경로 -->
-    <property name="LOG_FILE" value="logs/application"/>
+  <!-- 로그 파일 경로 -->
+  <property name="LOG_FILE" value="logs/application"/>
 
-    <!-- 콘솔용 색상 패턴 -->
-    <property name="CONSOLE_LOG_PATTERN"
-              value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){cyan} %clr([%thread]){magenta} %clr(%-5level){highlight} %clr(%logger{36}){cyan} - %msg%n"/>
+  <!-- 콘솔용 색상 패턴 -->
+  <property name="CONSOLE_LOG_PATTERN"
+            value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){cyan} %clr([%thread]){magenta} %clr(%-5level){highlight} %clr(%logger{36}){cyan} - %msg%n"/>
 
-    <!-- 파일용 일반 패턴 (색상 없음) -->
-    <property name="FILE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
+  <!-- 파일용 일반 패턴 (색상 없음) -->
+  <property name="FILE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
 
-    <!-- Console Appender (색상 적용) -->
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
-            <charset>UTF-8</charset>
-        </encoder>
-    </appender>
+  <!-- Console Appender (색상 적용) -->
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+      <charset>UTF-8</charset>
+    </encoder>
+  </appender>
 
-    <!-- File Appender (전체 로그) -->
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_FILE}.log</file>
-        <encoder>
-            <pattern>${FILE_LOG_PATTERN}</pattern>
-            <charset>UTF-8</charset>
-        </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>30</maxHistory>
-            <totalSizeCap>1GB</totalSizeCap>
-        </rollingPolicy>
-    </appender>
+  <!-- File Appender (전체 로그) -->
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_FILE}.log</file>
+    <encoder>
+      <pattern>${FILE_LOG_PATTERN}</pattern>
+      <charset>UTF-8</charset>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>30</maxHistory>
+      <totalSizeCap>1GB</totalSizeCap>
+    </rollingPolicy>
+  </appender>
 
-    <!-- Error Log File Appender -->
-    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_FILE}-error.log</file>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>ERROR</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
-        </filter>
-        <encoder>
-            <pattern>${FILE_LOG_PATTERN}</pattern>
-            <charset>UTF-8</charset>
-        </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_FILE}-error.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>30</maxHistory>
-        </rollingPolicy>
-    </appender>
+  <!-- Error Log File Appender -->
+  <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_FILE}-error.log</file>
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>ERROR</level>
+      <onMatch>ACCEPT</onMatch>
+      <onMismatch>DENY</onMismatch>
+    </filter>
+    <encoder>
+      <pattern>${FILE_LOG_PATTERN}</pattern>
+      <charset>UTF-8</charset>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_FILE}-error.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>30</maxHistory>
+    </rollingPolicy>
+  </appender>
 
-    <!-- Spring Profile별 설정 -->
+  <!-- Spring Profile별 설정 -->
 
-    <!-- 로컬 개발 환경: 콘솔 + 파일 로깅 -->
-    <springProfile name="local">
-        <root level="INFO">
-            <appender-ref ref="CONSOLE"/>
-            <appender-ref ref="FILE"/>
-            <appender-ref ref="ERROR_FILE"/>
-        </root>
-        <logger name="com.bifos.accountbook" level="DEBUG"/>
-        <logger name="org.springframework.web" level="INFO"/>
-        <logger name="org.springframework.security" level="INFO"/>
-        <!-- Hibernate SQL 로그 비활성화 (p6spy 사용) -->
-        <logger name="org.hibernate.SQL" level="OFF"/>
-        <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="OFF"/>
-        <logger name="org.hibernate.orm.jdbc.bind" level="OFF"/>
-        <!-- P6Spy SQL 로깅 -->
-        <logger name="p6spy" level="INFO"/>
-    </springProfile>
+  <!-- 로컬 개발 환경: 콘솔 + 파일 로깅 -->
+  <springProfile name="local">
+    <root level="INFO">
+      <appender-ref ref="CONSOLE"/>
+      <appender-ref ref="FILE"/>
+      <appender-ref ref="ERROR_FILE"/>
+    </root>
+    <logger name="com.bifos.accountbook" level="DEBUG"/>
+    <logger name="org.springframework.web" level="INFO"/>
+    <logger name="org.springframework.security" level="INFO"/>
+    <!-- Hibernate SQL 로그 비활성화 (p6spy 사용) -->
+    <logger name="org.hibernate.SQL" level="OFF"/>
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="OFF"/>
+    <logger name="org.hibernate.orm.jdbc.bind" level="OFF"/>
+    <!-- P6Spy SQL 로깅 -->
+    <logger name="p6spy" level="INFO"/>
+  </springProfile>
 
-    <!-- 프로덕션 환경 (Railway, Docker 등): 콘솔만 (stdout/stderr) -->
-    <springProfile name="prod">
-        <root level="INFO">
-            <appender-ref ref="CONSOLE"/>
-        </root>
-        <logger name="com.bifos.accountbook" level="INFO"/>
-        <logger name="org.springframework.web" level="WARN"/>
-        <logger name="org.springframework.security" level="WARN"/>
-        <!-- p6spy SQL 로깅 -->
+  <!-- 프로덕션 환경 (Railway, Docker 등): 콘솔만 (stdout/stderr) -->
+  <springProfile name="prod">
+    <root level="INFO">
+      <appender-ref ref="CONSOLE"/>
+    </root>
+    <logger name="com.bifos.accountbook" level="INFO"/>
+    <logger name="org.springframework.web" level="WARN"/>
+    <logger name="org.springframework.security" level="WARN"/>
+    <!-- p6spy SQL 로깅 -->
 
-        <logger name="p6spy" level="WARN"/>
-    </springProfile>
+    <logger name="p6spy" level="WARN"/>
+  </springProfile>
 </configuration>
 

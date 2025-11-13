@@ -27,77 +27,77 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final NextAuthTokenFilter nextAuthTokenFilter;
-    private final CorsProperties corsProperties;
-    private final RequestResponseLoggingFilter requestResponseLoggingFilter;
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final NextAuthTokenFilter nextAuthTokenFilter;
+  private final CorsProperties corsProperties;
+  private final RequestResponseLoggingFilter requestResponseLoggingFilter;
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                // CSRF 비활성화 (JWT 사용)
-                .csrf(AbstractHttpConfigurer::disable)
+  @Bean
+  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http
+        // CSRF 비활성화 (JWT 사용)
+        .csrf(AbstractHttpConfigurer::disable)
 
-                // CORS 설정
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        // CORS 설정
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // 세션 사용하지 않음 (JWT 사용)
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        // 세션 사용하지 않음 (JWT 사용)
+        .sessionManagement(session -> session
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // 요청에 대한 인증/인가 설정
-                .authorizeHttpRequests(auth -> auth
-                        // Public endpoints (Actuator)
-                        .requestMatchers("/actuator/**").permitAll()
+        // 요청에 대한 인증/인가 설정
+        .authorizeHttpRequests(auth -> auth
+            // Public endpoints (Actuator)
+            .requestMatchers("/actuator/**").permitAll()
 
-                        // Public API endpoints
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/invitations/token/**").permitAll() // 초대장 조회
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            // Public API endpoints
+            .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/v1/invitations/token/**").permitAll() // 초대장 조회
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Swagger UI 및 OpenAPI 문서
-                        .requestMatchers(
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/swagger-resources/**",
-                                "/webjars/**")
-                        .permitAll()
+            // Swagger UI 및 OpenAPI 문서
+            .requestMatchers(
+                "/v3/api-docs/**",
+                "/swagger-ui/**",
+                "/swagger-ui.html",
+                "/swagger-resources/**",
+                "/webjars/**")
+            .permitAll()
 
-                        // 나머지 요청은 인증 필요
-                        .anyRequest().authenticated())
+            // 나머지 요청은 인증 필요
+            .anyRequest().authenticated())
 
-                // 로깅 필터 추가 (가장 먼저 실행)
-                .addFilterBefore(requestResponseLoggingFilter, SecurityContextHolderFilter.class)
-                // NextAuth 세션 필터 추가 (JWT 필터보다 먼저 실행)
-                .addFilterBefore(nextAuthTokenFilter, UsernamePasswordAuthenticationFilter.class)
-                // JWT 필터 추가
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        // 로깅 필터 추가 (가장 먼저 실행)
+        .addFilterBefore(requestResponseLoggingFilter, SecurityContextHolderFilter.class)
+        // NextAuth 세션 필터 추가 (JWT 필터보다 먼저 실행)
+        .addFilterBefore(nextAuthTokenFilter, UsernamePasswordAuthenticationFilter.class)
+        // JWT 필터 추가
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
-    }
+    return http.build();
+  }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
 
-        // application.yml에서 CORS 설정 읽기
-        configuration.setAllowedOrigins(corsProperties.getAllowedOrigins());
-        configuration.setAllowedMethods(corsProperties.getAllowedMethods());
-        configuration.setAllowedHeaders(corsProperties.getAllowedHeaders());
-        configuration.setExposedHeaders(corsProperties.getExposedHeaders());
-        configuration.setAllowCredentials(corsProperties.isAllowCredentials());
-        configuration.setMaxAge(corsProperties.getMaxAge());
+    // application.yml에서 CORS 설정 읽기
+    configuration.setAllowedOrigins(corsProperties.getAllowedOrigins());
+    configuration.setAllowedMethods(corsProperties.getAllowedMethods());
+    configuration.setAllowedHeaders(corsProperties.getAllowedHeaders());
+    configuration.setExposedHeaders(corsProperties.getExposedHeaders());
+    configuration.setAllowCredentials(corsProperties.isAllowCredentials());
+    configuration.setMaxAge(corsProperties.getMaxAge());
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
 
-        return source;
-    }
+    return source;
+  }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 }
 
