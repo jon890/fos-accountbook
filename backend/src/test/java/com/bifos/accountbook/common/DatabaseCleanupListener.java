@@ -17,15 +17,17 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
  * 테스트 후 데이터베이스 정리 Listener (Spring TestExecutionListener 기반)
  * <p>
  * 사용법:
- *
- * @TestExecutionListeners( value = DatabaseCleanupListener.class,
- * mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
+ * <pre>{@code
+ * @TestExecutionListeners(
+ *     value = DatabaseCleanupListener.class,
+ *     mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
  * )
  * class MyTest {
- * // 테스트 메서드들
+ *     // 테스트 메서드들
  * }
+ * }</pre>
  * <p>
- * 또는 @SpringBootTest에 자동으로 적용하려면:
+ * 또는 {@code @SpringBootTest}에 자동으로 적용하려면:
  * spring.factories에 등록 (권장하지 않음, 명시적 사용 권장)
  * <p>
  * 장점:

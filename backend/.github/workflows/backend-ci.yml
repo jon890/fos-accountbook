@@ -44,14 +44,17 @@ jobs:
       - name: Initialize Gradle Wrapper
         run: gradle wrapper
 
-      - name: Run Checkstyle (코드 스타일 검사)
+      - name: Run Checkstyle Main (메인 소스 코드 스타일 검사)
         run: ./gradlew checkstyleMain --no-daemon
 
-      - name: Run tests with Gradle
+      - name: Run Checkstyle Test (테스트 소스 코드 스타일 검사)
+        run: ./gradlew checkstyleTest --no-daemon
+
+      - name: Run Tests (테스트 실행)
         run: ./gradlew test --no-daemon
 
-      - name: Build with Gradle
-        run: ./gradlew build -x test -x checkstyleMain --no-daemon
+      - name: Build with Gradle (빌드만 실행)
+        run: ./gradlew build -x test -x checkstyleMain -x checkstyleTest --no-daemon
 
       - name: Upload Checkstyle report
         if: failure()

@@ -6,6 +6,7 @@ import com.bifos.accountbook.application.dto.family.FamilyResponse;
 import com.bifos.accountbook.application.service.ExpenseService;
 import com.bifos.accountbook.application.service.FamilyService;
 import com.bifos.accountbook.domain.entity.Category;
+import com.bifos.accountbook.domain.entity.Notification;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.repository.NotificationRepository;
@@ -13,9 +14,7 @@ import com.bifos.accountbook.domain.value.CustomUuid;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -64,26 +63,22 @@ class NotificationControllerTest extends AbstractControllerTest {
     // 테스트 카테고리 조회
     List<Category> categories = categoryRepository.findAllByFamilyUuid(
         CustomUuid.from(testFamily.getUuid()));
-    testCategory = categories.get(0);
+    testCategory = categories.getFirst();
 
     // 테스트용 알림 생성 (예산 초과 지출 생성)
-    CreateExpenseRequest expenseRequest = new CreateExpenseRequest(
-        testCategory.getUuid().getValue(),
-        new BigDecimal("550000.00"),
-        "테스트 지출",
-        LocalDateTime.now()
+    CreateExpenseRequest expenseRequest = new CreateExpenseRequest(testCategory.getUuid().getValue(),
+                                                                   new BigDecimal("550000.00"),
+                                                                   "테스트 지출",
+                                                                   LocalDateTime.now()
     );
     expenseService.createExpense(testUser.getUuid(), testFamily.getUuid(), expenseRequest);
 
-    // 비동기 알림 생성 대기 (Awaitility 사용)
-    await()
-        .atMost(3, TimeUnit.SECONDS)
-        .untilAsserted(() -> {
-          List<com.bifos.accountbook.domain.entity.Notification> notifications =
-              notificationRepository.findAllByFamilyUuidOrderByCreatedAtDesc(
-                  CustomUuid.from(testFamily.getUuid()));
-          assertThat(notifications).isNotEmpty();
-        });
+    // TransactionalEventListener로 인해 트랜잭션 커밋 후 동기로 처리됨
+    // 따라서 별도의 대기 없이 바로 확인 가능
+    List<Notification> notifications =
+        notificationRepository.findAllByFamilyUuidOrderByCreatedAtDesc(
+            CustomUuid.from(testFamily.getUuid()));
+    assertThat(notifications).isNotEmpty();
   }
 
   @Test
@@ -116,11 +111,10 @@ class NotificationControllerTest extends AbstractControllerTest {
   @DisplayName("알림을 읽음 처리할 수 있다")
   void markAsRead_Success() throws Exception {
     // Given: 알림 조회
-    String notificationUuid = notificationRepository
-        .findAllByFamilyUuidOrderByCreatedAtDesc(CustomUuid.from(testFamily.getUuid()))
-        .get(0)
-        .getNotificationUuid()
-        .getValue();
+    String notificationUuid = notificationRepository.findAllByFamilyUuidOrderByCreatedAtDesc(CustomUuid.from(testFamily.getUuid()))
+                                                    .getFirst()
+                                                    .getNotificationUuid()
+                                                    .getValue();
 
     // When & Then
     mockMvc.perform(patch("/api/v1/notifications/{notificationUuid}/read", notificationUuid)

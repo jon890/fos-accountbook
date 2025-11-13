@@ -15,8 +15,9 @@ RUN gradle dependencies --no-daemon || true
 # Copy source code
 COPY src ./src
 
-# Build the application (skip tests for faster builds)
-RUN gradle clean build -x test --no-daemon
+# Build the application (skip tests and checkstyle for faster builds)
+# assemble: compile + package (no test, no checkstyle)
+RUN gradle clean assemble --no-daemon
 
 # Stage 2: Runtime
 FROM eclipse-temurin:21-jre-alpine

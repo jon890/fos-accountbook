@@ -80,12 +80,12 @@ public class TestFixtures {
   public final IncomeFixtures incomes;
 
   public TestFixtures(ApplicationContext applicationContext) {
-    UserRepository userRepository = applicationContext.getBean(UserRepository.class);
-    FamilyRepository familyRepository = applicationContext.getBean(FamilyRepository.class);
-    FamilyMemberRepository familyMemberRepository = applicationContext.getBean(FamilyMemberRepository.class);
-    CategoryRepository categoryRepository = applicationContext.getBean(CategoryRepository.class);
-    ExpenseRepository expenseRepository = applicationContext.getBean(ExpenseRepository.class);
-    IncomeRepository incomeRepository = applicationContext.getBean(IncomeRepository.class);
+    final UserRepository userRepository = applicationContext.getBean(UserRepository.class);
+    final FamilyRepository familyRepository = applicationContext.getBean(FamilyRepository.class);
+    final FamilyMemberRepository familyMemberRepository = applicationContext.getBean(FamilyMemberRepository.class);
+    final CategoryRepository categoryRepository = applicationContext.getBean(CategoryRepository.class);
+    final ExpenseRepository expenseRepository = applicationContext.getBean(ExpenseRepository.class);
+    final IncomeRepository incomeRepository = applicationContext.getBean(IncomeRepository.class);
 
     // 의존성 순서대로 초기화
     this.users = new UserFixtures(userRepository);

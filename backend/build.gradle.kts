@@ -110,22 +110,6 @@ tasks.named("checkstyleMain") {
     mustRunAfter(tasks.named("compileTestJava"))
 }
 
-// checkstyleTest 비활성화 (main 소스만 검사)
-tasks.named("checkstyleTest") {
-    enabled = false
-}
-
-// CD 환경(Railway)에서는 checkstyle 스킵, CI에서는 실행
-tasks.named("build") {
-    val isRailway = System.getenv("RAILWAY_ENVIRONMENT") != null
-    val skipCheckstyle = System.getenv("SKIP_CHECKSTYLE") == "true"
-
-    // Railway 배포 환경에서만 checkstyle 스킵
-    if (isRailway || skipCheckstyle) {
-        dependsOn.remove(tasks.named("checkstyleMain").get())
-    }
-}
-
 // Disable plain jar (only create executable boot jar)
 tasks.jar {
     enabled = false

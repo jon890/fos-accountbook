@@ -14,6 +14,7 @@ import java.time.YearMonth;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -32,11 +33,13 @@ public class BudgetAlertService {
   /**
    * 예산 알림 체크 및 생성
    * 지출이 생성/수정될 때 호출되어 예산 상태를 체크하고 필요시 알림을 생성합니다.
+   * <p>
+   * REQUIRES_NEW: TransactionalEventListener에서 호출되므로 새로운 트랜잭션 필요
    *
    * @param familyUuid 가족 UUID
    * @param date       지출 날짜
    */
-  @Transactional
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void checkAndCreateBudgetAlert(CustomUuid familyUuid, LocalDateTime date) {
     // 1. 가족 조회
     Family family = familyRepository.findActiveByUuid(familyUuid).orElse(null);

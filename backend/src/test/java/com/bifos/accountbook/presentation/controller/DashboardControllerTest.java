@@ -160,8 +160,8 @@ class DashboardControllerTest extends AbstractControllerTest {
     Category transportCategory = fixtures.categories.category(family).name("교통비").color("#3498DB").icon("🚗").build();
 
     LocalDateTime now = LocalDateTime.now();
-    int year = now.getYear();
-    int month = now.getMonthValue();
+    final int year = now.getYear();
+    final int month = now.getMonthValue();
 
     // 이번 달 지출: 50,000원 (음식) + 30,000원 (교통) = 80,000원
     createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
@@ -218,8 +218,8 @@ class DashboardControllerTest extends AbstractControllerTest {
     Category transportCategory = fixtures.categories.category(family).name("교통비").color("#3498DB").icon("🚗").build();
 
     LocalDateTime now = LocalDateTime.now();
-    int year = now.getYear();
-    int month = now.getMonthValue();
+    final int year = now.getYear();
+    final int month = now.getMonthValue();
 
     // 이번 달 지출: 200,000원
     createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
