@@ -8,6 +8,9 @@ on:
       - "src/**"
       - "build.gradle.kts"
       - "settings.gradle.kts"
+      - "gradle/**"
+      - "config/**"
+      - ".editorconfig"
       - ".github/workflows/backend-ci.yml"
   pull_request:
     branches:
@@ -16,6 +19,9 @@ on:
       - "src/**"
       - "build.gradle.kts"
       - "settings.gradle.kts"
+      - "gradle/**"
+      - "config/**"
+      - ".editorconfig"
       - ".github/workflows/backend-ci.yml"
 
 jobs:
