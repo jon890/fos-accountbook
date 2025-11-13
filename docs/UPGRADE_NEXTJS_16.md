@@ -5,6 +5,7 @@
 이 문서는 Next.js 15.5.4에서 Next.js 16으로 업그레이드할 때 고려해야 할 사항과 마이그레이션 절차를 설명합니다.
 
 **현재 상태:**
+
 - Next.js: 15.5.4
 - React: 19.2.0
 - TypeScript: 5.x
@@ -17,20 +18,24 @@
 ### 1. Middleware 파일명 변경
 
 **변경 전:**
+
 ```
 src/middleware.ts
 ```
 
 **변경 후:**
+
 ```
 src/proxy.ts
 ```
 
 **영향:**
+
 - `middleware.ts` 파일이 `proxy.ts`로 이름 변경 필요
 - 기존 `middleware` 함수는 그대로 유지 가능
 
 **마이그레이션:**
+
 ```bash
 # 파일명 변경
 mv src/middleware.ts src/proxy.ts
@@ -41,9 +46,11 @@ mv src/middleware.ts src/proxy.ts
 ### 2. 최소 요구사항 변경
 
 **Node.js:**
+
 - 최소 버전이 상향 조정될 수 있음 (현재 22.x 사용 중이므로 문제 없음)
 
 **TypeScript:**
+
 - TypeScript 5가 최소 버전 (현재 사용 중이므로 문제 없음)
 
 ---
@@ -51,10 +58,12 @@ mv src/middleware.ts src/proxy.ts
 ### 3. Turbopack 정식 채택
 
 **변경사항:**
+
 - Turbopack이 기본 빌드 도구로 채택됨
 - `--turbopack` 플래그가 더 이상 필요 없을 수 있음
 
 **현재 설정:**
+
 ```json
 {
   "scripts": {
@@ -65,6 +74,7 @@ mv src/middleware.ts src/proxy.ts
 ```
 
 **마이그레이션 후:**
+
 ```json
 {
   "scripts": {
@@ -79,10 +89,12 @@ mv src/middleware.ts src/proxy.ts
 ### 4. React Compiler 통합
 
 **변경사항:**
+
 - React Compiler가 자동으로 통합됨
 - 성능 최적화가 자동으로 적용됨
 
 **주의사항:**
+
 - 기존 코드는 대부분 호환되지만, 일부 패턴이 변경될 수 있음
 - 테스트를 통해 확인 필요
 
@@ -91,6 +103,7 @@ mv src/middleware.ts src/proxy.ts
 ### 5. 의존성 호환성 확인
 
 **확인 필요 항목:**
+
 - `next-auth` (Auth.js v5): Next.js 16 호환성 확인 필요
 - `@radix-ui/*`: 호환성 확인 필요
 - `react-hook-form`: 호환성 확인 필요
@@ -147,6 +160,7 @@ pnpm test:coverage
 ### 4. E2E 테스트 (권장)
 
 **추가 도구:**
+
 - Playwright 또는 Cypress 사용 권장
 - 주요 사용자 플로우 테스트:
   - 로그인 → 대시보드 → 지출 추가 → 수입 추가
@@ -227,6 +241,7 @@ mv src/middleware.ts src/proxy.ts
 ### 4단계: 설정 파일 업데이트
 
 **package.json:**
+
 ```json
 {
   "scripts": {
@@ -283,30 +298,36 @@ git push origin upgrade/nextjs-16
 ### 1. 호환성 문제
 
 **next-auth (Auth.js v5):**
+
 - Next.js 16과의 호환성 확인 필요
 - 공식 문서 확인: https://authjs.dev/getting-started/installation
 
 **서드파티 라이브러리:**
+
 - 모든 라이브러리가 Next.js 16을 지원하는지 확인
 - 지원하지 않는 경우 대체 라이브러리 검토
 
 ### 2. 성능 모니터링
 
 **빌드 시간:**
+
 - 빌드 시간이 크게 증가하지 않는지 확인
 - Turbopack 기본 사용으로 빌드 시간 감소 예상
 
 **런타임 성능:**
+
 - 페이지 로드 시간 확인
 - React Compiler로 인한 성능 향상 확인
 
 ### 3. 에러 처리
 
 **타입 에러:**
+
 - TypeScript 타입 에러가 발생할 수 있음
 - `@types/*` 패키지 업데이트 필요할 수 있음
 
 **런타임 에러:**
+
 - 브라우저 콘솔 에러 확인
 - 서버 로그 확인
 
@@ -326,15 +347,18 @@ git push origin upgrade/nextjs-16
 마이그레이션 완료 후 다음을 확인하세요:
 
 1. **기능 정상 작동:**
+
    - 모든 페이지가 정상적으로 렌더링됨
    - API 호출이 정상적으로 작동함
    - 인증 플로우가 정상적으로 작동함
 
 2. **성능 개선:**
+
    - 빌드 시간이 감소했는지 확인
    - 페이지 로드 시간이 개선되었는지 확인
 
 3. **에러 없음:**
+
    - 브라우저 콘솔에 에러가 없음
    - 서버 로그에 에러가 없음
    - 타입 에러가 없음
@@ -347,4 +371,3 @@ git push origin upgrade/nextjs-16
 
 **작성일:** 2025-11-12  
 **최종 업데이트:** Next.js 16 정식 릴리스 후 업데이트 필요
-
