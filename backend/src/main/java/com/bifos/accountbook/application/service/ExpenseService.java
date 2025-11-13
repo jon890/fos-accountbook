@@ -12,6 +12,8 @@ import com.bifos.accountbook.domain.entity.Expense;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.presentation.annotation.FamilyUuid;
+import com.bifos.accountbook.presentation.annotation.UserUuid;
 import com.bifos.accountbook.presentation.annotation.ValidateFamilyAccess;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -40,18 +42,17 @@ public class ExpenseService {
    * 지출 생성
    */
   @Transactional
-  public ExpenseResponse createExpense(CustomUuid userUuid, String familyUuid, CreateExpenseRequest request) {
-    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
+  public ExpenseResponse createExpense(CustomUuid userUuid, CustomUuid familyUuid, CreateExpenseRequest request) {
     CustomUuid categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
 
     // 사용자 확인
     User user = userService.getUser(userUuid);
 
     // 권한 확인 + Family 엔티티 조회 (DB 조회 1번으로 최적화)
-    var family = familyValidationService.validateAndGetFamily(userUuid, familyCustomUuid);
+    var family = familyValidationService.validateAndGetFamily(userUuid, familyUuid);
 
     // 카테고리 확인 + 가족 소속 검증 (캐시 활용, DB 조회 없음)
-    categoryService.validateAndFindCached(familyUuid, categoryCustomUuid);
+    categoryService.validateAndFindCached(familyUuid.getValue(), categoryCustomUuid);
 
     // 지출 생성 (ORM 편의 메서드 활용)
     Expense expense = family.addExpense(
@@ -80,7 +81,7 @@ public class ExpenseService {
    * 가족의 지출 목록 조회 (페이징)
    */
   @Transactional(readOnly = true)
-  public Page<ExpenseResponse> getFamilyExpenses(CustomUuid userUuid, String familyUuid, int page, int size) {
+  public Page<ExpenseResponse> getFamilyExpenses(CustomUuid userUuid, CustomUuid familyUuid, int page, int size) {
     ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
                                                              .page(page)
                                                              .size(size)
@@ -94,10 +95,9 @@ public class ExpenseService {
   @ValidateFamilyAccess
   @Transactional(readOnly = true)
   public Page<ExpenseResponse> getFamilyExpenses(
-      CustomUuid userUuid,
-      String familyUuid,
+      @UserUuid CustomUuid userUuid,
+      @FamilyUuid CustomUuid familyUuid,
       ExpenseSearchRequest searchRequest) {
-    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
 
     // 필터 파라미터 변환
     CustomUuid categoryUuid = null;
@@ -133,9 +133,9 @@ public class ExpenseService {
     Page<Expense> expenses;
     if (categoryUuid != null || startDateTime != null || endDateTime != null) {
       expenses = expenseRepository.findByFamilyUuidWithFilters(
-          familyCustomUuid, categoryUuid, startDateTime, endDateTime, pageable);
+          familyUuid, categoryUuid, startDateTime, endDateTime, pageable);
     } else {
-      expenses = expenseRepository.findAllByFamilyUuid(familyCustomUuid, pageable);
+      expenses = expenseRepository.findAllByFamilyUuid(familyUuid, pageable);
     }
 
     return expenses.map(ExpenseResponse::fromWithoutCategory);

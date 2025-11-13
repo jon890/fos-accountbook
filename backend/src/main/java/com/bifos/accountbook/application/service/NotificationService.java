@@ -7,6 +7,8 @@ import com.bifos.accountbook.application.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.Notification;
 import com.bifos.accountbook.domain.repository.NotificationRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.presentation.annotation.FamilyUuid;
+import com.bifos.accountbook.presentation.annotation.UserUuid;
 import com.bifos.accountbook.presentation.annotation.ValidateFamilyAccess;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,15 +33,13 @@ public class NotificationService {
    */
   @ValidateFamilyAccess
   @Transactional(readOnly = true)
-  public NotificationListResponse getFamilyNotifications(CustomUuid userUuid, String familyUuid) {
-    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
+  public NotificationListResponse getFamilyNotifications(@UserUuid CustomUuid userUuid, @FamilyUuid CustomUuid familyUuid) {
     // 알림 목록 조회
     List<Notification> notifications = notificationRepository
-        .findAllByFamilyUuidOrderByCreatedAtDesc(familyCustomUuid);
+        .findAllByFamilyUuidOrderByCreatedAtDesc(familyUuid);
 
     // 읽지 않은 알림 수
-    long unreadCount = notificationRepository.countByFamilyUuidAndIsReadFalse(familyCustomUuid);
+    long unreadCount = notificationRepository.countByFamilyUuidAndIsReadFalse(familyUuid);
 
     List<NotificationResponse> responses = notifications.stream()
                                                         .map(NotificationResponse::from)
@@ -89,10 +89,8 @@ public class NotificationService {
    */
   @ValidateFamilyAccess
   @Transactional
-  public void markAllAsRead(CustomUuid userUuid, String familyUuid) {
-    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
-    List<Notification> notifications = notificationRepository.findAllByFamilyUuidOrderByCreatedAtDesc(familyCustomUuid);
+  public void markAllAsRead(@UserUuid CustomUuid userUuid, @FamilyUuid CustomUuid familyUuid) {
+    List<Notification> notifications = notificationRepository.findAllByFamilyUuidOrderByCreatedAtDesc(familyUuid);
 
     for (Notification notification : notifications) {
       if (!notification.getIsRead()) {
@@ -106,10 +104,8 @@ public class NotificationService {
    */
   @ValidateFamilyAccess
   @Transactional(readOnly = true)
-  public Long getUnreadCount(CustomUuid userUuid, String familyUuid) {
-    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
-    return notificationRepository.countByFamilyUuidAndIsReadFalse(familyCustomUuid);
+  public Long getUnreadCount(@UserUuid CustomUuid userUuid, @FamilyUuid CustomUuid familyUuid) {
+    return notificationRepository.countByFamilyUuidAndIsReadFalse(familyUuid);
   }
 }
 

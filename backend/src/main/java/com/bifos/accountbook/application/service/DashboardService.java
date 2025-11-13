@@ -9,6 +9,8 @@ import com.bifos.accountbook.domain.repository.DashboardRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.repository.projection.CategoryExpenseProjection;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.presentation.annotation.FamilyUuid;
+import com.bifos.accountbook.presentation.annotation.UserUuid;
 import com.bifos.accountbook.presentation.annotation.ValidateFamilyAccess;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -30,7 +32,6 @@ public class DashboardService {
 
   private final DashboardRepository dashboardRepository;
   private final FamilyRepository familyRepository;
-  private final FamilyValidationService familyValidationService;
 
   /**
    * 카테고리별 지출 요약 조회 - 전체 지출 합계 - 카테고리별 지출 통계 (금액, 건수, 비율)
@@ -41,11 +42,9 @@ public class DashboardService {
    * @return 카테고리별 지출 요약
    */
   @ValidateFamilyAccess
-  public CategoryExpenseSummaryResponse getCategoryExpenseSummary(CustomUuid userUuid,
-                                                                  String familyUuid,
+  public CategoryExpenseSummaryResponse getCategoryExpenseSummary(@UserUuid CustomUuid userUuid,
+                                                                  @FamilyUuid CustomUuid familyUuid,
                                                                   ExpenseSummarySearchRequest searchRequest) {
-
-    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
 
     // 카테고리 UUID 변환 (null 가능)
     CustomUuid categoryCustomUuid = searchRequest.getCategoryUuid() != null
@@ -53,13 +52,13 @@ public class DashboardService {
         : null;
 
     // 전체 지출 합계 조회
-    BigDecimal totalExpense = dashboardRepository.getTotalExpenseAmount(familyCustomUuid,
+    BigDecimal totalExpense = dashboardRepository.getTotalExpenseAmount(familyUuid,
                                                                         categoryCustomUuid,
                                                                         searchRequest.getStartDate(),
                                                                         searchRequest.getEndDate());
 
     // 카테고리별 지출 통계 조회
-    List<CategoryExpenseProjection> projections = dashboardRepository.getCategoryExpenseStats(familyCustomUuid,
+    List<CategoryExpenseProjection> projections = dashboardRepository.getCategoryExpenseStats(familyUuid,
                                                                                               categoryCustomUuid,
                                                                                               searchRequest.getStartDate(),
                                                                                               searchRequest.getEndDate());
@@ -126,24 +125,21 @@ public class DashboardService {
    * @return 월별 통계 (지출, 수입, 예산, 가족 구성원 수)
    */
   @ValidateFamilyAccess
-  public MonthlyStatsResponse getMonthlyStats(CustomUuid userUuid,
-                                              String familyUuid,
+  public MonthlyStatsResponse getMonthlyStats(@UserUuid CustomUuid userUuid,
+                                              @FamilyUuid CustomUuid familyUuid,
                                               int year,
                                               int month) {
-
-    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
     // 가족 정보 조회 (구성원 수)
-    Family family = familyRepository.findByUuid(familyCustomUuid)
+    Family family = familyRepository.findByUuid(familyUuid)
                                     .orElseThrow(() -> new IllegalArgumentException("가족을 찾을 수 없습니다"));
 
     // QueryDSL로 월별 지출 합계 조회 (DB에서 직접 집계)
     BigDecimal monthlyExpense = dashboardRepository.getMonthlyExpenseAmount(
-        familyCustomUuid, year, month);
+        familyUuid, year, month);
 
     // QueryDSL로 월별 수입 합계 조회 (DB에서 직접 집계)
     BigDecimal monthlyIncome = dashboardRepository.getMonthlyIncomeAmount(
-        familyCustomUuid, year, month);
+        familyUuid, year, month);
 
     // 가족의 월 예산 조회
     BigDecimal budget = family.getMonthlyBudget() != null

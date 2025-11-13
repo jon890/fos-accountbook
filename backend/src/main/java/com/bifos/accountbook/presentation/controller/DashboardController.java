@@ -4,6 +4,7 @@ import com.bifos.accountbook.application.dto.dashboard.MonthlyStatsResponse;
 import com.bifos.accountbook.application.dto.expense.CategoryExpenseSummaryResponse;
 import com.bifos.accountbook.application.dto.expense.ExpenseSummarySearchRequest;
 import com.bifos.accountbook.application.service.DashboardService;
+import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.presentation.annotation.LoginUser;
 import com.bifos.accountbook.presentation.dto.ApiSuccessResponse;
 import com.bifos.accountbook.presentation.dto.LoginUserDto;
@@ -44,7 +45,7 @@ public class DashboardController {
   @GetMapping("/expenses/by-category")
   public ResponseEntity<ApiSuccessResponse<CategoryExpenseSummaryResponse>> getCategoryExpenseSummary(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable String familyUuid,
+      @PathVariable CustomUuid familyUuid,
       @RequestParam(required = false) String startDate,
       @RequestParam(required = false) String endDate,
       @RequestParam(required = false) String categoryUuid) {
@@ -72,7 +73,7 @@ public class DashboardController {
   @GetMapping("/stats/monthly")
   public ResponseEntity<ApiSuccessResponse<MonthlyStatsResponse>> getMonthlyStats(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable String familyUuid,
+      @PathVariable CustomUuid familyUuid,
       @RequestParam(required = false) Integer year,
       @RequestParam(required = false) Integer month) {
 

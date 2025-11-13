@@ -9,6 +9,8 @@ import com.bifos.accountbook.config.CacheConfig;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.presentation.annotation.FamilyUuid;
+import com.bifos.accountbook.presentation.annotation.UserUuid;
 import com.bifos.accountbook.presentation.annotation.ValidateFamilyAccess;
 import java.util.Arrays;
 import java.util.List;
@@ -47,21 +49,22 @@ public class CategoryService {
    */
   @ValidateFamilyAccess
   @Transactional
-  @CacheEvict(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid")
-  public CategoryResponse createCategory(CustomUuid userUuid, String familyUuid, CreateCategoryRequest request) {
-    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
+  @CacheEvict(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid.value")
+  public CategoryResponse createCategory(@UserUuid CustomUuid userUuid,
+                                         @FamilyUuid CustomUuid familyUuid,
+                                         CreateCategoryRequest request) {
 
     // 중복 확인
-    categoryRepository.findByFamilyUuidAndName(familyCustomUuid, request.getName())
+    categoryRepository.findByFamilyUuidAndName(familyUuid, request.getName())
                       .ifPresent(c -> {
                         throw new BusinessException(ErrorCode.CATEGORY_ALREADY_EXISTS)
-                            .addParameter("familyUuid", familyCustomUuid.getValue())
+                            .addParameter("familyUuid", familyUuid.getValue())
                             .addParameter("categoryName", request.getName());
                       });
 
     // 카테고리 생성
     Category category = Category.builder()
-                                .familyUuid(familyCustomUuid)
+                                .familyUuid(familyUuid)
                                 .name(request.getName())
                                 .color(request.getColor() != null ? request.getColor() : "#6366f1")
                                 .icon(request.getIcon())
@@ -84,11 +87,10 @@ public class CategoryService {
    */
   @ValidateFamilyAccess
   @Transactional(readOnly = true)
-  @Cacheable(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid")
-  public List<CategoryResponse> getFamilyCategories(CustomUuid userUuid, String familyUuid) {
-    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
-    List<Category> categories = categoryRepository.findAllByFamilyUuid(familyCustomUuid);
+  @Cacheable(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid.value")
+  public List<CategoryResponse> getFamilyCategories(@UserUuid CustomUuid userUuid,
+                                                    @FamilyUuid CustomUuid familyUuid) {
+    List<Category> categories = categoryRepository.findAllByFamilyUuid(familyUuid);
 
     return categories.stream()
                      .map(CategoryResponse::from)

@@ -6,6 +6,7 @@ import com.bifos.accountbook.application.dto.income.IncomeResponse;
 import com.bifos.accountbook.application.dto.income.IncomeSearchRequest;
 import com.bifos.accountbook.application.dto.income.UpdateIncomeRequest;
 import com.bifos.accountbook.application.service.IncomeService;
+import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.presentation.annotation.LoginUser;
 import com.bifos.accountbook.presentation.dto.ApiSuccessResponse;
 import com.bifos.accountbook.presentation.dto.LoginUserDto;
@@ -39,7 +40,7 @@ public class IncomeController {
   @PostMapping
   public ResponseEntity<ApiSuccessResponse<IncomeResponse>> createIncome(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable String familyUuid,
+      @PathVariable CustomUuid familyUuid,
       @Valid @RequestBody CreateIncomeRequest request) {
     IncomeResponse response = incomeService.createIncome(loginUser.userUuid(), familyUuid, request);
 
@@ -54,7 +55,7 @@ public class IncomeController {
   @GetMapping
   public ResponseEntity<ApiSuccessResponse<PaginationResponse<IncomeResponse>>> getFamilyIncomes(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable String familyUuid,
+      @PathVariable CustomUuid familyUuid,
       @RequestParam(defaultValue = "0") Integer page,
       @RequestParam(defaultValue = "20") Integer size,
       @RequestParam(required = false) String categoryUuid,

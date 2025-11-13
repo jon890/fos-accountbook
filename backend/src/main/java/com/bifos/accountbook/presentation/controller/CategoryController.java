@@ -4,6 +4,7 @@ import com.bifos.accountbook.application.dto.category.CategoryResponse;
 import com.bifos.accountbook.application.dto.category.CreateCategoryRequest;
 import com.bifos.accountbook.application.dto.category.UpdateCategoryRequest;
 import com.bifos.accountbook.application.service.CategoryService;
+import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.presentation.annotation.LoginUser;
 import com.bifos.accountbook.presentation.dto.ApiSuccessResponse;
 import com.bifos.accountbook.presentation.dto.LoginUserDto;
@@ -36,9 +37,9 @@ public class CategoryController {
   @PostMapping("/families/{familyUuid}/categories")
   public ResponseEntity<ApiSuccessResponse<CategoryResponse>> createCategory(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable String familyUuid,
+      @PathVariable CustomUuid familyUuid,
       @Valid @RequestBody CreateCategoryRequest request) {
-    log.info("Creating category in family: {} by user: {}", familyUuid, loginUser.userUuid());
+    log.info("Creating category in family: {} by user: {}", familyUuid.getValue(), loginUser.userUuid());
 
     CategoryResponse response = categoryService.createCategory(loginUser.userUuid(), familyUuid, request);
 
@@ -53,8 +54,8 @@ public class CategoryController {
   @GetMapping("/families/{familyUuid}/categories")
   public ResponseEntity<ApiSuccessResponse<List<CategoryResponse>>> getFamilyCategories(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable String familyUuid) {
-    log.info("Fetching categories for family: {} by user: {}", familyUuid, loginUser.userUuid());
+      @PathVariable CustomUuid familyUuid) {
+    log.info("Fetching categories for family: {} by user: {}", familyUuid.getValue(), loginUser.userUuid());
 
     List<CategoryResponse> categories = categoryService.getFamilyCategories(loginUser.userUuid(), familyUuid);
 

@@ -4,6 +4,7 @@ import com.bifos.accountbook.application.dto.family.CreateFamilyRequest;
 import com.bifos.accountbook.application.dto.family.FamilyResponse;
 import com.bifos.accountbook.application.dto.family.UpdateFamilyRequest;
 import com.bifos.accountbook.application.service.FamilyService;
+import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.presentation.annotation.LoginUser;
 import com.bifos.accountbook.presentation.dto.ApiSuccessResponse;
 import com.bifos.accountbook.presentation.dto.LoginUserDto;
@@ -67,8 +68,8 @@ public class FamilyController {
   @GetMapping("/{familyUuid}")
   public ResponseEntity<ApiSuccessResponse<FamilyResponse>> getFamily(
       @LoginUser LoginUserDto loginUser,
-      @Parameter(description = "가족 UUID") @PathVariable String familyUuid) {
-    log.info("Fetching family: {} for user: {}", familyUuid, loginUser.userUuid());
+      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid) {
+    log.info("Fetching family: {} for user: {}", familyUuid.getValue(), loginUser.userUuid());
 
     FamilyResponse family = familyService.getFamily(loginUser.userUuid(), familyUuid);
 
@@ -81,9 +82,9 @@ public class FamilyController {
   @PutMapping("/{familyUuid}")
   public ResponseEntity<ApiSuccessResponse<FamilyResponse>> updateFamily(
       @LoginUser LoginUserDto loginUser,
-      @Parameter(description = "가족 UUID") @PathVariable String familyUuid,
+      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
       @Valid @RequestBody UpdateFamilyRequest request) {
-    log.info("Updating family: {} by user: {}", familyUuid, loginUser.userUuid());
+    log.info("Updating family: {} by user: {}", familyUuid.getValue(), loginUser.userUuid());
 
     FamilyResponse response = familyService.updateFamily(loginUser.userUuid(), familyUuid, request);
 
@@ -96,8 +97,8 @@ public class FamilyController {
   @DeleteMapping("/{familyUuid}")
   public ResponseEntity<ApiSuccessResponse<Void>> deleteFamily(
       @LoginUser LoginUserDto loginUser,
-      @Parameter(description = "가족 UUID") @PathVariable String familyUuid) {
-    log.info("Deleting family: {} by user: {}", familyUuid, loginUser.userUuid());
+      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid) {
+    log.info("Deleting family: {} by user: {}", familyUuid.getValue(), loginUser.userUuid());
 
     familyService.deleteFamily(loginUser.userUuid(), familyUuid);
 

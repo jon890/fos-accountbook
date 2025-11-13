@@ -3,6 +3,7 @@ package com.bifos.accountbook.presentation.controller;
 import com.bifos.accountbook.application.dto.notification.NotificationListResponse;
 import com.bifos.accountbook.application.dto.notification.NotificationResponse;
 import com.bifos.accountbook.application.service.NotificationService;
+import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.presentation.annotation.LoginUser;
 import com.bifos.accountbook.presentation.dto.ApiSuccessResponse;
 import com.bifos.accountbook.presentation.dto.LoginUserDto;
@@ -38,8 +39,8 @@ public class NotificationController {
   @GetMapping("/families/{familyUuid}/notifications")
   public ResponseEntity<ApiSuccessResponse<NotificationListResponse>> getFamilyNotifications(
       @LoginUser LoginUserDto loginUser,
-      @Parameter(description = "가족 UUID") @PathVariable String familyUuid) {
-    log.info("Fetching notifications for family: {} by user: {}", familyUuid, loginUser.userUuid());
+      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid) {
+    log.info("Fetching notifications for family: {} by user: {}", familyUuid.getValue(), loginUser.userUuid());
 
     NotificationListResponse response = notificationService.getFamilyNotifications(
         loginUser.userUuid(), familyUuid);
@@ -52,7 +53,7 @@ public class NotificationController {
   @GetMapping("/families/{familyUuid}/notifications/unread-count")
   public ResponseEntity<ApiSuccessResponse<Map<String, Long>>> getUnreadCount(
       @LoginUser LoginUserDto loginUser,
-      @Parameter(description = "가족 UUID") @PathVariable String familyUuid) {
+      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid) {
     Long unreadCount = notificationService.getUnreadCount(loginUser.userUuid(), familyUuid);
 
     return ResponseEntity.ok(ApiSuccessResponse.of(Map.of("unreadCount", unreadCount)));
@@ -93,8 +94,8 @@ public class NotificationController {
   @PostMapping("/families/{familyUuid}/notifications/mark-all-read")
   public ResponseEntity<ApiSuccessResponse<Void>> markAllAsRead(
       @LoginUser LoginUserDto loginUser,
-      @Parameter(description = "가족 UUID") @PathVariable String familyUuid) {
-    log.info("Marking all notifications as read for family: {} by user: {}", familyUuid, loginUser.userUuid());
+      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid) {
+    log.info("Marking all notifications as read for family: {} by user: {}", familyUuid.getValue(), loginUser.userUuid());
 
     notificationService.markAllAsRead(loginUser.userUuid(), familyUuid);
 

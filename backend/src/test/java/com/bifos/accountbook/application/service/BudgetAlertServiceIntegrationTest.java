@@ -8,6 +8,7 @@ import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Notification;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.NotificationRepository;
+import com.bifos.accountbook.domain.value.CustomUuid;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -71,7 +72,7 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
 
     // When: 지출 생성
     expenseService.createExpense(data.testUser.getUuid(),
-                                 data.testFamily.getUuid(),
+                                 CustomUuid.from(data.testFamily.getUuid()),
                                  request
     );
 
@@ -104,7 +105,7 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
 
     // When: 지출 생성
     expenseService.createExpense(data.testUser.getUuid(),
-                                 data.testFamily.getUuid(),
+                                 CustomUuid.from(data.testFamily.getUuid()),
                                  request
     );
 
@@ -139,7 +140,7 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
     // When: 지출 생성
     expenseService.createExpense(
         data.testUser.getUuid(),
-        data.testFamily.getUuid(),
+        CustomUuid.from(data.testFamily.getUuid()),
         request
     );
 
@@ -171,7 +172,7 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
         LocalDateTime.now()
     );
 
-    expenseService.createExpense(data.testUser.getUuid(), data.testFamily.getUuid(), firstRequest);
+    expenseService.createExpense(data.testUser.getUuid(), CustomUuid.from(data.testFamily.getUuid()), firstRequest);
 
     // 첫 번째 알림 생성 대기
     await()
@@ -190,7 +191,7 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
         LocalDateTime.now()
     );
 
-    expenseService.createExpense(data.testUser.getUuid(), data.testFamily.getUuid(), secondRequest);
+    expenseService.createExpense(data.testUser.getUuid(), CustomUuid.from(data.testFamily.getUuid()), secondRequest);
 
     // Then: 잠시 대기 후 50% 알림은 여전히 1개만 존재해야 함
     await()
@@ -231,7 +232,7 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
         LocalDateTime.now()
     );
 
-    expenseService.createExpense(testUser.getUuid(), noBudgetFamily.getUuid(), request);
+    expenseService.createExpense(testUser.getUuid(), CustomUuid.from(noBudgetFamily.getUuid()), request);
 
     // Then: 잠시 대기 후에도 알림이 생성되지 않아야 함
     await()
@@ -257,7 +258,7 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
         "50% 초과",
         LocalDateTime.now()
     );
-    expenseService.createExpense(data.testUser.getUuid(), data.testFamily.getUuid(), request1);
+    expenseService.createExpense(data.testUser.getUuid(), CustomUuid.from(data.testFamily.getUuid()), request1);
 
     // 50% 알림 생성 대기
     await().atMost(3, TimeUnit.SECONDS).untilAsserted(() ->
@@ -271,7 +272,7 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
         "80% 초과",
         LocalDateTime.now()
     );
-    expenseService.createExpense(data.testUser.getUuid(), data.testFamily.getUuid(), request2);
+    expenseService.createExpense(data.testUser.getUuid(), CustomUuid.from(data.testFamily.getUuid()), request2);
 
     // 80% 알림 생성 대기
     await().atMost(3, TimeUnit.SECONDS).untilAsserted(() ->
@@ -285,7 +286,7 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
         "100% 초과",
         LocalDateTime.now()
     );
-    expenseService.createExpense(data.testUser.getUuid(), data.testFamily.getUuid(), request3);
+    expenseService.createExpense(data.testUser.getUuid(), CustomUuid.from(data.testFamily.getUuid()), request3);
 
     // Then: 3개의 알림이 모두 생성되어야 함
     await()

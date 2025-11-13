@@ -13,6 +13,8 @@ import com.bifos.accountbook.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.presentation.annotation.FamilyUuid;
+import com.bifos.accountbook.presentation.annotation.UserUuid;
 import com.bifos.accountbook.presentation.annotation.ValidateFamilyAccess;
 import java.math.BigDecimal;
 import java.util.List;
@@ -110,14 +112,12 @@ public class FamilyService {
    */
   @ValidateFamilyAccess
   @Transactional(readOnly = true)
-  public FamilyResponse getFamily(CustomUuid userUuid, String familyUuid) {
-    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
-    Family family = familyRepository.findActiveByUuid(familyCustomUuid)
+  public FamilyResponse getFamily(@UserUuid CustomUuid userUuid, @FamilyUuid CustomUuid familyUuid) {
+    Family family = familyRepository.findActiveByUuid(familyUuid)
                                     .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
-                                        .addParameter("familyUuid", familyUuid));
+                                        .addParameter("familyUuid", familyUuid.getValue()));
 
-    int memberCount = familyMemberRepository.countByFamilyUuid(familyCustomUuid);
+    int memberCount = familyMemberRepository.countByFamilyUuid(familyUuid);
     return FamilyResponse.fromWithMemberCount(family, memberCount);
   }
 
@@ -125,15 +125,13 @@ public class FamilyService {
    * 가족 정보 수정
    */
   @Transactional
-  public FamilyResponse updateFamily(CustomUuid userUuid, String familyUuid, UpdateFamilyRequest request) {
-    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
+  public FamilyResponse updateFamily(CustomUuid userUuid, CustomUuid familyUuid, UpdateFamilyRequest request) {
     // 권한 확인 (owner만 수정 가능)
-    validateFamilyOwner(userUuid, familyCustomUuid);
+    validateFamilyOwner(userUuid, familyUuid);
 
-    Family family = familyRepository.findActiveByUuid(familyCustomUuid)
+    Family family = familyRepository.findActiveByUuid(familyUuid)
                                     .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
-                                        .addParameter("familyUuid", familyUuid));
+                                        .addParameter("familyUuid", familyUuid.getValue()));
 
     family.updateName(request.getName());
 
@@ -142,7 +140,7 @@ public class FamilyService {
       family.updateMonthlyBudget(request.getMonthlyBudget());
     }
 
-    int memberCount = familyMemberRepository.countByFamilyUuid(familyCustomUuid);
+    int memberCount = familyMemberRepository.countByFamilyUuid(familyUuid);
     return FamilyResponse.fromWithMemberCount(family, memberCount);
   }
 
@@ -150,15 +148,13 @@ public class FamilyService {
    * 가족 삭제 (Soft Delete)
    */
   @Transactional
-  public void deleteFamily(CustomUuid userUuid, String familyUuid) {
-    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
+  public void deleteFamily(CustomUuid userUuid, CustomUuid familyUuid) {
     // 권한 확인 (owner만 삭제 가능)
-    validateFamilyOwner(userUuid, familyCustomUuid);
+    validateFamilyOwner(userUuid, familyUuid);
 
-    Family family = familyRepository.findActiveByUuid(familyCustomUuid)
+    Family family = familyRepository.findActiveByUuid(familyUuid)
                                     .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
-                                        .addParameter("familyUuid", familyUuid));
+                                        .addParameter("familyUuid", familyUuid.getValue()));
 
     family.delete();
     // 더티 체킹으로 자동 업데이트

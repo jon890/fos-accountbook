@@ -4,6 +4,7 @@ import com.bifos.accountbook.application.dto.invitation.AcceptInvitationRequest;
 import com.bifos.accountbook.application.dto.invitation.CreateInvitationRequest;
 import com.bifos.accountbook.application.dto.invitation.InvitationResponse;
 import com.bifos.accountbook.application.service.InvitationService;
+import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.presentation.annotation.LoginUser;
 import com.bifos.accountbook.presentation.dto.ApiSuccessResponse;
 import com.bifos.accountbook.presentation.dto.LoginUserDto;
@@ -35,9 +36,9 @@ public class InvitationController {
   @PostMapping("/families/{familyUuid}")
   public ResponseEntity<ApiSuccessResponse<InvitationResponse>> createInvitation(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable String familyUuid,
+      @PathVariable CustomUuid familyUuid,
       @Valid @RequestBody(required = false) CreateInvitationRequest request) {
-    log.info("Creating invitation for family: {} by user: {}", familyUuid, loginUser.userUuid());
+    log.info("Creating invitation for family: {} by user: {}", familyUuid.getValue(), loginUser.userUuid());
 
     if (request == null) {
       request = new CreateInvitationRequest(72); // 기본 3일
@@ -56,8 +57,8 @@ public class InvitationController {
   @GetMapping("/families/{familyUuid}")
   public ResponseEntity<ApiSuccessResponse<List<InvitationResponse>>> getFamilyInvitations(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable String familyUuid) {
-    log.info("Fetching invitations for family: {} by user: {}", familyUuid, loginUser.userUuid());
+      @PathVariable CustomUuid familyUuid) {
+    log.info("Fetching invitations for family: {} by user: {}", familyUuid.getValue(), loginUser.userUuid());
 
     List<InvitationResponse> invitations = invitationService.getFamilyInvitations(loginUser.userUuid(),
                                                                                   familyUuid);

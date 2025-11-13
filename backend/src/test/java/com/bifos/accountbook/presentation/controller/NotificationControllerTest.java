@@ -71,7 +71,7 @@ class NotificationControllerTest extends AbstractControllerTest {
                                                                    "테스트 지출",
                                                                    LocalDateTime.now()
     );
-    expenseService.createExpense(testUser.getUuid(), testFamily.getUuid(), expenseRequest);
+    expenseService.createExpense(testUser.getUuid(), CustomUuid.from(testFamily.getUuid()), expenseRequest);
 
     // TransactionalEventListener로 인해 트랜잭션 커밋 후 동기로 처리됨
     // 따라서 별도의 대기 없이 바로 확인 가능

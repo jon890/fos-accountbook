@@ -1,9 +1,11 @@
 package com.bifos.accountbook.config;
 
+import com.bifos.accountbook.config.converter.StringToCustomUuidConverter;
 import com.bifos.accountbook.presentation.resolver.LoginUserArgumentResolver;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.format.FormatterRegistry;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -16,6 +18,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebMvcConfig implements WebMvcConfigurer {
 
   private final LoginUserArgumentResolver loginUserArgumentResolver;
+  private final StringToCustomUuidConverter stringToCustomUuidConverter;
 
   /**
    * 커스텀 ArgumentResolver 등록
@@ -24,6 +27,15 @@ public class WebMvcConfig implements WebMvcConfigurer {
   @Override
   public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
     resolvers.add(loginUserArgumentResolver);
+  }
+
+  /**
+   * 커스텀 Converter 등록
+   * String을 CustomUuid로 자동 변환할 수 있도록 StringToCustomUuidConverter를 추가합니다.
+   */
+  @Override
+  public void addFormatters(FormatterRegistry registry) {
+    registry.addConverter(stringToCustomUuidConverter);
   }
 }
 

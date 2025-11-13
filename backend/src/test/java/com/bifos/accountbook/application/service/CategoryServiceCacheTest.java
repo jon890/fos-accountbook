@@ -8,6 +8,7 @@ import com.bifos.accountbook.config.CacheConfig;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Family;
 import com.bifos.accountbook.domain.entity.User;
+import com.bifos.accountbook.domain.value.CustomUuid;
 import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,12 +55,13 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
                                            .icon("🍎")
                                            .build();
 
-    String familyUuidStr = testFamily.getUuid().getValue();
+    CustomUuid familyUuid = testFamily.getUuid();
+    String familyUuidStr = familyUuid.getValue();
 
     // When: 첫 번째 조회 (DB에서 조회)
     List<CategoryResponse> firstCall = categoryService.getFamilyCategories(
         testUser.getUuid(),
-        familyUuidStr
+        familyUuid
     );
 
     // Then: 캐시에 저장되어 있어야 함
@@ -70,7 +72,7 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
     // When: 두 번째 조회 (캐시에서 조회)
     List<CategoryResponse> secondCall = categoryService.getFamilyCategories(
         testUser.getUuid(),
-        familyUuidStr
+        familyUuid
     );
 
     // Then: 동일한 결과 반환
@@ -85,9 +87,10 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
     // Given: TestFixtures로 데이터 생성 + 캐시 준비
     User testUser = fixtures.getDefaultUser();
     Family testFamily = fixtures.getDefaultFamily();
-    String familyUuidStr = testFamily.getUuid().getValue();
+    CustomUuid familyUuid = testFamily.getUuid();
+    String familyUuidStr = familyUuid.getValue();
 
-    categoryService.getFamilyCategories(testUser.getUuid(), familyUuidStr);
+    categoryService.getFamilyCategories(testUser.getUuid(), familyUuid);
 
     var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
     assertThat(cache.get(familyUuidStr)).isNotNull();
@@ -98,7 +101,7 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
         "#00ff00",
         "🍏"
     );
-    categoryService.createCategory(testUser.getUuid(), familyUuidStr, request);
+    categoryService.createCategory(testUser.getUuid(), familyUuid, request);
 
     // Then: 캐시가 무효화됨
     assertThat(cache.get(familyUuidStr)).isNull();
@@ -116,8 +119,9 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
                                            .icon("🍎")
                                            .build();
 
-    String familyUuidStr = testFamily.getUuid().getValue();
-    categoryService.getFamilyCategories(testUser.getUuid(), familyUuidStr);
+    CustomUuid familyUuid = testFamily.getUuid();
+    String familyUuidStr = familyUuid.getValue();
+    categoryService.getFamilyCategories(testUser.getUuid(), familyUuid);
 
     var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
     assertThat(cache.get(familyUuidStr)).isNotNull();
@@ -146,8 +150,9 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
                                            .icon("🍎")
                                            .build();
 
-    String familyUuidStr = testFamily.getUuid().getValue();
-    categoryService.getFamilyCategories(testUser.getUuid(), familyUuidStr);
+    CustomUuid familyUuid = testFamily.getUuid();
+    String familyUuidStr = familyUuid.getValue();
+    categoryService.getFamilyCategories(testUser.getUuid(), familyUuid);
 
     var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
     assertThat(cache.get(familyUuidStr)).isNotNull();
@@ -169,8 +174,9 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
                                         .owner(testUser)
                                         .build();
 
-    String newFamilyUuidStr = newFamily.getUuid().getValue();
-    categoryService.getFamilyCategories(testUser.getUuid(), newFamilyUuidStr);
+    CustomUuid newFamilyUuid = newFamily.getUuid();
+    String newFamilyUuidStr = newFamilyUuid.getValue();
+    categoryService.getFamilyCategories(testUser.getUuid(), newFamilyUuid);
 
     var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
     assertThat(cache.get(newFamilyUuidStr)).isNotNull();
@@ -244,9 +250,10 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
     assertThat(cache.get(familyUuidStr)).isNotNull();
 
     // When: getFamilyCategories로 조회 (캐시 재사용)
+    CustomUuid familyUuid = testFamily.getUuid();
     List<CategoryResponse> categories = categoryService.getFamilyCategories(
         testUser.getUuid(),
-        familyUuidStr
+        familyUuid
     );
 
     // Then: 동일한 캐시를 사용하여 결과 반환

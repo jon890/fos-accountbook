@@ -6,6 +6,7 @@ import com.bifos.accountbook.application.dto.expense.ExpenseResponse;
 import com.bifos.accountbook.application.dto.expense.ExpenseSearchRequest;
 import com.bifos.accountbook.application.dto.expense.UpdateExpenseRequest;
 import com.bifos.accountbook.application.service.ExpenseService;
+import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.presentation.annotation.LoginUser;
 import com.bifos.accountbook.presentation.dto.ApiSuccessResponse;
 import com.bifos.accountbook.presentation.dto.LoginUserDto;
@@ -39,7 +40,7 @@ public class ExpenseController {
   @PostMapping
   public ResponseEntity<ApiSuccessResponse<ExpenseResponse>> createExpense(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable String familyUuid,
+      @PathVariable CustomUuid familyUuid,
       @Valid @RequestBody CreateExpenseRequest request) {
     ExpenseResponse response = expenseService.createExpense(loginUser.userUuid(), familyUuid, request);
 
@@ -54,7 +55,7 @@ public class ExpenseController {
   @GetMapping
   public ResponseEntity<ApiSuccessResponse<PaginationResponse<ExpenseResponse>>> getFamilyExpenses(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable String familyUuid,
+      @PathVariable CustomUuid familyUuid,
       @RequestParam(defaultValue = "0") Integer page,
       @RequestParam(defaultValue = "20") Integer size,
       @RequestParam(required = false) String categoryId,
@@ -78,7 +79,7 @@ public class ExpenseController {
   @GetMapping("/{expenseUuid}")
   public ResponseEntity<ApiSuccessResponse<ExpenseResponse>> getExpense(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable String familyUuid,
+      @PathVariable CustomUuid familyUuid,
       @PathVariable String expenseUuid) {
     ExpenseResponse expense = expenseService.getExpense(loginUser.userUuid(), expenseUuid);
 
@@ -91,7 +92,7 @@ public class ExpenseController {
   @PutMapping("/{expenseUuid}")
   public ResponseEntity<ApiSuccessResponse<ExpenseResponse>> updateExpense(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable String familyUuid,
+      @PathVariable CustomUuid familyUuid,
       @PathVariable String expenseUuid,
       @Valid @RequestBody UpdateExpenseRequest request) {
     ExpenseResponse response = expenseService.updateExpense(loginUser.userUuid(), expenseUuid, request);
@@ -105,7 +106,7 @@ public class ExpenseController {
   @DeleteMapping("/{expenseUuid}")
   public ResponseEntity<ApiSuccessResponse<Void>> deleteExpense(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable String familyUuid,
+      @PathVariable CustomUuid familyUuid,
       @PathVariable String expenseUuid) {
     expenseService.deleteExpense(loginUser.userUuid(), expenseUuid);
 

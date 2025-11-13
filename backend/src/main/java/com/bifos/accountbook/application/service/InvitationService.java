@@ -12,6 +12,8 @@ import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.repository.InvitationRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.presentation.annotation.FamilyUuid;
+import com.bifos.accountbook.presentation.annotation.UserUuid;
 import com.bifos.accountbook.presentation.annotation.ValidateFamilyAccess;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -31,7 +33,6 @@ public class InvitationService {
   private final FamilyRepository familyRepository;
   private final FamilyMemberRepository familyMemberRepository;
   private final UserService userService; // 사용자 조회
-  private final FamilyValidationService familyValidationService; // 가족 검증 로직
 
   private static final String TOKEN_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   private static final int TOKEN_LENGTH = 32;
@@ -42,30 +43,28 @@ public class InvitationService {
    */
   @ValidateFamilyAccess
   @Transactional
-  public InvitationResponse createInvitation(CustomUuid userUuid, String familyUuid,
+  public InvitationResponse createInvitation(@UserUuid CustomUuid userUuid, @FamilyUuid CustomUuid familyUuid,
                                              CreateInvitationRequest request) {
-    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
     // 사용자 조회
     User user = userService.getUser(userUuid);
 
-    Family family = familyRepository.findActiveByUuid(familyCustomUuid)
+    Family family = familyRepository.findActiveByUuid(familyUuid)
                                     .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
-                                        .addParameter("familyUuid", familyUuid));
+                                        .addParameter("familyUuid", familyUuid.getValue()));
 
     // 초대장 생성
     int expirationHours = request.getExpirationHours() != null ? request.getExpirationHours() : 72; // 기본 3일
     LocalDateTime expiresAt = LocalDateTime.now().plusHours(expirationHours);
 
     Invitation invitation = Invitation.builder()
-                                      .familyUuid(familyCustomUuid)
+                                      .familyUuid(familyUuid)
                                       .inviterUserUuid(user.getUuid())
                                       .token(generateToken())
                                       .expiresAt(expiresAt)
                                       .build();
 
     invitation = invitationRepository.save(invitation);
-    log.info("Created invitation: {} for family: {} by user: {}", invitation.getUuid(), familyUuid,
+    log.info("Created invitation: {} for family: {} by user: {}", invitation.getUuid(), familyUuid.getValue(),
              userUuid);
 
     return InvitationResponse.fromWithFamilyName(invitation, family.getName());
@@ -76,14 +75,12 @@ public class InvitationService {
    */
   @ValidateFamilyAccess
   @Transactional(readOnly = true)
-  public List<InvitationResponse> getFamilyInvitations(CustomUuid userUuid, String familyUuid) {
-    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
-    Family family = familyRepository.findActiveByUuid(familyCustomUuid)
+  public List<InvitationResponse> getFamilyInvitations(@UserUuid CustomUuid userUuid, @FamilyUuid CustomUuid familyUuid) {
+    Family family = familyRepository.findActiveByUuid(familyUuid)
                                     .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
-                                        .addParameter("familyUuid", familyUuid));
+                                        .addParameter("familyUuid", familyUuid.getValue()));
 
-    List<Invitation> invitations = invitationRepository.findActiveByFamilyUuid(familyCustomUuid,
+    List<Invitation> invitations = invitationRepository.findActiveByFamilyUuid(familyUuid,
                                                                                LocalDateTime.now());
 
     return invitations.stream()

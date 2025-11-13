@@ -119,7 +119,7 @@ class ExpenseServiceIntegrationTest extends TestFixturesSupport {
 
     // When
     Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
+          testUser.getUuid(), testFamily.getUuid(), searchRequest);
 
     // Then
     assertThat(expenses.getContent()).hasSize(5);
@@ -145,7 +145,7 @@ class ExpenseServiceIntegrationTest extends TestFixturesSupport {
 
     // When
     Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
+          testUser.getUuid(), testFamily.getUuid(), searchRequest);
 
     // Then - 식비 카테고리 지출만 3개 조회되어야 함
     assertThat(expenses.getContent()).hasSize(3);
@@ -176,7 +176,7 @@ class ExpenseServiceIntegrationTest extends TestFixturesSupport {
 
     // When
     Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
+          testUser.getUuid(), testFamily.getUuid(), searchRequest);
 
     // Then - 1월 지출 3개만 조회되어야 함
     assertThat(expenses.getContent()).hasSize(3);
@@ -201,7 +201,7 @@ class ExpenseServiceIntegrationTest extends TestFixturesSupport {
 
     // When
     Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
+          testUser.getUuid(), testFamily.getUuid(), searchRequest);
 
     // Then - 4개 조회되어야 함 (1-15는 제외)
     assertThat(expenses.getContent()).hasSize(4);
@@ -225,7 +225,7 @@ class ExpenseServiceIntegrationTest extends TestFixturesSupport {
 
     // When
     Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
+          testUser.getUuid(), testFamily.getUuid(), searchRequest);
 
     // Then - 1월 지출 3개만 조회되어야 함
     assertThat(expenses.getContent()).hasSize(3);
@@ -251,7 +251,7 @@ class ExpenseServiceIntegrationTest extends TestFixturesSupport {
 
     // When
     Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
+          testUser.getUuid(), testFamily.getUuid(), searchRequest);
 
     // Then - 1월 식비 2개만 조회되어야 함
     assertThat(expenses.getContent()).hasSize(2);
@@ -276,7 +276,7 @@ class ExpenseServiceIntegrationTest extends TestFixturesSupport {
 
     // When - 첫 번째 페이지 조회
     Page<ExpenseResponse> page1 = expenseService.getFamilyExpenses(
-        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest1);
+        testUser.getUuid(), testFamily.getUuid(), searchRequest1);
 
     // Then
     assertThat(page1.getContent()).hasSize(2);
@@ -298,7 +298,7 @@ class ExpenseServiceIntegrationTest extends TestFixturesSupport {
 
     // When - 두 번째 페이지 조회
     Page<ExpenseResponse> page2 = expenseService.getFamilyExpenses(
-        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest2);
+        testUser.getUuid(), testFamily.getUuid(), searchRequest2);
 
     // Then
     assertThat(page2.getContent()).hasSize(2);
@@ -324,7 +324,7 @@ class ExpenseServiceIntegrationTest extends TestFixturesSupport {
 
     // When
     Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
+          testUser.getUuid(), testFamily.getUuid(), searchRequest);
 
     // Then
     assertThat(expenses.getContent()).isEmpty();
@@ -344,7 +344,7 @@ class ExpenseServiceIntegrationTest extends TestFixturesSupport {
 
     // When
     Page<ExpenseResponse> expenses = expenseService.getFamilyExpenses(
-        testUser.getUuid(), testFamily.getUuid().getValue(), searchRequest);
+          testUser.getUuid(), testFamily.getUuid(), searchRequest);
 
     // Then
     assertThat(expenses.getContent()).isEmpty();
