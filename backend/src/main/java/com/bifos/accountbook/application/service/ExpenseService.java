@@ -12,6 +12,7 @@ import com.bifos.accountbook.domain.entity.Expense;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.presentation.annotation.ValidateFamilyAccess;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
@@ -90,15 +91,13 @@ public class ExpenseService {
   /**
    * 가족의 지출 목록 조회 (페이징 + 필터링)
    */
+  @ValidateFamilyAccess
   @Transactional(readOnly = true)
   public Page<ExpenseResponse> getFamilyExpenses(
       CustomUuid userUuid,
       String familyUuid,
       ExpenseSearchRequest searchRequest) {
     CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
-    // 권한 확인
-    familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
     // 필터 파라미터 변환
     CustomUuid categoryUuid = null;

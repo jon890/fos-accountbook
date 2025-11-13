@@ -13,6 +13,7 @@ import com.bifos.accountbook.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.presentation.annotation.ValidateFamilyAccess;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
@@ -107,12 +108,10 @@ public class FamilyService {
   /**
    * 가족 상세 조회
    */
+  @ValidateFamilyAccess
   @Transactional(readOnly = true)
   public FamilyResponse getFamily(CustomUuid userUuid, String familyUuid) {
     CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
-    // 권한 확인
-    validateFamilyAccess(userUuid, familyCustomUuid);
 
     Family family = familyRepository.findActiveByUuid(familyCustomUuid)
                                     .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)

@@ -9,6 +9,7 @@ import com.bifos.accountbook.config.CacheConfig;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.presentation.annotation.ValidateFamilyAccess;
 import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -29,12 +30,10 @@ public class CategoryService {
   private final CategoryService self; // Self-injection for @Cacheable to work in same-class calls
 
   // Constructor with @Lazy for self-injection to avoid circular dependency
-  public CategoryService(
-      CategoryRepository categoryRepository,
-      FamilyValidationService familyValidationService,
-      CacheManager cacheManager,
-      @Lazy CategoryService self
-  ) {
+  public CategoryService(CategoryRepository categoryRepository,
+                         FamilyValidationService familyValidationService,
+                         CacheManager cacheManager,
+                         @Lazy CategoryService self) {
     this.categoryRepository = categoryRepository;
     this.familyValidationService = familyValidationService;
     this.cacheManager = cacheManager;
@@ -46,13 +45,11 @@ public class CategoryService {
    * <p>
    * 카테고리 생성 후 해당 가족의 캐시를 무효화하여 다음 조회 시 최신 데이터를 반환합니다.
    */
+  @ValidateFamilyAccess
   @Transactional
   @CacheEvict(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid")
   public CategoryResponse createCategory(CustomUuid userUuid, String familyUuid, CreateCategoryRequest request) {
     CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
-    // 권한 확인
-    familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
     // 중복 확인
     categoryRepository.findByFamilyUuidAndName(familyCustomUuid, request.getName())
@@ -85,13 +82,11 @@ public class CategoryService {
    * <p>
    * 카테고리는 자주 조회되지만 변경이 적으므로 캐싱으로 DB 부하 감소
    */
+  @ValidateFamilyAccess
   @Transactional(readOnly = true)
   @Cacheable(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid")
   public List<CategoryResponse> getFamilyCategories(CustomUuid userUuid, String familyUuid) {
     CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
-    // 권한 확인
-    familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
     List<Category> categories = categoryRepository.findAllByFamilyUuid(familyCustomUuid);
 
@@ -290,21 +285,6 @@ public class CategoryService {
   }
 
   /**
-   * 기본 카테고리 정보를 담는 내부 클래스
-   */
-  private static class DefaultCategory {
-    String name;
-    String color;
-    String icon;
-
-    DefaultCategory(String name, String color, String icon) {
-      this.name = name;
-      this.color = color;
-      this.icon = icon;
-    }
-  }
-
-  /**
    * 가족의 카테고리 캐시를 무효화하는 헬퍼 메서드
    * <p>
    * updateCategory와 deleteCategory에서 사용
@@ -318,6 +298,21 @@ public class CategoryService {
     if (cache != null) {
       cache.evict(familyUuid);
       log.debug("Evicted category cache for family: {}", familyUuid);
+    }
+  }
+
+  /**
+   * 기본 카테고리 정보를 담는 내부 클래스
+   */
+  private static class DefaultCategory {
+    String name;
+    String color;
+    String icon;
+
+    DefaultCategory(String name, String color, String icon) {
+      this.name = name;
+      this.color = color;
+      this.icon = icon;
     }
   }
 }

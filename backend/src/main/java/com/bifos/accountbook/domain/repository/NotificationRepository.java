@@ -45,10 +45,9 @@ public interface NotificationRepository {
    * 특정 가족, 타입, 연월에 해당하는 알림이 존재하는지 확인
    * 중복 알림 방지용
    */
-  boolean existsByFamilyUuidAndTypeAndYearMonth(
-      CustomUuid familyUuid,
-      NotificationType type,
-      String yearMonth
+  boolean existsByFamilyUuidAndTypeAndYearMonth(CustomUuid familyUuid,
+                                                NotificationType type,
+                                                String yearMonth
   );
 
   /**

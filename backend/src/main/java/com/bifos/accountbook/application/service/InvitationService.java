@@ -12,6 +12,7 @@ import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.repository.InvitationRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.presentation.annotation.ValidateFamilyAccess;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,15 +40,14 @@ public class InvitationService {
   /**
    * 초대장 생성
    */
+  @ValidateFamilyAccess
   @Transactional
   public InvitationResponse createInvitation(CustomUuid userUuid, String familyUuid,
                                              CreateInvitationRequest request) {
     CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
 
-    // 권한 확인 (가족 멤버만 초대 가능)
+    // 사용자 조회
     User user = userService.getUser(userUuid);
-
-    familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
     Family family = familyRepository.findActiveByUuid(familyCustomUuid)
                                     .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
@@ -74,12 +74,10 @@ public class InvitationService {
   /**
    * 가족의 활성 초대장 목록 조회
    */
+  @ValidateFamilyAccess
   @Transactional(readOnly = true)
   public List<InvitationResponse> getFamilyInvitations(CustomUuid userUuid, String familyUuid) {
     CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
-    // 권한 확인
-    familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
     Family family = familyRepository.findActiveByUuid(familyCustomUuid)
                                     .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)

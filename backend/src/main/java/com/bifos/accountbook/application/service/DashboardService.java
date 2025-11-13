@@ -9,6 +9,7 @@ import com.bifos.accountbook.domain.repository.DashboardRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.repository.projection.CategoryExpenseProjection;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.presentation.annotation.ValidateFamilyAccess;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -39,15 +40,12 @@ public class DashboardService {
    * @param searchRequest 검색 조건 (날짜, 카테고리)
    * @return 카테고리별 지출 요약
    */
-  public CategoryExpenseSummaryResponse getCategoryExpenseSummary(
-      CustomUuid userUuid,
-      String familyUuid,
-      ExpenseSummarySearchRequest searchRequest) {
+  @ValidateFamilyAccess
+  public CategoryExpenseSummaryResponse getCategoryExpenseSummary(CustomUuid userUuid,
+                                                                  String familyUuid,
+                                                                  ExpenseSummarySearchRequest searchRequest) {
 
     CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
-    // 권한 확인
-    familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
     // 카테고리 UUID 변환 (null 가능)
     CustomUuid categoryCustomUuid = searchRequest.getCategoryUuid() != null
@@ -127,16 +125,13 @@ public class DashboardService {
    * @param month      월 (1~12)
    * @return 월별 통계 (지출, 수입, 예산, 가족 구성원 수)
    */
-  public MonthlyStatsResponse getMonthlyStats(
-      CustomUuid userUuid,
-      String familyUuid,
-      int year,
-      int month) {
+  @ValidateFamilyAccess
+  public MonthlyStatsResponse getMonthlyStats(CustomUuid userUuid,
+                                              String familyUuid,
+                                              int year,
+                                              int month) {
 
     CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
-    // 권한 확인
-    familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
     // 가족 정보 조회 (구성원 수)
     Family family = familyRepository.findByUuid(familyCustomUuid)

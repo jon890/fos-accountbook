@@ -10,6 +10,7 @@ import com.bifos.accountbook.domain.entity.Income;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.IncomeRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.presentation.annotation.ValidateFamilyAccess;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -76,15 +77,13 @@ public class IncomeService {
   /**
    * 가족의 수입 목록 조회 (페이징 + 필터링)
    */
+  @ValidateFamilyAccess
   @Transactional(readOnly = true)
   public Page<IncomeResponse> getFamilyIncomes(
       CustomUuid userUuid,
       String familyUuid,
       IncomeSearchRequest searchRequest) {
     CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
-    // 권한 확인
-    familyValidationService.validateFamilyAccess(userUuid, familyCustomUuid);
 
     // 페이징 설정
     Pageable pageable = PageRequest.of(
