@@ -37,14 +37,9 @@ public class NotificationController {
   @ApiResponse(responseCode = "200", description = "조회 성공")
   @ApiResponse(responseCode = "404", description = "가족을 찾을 수 없음")
   @GetMapping("/families/{familyUuid}/notifications")
-  public ResponseEntity<ApiSuccessResponse<NotificationListResponse>> getFamilyNotifications(
-      @LoginUser LoginUserDto loginUser,
-      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid) {
-    log.info("Fetching notifications for family: {} by user: {}", familyUuid.getValue(), loginUser.userUuid());
-
-    NotificationListResponse response = notificationService.getFamilyNotifications(
-        loginUser.userUuid(), familyUuid);
-
+  public ResponseEntity<ApiSuccessResponse<NotificationListResponse>> getFamilyNotifications(@LoginUser LoginUserDto loginUser,
+                                                                                             @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid) {
+    NotificationListResponse response = notificationService.getFamilyNotifications(loginUser.userUuid(), familyUuid);
     return ResponseEntity.ok(ApiSuccessResponse.of(response));
   }
 

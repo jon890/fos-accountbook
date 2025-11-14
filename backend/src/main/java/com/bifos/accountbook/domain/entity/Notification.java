@@ -28,7 +28,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Entity
 @Table(name = "notifications", indexes = {
     @Index(name = "idx_family_uuid", columnList = "family_uuid"),
-    @Index(name = "idx_family_type_month", columnList = "family_uuid,type,alert_month")
+    @Index(name = "idx_family_type_month", columnList = "family_uuid,type,alert_month"),
+    @Index(name = "idx_family_user_created", columnList = "family_uuid,user_uuid,created_at"),
+    @Index(name = "idx_user_is_read", columnList = "user_uuid,is_read")
 })
 @EntityListeners(AuditingEntityListener.class)
 @Getter

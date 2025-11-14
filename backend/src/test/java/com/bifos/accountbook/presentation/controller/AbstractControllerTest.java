@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Presentation Layer 통합 테스트를 위한 추상 클래스
@@ -85,5 +86,28 @@ public abstract class AbstractControllerTest extends TestFixturesSupport {
    */
   @Autowired
   protected ObjectMapper objectMapper;
+
+  @Autowired
+  private TransactionTemplate transactionTemplate;
+
+  public <T> void doTransactionWithoutResult(SimpleFunction func) {
+    transactionTemplate.executeWithoutResult(status -> {
+      func.apply();
+    });
+  }
+
+  public <T> T doTransaction(TransactionFunction<T> func) {
+    return transactionTemplate.execute(status -> func.apply());
+  }
+
+  @FunctionalInterface
+  public interface SimpleFunction {
+    void apply();
+  }
+
+  @FunctionalInterface
+  public interface TransactionFunction<T> {
+    T apply();
+  }
 }
 

@@ -1,8 +1,10 @@
 package com.bifos.accountbook.application.service;
 
 import com.bifos.accountbook.domain.entity.Family;
+import com.bifos.accountbook.domain.entity.FamilyMember;
 import com.bifos.accountbook.domain.entity.Notification;
 import com.bifos.accountbook.domain.repository.ExpenseRepository;
+import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.repository.NotificationRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
@@ -11,6 +13,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,6 +32,7 @@ public class BudgetAlertService {
   private final FamilyRepository familyRepository;
   private final ExpenseRepository expenseRepository;
   private final NotificationRepository notificationRepository;
+  private final FamilyMemberRepository familyMemberRepository;
 
   /**
    * 예산 알림 체크 및 생성
@@ -118,6 +122,7 @@ public class BudgetAlertService {
 
   /**
    * 중복되지 않은 경우에만 알림 생성
+   * 가족의 모든 활성 구성원에게 각각 알림을 생성합니다.
    */
   private void createAlertIfNotExists(
       Family family,
@@ -128,35 +133,48 @@ public class BudgetAlertService {
 
     String yearMonth = Notification.formatYearMonth(month);
 
-    // 중복 체크: 같은 달에 같은 타입의 알림이 이미 있는지 확인
-    boolean alreadyExists = notificationRepository.existsByFamilyUuidAndTypeAndYearMonth(
-        family.getUuid(),
-        alertType,
-        yearMonth
-    );
+    // 가족의 모든 활성 구성원 조회
+    List<FamilyMember> members = familyMemberRepository.findAllByFamilyUuid(family.getUuid());
 
-    if (alreadyExists) {
-      log.debug("Alert already exists - Family: {}, Type: {}, Month: {}",
-                family.getUuid(), alertType, yearMonth);
+    if (members.isEmpty()) {
+      log.debug("No active members found for family: {}", family.getUuid());
       return;
     }
 
-    // 알림 생성
-    Notification notification = Notification.builder()
-                                            .familyUuid(family.getUuid())
-                                            .userUuid(null) // 가족 전체 알림
-                                            .type(alertType)
-                                            .title(generateTitle(alertType))
-                                            .message(generateMessage(family, alertType, percentage, totalExpense))
-                                            .referenceType("BUDGET")
-                                            .yearMonth(yearMonth)
-                                            .isRead(false)
-                                            .build();
+    // 각 구성원별로 중복 체크 및 알림 생성
+    for (FamilyMember member : members) {
+      // 중복 체크: 해당 사용자에게 같은 달에 같은 타입의 알림이 이미 있는지 확인
+      List<Notification> existingNotifications = notificationRepository
+          .findByFamilyAndType(family.getUuid(), alertType);
 
-    notificationRepository.save(notification);
+      boolean userHasNotification = existingNotifications.stream()
+          .anyMatch(n -> n.getUserUuid() != null
+              && n.getUserUuid().equals(member.getUserUuid())
+              && n.getYearMonth().equals(yearMonth));
 
-    log.info("Budget alert created - Family: {}, Type: {}, Percentage: {}%",
-             family.getUuid(), alertType, percentage);
+      if (userHasNotification) {
+        log.debug("Alert already exists for user: {} - Family: {}, Type: {}, Month: {}",
+                  member.getUserUuid(), family.getUuid(), alertType, yearMonth);
+        continue;
+      }
+
+      // 각 구성원별로 알림 생성
+      Notification notification = Notification.builder()
+                                              .familyUuid(family.getUuid())
+                                              .userUuid(member.getUserUuid()) // 각 구성원별 알림
+                                              .type(alertType)
+                                              .title(generateTitle(alertType))
+                                              .message(generateMessage(family, alertType, percentage, totalExpense))
+                                              .referenceType("BUDGET")
+                                              .yearMonth(yearMonth)
+                                              .isRead(false)
+                                              .build();
+
+      notificationRepository.save(notification);
+
+      log.info("Budget alert created for user: {} - Family: {}, Type: {}, Percentage: {}%",
+               member.getUserUuid(), family.getUuid(), alertType, percentage);
+    }
   }
 
   /**

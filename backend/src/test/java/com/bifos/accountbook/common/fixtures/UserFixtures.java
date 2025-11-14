@@ -2,6 +2,8 @@ package com.bifos.accountbook.common.fixtures;
 
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.UserRepository;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -17,6 +19,9 @@ public class UserFixtures {
   // 기본 user (lazy initialization)
   private User defaultUser;
 
+  // 다른 유저들 (테스트에서 여러 유저가 필요한 경우)
+  private final List<User> otherUsers = new ArrayList<>();
+
   public UserFixtures(UserRepository userRepository) {
     this.userRepository = userRepository;
   }
@@ -27,9 +32,39 @@ public class UserFixtures {
    */
   public User getDefaultUser() {
     if (defaultUser == null) {
-      defaultUser = user().build();
+      defaultUser = user().buildAndSetSecurityContext();
     }
     return defaultUser;
+  }
+
+  /**
+   * 다른 유저 생성 및 반환
+   * 여러 유저가 필요한 테스트에서 사용
+   * 매번 고유한 이메일로 유저를 생성합니다.
+   * SecurityContext에는 설정하지 않습니다.
+   *
+   * @return 생성된 다른 유저
+   */
+  public User getOtherUser() {
+    String uniqueEmail = "other-" + System.currentTimeMillis() + "-" + System.nanoTime() + "@test.com";
+    User otherUser = user()
+        .email(uniqueEmail)
+        .name("다른 사용자")
+        .build();
+    otherUsers.add(otherUser);
+    return otherUser;
+  }
+
+  /**
+   * SecurityContext에 유저 인증 정보 설정
+   *
+   * @param user SecurityContext에 설정할 유저
+   */
+  public void setSecurityContext(User user) {
+    UsernamePasswordAuthenticationToken authentication =
+        new UsernamePasswordAuthenticationToken(user.getUuid().getValue(), null, null);
+    SecurityContextHolder.getContext()
+                         .setAuthentication(authentication);
   }
 
   /**
@@ -44,18 +79,18 @@ public class UserFixtures {
    */
   public void clear() {
     this.defaultUser = null;
+    this.otherUsers.clear();
   }
 
   /**
    * User Builder - 사용자 생성
    */
   public static class UserBuilder {
+    private final UserRepository userRepository;
     private String email = "test@example.com";
     private String name = "Test User";
     private String provider = "google";
     private String providerId;
-
-    private final UserRepository userRepository;
 
     UserBuilder(UserRepository userRepository) {
       this.userRepository = userRepository;
@@ -81,6 +116,11 @@ public class UserFixtures {
       return this;
     }
 
+    /**
+     * 유저 생성 (SecurityContext 설정 없음)
+     *
+     * @return 생성된 유저
+     */
     public User build() {
       // providerId가 설정되지 않았다면 build() 시점에 생성 (재사용 시 중복 방지)
       String finalProviderId = providerId != null
@@ -93,14 +133,20 @@ public class UserFixtures {
                       .provider(provider)
                       .providerId(finalProviderId)
                       .build();
-      user = userRepository.save(user);
+      return userRepository.save(user);
+    }
 
-      // SecurityContext에 인증 정보 자동 설정
+    /**
+     * 유저 생성 및 SecurityContext에 인증 정보 설정
+     *
+     * @return 생성된 유저
+     */
+    public User buildAndSetSecurityContext() {
+      User user = build();
       UsernamePasswordAuthenticationToken authentication =
           new UsernamePasswordAuthenticationToken(user.getUuid().getValue(), null, null);
       SecurityContextHolder.getContext()
                            .setAuthentication(authentication);
-
       return user;
     }
   }

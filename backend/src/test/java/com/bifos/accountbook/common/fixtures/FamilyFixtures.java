@@ -60,18 +60,16 @@ public class FamilyFixtures {
    * Family Builder - 가족 생성
    */
   public static class FamilyBuilder {
+    private final FamilyRepository familyRepository;
+    private final FamilyMemberRepository familyMemberRepository;
+    private final UserFixtures userFixtures;
     private String name = "Test Family";
     private BigDecimal budget = BigDecimal.ZERO;
     private User owner;
 
-    private final FamilyRepository familyRepository;
-    private final FamilyMemberRepository familyMemberRepository;
-    private final UserFixtures userFixtures;
-
-    FamilyBuilder(
-        FamilyRepository familyRepository,
-        FamilyMemberRepository familyMemberRepository,
-        UserFixtures userFixtures) {
+    FamilyBuilder(FamilyRepository familyRepository,
+                  FamilyMemberRepository familyMemberRepository,
+                  UserFixtures userFixtures) {
       this.familyRepository = familyRepository;
       this.familyMemberRepository = familyMemberRepository;
       this.userFixtures = userFixtures;

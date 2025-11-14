@@ -5,16 +5,19 @@ import com.bifos.accountbook.application.dto.family.CreateFamilyRequest;
 import com.bifos.accountbook.application.dto.family.FamilyResponse;
 import com.bifos.accountbook.common.TestFixturesSupport;
 import com.bifos.accountbook.domain.entity.Category;
+import com.bifos.accountbook.domain.entity.FamilyMember;
 import com.bifos.accountbook.domain.entity.Notification;
 import com.bifos.accountbook.domain.entity.User;
+import com.bifos.accountbook.domain.repository.CategoryRepository;
+import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.NotificationRepository;
+import com.bifos.accountbook.domain.repository.UserRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.domain.value.FamilyMemberStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,9 +52,9 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
     FamilyResponse testFamily = familyService.createFamily(testUser.getUuid(), familyRequest);
 
     // FamilyService는 기본 카테고리 10개를 자동 생성하므로 첫 번째 카테고리를 사용
-    java.util.List<com.bifos.accountbook.domain.entity.Category> categories =
-        applicationContext.getBean(com.bifos.accountbook.domain.repository.CategoryRepository.class)
-                          .findAllByFamilyUuid(com.bifos.accountbook.domain.value.CustomUuid.from(testFamily.getUuid()));
+    List<Category> categories =
+        applicationContext.getBean(CategoryRepository.class)
+                          .findAllByFamilyUuid(CustomUuid.from(testFamily.getUuid()));
     Category testCategory = categories.getFirst();
 
     return new TestData(testUser, testFamily, testCategory);
@@ -76,18 +79,15 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
                                  request
     );
 
-    // Then: 비동기 알림 생성을 기다림 (Awaitility 사용)
-    await().atMost(3, TimeUnit.SECONDS)
-           .pollInterval(100, TimeUnit.MILLISECONDS)
-           .untilAsserted(() -> {
-             List<Notification> notifications = notificationRepository
-                 .findAllByFamilyUuidOrderByCreatedAtDesc(com.bifos.accountbook.domain.value.CustomUuid.from(data.testFamily.getUuid()));
+    // Then: TransactionalEventListener로 인해 트랜잭션 커밋 후 동기로 처리됨
+    // 따라서 별도의 대기 없이 바로 확인 가능
+    List<Notification> notifications = notificationRepository
+        .findByFamily(CustomUuid.from(data.testFamily.getUuid()));
 
-             assertThat(notifications).isNotEmpty();
-             assertThat(notifications).anyMatch(n ->
-                                                    n.getTitle().contains("50%") && n.getType().getCode().equals("BUDGET_50_EXCEEDED")
-             );
-           });
+    assertThat(notifications).isNotEmpty();
+    assertThat(notifications).anyMatch(n ->
+                                           n.getTitle().contains("50%") && n.getType().getCode().equals("BUDGET_50_EXCEEDED")
+    );
   }
 
   @Test
@@ -109,19 +109,14 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
                                  request
     );
 
-    // Then: 비동기 알림 생성을 기다림
-    await()
-        .atMost(3, TimeUnit.SECONDS)
-        .pollInterval(100, TimeUnit.MILLISECONDS)
-        .untilAsserted(() -> {
-          List<Notification> notifications = notificationRepository
-              .findAllByFamilyUuidOrderByCreatedAtDesc(com.bifos.accountbook.domain.value.CustomUuid.from(data.testFamily.getUuid()));
+    // Then: TransactionalEventListener로 인해 트랜잭션 커밋 후 동기로 처리됨
+    List<Notification> notifications = notificationRepository
+        .findByFamily(CustomUuid.from(data.testFamily.getUuid()));
 
-          assertThat(notifications).isNotEmpty();
-          assertThat(notifications).anyMatch(n ->
-                                                 n.getTitle().contains("80%") && n.getType().getCode().equals("BUDGET_80_EXCEEDED")
-          );
-        });
+    assertThat(notifications).isNotEmpty();
+    assertThat(notifications).anyMatch(n ->
+                                           n.getTitle().contains("80%") && n.getType().getCode().equals("BUDGET_80_EXCEEDED")
+    );
   }
 
   @Test
@@ -144,19 +139,14 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
         request
     );
 
-    // Then: 비동기 알림 생성을 기다림
-    await()
-        .atMost(3, TimeUnit.SECONDS)
-        .pollInterval(100, TimeUnit.MILLISECONDS)
-        .untilAsserted(() -> {
-          List<Notification> notifications = notificationRepository
-              .findAllByFamilyUuidOrderByCreatedAtDesc(com.bifos.accountbook.domain.value.CustomUuid.from(data.testFamily.getUuid()));
+    // Then: TransactionalEventListener로 인해 트랜잭션 커밋 후 동기로 처리됨
+    List<Notification> notifications = notificationRepository
+        .findByFamily(CustomUuid.from(data.testFamily.getUuid()));
 
-          assertThat(notifications).isNotEmpty();
-          assertThat(notifications).anyMatch(n ->
-                                                 n.getTitle().contains("100%") && n.getType().getCode().equals("BUDGET_100_EXCEEDED")
-          );
-        });
+    assertThat(notifications).isNotEmpty();
+    assertThat(notifications).anyMatch(n ->
+                                           n.getTitle().contains("100%") && n.getType().getCode().equals("BUDGET_100_EXCEEDED")
+    );
   }
 
   @Test
@@ -174,15 +164,6 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
 
     expenseService.createExpense(data.testUser.getUuid(), CustomUuid.from(data.testFamily.getUuid()), firstRequest);
 
-    // 첫 번째 알림 생성 대기
-    await()
-        .atMost(3, TimeUnit.SECONDS)
-        .untilAsserted(() -> {
-          List<Notification> notifications = notificationRepository
-              .findAllByFamilyUuidOrderByCreatedAtDesc(com.bifos.accountbook.domain.value.CustomUuid.from(data.testFamily.getUuid()));
-          assertThat(notifications).isNotEmpty();
-        });
-
     // When: 두 번째 지출 (여전히 50% 초과 구간)
     CreateExpenseRequest secondRequest = new CreateExpenseRequest(
         data.testCategory.getUuid().getValue(),
@@ -193,19 +174,75 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
 
     expenseService.createExpense(data.testUser.getUuid(), CustomUuid.from(data.testFamily.getUuid()), secondRequest);
 
-    // Then: 잠시 대기 후 50% 알림은 여전히 1개만 존재해야 함
-    await()
-        .atMost(2, TimeUnit.SECONDS)
-        .untilAsserted(() -> {
-          List<Notification> notifications = notificationRepository
-              .findAllByFamilyUuidOrderByCreatedAtDesc(com.bifos.accountbook.domain.value.CustomUuid.from(data.testFamily.getUuid()));
+    // Then: TransactionalEventListener로 인해 트랜잭션 커밋 후 동기로 처리됨
+    // 해당 사용자에게 50% 알림은 여전히 1개만 존재해야 함 (중복 생성되지 않음)
+    List<Notification> notifications = notificationRepository
+        .findByFamilyAndUser(
+            CustomUuid.from(data.testFamily.getUuid()),
+            data.testUser.getUuid());
 
-          long count50 = notifications.stream()
-                                      .filter(n -> n.getType().getCode().equals("BUDGET_50_EXCEEDED"))
-                                      .count();
+    long count50 = notifications.stream()
+                                .filter(n -> n.getType().getCode().equals("BUDGET_50_EXCEEDED"))
+                                .count();
 
-          assertThat(count50).isEqualTo(1);
-        });
+    assertThat(count50).isEqualTo(1);
+  }
+
+  @Test
+  @DisplayName("가족의 모든 활성 구성원에게 각각 알림이 생성된다")
+  void shouldCreateNotificationForEachFamilyMember() {
+    // Given: TestFixtures로 예산 설정된 가족 + 카테고리 생성
+    TestData data = createTestFamilyWithBudget();
+
+    // 다른 사용자 생성 및 가족에 추가
+    User otherUser = applicationContext.getBean(UserRepository.class)
+                                  .save(fixtures.users.user()
+                                                   .email("other@test.com")
+                                                   .name("다른 사용자")
+                                                   .build());
+
+    FamilyMember otherMember =
+        FamilyMember.builder()
+                    .uuid(CustomUuid.generate())
+                    .familyUuid(CustomUuid.from(data.testFamily.getUuid()))
+                    .userUuid(otherUser.getUuid())
+                    .status(FamilyMemberStatus.ACTIVE)
+                    .build();
+    applicationContext.getBean(FamilyMemberRepository.class)
+                      .save(otherMember);
+
+    // When: 예산 초과 지출 생성
+    CreateExpenseRequest request = new CreateExpenseRequest(
+        data.testCategory.getUuid().getValue(),
+        new BigDecimal("550000.00"),
+        "50% 초과 테스트 지출",
+        LocalDateTime.now()
+    );
+
+    expenseService.createExpense(data.testUser.getUuid(), CustomUuid.from(data.testFamily.getUuid()), request);
+
+    // Then: TransactionalEventListener로 인해 트랜잭션 커밋 후 동기로 처리됨
+    // 각 구성원별로 알림이 생성되어야 함
+    // 첫 번째 사용자의 알림
+    List<Notification> user1Notifications = notificationRepository
+        .findByFamilyAndUser(
+            CustomUuid.from(data.testFamily.getUuid()),
+            data.testUser.getUuid());
+
+    // 두 번째 사용자의 알림
+    List<Notification> user2Notifications = notificationRepository
+        .findByFamilyAndUser(
+            CustomUuid.from(data.testFamily.getUuid()),
+            otherUser.getUuid());
+
+    assertThat(user1Notifications).isNotEmpty();
+    assertThat(user2Notifications).isNotEmpty();
+    assertThat(user1Notifications).anyMatch(n ->
+                                                 n.getType().getCode().equals("BUDGET_50_EXCEEDED")
+                                                     && n.getUserUuid().equals(data.testUser.getUuid()));
+    assertThat(user2Notifications).anyMatch(n ->
+                                                 n.getType().getCode().equals("BUDGET_50_EXCEEDED")
+                                                     && n.getUserUuid().equals(otherUser.getUuid()));
   }
 
   @Test
@@ -219,9 +256,9 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
                                                            .build();
     FamilyResponse noBudgetFamily = familyService.createFamily(testUser.getUuid(), familyRequest);
 
-    java.util.List<com.bifos.accountbook.domain.entity.Category> categories =
-        applicationContext.getBean(com.bifos.accountbook.domain.repository.CategoryRepository.class)
-                          .findAllByFamilyUuid(com.bifos.accountbook.domain.value.CustomUuid.from(noBudgetFamily.getUuid()));
+    List<Category> categories =
+        applicationContext.getBean(CategoryRepository.class)
+                          .findAllByFamilyUuid(CustomUuid.from(noBudgetFamily.getUuid()));
     Category category = categories.getFirst();
 
     // When: 지출 생성
@@ -234,15 +271,12 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
 
     expenseService.createExpense(testUser.getUuid(), CustomUuid.from(noBudgetFamily.getUuid()), request);
 
-    // Then: 잠시 대기 후에도 알림이 생성되지 않아야 함
-    await()
-        .during(1, TimeUnit.SECONDS)
-        .atMost(2, TimeUnit.SECONDS)
-        .until(() -> {
-          List<Notification> notifications = notificationRepository
-              .findAllByFamilyUuidOrderByCreatedAtDesc(com.bifos.accountbook.domain.value.CustomUuid.from(noBudgetFamily.getUuid()));
-          return notifications.isEmpty();
-        });
+    // Then: TransactionalEventListener로 인해 트랜잭션 커밋 후 동기로 처리됨
+    // 예산이 설정되지 않은 가족은 알림이 생성되지 않아야 함
+    List<Notification> notifications = notificationRepository
+        .findByFamily(CustomUuid.from(noBudgetFamily.getUuid()));
+
+    assertThat(notifications).isEmpty();
   }
 
   @Test
@@ -260,10 +294,10 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
     );
     expenseService.createExpense(data.testUser.getUuid(), CustomUuid.from(data.testFamily.getUuid()), request1);
 
-    // 50% 알림 생성 대기
-    await().atMost(3, TimeUnit.SECONDS).untilAsserted(() ->
-                                                          assertThat(notificationRepository.findAllByFamilyUuidOrderByCreatedAtDesc(
-                                                              com.bifos.accountbook.domain.value.CustomUuid.from(data.testFamily.getUuid()))).hasSize(1));
+    // 50% 알림 생성 확인
+    List<Notification> notificationsAfter50 = notificationRepository.findByFamily(
+        CustomUuid.from(data.testFamily.getUuid()));
+    assertThat(notificationsAfter50).hasSize(1);
 
     // When: 추가 지출로 80% 초과
     CreateExpenseRequest request2 = new CreateExpenseRequest(
@@ -274,10 +308,10 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
     );
     expenseService.createExpense(data.testUser.getUuid(), CustomUuid.from(data.testFamily.getUuid()), request2);
 
-    // 80% 알림 생성 대기
-    await().atMost(3, TimeUnit.SECONDS).untilAsserted(() ->
-                                                          assertThat(notificationRepository.findAllByFamilyUuidOrderByCreatedAtDesc(
-                                                              com.bifos.accountbook.domain.value.CustomUuid.from(data.testFamily.getUuid()))).hasSize(2));
+    // 80% 알림 생성 확인
+    List<Notification> notificationsAfter80 = notificationRepository.findByFamily(
+        CustomUuid.from(data.testFamily.getUuid()));
+    assertThat(notificationsAfter80).hasSize(2);
 
     // When: 추가 지출로 100% 초과
     CreateExpenseRequest request3 = new CreateExpenseRequest(
@@ -288,18 +322,15 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
     );
     expenseService.createExpense(data.testUser.getUuid(), CustomUuid.from(data.testFamily.getUuid()), request3);
 
-    // Then: 3개의 알림이 모두 생성되어야 함
-    await()
-        .atMost(3, TimeUnit.SECONDS)
-        .untilAsserted(() -> {
-          List<Notification> notifications = notificationRepository
-              .findAllByFamilyUuidOrderByCreatedAtDesc(com.bifos.accountbook.domain.value.CustomUuid.from(data.testFamily.getUuid()));
+    // Then: TransactionalEventListener로 인해 트랜잭션 커밋 후 동기로 처리됨
+    // 3개의 알림이 모두 생성되어야 함
+    List<Notification> notifications = notificationRepository
+        .findByFamily(CustomUuid.from(data.testFamily.getUuid()));
 
-          assertThat(notifications).hasSize(3);
-          assertThat(notifications).anyMatch(n -> n.getType().getCode().equals("BUDGET_50_EXCEEDED"));
-          assertThat(notifications).anyMatch(n -> n.getType().getCode().equals("BUDGET_80_EXCEEDED"));
-          assertThat(notifications).anyMatch(n -> n.getType().getCode().equals("BUDGET_100_EXCEEDED"));
-        });
+    assertThat(notifications).hasSize(3);
+    assertThat(notifications).anyMatch(n -> n.getType().getCode().equals("BUDGET_50_EXCEEDED"));
+    assertThat(notifications).anyMatch(n -> n.getType().getCode().equals("BUDGET_80_EXCEEDED"));
+    assertThat(notifications).anyMatch(n -> n.getType().getCode().equals("BUDGET_100_EXCEEDED"));
   }
 
   // 헬퍼 레코드

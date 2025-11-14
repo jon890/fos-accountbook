@@ -24,36 +24,41 @@ public interface NotificationRepository {
   /**
    * 가족의 모든 알림 조회 (최신순)
    */
-  List<Notification> findAllByFamilyUuidOrderByCreatedAtDesc(CustomUuid familyUuid);
+  List<Notification> findByFamily(CustomUuid familyUuid);
 
   /**
    * 사용자의 모든 알림 조회 (최신순)
    */
-  List<Notification> findAllByUserUuidOrderByCreatedAtDesc(CustomUuid userUuid);
+  List<Notification> findByUser(CustomUuid userUuid);
 
   /**
    * 가족의 읽지 않은 알림 수
    */
-  long countByFamilyUuidAndIsReadFalse(CustomUuid familyUuid);
+  long countUnreadByFamily(CustomUuid familyUuid);
 
   /**
    * 사용자의 읽지 않은 알림 수
    */
-  long countByUserUuidAndIsReadFalse(CustomUuid userUuid);
+  long countUnreadByUser(CustomUuid userUuid);
 
   /**
    * 특정 가족, 타입, 연월에 해당하는 알림이 존재하는지 확인
    * 중복 알림 방지용
    */
-  boolean existsByFamilyUuidAndTypeAndYearMonth(CustomUuid familyUuid,
-                                                NotificationType type,
-                                                String yearMonth
-  );
+  boolean existsByFamilyTypeAndMonth(CustomUuid familyUuid,
+                                     NotificationType type,
+                                     String yearMonth);
 
   /**
    * 가족의 특정 타입 알림 조회
    */
-  List<Notification> findAllByFamilyUuidAndType(CustomUuid familyUuid, NotificationType type);
+  List<Notification> findByFamilyAndType(CustomUuid familyUuid, NotificationType type);
+
+  /**
+   * 가족 UUID와 사용자 UUID로 알림 조회 (최신순)
+   * 가족 내에서 특정 사용자의 알림만 조회합니다.
+   */
+  List<Notification> findByFamilyAndUser(CustomUuid familyUuid, CustomUuid userUuid);
 
   /**
    * 오래된 알림 삭제 (예: 3개월 이상 지난 알림)
