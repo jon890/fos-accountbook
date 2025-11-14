@@ -4,7 +4,7 @@ Spring Boot 3.5 + Java 21 기반 가계부 애플리케이션 백엔드 API 서�
 
 ## 📖 프로젝트 소개
 
-**우리집 가계부**는 가족 단위로 지출을 관리하고 추적할 수 있는 웹 애플리케이션입니다.  
+**우리집 가계부**는 가족 단위로 지출을 관리하고 추적할 수 있는 웹 애플리케이션입니다.
 이 레포지터리는 RESTful API를 제공하는 백엔드 서버입니다.
 
 ### 주요 기능
@@ -24,8 +24,8 @@ Spring Boot 3.5 + Java 21 기반 가계부 애플리케이션 백엔드 API 서�
 ### Core
 
 - **Language**: Java 21
-- **Framework**: Spring Boot 3.5.0
-- **Build Tool**: Gradle 8.x (Version Catalogs 사용)
+- **Framework**: Spring Boot 3.5.7
+- **Build Tool**: Gradle 9.2 (Version Catalogs 사용)
 - **Database**: MySQL 8.0+
 
 ### Libraries
@@ -83,38 +83,6 @@ infra/            # 기술적 구현 (Config, Security, Exception)
 - Soft Delete 패턴 (`status` 컬럼 기반: ACTIVE, DELETED)
 - Flyway 마이그레이션으로 스키마 버전 관리
 
-### Gradle Version Catalogs
-
-의존성 버전을 중앙 집중식으로 관리하기 위해 Gradle Version Catalogs를 사용합니다.
-
-**장점**:
-
-- 🎯 중앙 집중식 버전 관리 - 모든 버전을 한 곳에서 관리
-- 🔒 타입 안전성 - IDE 자동완성 및 컴파일 타임 검증
-- 📦 번들 관리 - 관련 라이브러리를 그룹으로 관리
-- 🚀 멀티모듈 대응 - 향후 멀티모듈 전환 시 유리
-
-**파일 구조**:
-
-```
-gradle/
-├── libs.versions.toml    # Version Catalog 정의
-└── README.md            # 상세 사용법
-```
-
-**사용 예시** (build.gradle.kts):
-
-```kotlin
-dependencies {
-    // 개별 라이브러리
-    implementation(libs.springdoc.openapi.starter.webmvc.ui)
-
-    // 번들 사용
-    implementation(libs.bundles.spring.boot.starters)
-    runtimeOnly(libs.bundles.jwt)
-}
-```
-
 **상세 가이드**: [gradle/README.md](gradle/README.md)
 
 ### Spring Profiles
@@ -124,15 +92,6 @@ dependencies {
 | **local** | 로컬 개발    | Docker MySQL  | ✅      | Console + File |
 | **prod**  | Railway 배포 | Railway MySQL | ❌      | Console만      |
 | **test**  | 테스트       | H2 in-memory  | ❌      | Console만      |
-
-### CORS 설정
-
-CORS 설정은 코드가 아닌 설정 파일(`application.yml`)에서 관리합니다.
-
-환경별로 `allowed-origins`만 변경하면 되도록 구성되어 있습니다:
-
-- `application-local.yml`: localhost 포트들
-- `application-prod.yml`: Vercel 프로덕션 도메인
 
 ### Dependabot 자동 의존성 관리
 
@@ -197,21 +156,11 @@ fos-accountbook-backend/
 
 **프론트엔드 레포지터리**: [fos-accountbook](https://github.com/jon890/fos-accountbook)
 
-- Next.js 15 + Auth.js v5
-- Tailwind CSS + shadcn/ui
-- TypeScript
-- Dependabot 자동 의존성 관리
-
-**배포 구성**:
-
-- Frontend: Vercel
-- Backend: Railway (Spring Boot + MySQL)
-
 ---
 
 ## 📝 코딩 컨벤션
 
-- **Database**: snake_case (비즈니스 테이블), camelCase (Auth 테이블)
+- **Database**: snake_case (비즈니스 테이블)
 - **Java**: CamelCase (클래스), camelCase (변수/메서드)
 - **Package**: 소문자, 점(.) 구분
 - **Layer 분리**: Presentation → Application → Domain → Infrastructure
@@ -220,5 +169,4 @@ fos-accountbook-backend/
 
 ---
 
-**마지막 업데이트**: 2025-11-11  
-**버전**: 1.0.0
+**마지막 업데이트**: 2025-11-14
