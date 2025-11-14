@@ -59,10 +59,8 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
     String familyUuidStr = familyUuid.getValue();
 
     // When: 첫 번째 조회 (DB에서 조회)
-    List<CategoryResponse> firstCall = categoryService.getFamilyCategories(
-        testUser.getUuid(),
-        familyUuid
-    );
+    List<CategoryResponse> firstCall = categoryService.getFamilyCategories(testUser.getUuid(),
+                                                                           familyUuid);
 
     // Then: 캐시에 저장되어 있어야 함
     var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
@@ -70,15 +68,13 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
     assertThat(cache.get(familyUuidStr)).isNotNull();
 
     // When: 두 번째 조회 (캐시에서 조회)
-    List<CategoryResponse> secondCall = categoryService.getFamilyCategories(
-        testUser.getUuid(),
-        familyUuid
-    );
+    List<CategoryResponse> secondCall = categoryService.getFamilyCategories(testUser.getUuid(),
+                                                                            familyUuid);
 
     // Then: 동일한 결과 반환
     assertThat(firstCall).hasSize(1);
     assertThat(secondCall).hasSize(1);
-    assertThat(firstCall.get(0).getUuid()).isEqualTo(secondCall.get(0).getUuid());
+    assertThat(firstCall.getFirst().getUuid()).isEqualTo(secondCall.getFirst().getUuid());
   }
 
   @Test
@@ -205,13 +201,14 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
                                             .icon("🍏")
                                             .build();
 
-    String familyUuidStr = testFamily.getUuid().getValue();
+    CustomUuid familyUuid = testFamily.getUuid();
+    String familyUuidStr = familyUuid.getValue();
     com.bifos.accountbook.domain.value.CustomUuid category1Uuid = category1.getUuid();
     com.bifos.accountbook.domain.value.CustomUuid category2Uuid = category2.getUuid();
     var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
 
     // When: findByUuidCached로 첫 번째 카테고리 조회
-    CategoryResponse result1 = categoryService.findByUuidCached(familyUuidStr, category1Uuid);
+    CategoryResponse result1 = categoryService.findByUuidCached(familyUuid, category1Uuid);
 
     // Then: 캐시에 가족의 전체 카테고리가 저장되어야 함
     assertThat(cache.get(familyUuidStr)).isNotNull();
@@ -219,7 +216,7 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
     assertThat(result1.getName()).isEqualTo("Category 1");
 
     // When: 같은 가족의 다른 카테고리를 findByUuidCached로 조회
-    CategoryResponse result2 = categoryService.findByUuidCached(familyUuidStr, category2Uuid);
+    CategoryResponse result2 = categoryService.findByUuidCached(familyUuid, category2Uuid);
 
     // Then: 캐시에서 조회되어야 함 (추가 DB 조회 없이)
     assertThat(result2).isNotNull();
@@ -239,18 +236,18 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
                                            .icon("🍎")
                                            .build();
 
-    String familyUuidStr = testFamily.getUuid().getValue();
-    com.bifos.accountbook.domain.value.CustomUuid categoryUuid = category.getUuid();
+    CustomUuid familyUuid = testFamily.getUuid();
+    String familyUuidStr = familyUuid.getValue();
+    CustomUuid categoryUuid = category.getUuid();
     var cache = cacheManager.getCache(CacheConfig.CATEGORIES_CACHE);
 
     // When: findByUuidCached로 조회 (캐시 생성)
-    categoryService.findByUuidCached(familyUuidStr, categoryUuid);
+    categoryService.findByUuidCached(familyUuid, categoryUuid);
 
     // Then: 캐시가 생성되어 있어야 함
     assertThat(cache.get(familyUuidStr)).isNotNull();
 
     // When: getFamilyCategories로 조회 (캐시 재사용)
-    CustomUuid familyUuid = testFamily.getUuid();
     List<CategoryResponse> categories = categoryService.getFamilyCategories(
         testUser.getUuid(),
         familyUuid

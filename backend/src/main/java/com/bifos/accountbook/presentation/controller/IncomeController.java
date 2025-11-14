@@ -62,11 +62,9 @@ public class IncomeController {
       @RequestParam(required = false) String startDate,
       @RequestParam(required = false) String endDate) {
 
-    IncomeSearchRequest searchRequest = IncomeSearchRequest.withDefaults(
-        page, size, categoryUuid, startDate, endDate);
+    IncomeSearchRequest searchRequest = IncomeSearchRequest.withDefaults(page, size, categoryUuid, startDate, endDate);
 
-    Page<IncomeResponse> incomesPage = incomeService.getFamilyIncomes(
-        loginUser.userUuid(), familyUuid, searchRequest);
+    Page<IncomeResponse> incomesPage = incomeService.getFamilyIncomes(loginUser.userUuid(), familyUuid, searchRequest);
 
     PaginationResponse<IncomeResponse> response = PaginationResponse.from(incomesPage);
 

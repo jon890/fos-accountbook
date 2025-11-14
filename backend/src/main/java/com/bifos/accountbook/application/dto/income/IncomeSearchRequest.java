@@ -24,12 +24,11 @@ public class IncomeSearchRequest {
   private LocalDateTime startDate;
   private LocalDateTime endDate;
 
-  public static IncomeSearchRequest withDefaults(
-      Integer page,
-      Integer size,
-      String categoryUuid,
-      String startDate,
-      String endDate) {
+  public static IncomeSearchRequest withDefaults(Integer page,
+                                                 Integer size,
+                                                 String categoryUuid,
+                                                 String startDate,
+                                                 String endDate) {
 
     return IncomeSearchRequest.builder()
                               .page(page != null ? page : 0)

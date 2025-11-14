@@ -14,33 +14,21 @@ import com.bifos.accountbook.presentation.annotation.UserUuid;
 import com.bifos.accountbook.presentation.annotation.ValidateFamilyAccess;
 import java.util.Arrays;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class CategoryService {
 
   private final CategoryRepository categoryRepository;
   private final FamilyValidationService familyValidationService; // 가족 검증 로직
   private final CacheManager cacheManager; // 캐시 관리자
-  private final CategoryService self; // Self-injection for @Cacheable to work in same-class calls
-
-  // Constructor with @Lazy for self-injection to avoid circular dependency
-  public CategoryService(CategoryRepository categoryRepository,
-                         FamilyValidationService familyValidationService,
-                         CacheManager cacheManager,
-                         @Lazy CategoryService self) {
-    this.categoryRepository = categoryRepository;
-    this.familyValidationService = familyValidationService;
-    this.cacheManager = cacheManager;
-    this.self = self;
-  }
 
   /**
    * 카테고리 생성
@@ -78,18 +66,14 @@ public class CategoryService {
   /**
    * 가족의 카테고리 목록 조회
    * <p>
-   * 캐싱 전략:
-   * - 캐시 이름: categories
-   * - 캐시 키: familyUuid
-   * - TTL: 1시간 (CacheConfig에서 설정)
-   * <p>
-   * 카테고리는 자주 조회되지만 변경이 적으므로 캐싱으로 DB 부하 감소
+   * Repository에서 Entity를 캐싱하므로, Service는 캐시된 Entity를 DTO로 변환만 수행합니다.
+   * 이를 통해 다양한 Response 형태로 유연하게 변환할 수 있습니다.
    */
   @ValidateFamilyAccess
   @Transactional(readOnly = true)
-  @Cacheable(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid.value")
   public List<CategoryResponse> getFamilyCategories(@UserUuid CustomUuid userUuid,
                                                     @FamilyUuid CustomUuid familyUuid) {
+    // Repository에서 캐시된 Entity 조회
     List<Category> categories = categoryRepository.findAllByFamilyUuid(familyUuid);
 
     return categories.stream()
@@ -100,7 +84,7 @@ public class CategoryService {
   /**
    * UUID로 단일 카테고리 조회 (캐시 활용)
    * <p>
-   * 해당 가족의 전체 카테고리를 캐시에서 조회한 후 UUID로 필터링합니다.
+   * Repository에서 캐시된 Entity를 조회한 후 UUID로 필터링합니다.
    * DB 조회 없이 순수하게 캐시만 활용하여 성능을 최적화합니다.
    *
    * @param familyUuid   가족 UUID (캐시 키)
@@ -108,18 +92,18 @@ public class CategoryService {
    * @return 카테고리 응답 (없으면 예외)
    */
   @Transactional(readOnly = true)
-  public CategoryResponse findByUuidCached(String familyUuid, CustomUuid categoryUuid) {
-    // 1. 해당 가족의 전체 카테고리 조회 (캐시 활용, DB 조회 없음)
-    // Self-injection을 통해 프록시를 거쳐 캐시가 동작하도록 함
-    List<CategoryResponse> familyCategories = self.getFamilyCategoriesCached(familyUuid);
+  public CategoryResponse findByUuidCached(CustomUuid familyUuid, CustomUuid categoryUuid) {
+    // Repository에서 캐시된 Entity 조회
+    List<Category> categories = categoryRepository.findAllByFamilyUuid(familyUuid);
 
-    // 2. UUID로 필터링하여 반환
-    return familyCategories.stream()
-                           .filter(c -> c.getUuid().equals(categoryUuid.getValue()))
-                           .findFirst()
-                           .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
-                               .addParameter("familyUuid", familyUuid)
-                               .addParameter("categoryUuid", categoryUuid.getValue()));
+    // UUID로 필터링하여 반환
+    return categories.stream()
+                     .filter(c -> c.getUuid().equals(categoryUuid))
+                     .findFirst()
+                     .map(CategoryResponse::from)
+                     .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
+                         .addParameter("familyUuid", familyUuid.getValue())
+                         .addParameter("categoryUuid", categoryUuid.getValue()));
   }
 
   /**
@@ -134,35 +118,28 @@ public class CategoryService {
    * @throws BusinessException 카테고리가 해당 가족에 속하지 않는 경우
    */
   @Transactional(readOnly = true)
-  public CategoryResponse validateAndFindCached(String familyUuid, CustomUuid categoryUuid) {
+  public CategoryResponse validateAndFindCached(CustomUuid familyUuid, CustomUuid categoryUuid) {
     CategoryResponse category = findByUuidCached(familyUuid, categoryUuid);
 
     // 카테고리가 해당 가족의 것인지 확인
-    if (!category.getFamilyUuid().equals(familyUuid)) {
+    if (!category.getFamilyUuid().equals(familyUuid.getValue())) {
       throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 가족의 카테고리가 아닙니다")
           .addParameter("categoryFamilyUuid", category.getFamilyUuid())
-          .addParameter("requestFamilyUuid", familyUuid);
+          .addParameter("requestFamilyUuid", familyUuid.getValue());
     }
 
     return category;
   }
 
   /**
-   * 가족의 카테고리 목록 조회 (권한 검증 없이 캐시만 활용)
+   * 가족의 카테고리 Entity 목록 조회 (캐시 활용)
    * <p>
-   * 내부 메서드로, 이미 권한이 검증된 상태에서 캐시만 활용하여 카테고리를 조회합니다.
-   * findByUuidCached()에서 사용됩니다.
+   * Repository에서 캐시된 Entity를 직접 반환합니다.
+   * IncomeService, ExpenseService에서 CategoryInfo 변환을 위해 사용됩니다.
    */
   @Transactional(readOnly = true)
-  @Cacheable(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid")
-  public List<CategoryResponse> getFamilyCategoriesCached(String familyUuid) {
-    CustomUuid familyCustomUuid = CustomUuid.from(familyUuid);
-
-    List<Category> categories = categoryRepository.findAllByFamilyUuid(familyCustomUuid);
-
-    return categories.stream()
-                     .map(CategoryResponse::from)
-                     .toList();
+  public List<Category> getFamilyCategoriesEntity(CustomUuid familyUuid) {
+    return categoryRepository.findAllByFamilyUuid(familyUuid);
   }
 
   /**

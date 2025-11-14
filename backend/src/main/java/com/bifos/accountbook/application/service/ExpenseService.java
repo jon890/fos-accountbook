@@ -52,7 +52,7 @@ public class ExpenseService {
     var family = familyValidationService.validateAndGetFamily(userUuid, familyUuid);
 
     // 카테고리 확인 + 가족 소속 검증 (캐시 활용, DB 조회 없음)
-    categoryService.validateAndFindCached(familyUuid.getValue(), categoryCustomUuid);
+    categoryService.validateAndFindCached(familyUuid, categoryCustomUuid);
 
     // 지출 생성 (ORM 편의 메서드 활용)
     Expense expense = family.addExpense(
@@ -91,6 +91,8 @@ public class ExpenseService {
 
   /**
    * 가족의 지출 목록 조회 (페이징 + 필터링)
+   * <p>
+   * QueryDSL 동적 쿼리로 필터링을 처리합니다.
    */
   @ValidateFamilyAccess
   @Transactional(readOnly = true)
@@ -129,14 +131,13 @@ public class ExpenseService {
         searchRequest.getSize(),
         Sort.by(Sort.Direction.DESC, "date"));
 
-    // 필터링이 있으면 필터링 메서드 사용, 없으면 기본 메서드 사용
-    Page<Expense> expenses;
-    if (categoryUuid != null || startDateTime != null || endDateTime != null) {
-      expenses = expenseRepository.findByFamilyUuidWithFilters(
-          familyUuid, categoryUuid, startDateTime, endDateTime, pageable);
-    } else {
-      expenses = expenseRepository.findAllByFamilyUuid(familyUuid, pageable);
-    }
+    // QueryDSL이 null 조건을 자동으로 처리하므로 단일 메서드 호출
+    Page<Expense> expenses = expenseRepository.findByFamilyUuidWithFilters(
+        familyUuid,
+        categoryUuid,
+        startDateTime,
+        endDateTime,
+        pageable);
 
     return expenses.map(ExpenseResponse::fromWithoutCategory);
   }
@@ -179,9 +180,7 @@ public class ExpenseService {
     CustomUuid categoryCustomUuid = null;
     if (request.getCategoryUuid() != null) {
       categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
-      categoryService.validateAndFindCached(
-          expense.getFamilyUuid().getValue(),
-          categoryCustomUuid);
+      categoryService.validateAndFindCached(expense.getFamilyUuid(), categoryCustomUuid);
     }
 
     // 지출 정보 업데이트

@@ -1,5 +1,6 @@
 package com.bifos.accountbook.application.service;
 
+import com.bifos.accountbook.application.dto.category.CategoryResponse;
 import com.bifos.accountbook.application.dto.income.CreateIncomeRequest;
 import com.bifos.accountbook.application.dto.income.IncomeResponse;
 import com.bifos.accountbook.application.dto.income.IncomeSearchRequest;
@@ -14,6 +15,9 @@ import com.bifos.accountbook.presentation.annotation.FamilyUuid;
 import com.bifos.accountbook.presentation.annotation.UserUuid;
 import com.bifos.accountbook.presentation.annotation.ValidateFamilyAccess;
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -47,7 +51,7 @@ public class IncomeService {
     var family = familyValidationService.validateAndGetFamily(userUuid, familyUuid);
 
     // 카테고리 확인 + 가족 소속 검증 (캐시 활용, DB 조회 없음)
-    categoryService.validateAndFindCached(familyUuid.getValue(), categoryCustomUuid);
+    categoryService.validateAndFindCached(familyUuid, categoryCustomUuid);
 
     // 수입 생성 (ORM 편의 메서드 활용)
     Income income = family.addIncome(
@@ -64,47 +68,47 @@ public class IncomeService {
   }
 
   /**
-   * 가족의 수입 목록 조회 (페이징)
-   */
-  @Transactional(readOnly = true)
-  public Page<IncomeResponse> getFamilyIncomes(CustomUuid userUuid, CustomUuid familyUuid, int page, int size) {
-    IncomeSearchRequest searchRequest = IncomeSearchRequest.builder()
-                                                           .page(page)
-                                                           .size(size)
-                                                           .build();
-    return getFamilyIncomes(userUuid, familyUuid, searchRequest);
-  }
-
-  /**
    * 가족의 수입 목록 조회 (페이징 + 필터링)
+   * <p>
+   * QueryDSL 동적 쿼리로 필터링을 처리하며, 카테고리 정보를 포함하여 응답합니다.
+   * Repository 캐시를 활용하여 성능을 최적화합니다.
    */
   @ValidateFamilyAccess
   @Transactional(readOnly = true)
-  public Page<IncomeResponse> getFamilyIncomes(
-      @UserUuid CustomUuid userUuid,
-      @FamilyUuid CustomUuid familyUuid,
-      IncomeSearchRequest searchRequest) {
-
+  public Page<IncomeResponse> getFamilyIncomes(@UserUuid CustomUuid userUuid,
+                                               @FamilyUuid CustomUuid familyUuid,
+                                               IncomeSearchRequest searchRequest) {
     // 페이징 설정
     Pageable pageable = PageRequest.of(
         searchRequest.getPage(),
         searchRequest.getSize(),
         Sort.by(Sort.Direction.DESC, "date"));
 
-    // 필터링이 있으면 필터링 메서드 사용, 없으면 기본 메서드 사용
-    Page<Income> incomes;
-    CustomUuid categoryUuid = searchRequest.getCategoryUuid() != null ?
-        CustomUuid.from(searchRequest.getCategoryUuid()) : null;
+    // 카테고리 맵 생성 (Repository 캐시 활용)
+    Map<String, CategoryResponse> categoryMap = categoryService.getFamilyCategories(userUuid, familyUuid)
+                                                               .stream()
+                                                               .collect(Collectors.toMap(
+                                                                   CategoryResponse::getUuid,
+                                                                   Function.identity()));
 
-    if (categoryUuid != null || searchRequest.getStartDate() != null || searchRequest.getEndDate() != null) {
-      incomes = incomeRepository.findByFamilyUuidWithFilters(
-          familyUuid, categoryUuid,
-          searchRequest.getStartDate(), searchRequest.getEndDate(), pageable);
-    } else {
-      incomes = incomeRepository.findAllByFamilyUuid(familyUuid, pageable);
-    }
+    // 필터 조건 변환
+    CustomUuid categoryUuid = searchRequest.getCategoryUuid() != null
+        ? CustomUuid.from(searchRequest.getCategoryUuid())
+        : null;
 
-    return incomes.map(IncomeResponse::fromWithoutCategory);
+    // QueryDSL이 null 조건을 자동으로 처리하므로 단일 메서드 호출
+    Page<Income> incomes = incomeRepository.findByFamilyUuidWithFilters(
+        familyUuid,
+        categoryUuid,
+        searchRequest.getStartDate(),
+        searchRequest.getEndDate(),
+        pageable);
+
+    // 카테고리 정보를 포함하여 응답 생성
+    return incomes.map(income -> {
+      CategoryResponse category = categoryMap.get(income.getCategoryUuid().getValue());
+      return IncomeResponse.from(income, category != null ? category.toCategoryInfo() : null);
+    });
   }
 
   /**
@@ -142,9 +146,7 @@ public class IncomeService {
     CustomUuid categoryCustomUuid = null;
     if (request.getCategoryUuid() != null) {
       categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
-      categoryService.validateAndFindCached(
-          income.getFamilyUuid().getValue(),
-          categoryCustomUuid);
+      categoryService.validateAndFindCached(income.getFamilyUuid(), categoryCustomUuid);
     }
 
     // 수입 정보 업데이트

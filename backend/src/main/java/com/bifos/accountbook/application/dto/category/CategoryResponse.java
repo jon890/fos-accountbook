@@ -1,5 +1,6 @@
 package com.bifos.accountbook.application.dto.category;
 
+import com.bifos.accountbook.application.dto.common.CategoryInfo;
 import com.bifos.accountbook.domain.entity.Category;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -31,5 +32,18 @@ public class CategoryResponse {
                            .createdAt(category.getCreatedAt())
                            .updatedAt(category.getUpdatedAt())
                            .build();
+  }
+
+  /**
+   * CategoryResponse를 CategoryInfo로 변환
+   * IncomeService, ExpenseService에서 사용됩니다.
+   */
+  public CategoryInfo toCategoryInfo() {
+    return CategoryInfo.builder()
+                       .uuid(this.uuid)
+                       .name(this.name)
+                       .color(this.color)
+                       .icon(this.icon)
+                       .build();
   }
 }
