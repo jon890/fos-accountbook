@@ -11,7 +11,7 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
-import { requireAuth } from "@/lib/server/auth-helpers";
+import { requireAuth } from "@/lib/server/auth/auth-helpers";
 import { revalidatePath } from "next/cache";
 
 export async function deleteExpenseAction(

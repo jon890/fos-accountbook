@@ -6,7 +6,7 @@
 "use server";
 
 import { auth } from "@/lib/server/auth";
-import { getSelectedFamilyUuid } from "@/lib/server/auth-helpers";
+import { getSelectedFamilyUuid } from "@/lib/server/auth/auth-helpers";
 import { getFamiliesAction } from "./get-families-action";
 
 export async function checkUserFamilyAction(): Promise<{

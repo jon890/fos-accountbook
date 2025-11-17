@@ -1,13 +1,12 @@
 "use client";
 
 import { Toaster } from "@/components/ui/sonner";
-import { TimeZoneProvider } from "@/lib/client/timezone-context";
 import { SessionProvider } from "next-auth/react";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <TimeZoneProvider>{children}</TimeZoneProvider>
+      {children}
       <Toaster
         position="top-center"
         expand={true}

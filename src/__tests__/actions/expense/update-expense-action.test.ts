@@ -11,7 +11,7 @@
 import { updateExpenseAction } from "@/app/actions/expense/update-expense-action";
 
 // Mock modules
-jest.mock("@/lib/server/auth-helpers", () => ({
+jest.mock("@/lib/server/auth/auth-helpers", () => ({
   requireAuth: jest.fn().mockResolvedValue({ user: { id: "test-user" } }),
 }));
 

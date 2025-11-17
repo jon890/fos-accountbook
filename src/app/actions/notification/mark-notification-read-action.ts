@@ -1,7 +1,7 @@
 "use server";
 
 import { serverApiClient } from "@/lib/server/api/client";
-import { requireAuth } from "@/lib/server/auth-helpers";
+import { requireAuth } from "@/lib/server/auth/auth-helpers";
 import { revalidatePath } from "next/cache";
 import type { ApiResponse } from "@/lib/server/api/types";
 import type { Notification } from "@/types/actions/notification";

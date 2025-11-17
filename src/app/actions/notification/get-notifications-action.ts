@@ -1,7 +1,7 @@
 "use server";
 
 import { serverApiClient } from "@/lib/server/api/client";
-import { requireAuth } from "@/lib/server/auth-helpers";
+import { requireAuth } from "@/lib/server/auth/auth-helpers";
 import type { ApiResponse } from "@/lib/server/api/types";
 import type { NotificationListResponse } from "@/types/actions/notification";
 import type { ActionResult } from "@/lib/errors";

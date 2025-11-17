@@ -8,6 +8,8 @@ import { getBackendJWT, refreshAccessToken } from "../api/backend-auth";
 import { serverApiClient } from "../api/client";
 import { ApiSuccessResponse } from "@/types";
 import { UserProfile } from "@/types/next-auth";
+import { SUPPORTED_PROVIDERS } from "@/app/actions/auth/signin/constants";
+import { NaverProvider } from "./providers/naver";
 
 /**
  * JWT Secret Key (백엔드와 동일한 키 사용)
@@ -186,6 +188,10 @@ export const authConfig: NextAuthConfig = {
       clientId: serverEnv.GOOGLE_CLIENT_ID,
       clientSecret: serverEnv.GOOGLE_CLIENT_SECRET,
     }),
+    NaverProvider({
+      clientId: serverEnv.NAVER_CLIENT_ID,
+      clientSecret: serverEnv.NAVER_CLIENT_SECRET,
+    }),
   ],
   jwt: {
     /**
@@ -272,14 +278,25 @@ export const authConfig: NextAuthConfig = {
         };
       } catch (error) {
         console.error("Failed to fetch user profile in session:", error);
-        return session;
+        // 프로필 조회 실패 시 기본값 설정 (첫 가입 유저일 수 있음)
+        session.user.profile = {
+          timezone: "Asia/Seoul",
+          language: "ko",
+          currency: "KRW",
+          defaultFamilyUuid: null,
+        };
       }
 
       return session;
     },
     async signIn({ user, account }) {
       // OAuth 로그인 시 백엔드 인증 검증
-      if (account?.provider === "google") {
+      if (
+        account?.provider &&
+        SUPPORTED_PROVIDERS.includes(
+          account.provider as (typeof SUPPORTED_PROVIDERS)[number]
+        )
+      ) {
         try {
           if (!user.email || !account.providerAccountId) {
             return false;

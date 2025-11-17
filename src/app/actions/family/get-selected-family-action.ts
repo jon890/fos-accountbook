@@ -10,7 +10,7 @@ import {
   successResult,
   type ActionResult,
 } from "@/lib/errors";
-import { getSelectedFamilyUuid } from "@/lib/server/auth-helpers";
+import { getSelectedFamilyUuid } from "@/lib/server/auth/auth-helpers";
 
 export async function getSelectedFamilyAction(): Promise<
   ActionResult<string | null>

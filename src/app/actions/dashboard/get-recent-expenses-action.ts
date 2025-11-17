@@ -11,7 +11,10 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { serverApiGet } from "@/lib/server/api";
-import { requireAuth, getSelectedFamilyUuid } from "@/lib/server/auth-helpers";
+import {
+  requireAuth,
+  getSelectedFamilyUuid,
+} from "@/lib/server/auth/auth-helpers";
 import type { RecentExpense } from "@/types/dashboard";
 import type { CategoryResponse } from "@/types/category";
 import type { ExpenseResponse } from "@/types/expense";

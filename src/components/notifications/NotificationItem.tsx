@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AlertTriangle, AlertCircle, XCircle } from "lucide-react";
 import { cn } from "@/lib/client/utils";
+import { useTimeZone } from "@/lib/client/timezone-context";
 import { markNotificationReadAction } from "@/app/actions/notification/mark-notification-read-action";
 import type {
   Notification,
@@ -43,7 +44,7 @@ const getNotificationBgColor = (type: NotificationType) => {
 };
 
 // 시간 포맷팅
-const formatDate = (dateString: string) => {
+const formatDate = (dateString: string, timezone: string) => {
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -57,6 +58,7 @@ const formatDate = (dateString: string) => {
   if (diffDays < 7) return `${diffDays}일 전`;
 
   return date.toLocaleDateString("ko-KR", {
+    timeZone: timezone,
     month: "long",
     day: "numeric",
   });
@@ -67,6 +69,7 @@ export function NotificationItem({
   onRead,
 }: NotificationItemProps) {
   const [isReading, setIsReading] = useState(false);
+  const { timezone } = useTimeZone();
 
   const handleClick = async () => {
     if (notification.isRead || isReading) return;
@@ -126,7 +129,7 @@ export function NotificationItem({
             {notification.message}
           </p>
           <time className="text-xs text-gray-400">
-            {formatDate(notification.createdAt)}
+            {formatDate(notification.createdAt, timezone)}
           </time>
         </div>
       </div>

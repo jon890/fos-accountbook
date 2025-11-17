@@ -2,7 +2,7 @@
   "name": "fos-accountbook",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@10.15.0",
+  "packageManager": "pnpm@10.22.0",
   "engines": {
     "node": "22.x"
   },
@@ -50,6 +50,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@auth/core": "^0.41.0",
     "@eslint/eslintrc": "^3",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",

@@ -9,7 +9,7 @@ import { serverApiClient } from "@/lib/server/api/client";
 import {
   requireAuthOrRedirect,
   getSelectedFamilyUuid,
-} from "@/lib/server/auth-helpers";
+} from "@/lib/server/auth/auth-helpers";
 import type { CreateIncomeRequest, IncomeResponse } from "@/types/income";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";

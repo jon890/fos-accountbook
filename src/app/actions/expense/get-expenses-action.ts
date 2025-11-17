@@ -11,7 +11,10 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { serverApiGet } from "@/lib/server/api/client";
-import { requireAuth, getSelectedFamilyUuid } from "@/lib/server/auth-helpers";
+import {
+  requireAuth,
+  getSelectedFamilyUuid,
+} from "@/lib/server/auth/auth-helpers";
 import type { GetExpensesParams, GetExpensesResponse } from "@/types/expense";
 
 export async function getExpensesAction(

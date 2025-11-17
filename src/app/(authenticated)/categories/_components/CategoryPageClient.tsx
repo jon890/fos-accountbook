@@ -3,7 +3,8 @@
 import { Button } from "@/components/ui/button";
 import type { CategoryResponse } from "@/types/category";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { AddCategoryDialog } from "./AddCategoryDialog";
 import { CategoryList } from "./CategoryList";
 import { EditCategoryDialog } from "./EditCategoryDialog";
@@ -11,12 +12,22 @@ import { EditCategoryDialog } from "./EditCategoryDialog";
 interface CategoryPageClientProps {
   initialCategories: CategoryResponse[];
   familyUuid: string;
+  hasInitialError?: boolean;
 }
 
 export function CategoryPageClient({
   initialCategories,
   familyUuid,
+  hasInitialError = false,
 }: CategoryPageClientProps) {
+  // 초기 로드 시 에러 알림
+  useEffect(() => {
+    if (hasInitialError) {
+      toast.error(
+        "카테고리 목록을 불러오는데 실패했습니다. 다시 시도해주세요."
+      );
+    }
+  }, [hasInitialError]);
   const [categories, setCategories] = useState(initialCategories);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);

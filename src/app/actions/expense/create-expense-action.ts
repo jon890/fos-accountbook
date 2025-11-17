@@ -9,7 +9,7 @@ import { serverApiClient } from "@/lib/server/api/client";
 import {
   requireAuthOrRedirect,
   getSelectedFamilyUuid,
-} from "@/lib/server/auth-helpers";
+} from "@/lib/server/auth/auth-helpers";
 import type {
   CreateExpenseFormState,
   CreateExpenseRequest,

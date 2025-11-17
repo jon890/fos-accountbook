@@ -7,7 +7,7 @@
 jest.mock("@/lib/server/auth/config", () => ({
   authConfig: { providers: [], session: { strategy: "jwt" } },
 }));
-jest.mock("@/lib/server/auth-helpers", () => ({
+jest.mock("@/lib/server/auth/auth-helpers", () => ({
   requireAuth: jest.fn(),
 }));
 jest.mock("@/lib/server/api/client", () => ({

@@ -11,7 +11,7 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
-import { requireAuth } from "@/lib/server/auth-helpers";
+import { requireAuth } from "@/lib/server/auth/auth-helpers";
 import { setDefaultFamilyAction } from "../user/set-default-family-action";
 import type { CreateFamilyData, CreateFamilyResult } from "@/types/family";
 import { revalidatePath } from "next/cache";
@@ -39,10 +39,14 @@ export async function createFamilyAction(
       body: JSON.stringify(data),
     });
 
-    // 생성된 가족을 기본 가족으로 설정
+    // 백엔드에서 첫 가족 생성 시 자동으로 defaultFamilyUuid 설정됨
+    // 프론트엔드에서도 명시적으로 설정 (중복 호출이지만 안전장치)
     await setDefaultFamilyAction(result.data.uuid);
 
+    // 세션 업데이트를 위해 관련 경로 revalidate
+    // session callback에서 프로필을 다시 조회하도록 함
     revalidatePath("/");
+    revalidatePath("/dashboard");
 
     return successResult(result.data);
   } catch (error) {

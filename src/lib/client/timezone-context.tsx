@@ -1,6 +1,5 @@
 "use client";
 
-import { useSession } from "next-auth/react";
 import { createContext, ReactNode, useContext } from "react";
 
 interface TimeZoneContextValue {
@@ -11,12 +10,13 @@ const TimeZoneContext = createContext<TimeZoneContextValue | null>(null);
 
 interface TimeZoneProviderProps {
   children: ReactNode;
+  timezone?: string;
 }
 
-export function TimeZoneProvider({ children }: TimeZoneProviderProps) {
-  const session = useSession();
-  const timezone = session?.data?.user.profile?.timezone ?? "Asia/Seoul";
-
+export function TimeZoneProvider({
+  children,
+  timezone = "Asia/Seoul",
+}: TimeZoneProviderProps) {
   return (
     <TimeZoneContext.Provider value={{ timezone }}>
       {children}

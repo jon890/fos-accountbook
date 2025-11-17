@@ -21,6 +21,7 @@ export type {
   RegisterRequest,
   LoginRequest,
   RefreshTokenRequest,
+  NaverProfile,
 } from "./auth";
 
 // 가족

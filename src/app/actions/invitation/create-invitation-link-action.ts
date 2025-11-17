@@ -12,7 +12,10 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
-import { requireAuth, getSelectedFamilyUuid } from "@/lib/server/auth-helpers";
+import {
+  requireAuth,
+  getSelectedFamilyUuid,
+} from "@/lib/server/auth/auth-helpers";
 import type { InvitationInfo } from "@/types/invitation";
 import type {
   CreateInvitationRequest,

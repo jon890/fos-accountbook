@@ -3,7 +3,13 @@
  */
 
 // Mock modules (jose 오류 방지를 위해 먼저 모킹)
-jest.mock("@/lib/server/auth-helpers", () => ({
+jest.mock("@/lib/env/server.env", () => ({
+  serverEnv: {
+    BACKEND_API_URL: "http://localhost:8080",
+  },
+}));
+
+jest.mock("@/lib/server/auth/auth-helpers", () => ({
   requireAuth: jest.fn(),
   requireAuthOrRedirect: jest.fn(),
   getSelectedFamilyUuid: jest.fn(),

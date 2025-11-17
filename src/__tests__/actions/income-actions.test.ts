@@ -7,7 +7,7 @@ import { deleteIncomeAction } from "@/app/actions/income/delete-income-action";
 import { serverApiClient } from "@/lib/server/api/client";
 
 // Mock modules
-jest.mock("@/lib/server/auth-helpers", () => ({
+jest.mock("@/lib/server/auth/auth-helpers", () => ({
   requireAuthOrRedirect: jest.fn(),
   requireAuth: jest.fn(),
   getSelectedFamilyUuid: jest.fn(),
@@ -24,7 +24,7 @@ jest.mock("next/cache", () => ({
 import {
   requireAuthOrRedirect,
   getSelectedFamilyUuid,
-} from "@/lib/server/auth-helpers";
+} from "@/lib/server/auth/auth-helpers";
 import type { Session } from "next-auth";
 
 const mockRequireAuth = requireAuthOrRedirect as jest.MockedFunction<

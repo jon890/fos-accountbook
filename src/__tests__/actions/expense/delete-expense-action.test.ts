@@ -4,10 +4,16 @@
  */
 
 // Mock modules - import 전에 선언해야 함
+jest.mock("@/lib/env/server.env", () => ({
+  serverEnv: {
+    BACKEND_API_URL: "http://localhost:8080",
+  },
+}));
+
 jest.mock("@/lib/server/auth/config", () => ({
   authConfig: { providers: [], session: { strategy: "jwt" } },
 }));
-jest.mock("@/lib/server/auth-helpers");
+jest.mock("@/lib/server/auth/auth-helpers");
 jest.mock("@/lib/server/auth");
 jest.mock("@/lib/server/api/client");
 jest.mock("next/cache");
@@ -15,7 +21,7 @@ jest.mock("next/cache");
 import { deleteExpenseAction } from "@/app/actions/expense/delete-expense-action";
 import { ActionError } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
-import { requireAuth } from "@/lib/server/auth-helpers";
+import { requireAuth } from "@/lib/server/auth/auth-helpers";
 import type { Session } from "next-auth";
 import { revalidatePath } from "next/cache";
 
