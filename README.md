@@ -425,14 +425,13 @@ fos-accountbook/
 // ✅ 클라이언트 안전 모듈 (브라우저에서 실행 가능)
 import { apiGet, apiPost, apiPut, apiDelete, ApiError } from "@/lib/client/api";
 import { cn } from "@/lib/client";
-import { clientEnv } from "@/lib/env"; // 클라이언트 환경변수
+// import { clientEnv } from "@/lib/env"; // 클라이언트 환경변수 (현재 미사용)
 
 // ⚠️ 서버 전용 모듈 (Node.js 환경에서만 실행)
 import { auth, signIn, signOut, handlers } from "@/lib/server/auth";
 import { serverApiGet, serverApiPost, ServerApiError } from "@/lib/server/api";
 import { getBackendJWT, refreshAccessToken } from "@/lib/server/api";
 import { serverEnv } from "@/lib/env/server.env"; // 서버 환경변수 (직접 import)
-import { isDev, isProduction } from "@/lib/env"; // 환경 유틸리티
 ```
 
 **💡 핵심 개선: import 경로로 즉시 구분!**

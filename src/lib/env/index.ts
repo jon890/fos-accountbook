@@ -5,8 +5,9 @@
  */
 
 // 클라이언트 환경변수만 export (클라이언트 번들에 포함되어도 안전)
-export { clientEnv } from "./client.env";
-export type { ClientEnv } from "./schemas/client.env.schema";
+// 현재는 사용되지 않지만, 향후 필요 시 client.env.ts와 client.env.schema.ts의 주석을 해제하세요
+// export { clientEnv } from "./client.env";
+// export type { ClientEnv } from "./schemas/client.env.schema";
 
 // 서버 환경변수는 직접 import하세요:
 // import { serverEnv } from '@/lib/env/server.env'
