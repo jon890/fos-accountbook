@@ -11,8 +11,7 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { serverApiGet } from "@/lib/server/api";
-import { requireAuth } from "@/lib/server/auth-helpers";
-import { getSelectedFamilyUuid } from "@/lib/server/cookies";
+import { requireAuth, getSelectedFamilyUuid } from "@/lib/server/auth-helpers";
 import type { CategoryResponse } from "@/types/category";
 
 export async function getFamilyCategoriesAction(
@@ -22,7 +21,7 @@ export async function getFamilyCategoriesAction(
     // 인증 확인
     await requireAuth();
 
-    // familyUuid가 없으면 쿠키에서 가져오기
+    // familyUuid가 없으면 기본값 가져오기
     const selectedFamilyUuid = familyUuid || (await getSelectedFamilyUuid());
 
     // 선택된 가족이 없으면 에러

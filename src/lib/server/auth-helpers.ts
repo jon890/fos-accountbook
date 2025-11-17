@@ -61,3 +61,14 @@ export async function requireAuthOrRedirect(
 
   return session;
 }
+
+/**
+ * 선택된 가족 UUID 가져오기
+ * 세션의 profile.defaultFamilyUuid를 반환
+ *
+ * @returns 선택된 가족 UUID 또는 null
+ */
+export async function getSelectedFamilyUuid(): Promise<string | null> {
+  const session = await auth();
+  return session?.user?.profile?.defaultFamilyUuid || null;
+}

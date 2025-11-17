@@ -6,7 +6,7 @@
 "use server";
 
 import { auth } from "@/lib/server/auth";
-import { getSelectedFamilyUuid } from "@/lib/server/cookies";
+import { getSelectedFamilyUuid } from "@/lib/server/auth-helpers";
 import { getFamiliesAction } from "./get-families-action";
 
 export async function checkUserFamilyAction(): Promise<{
@@ -32,7 +32,7 @@ export async function checkUserFamilyAction(): Promise<{
       return { hasFamily: false };
     }
 
-    // 선택된 가족 UUID 가져오기 (쿠키에서 읽기만)
+    // 선택된 가족 UUID 가져오기
     let selectedFamilyUuid = await getSelectedFamilyUuid();
     if (!selectedFamilyUuid) {
       selectedFamilyUuid = familiesResult.data[0].uuid;

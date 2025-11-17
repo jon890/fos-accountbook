@@ -15,11 +15,8 @@ import { StatsCards } from "@/components/dashboard/StatsCards";
 import { WelcomeSection } from "@/components/dashboard/WelcomeSection";
 import { getActionDataOrDefault } from "@/lib/server/action-result-handler";
 import { auth } from "@/lib/server/auth";
-import { getSelectedFamilyUuid } from "@/lib/server/cookies";
+import { getSelectedFamilyUuid } from "@/lib/server/auth-helpers";
 import { redirect } from "next/navigation";
-
-// 쿠키를 사용하므로 동적 렌더링 필요
-export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   // 1. 인증 확인

@@ -1,6 +1,6 @@
 /**
  * 선택된 가족 설정 Server Action
- * 쿠키에 가족 UUID를 저장하고 페이지를 새로고침
+ * 프로필의 defaultFamilyUuid를 업데이트하고 페이지를 새로고침
  */
 
 "use server";
@@ -12,8 +12,8 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { requireAuth } from "@/lib/server/auth-helpers";
-import { setSelectedFamilyUuid } from "@/lib/server/cookies";
 import { getFamiliesAction } from "./get-families-action";
+import { setDefaultFamilyAction } from "../user/set-default-family-action";
 import { revalidatePath } from "next/cache";
 
 export async function selectFamilyAction(
@@ -43,8 +43,11 @@ export async function selectFamilyAction(
       throw ActionError.entityNotFound("가족", familyUuid);
     }
 
-    // 쿠키에 선택된 가족 UUID 저장
-    await setSelectedFamilyUuid(familyUuid);
+    // 프로필의 defaultFamilyUuid 업데이트
+    const result = await setDefaultFamilyAction(familyUuid);
+    if (!result.success) {
+      throw ActionError.internalError("기본 가족 설정에 실패했습니다");
+    }
 
     // 모든 페이지 재검증
     revalidatePath("/", "layout");

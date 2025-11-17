@@ -1,6 +1,6 @@
 /**
  * 현재 선택된 가족 UUID 가져오기 Server Action
- * 클라이언트 컴포넌트에서 호출 가능
+ * 세션의 profile.defaultFamilyUuid를 반환
  */
 
 "use server";
@@ -10,16 +10,12 @@ import {
   successResult,
   type ActionResult,
 } from "@/lib/errors";
-import { requireAuth } from "@/lib/server/auth-helpers";
-import { getSelectedFamilyUuid } from "@/lib/server/cookies";
+import { getSelectedFamilyUuid } from "@/lib/server/auth-helpers";
 
 export async function getSelectedFamilyAction(): Promise<
   ActionResult<string | null>
 > {
   try {
-    // 인증 확인
-    await requireAuth();
-
     const selectedFamilyUuid = await getSelectedFamilyUuid();
 
     return successResult(selectedFamilyUuid);

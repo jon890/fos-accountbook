@@ -10,22 +10,21 @@ import { serverApiClient } from "@/lib/server/api/client";
 jest.mock("@/lib/server/auth-helpers", () => ({
   requireAuthOrRedirect: jest.fn(),
   requireAuth: jest.fn(),
+  getSelectedFamilyUuid: jest.fn(),
 }));
 
 jest.mock("@/lib/server/api/client", () => ({
   serverApiClient: jest.fn(),
 }));
 
-jest.mock("@/lib/server/cookies", () => ({
-  getSelectedFamilyUuid: jest.fn(),
-}));
-
 jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
 }));
 
-import { requireAuthOrRedirect } from "@/lib/server/auth-helpers";
-import { getSelectedFamilyUuid } from "@/lib/server/cookies";
+import {
+  requireAuthOrRedirect,
+  getSelectedFamilyUuid,
+} from "@/lib/server/auth-helpers";
 import type { Session } from "next-auth";
 
 const mockRequireAuth = requireAuthOrRedirect as jest.MockedFunction<
@@ -102,7 +101,7 @@ describe("Income Actions", () => {
     it("familyUuid가 없으면 에러를 반환한다", async () => {
       // Given
       mockRequireAuth.mockResolvedValue(mockSession);
-      mockGetSelectedFamilyUuid.mockResolvedValue(null); // 쿠키 없음
+      mockGetSelectedFamilyUuid.mockResolvedValue(null);
 
       const formData = new FormData();
       formData.append("amount", "50000");

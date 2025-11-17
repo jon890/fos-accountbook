@@ -7,15 +7,27 @@
 
 import { DefaultSession } from "next-auth";
 
+/**
+ * 사용자 프로필 정보
+ */
+export interface UserProfile {
+  timezone: string;
+  language: string;
+  currency: string;
+  defaultFamilyUuid: string | null;
+}
+
 declare module "next-auth" {
   /**
    * Session 타입 확장
    *
    * id: 사용자 UUID (백엔드 User 테이블의 uuid 컬럼)
+   * profile: 사용자 프로필 정보 (시간대, 언어, 통화 등)
    */
   interface Session {
     user: {
       id: string;
+      profile?: UserProfile;
     } & DefaultSession["user"];
   }
 

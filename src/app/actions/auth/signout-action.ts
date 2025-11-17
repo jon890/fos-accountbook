@@ -16,11 +16,7 @@ export async function signOutAction(): Promise<void> {
   const cookieStore = await cookies();
 
   // 1. 우리가 관리하는 쿠키 제거
-  const ourCookies = [
-    "backend_access_token",
-    "backend_refresh_token",
-    "selected_family_uuid",
-  ];
+  const ourCookies = ["backend_access_token", "backend_refresh_token"];
 
   ourCookies.forEach((cookieName) => {
     cookieStore.delete(cookieName);
@@ -46,4 +42,3 @@ export async function signOutAction(): Promise<void> {
   // 3. NextAuth signOut 호출 (세션 무효화 + 로그인 페이지로 리다이렉트)
   await signOut({ redirectTo: "/auth/signin" });
 }
-
