@@ -5,6 +5,7 @@
  * NEXT_PUBLIC_ 접두사가 있는 환경변수만 클라이언트에 노출됩니다.
  */
 
+import z from "zod";
 import { clientEnvSchema } from "./schemas/client.env.schema";
 
 // 환경변수 파싱 및 검증
@@ -15,7 +16,7 @@ const parseClientEnv = () => {
 
   if (!parsed.success) {
     console.error("❌ Invalid client environment variables:");
-    console.error(JSON.stringify(parsed.error.format(), null, 2));
+    console.error(JSON.stringify(z.treeifyError(parsed.error), null, 2));
     throw new Error("Invalid client environment variables");
   }
 
@@ -24,6 +25,3 @@ const parseClientEnv = () => {
 
 // 환경변수 export (빌드 시 검증됨)
 export const clientEnv = parseClientEnv();
-
-// 타입 re-export
-export type { ClientEnv } from "./schemas/client.env.schema";
