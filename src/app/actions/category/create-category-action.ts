@@ -11,7 +11,10 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { serverApiPost } from "@/lib/server/api";
-import { requireAuth, getSelectedFamilyUuid } from "@/lib/server/auth-helpers";
+import {
+  requireAuth,
+  getSelectedFamilyUuid,
+} from "@/lib/server/auth/auth-helpers";
 import type { CategoryResponse } from "@/types/category";
 import { revalidatePath } from "next/cache";
 

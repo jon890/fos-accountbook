@@ -15,7 +15,7 @@ import { StatsCards } from "@/components/dashboard/StatsCards";
 import { WelcomeSection } from "@/components/dashboard/WelcomeSection";
 import { getActionDataOrDefault } from "@/lib/server/action-result-handler";
 import { auth } from "@/lib/server/auth";
-import { getSelectedFamilyUuid } from "@/lib/server/auth-helpers";
+import { getSelectedFamilyUuid } from "@/lib/server/auth/auth-helpers";
 import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {

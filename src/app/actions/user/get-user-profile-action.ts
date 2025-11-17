@@ -1,12 +1,12 @@
 "use server";
 
-import { requireAuth } from "@/lib/server/auth-helpers";
-import { serverApiClient } from "@/lib/server/api/client";
 import {
-  successResult,
   handleActionError,
+  successResult,
   type ActionResult,
 } from "@/lib/errors";
+import { serverApiClient } from "@/lib/server/api/client";
+import { requireAuth } from "@/lib/server/auth/auth-helpers";
 
 export interface UserProfile {
   userUuid: string;

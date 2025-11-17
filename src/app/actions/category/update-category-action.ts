@@ -11,7 +11,7 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { serverApiPut } from "@/lib/server/api";
-import { requireAuth } from "@/lib/server/auth-helpers";
+import { requireAuth } from "@/lib/server/auth/auth-helpers";
 import type { CategoryResponse } from "@/types/category";
 import { revalidatePath } from "next/cache";
 

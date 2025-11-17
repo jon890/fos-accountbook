@@ -11,7 +11,7 @@ import {
   successResult,
   type ActionResult,
 } from "@/lib/errors";
-import { requireAuth } from "@/lib/server/auth-helpers";
+import { requireAuth } from "@/lib/server/auth/auth-helpers";
 import { getFamiliesAction } from "./get-families-action";
 import { setDefaultFamilyAction } from "../user/set-default-family-action";
 import { revalidatePath } from "next/cache";

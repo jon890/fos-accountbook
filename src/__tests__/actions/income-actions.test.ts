@@ -24,7 +24,7 @@ jest.mock("next/cache", () => ({
 import {
   requireAuthOrRedirect,
   getSelectedFamilyUuid,
-} from "@/lib/server/auth-helpers";
+} from "@/lib/server/auth/auth-helpers";
 import type { Session } from "next-auth";
 
 const mockRequireAuth = requireAuthOrRedirect as jest.MockedFunction<

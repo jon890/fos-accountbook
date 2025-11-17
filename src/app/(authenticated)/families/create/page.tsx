@@ -40,8 +40,9 @@ export default function CreateFamilyPage() {
 
       if (result.success) {
         toast.success("가족이 성공적으로 생성되었습니다!");
-        // 생성 후 홈페이지로 이동
-        router.push("/");
+        // 백엔드에서 첫 가족 생성 시 자동으로 defaultFamilyUuid 설정됨
+        // 대시보드로 바로 이동 (홈에서 리다이렉트 처리)
+        router.push("/dashboard");
       } else {
         toast.error(result.error.message);
       }
@@ -147,7 +148,7 @@ export default function CreateFamilyPage() {
               </h4>
               <p className="text-xs text-blue-700">
                 {familyType === "personal"
-                  ? "개인 지출을 관리할 수 있는 가계부를 만듭니다. 언제든지 가족 구성원을 추가할 수 있습니다."
+                  ? "개인 지출을 관리할 수 있는 가계부를 만듭니다. 언제든지 가족을 초대할 수 있습니다."
                   : "가족 구성원들과 함께 지출을 관리할 수 있는 공유 가계부를 만듭니다."}
               </p>
             </div>

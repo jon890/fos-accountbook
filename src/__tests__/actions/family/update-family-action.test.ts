@@ -17,7 +17,7 @@ jest.mock("next/cache", () => ({
 
 import { updateFamilyAction } from "@/app/actions/family/update-family-action";
 import { serverApiClient } from "@/lib/server/api/client";
-import { requireAuth } from "@/lib/server/auth-helpers";
+import { requireAuth } from "@/lib/server/auth/auth-helpers";
 import { revalidatePath } from "next/cache";
 
 const mockRequireAuth = requireAuth as jest.MockedFunction<typeof requireAuth>;

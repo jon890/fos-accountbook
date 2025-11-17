@@ -5,7 +5,7 @@
 import { getFamilyCategoriesAction } from "@/app/actions/category/get-categories-action";
 import { checkUserFamilyAction } from "@/app/actions/family/check-user-family-action";
 import { CategoryPageClient } from "./_components/CategoryPageClient";
-import { getSelectedFamilyUuid } from "@/lib/server/auth-helpers";
+import { getSelectedFamilyUuid } from "@/lib/server/auth/auth-helpers";
 import type { CategoryResponse } from "@/types/category";
 import { redirect } from "next/navigation";
 

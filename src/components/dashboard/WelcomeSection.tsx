@@ -1,3 +1,7 @@
+"use client";
+
+import { useTimeZone } from "@/lib/client/timezone-context";
+
 interface WelcomeSectionProps {
   userName?: string | null;
   familyName?: string | null;
@@ -5,6 +9,7 @@ interface WelcomeSectionProps {
 
 export function WelcomeSection({ userName, familyName }: WelcomeSectionProps) {
   const firstName = userName?.split(" ")[0] || "사용자";
+  const { timezone } = useTimeZone();
 
   return (
     <div className="mb-4 md:mb-8">
@@ -26,6 +31,7 @@ export function WelcomeSection({ userName, familyName }: WelcomeSectionProps) {
           <p className="text-sm text-gray-500">오늘</p>
           <p className="text-lg font-semibold text-gray-900">
             {new Date().toLocaleDateString("ko-KR", {
+              timeZone: timezone,
               month: "long",
               day: "numeric",
               weekday: "short",

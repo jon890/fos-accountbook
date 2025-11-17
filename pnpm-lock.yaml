@@ -96,6 +96,9 @@ importers:
         specifier: ^4.1.12
         version: 4.1.12
     devDependencies:
+      '@auth/core':
+        specifier: ^0.41.0
+        version: 0.41.0
       '@eslint/eslintrc':
         specifier: ^3
         version: 3.3.1

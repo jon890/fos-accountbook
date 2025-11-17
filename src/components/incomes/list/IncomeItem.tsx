@@ -2,6 +2,7 @@
 
 import type { Income } from "@/types/income";
 import { formatExpenseDate } from "@/lib/utils/format";
+import { useTimeZone } from "@/lib/client/timezone-context";
 import { Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { EditIncomeDialog } from "../dialogs/EditIncomeDialog";
@@ -24,6 +25,7 @@ export function IncomeItem({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { timezone } = useTimeZone();
 
   const handleDelete = async () => {
     if (!confirm("이 수입 내역을 삭제하시겠습니까?")) {
@@ -80,7 +82,7 @@ export function IncomeItem({
               {income.category.name}
             </p>
             <div className="flex items-center gap-1 text-[10px] md:text-sm text-gray-500 mt-0.5">
-              <span>{formatExpenseDate(income.date)}</span>
+              <span>{formatExpenseDate(income.date, timezone)}</span>
               {income.description && (
                 <>
                   <span>•</span>

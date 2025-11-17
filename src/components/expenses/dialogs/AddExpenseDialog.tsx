@@ -40,13 +40,19 @@ export function AddExpenseDialog({
 }: AddExpenseDialogProps) {
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [familyUuid, setFamilyUuid] = useState<string>("");
-  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [state, formAction] = useActionState(createExpenseAction, initialState);
 
-  // 컴포넌트 마운트 시 즉시 카테고리 로드
+  // 다이얼로그가 열릴 때만 카테고리 로드
   useEffect(() => {
-    loadData();
-  }, []);
+    if (open) {
+      loadData();
+    } else {
+      // 다이얼로그가 닫힐 때 데이터 초기화
+      setCategories([]);
+      setFamilyUuid("");
+    }
+  }, [open]);
 
   const loadData = async () => {
     setIsLoadingCategories(true);

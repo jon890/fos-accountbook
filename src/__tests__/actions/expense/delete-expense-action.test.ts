@@ -15,7 +15,7 @@ jest.mock("next/cache");
 import { deleteExpenseAction } from "@/app/actions/expense/delete-expense-action";
 import { ActionError } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
-import { requireAuth } from "@/lib/server/auth-helpers";
+import { requireAuth } from "@/lib/server/auth/auth-helpers";
 import type { Session } from "next-auth";
 import { revalidatePath } from "next/cache";
 

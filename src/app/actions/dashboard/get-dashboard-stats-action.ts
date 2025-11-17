@@ -11,7 +11,10 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { serverApiGet } from "@/lib/server/api";
-import { requireAuth, getSelectedFamilyUuid } from "@/lib/server/auth-helpers";
+import {
+  requireAuth,
+  getSelectedFamilyUuid,
+} from "@/lib/server/auth/auth-helpers";
 import type { DashboardStats } from "@/types/dashboard";
 
 export async function getDashboardStatsAction(): Promise<

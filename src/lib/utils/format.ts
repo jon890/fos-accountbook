@@ -2,9 +2,6 @@
  * 포맷팅 유틸리티 함수
  */
 
-import { format } from "date-fns";
-import { ko } from "date-fns/locale";
-
 /**
  * 금액을 한국 원화 형식으로 포맷팅
  * @param amount - 포맷팅할 금액
@@ -24,11 +21,13 @@ export function formatCurrency(amount: number | string): string {
  * 날짜를 한국어 형식으로 포맷팅
  * @param date - Date 객체 또는 ISO 문자열
  * @param format - 'short' | 'long' | 'date-only'
+ * @param timezone - 시간대 (기본값: "Asia/Seoul")
  * @returns 포맷팅된 날짜 문자열
  */
 export function formatDate(
   date: Date | string,
-  format: "short" | "long" | "date-only" = "short"
+  format: "short" | "long" | "date-only" = "short",
+  timezone: string = "Asia/Seoul"
 ): string {
   const dateObj = typeof date === "string" ? new Date(date) : date;
 
@@ -37,7 +36,7 @@ export function formatDate(
   }
 
   const options: Intl.DateTimeFormatOptions = {
-    timeZone: "Asia/Seoul",
+    timeZone: timezone,
   };
 
   switch (format) {
@@ -73,9 +72,13 @@ export function formatDate(
 /**
  * 상대 시간 표시 (예: "3시간 전", "2일 전")
  * @param date - Date 객체 또는 ISO 문자열
+ * @param timezone - 시간대 (기본값: "Asia/Seoul")
  * @returns 상대 시간 문자열
  */
-export function formatRelativeTime(date: Date | string): string {
+export function formatRelativeTime(
+  date: Date | string,
+  timezone: string = "Asia/Seoul"
+): string {
   const dateObj = typeof date === "string" ? new Date(date) : date;
   const now = new Date();
   const diffMs = now.getTime() - dateObj.getTime();
@@ -100,21 +103,36 @@ export function formatRelativeTime(date: Date | string): string {
     return `${diffDays}일 전`;
   }
 
-  return formatDate(dateObj, "date-only");
+  return formatDate(dateObj, "date-only", timezone);
 }
 
 /**
- * 지출/수입 아이템용 날짜 포맷팅 (date-fns 사용)
+ * 지출/수입 아이템용 날짜 포맷팅
  * @param dateString - ISO 8601 형식의 날짜 문자열
+ * @param timezone - 시간대 (기본값: "Asia/Seoul")
  * @returns 포맷팅된 날짜 문자열 (예: "1월 15일 (수) 10:00")
  */
-export function formatExpenseDate(dateString: string): string {
+export function formatExpenseDate(
+  dateString: string,
+  timezone: string = "Asia/Seoul"
+): string {
   try {
     const date = new Date(dateString);
     if (Number.isNaN(date.getTime())) {
       return "잘못된 날짜";
     }
-    return format(date, "M월 d일 (E) HH:mm", { locale: ko });
+
+    // 시간대를 고려하여 포맷팅
+    const formatter = new Intl.DateTimeFormat("ko-KR", {
+      timeZone: timezone,
+      month: "long",
+      day: "numeric",
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    return formatter.format(date);
   } catch {
     return "잘못된 날짜";
   }

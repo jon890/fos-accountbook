@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatExpenseDate } from "@/lib/utils/format";
+import { useTimeZone } from "@/lib/client/timezone-context";
 import type { ExpenseItemData } from "@/types/expense";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -15,6 +16,7 @@ interface ExpenseItemProps {
 
 export function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { timezone } = useTimeZone();
   const {
     uuid,
     amount,
@@ -81,7 +83,7 @@ export function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemProps) {
               </Badge>
             </div>
             <p className="text-[10px] md:text-sm text-gray-500">
-              {formatExpenseDate(date)}
+              {formatExpenseDate(date, timezone)}
             </p>
           </div>
         </div>

@@ -5,7 +5,9 @@
  * 로그인하지 않은 사용자는 자동으로 로그인 페이지로 리다이렉트됩니다.
  */
 
-import { AppLayout } from "@/components/layout/AppLayout";
+import { Header } from "@/components/layout/Header";
+import { BottomNavigation } from "@/components/layout/BottomNavigation";
+import { TimeZoneProvider } from "@/lib/client/timezone-context";
 import { auth } from "@/lib/server/auth";
 import { redirect } from "next/navigation";
 import { ReactNode } from "react";
@@ -22,5 +24,26 @@ export default async function AuthenticatedLayout({
     redirect("/auth/signin");
   }
 
-  return <AppLayout initialSession={session}>{children}</AppLayout>;
+  const timezone = session.user.profile?.timezone ?? "Asia/Seoul";
+
+  return (
+    <TimeZoneProvider timezone={timezone}>
+      <div
+        className="min-h-screen"
+        style={{
+          minHeight: "100vh",
+          background:
+            "linear-gradient(135deg, #f8fafc 0%, rgba(59, 130, 246, 0.1) 50%, rgba(99, 102, 241, 0.1) 100%)",
+        }}
+      >
+        <Header session={session} />
+
+        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 md:py-6 pb-20 md:pb-24">
+          {children}
+        </main>
+
+        <BottomNavigation />
+      </div>
+    </TimeZoneProvider>
+  );
 }

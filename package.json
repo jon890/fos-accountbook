@@ -50,6 +50,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@auth/core": "^0.41.0",
     "@eslint/eslintrc": "^3",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
