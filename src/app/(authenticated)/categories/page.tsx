@@ -8,9 +8,6 @@ import { serverApiGet } from "@/lib/server/api";
 import type { CategoryResponse } from "@/types/category";
 import { redirect } from "next/navigation";
 
-// 인증이 필요한 페이지이므로 동적 렌더링 필요
-export const dynamic = "force-dynamic";
-
 export default async function CategoriesPage() {
   // 선택된 가족 UUID 가져오기
   const familyUuid = await getSelectedFamilyUuid();
@@ -23,13 +20,15 @@ export default async function CategoriesPage() {
 
   // 선택된 가족의 카테고리 목록 조회
   let categories: CategoryResponse[] = [];
+  let hasError = false;
   try {
     categories = await serverApiGet<CategoryResponse[]>(
       `/families/${familyUuid}/categories`
     );
   } catch (error) {
     console.error("Failed to fetch categories:", error);
-    // 카테고리가 없어도 페이지는 표시
+    // API 호출 실패 시 에러 상태 전달
+    hasError = true;
     categories = [];
   }
 
@@ -45,6 +44,7 @@ export default async function CategoriesPage() {
       <CategoryPageClient
         initialCategories={categories}
         familyUuid={familyUuid}
+        hasInitialError={hasError}
       />
     </div>
   );
