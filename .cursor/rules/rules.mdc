@@ -467,11 +467,82 @@ public class Expense {
 
 ---
 
+## 👤 사용자 플로우 및 가족 관리
+
+### 첫 회원가입 유저 플로우
+
+**핵심 원칙:**
+
+- 선택된 가족(`defaultFamilyUuid`)이 없는 경우는 **첫 회원가입 유저만** 해당
+- 첫 회원가입 유저는 아직 가족을 생성하지 않았으므로 `defaultFamilyUuid`가 `null`
+- 백엔드에서 첫 가족 생성 시 자동으로 `defaultFamilyUuid` 설정됨
+
+**처리 규칙:**
+
+1. **선택된 가족이 없는 경우 (`defaultFamilyUuid === null`):**
+
+   ```typescript
+   // ✅ 올바른 처리
+   const familyUuid = await getSelectedFamilyUuid();
+   if (!familyUuid) {
+     redirect("/families/create"); // 가족 생성 페이지로 리다이렉트
+   }
+
+   // ❌ 잘못된 처리 - 첫 번째 가족을 자동으로 사용하지 않음
+   if (!familyUuid) {
+     const families = await serverApiGet<FamilyResponse[]>("/families");
+     familyUuid = families[0].uuid; // 이렇게 하지 않음
+   }
+   ```
+
+2. **홈 페이지 (`/`) 처리:**
+
+   ```typescript
+   // src/app/(authenticated)/page.tsx
+   export default async function HomePage() {
+     const session = await requireAuth();
+     const defaultFamilyUuid = session.user.profile?.defaultFamilyUuid;
+
+     if (!defaultFamilyUuid) {
+       redirect("/families/create"); // 첫 가입 유저 → 가족 생성
+     } else {
+       redirect("/dashboard"); // 기존 유저 → 대시보드
+     }
+   }
+   ```
+
+3. **가족이 필요한 페이지 처리:**
+
+   ```typescript
+   // 예: src/app/(authenticated)/categories/page.tsx
+   export default async function CategoriesPage() {
+     const familyUuid = await getSelectedFamilyUuid();
+
+     // 선택된 가족이 없으면 가족 생성 페이지로 리다이렉트
+     // (선택된 가족이 없는 경우는 첫 회원가입 유저만 해당)
+     if (!familyUuid) {
+       redirect("/families/create");
+     }
+
+     // 이후 로직 진행...
+   }
+   ```
+
+**주의사항:**
+
+- ❌ **절대 첫 번째 가족을 자동으로 선택하지 않음**
+- ✅ **항상 가족 생성 페이지로 리다이렉트**
+- ✅ **백엔드에서 첫 가족 생성 시 `defaultFamilyUuid` 자동 설정**
+- ✅ **명확한 주석으로 의도 표현**
+
+---
+
 ## 🧪 테스트 작성 가이드
 
 ### 테스트 전략
 
 **테스트 피라미드 비율:**
+
 - Unit Tests (70%): 순수 함수, 유틸리티 테스트
 - Component Tests (20%): React 컴포넌트 렌더링 및 상호작용
 - Integration Tests (8%): Server Actions, API 통신
@@ -481,14 +552,14 @@ public class Expense {
 
 ```typescript
 // ✅ 프론트엔드 테스트는 백엔드 연결 없이 모킹만 사용
-jest.mock('@/lib/server/api/client', () => ({
+jest.mock("@/lib/server/api/client", () => ({
   serverApiClient: jest.fn(),
 }));
 
 // ✅ Next.js 의존성 모킹
-jest.mock('@/lib/server/auth-helpers');
-jest.mock('@/lib/server/cookies');
-jest.mock('next/cache', () => ({
+jest.mock("@/lib/server/auth-helpers");
+jest.mock("@/lib/server/cookies");
+jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
 }));
 
@@ -502,18 +573,18 @@ jest.mock('next/cache', () => ({
 
 ```typescript
 // src/__tests__/lib/utils/format.test.ts
-import { formatCurrency } from '@/lib/utils/format';
+import { formatCurrency } from "@/lib/utils/format";
 
-describe('formatCurrency', () => {
-  it('숫자를 한국 원화 형식으로 변환한다', () => {
+describe("formatCurrency", () => {
+  it("숫자를 한국 원화 형식으로 변환한다", () => {
     // Given
     const amount = 50000;
-    
+
     // When
     const result = formatCurrency(amount);
-    
+
     // Then
-    expect(result).toBe('₩50,000');
+    expect(result).toBe("₩50,000");
   });
 });
 ```
@@ -522,23 +593,23 @@ describe('formatCurrency', () => {
 
 ```typescript
 // src/__tests__/components/ui/SubmitButton.test.tsx
-import { render, screen } from '@testing-library/react';
-import { SubmitButton } from '@/components/ui/submit-button';
+import { render, screen } from "@testing-library/react";
+import { SubmitButton } from "@/components/ui/submit-button";
 
-jest.mock('react-dom', () => ({
+jest.mock("react-dom", () => ({
   useFormStatus: jest.fn(),
 }));
 
-describe('SubmitButton', () => {
-  it('pending 상태일 때 버튼이 비활성화된다', () => {
+describe("SubmitButton", () => {
+  it("pending 상태일 때 버튼이 비활성화된다", () => {
     // Given
     useFormStatus.mockReturnValue({ pending: true });
-    
+
     // When
     render(<SubmitButton>제출</SubmitButton>);
-    
+
     // Then
-    expect(screen.getByRole('button')).toBeDisabled();
+    expect(screen.getByRole("button")).toBeDisabled();
   });
 });
 ```
@@ -547,29 +618,29 @@ describe('SubmitButton', () => {
 
 ```typescript
 // src/__tests__/actions/expense/update-expense-action.test.ts
-import { updateExpenseAction } from '@/app/actions/expense/update-expense-action';
+import { updateExpenseAction } from "@/app/actions/expense/update-expense-action";
 
-jest.mock('@/lib/server/auth-helpers');
-jest.mock('@/lib/server/api/client');
-jest.mock('next/cache');
+jest.mock("@/lib/server/auth-helpers");
+jest.mock("@/lib/server/api/client");
+jest.mock("next/cache");
 
-describe('updateExpenseAction', () => {
-  it('유효한 데이터로 지출 수정에 성공한다', async () => {
+describe("updateExpenseAction", () => {
+  it("유효한 데이터로 지출 수정에 성공한다", async () => {
     // Given
     mockRequireAuth.mockResolvedValue(undefined);
-    mockServerApiClient.mockResolvedValue({ data: { uuid: 'test' } });
-    
+    mockServerApiClient.mockResolvedValue({ data: { uuid: "test" } });
+
     const formData = new FormData();
-    formData.append('amount', '50000');
-    
+    formData.append("amount", "50000");
+
     // When
     const result = await updateExpenseAction(initialState, formData);
-    
+
     // Then
     expect(result.success).toBe(true);
     expect(mockServerApiClient).toHaveBeenCalledWith(
-      expect.stringContaining('/expenses/'),
-      expect.objectContaining({ method: 'PUT' })
+      expect.stringContaining("/expenses/"),
+      expect.objectContaining({ method: "PUT" })
     );
   });
 });

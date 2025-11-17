@@ -4,10 +4,16 @@
  */
 
 // Mock modules - import 전에 선언해야 함
+jest.mock("@/lib/env/server.env", () => ({
+  serverEnv: {
+    BACKEND_API_URL: "http://localhost:8080",
+  },
+}));
+
 jest.mock("@/lib/server/auth/config", () => ({
   authConfig: { providers: [], session: { strategy: "jwt" } },
 }));
-jest.mock("@/lib/server/auth-helpers");
+jest.mock("@/lib/server/auth/auth-helpers");
 jest.mock("@/lib/server/auth");
 jest.mock("@/lib/server/api/client");
 jest.mock("next/cache");

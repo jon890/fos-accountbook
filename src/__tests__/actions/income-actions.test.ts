@@ -7,7 +7,7 @@ import { deleteIncomeAction } from "@/app/actions/income/delete-income-action";
 import { serverApiClient } from "@/lib/server/api/client";
 
 // Mock modules
-jest.mock("@/lib/server/auth-helpers", () => ({
+jest.mock("@/lib/server/auth/auth-helpers", () => ({
   requireAuthOrRedirect: jest.fn(),
   requireAuth: jest.fn(),
   getSelectedFamilyUuid: jest.fn(),
