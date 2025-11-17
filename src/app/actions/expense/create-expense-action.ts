@@ -8,7 +8,7 @@ import { ActionError } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
 import {
   requireAuthOrRedirect,
-  getSelectedFamilyUuidFromSession,
+  getSelectedFamilyUuid,
 } from "@/lib/server/auth-helpers";
 import type {
   CreateExpenseFormState,
@@ -34,8 +34,8 @@ export async function createExpenseAction(
     // 인증 확인
     await requireAuthOrRedirect();
 
-    // 선택된 가족 UUID 가져오기 (세션에서)
-    const familyUuid = await getSelectedFamilyUuidFromSession();
+    // 선택된 가족 UUID 가져오기
+    const familyUuid = await getSelectedFamilyUuid();
 
     // 선택된 가족이 없으면 에러
     if (!familyUuid) {

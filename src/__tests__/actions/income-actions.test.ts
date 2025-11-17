@@ -10,7 +10,7 @@ import { serverApiClient } from "@/lib/server/api/client";
 jest.mock("@/lib/server/auth-helpers", () => ({
   requireAuthOrRedirect: jest.fn(),
   requireAuth: jest.fn(),
-  getSelectedFamilyUuidFromSession: jest.fn(),
+  getSelectedFamilyUuid: jest.fn(),
 }));
 
 jest.mock("@/lib/server/api/client", () => ({
@@ -21,7 +21,10 @@ jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
 }));
 
-import { requireAuthOrRedirect, getSelectedFamilyUuidFromSession } from "@/lib/server/auth-helpers";
+import {
+  requireAuthOrRedirect,
+  getSelectedFamilyUuid,
+} from "@/lib/server/auth-helpers";
 import type { Session } from "next-auth";
 
 const mockRequireAuth = requireAuthOrRedirect as jest.MockedFunction<
@@ -36,8 +39,8 @@ const mockSession: Session = {
   },
   expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
 };
-const mockGetSelectedFamilyUuidFromSession = getSelectedFamilyUuidFromSession as jest.MockedFunction<
-  typeof getSelectedFamilyUuidFromSession
+const mockGetSelectedFamilyUuid = getSelectedFamilyUuid as jest.MockedFunction<
+  typeof getSelectedFamilyUuid
 >;
 const mockServerApiClient = serverApiClient as jest.MockedFunction<
   typeof serverApiClient
@@ -52,7 +55,7 @@ describe("Income Actions", () => {
     it("인증된 사용자가 수입을 성공적으로 생성할 수 있다", async () => {
       // Given
       mockRequireAuth.mockResolvedValue(mockSession);
-      mockGetSelectedFamilyUuidFromSession.mockResolvedValue("family-1");
+      mockGetSelectedFamilyUuid.mockResolvedValue("family-1");
 
       mockServerApiClient.mockResolvedValue({
         data: {
@@ -98,7 +101,7 @@ describe("Income Actions", () => {
     it("familyUuid가 없으면 에러를 반환한다", async () => {
       // Given
       mockRequireAuth.mockResolvedValue(mockSession);
-      mockGetSelectedFamilyUuidFromSession.mockResolvedValue(null); // 세션에 없음
+      mockGetSelectedFamilyUuid.mockResolvedValue(null);
 
       const formData = new FormData();
       formData.append("amount", "50000");
@@ -123,7 +126,7 @@ describe("Income Actions", () => {
     it("유효하지 않은 금액이면 검증 에러를 반환한다", async () => {
       // Given
       mockRequireAuth.mockResolvedValue(mockSession);
-      mockGetSelectedFamilyUuidFromSession.mockResolvedValue("family-1");
+      mockGetSelectedFamilyUuid.mockResolvedValue("family-1");
 
       const formData = new FormData();
       formData.append("familyUuid", "family-1");

@@ -12,7 +12,7 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
-import { requireAuth, getSelectedFamilyUuidFromSession } from "@/lib/server/auth-helpers";
+import { requireAuth, getSelectedFamilyUuid } from "@/lib/server/auth-helpers";
 import type { InvitationInfo } from "@/types/invitation";
 import type { InvitationResponse } from "@/types/invitation";
 import type { FamilyResponse } from "@/types/family";
@@ -24,8 +24,8 @@ export async function getActiveInvitationsAction(): Promise<
     // 인증 확인
     await requireAuth();
 
-    // 선택된 가족 UUID 가져오기 (세션에서)
-    let familyUuid = await getSelectedFamilyUuidFromSession();
+    // 선택된 가족 UUID 가져오기
+    let familyUuid = await getSelectedFamilyUuid();
 
     // 선택된 가족이 없으면 첫 번째 가족 사용
     if (!familyUuid) {

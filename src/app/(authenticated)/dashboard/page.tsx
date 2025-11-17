@@ -15,7 +15,7 @@ import { StatsCards } from "@/components/dashboard/StatsCards";
 import { WelcomeSection } from "@/components/dashboard/WelcomeSection";
 import { getActionDataOrDefault } from "@/lib/server/action-result-handler";
 import { auth } from "@/lib/server/auth";
-import { getSelectedFamilyUuidFromSession } from "@/lib/server/auth-helpers";
+import { getSelectedFamilyUuid } from "@/lib/server/auth-helpers";
 import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
@@ -25,8 +25,8 @@ export default async function DashboardPage() {
     redirect("/auth/signin");
   }
 
-  // 2. 선택된 가족 확인 (세션에서 가져오기)
-  const selectedFamilyUuid = await getSelectedFamilyUuidFromSession();
+  // 2. 선택된 가족 확인
+  const selectedFamilyUuid = await getSelectedFamilyUuid();
   if (!selectedFamilyUuid) {
     // 선택된 가족이 없으면 홈으로 (홈에서 리다이렉트 처리)
     redirect("/");

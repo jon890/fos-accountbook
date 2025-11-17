@@ -11,10 +11,7 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { serverApiGet } from "@/lib/server/api/client";
-import {
-  requireAuth,
-  getSelectedFamilyUuidFromSession,
-} from "@/lib/server/auth-helpers";
+import { requireAuth, getSelectedFamilyUuid } from "@/lib/server/auth-helpers";
 import type { GetExpensesParams, GetExpensesResponse } from "@/types/expense";
 
 export async function getExpensesAction(
@@ -24,8 +21,8 @@ export async function getExpensesAction(
     // 인증 확인
     await requireAuth();
 
-    // 선택된 가족 UUID 가져오기 (세션에서)
-    const familyId = await getSelectedFamilyUuidFromSession();
+    // 선택된 가족 UUID 가져오기
+    const familyId = await getSelectedFamilyUuid();
 
     // 선택된 가족이 없으면 에러
     if (!familyId) {
