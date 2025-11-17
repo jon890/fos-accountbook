@@ -11,8 +11,8 @@ export async function register() {
   // 서버 사이드에서만 실행
   if (process.env.NEXT_RUNTIME === "nodejs") {
     // 환경변수 검증 (import하는 순간 검증됨)
-    await import("./src/lib/env/server.env");
-    await import("./src/lib/env/client.env");
+    await import("@/lib/env/server.env");
+    await import("@/lib/env/client.env");
 
     console.log("✅ Environment variables validated successfully");
   }

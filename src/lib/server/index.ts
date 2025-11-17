@@ -23,4 +23,3 @@
 export * from "./action-result-handler";
 export * from "./api";
 export * from "./auth";
-export * from "./config";
