@@ -26,9 +26,8 @@ export async function setDefaultFamilyAction(
       body: JSON.stringify({ defaultFamilyUuid: familyUuid }),
     });
 
-    // 3. Next.js 캐시 무효화 - 홈 페이지와 대시보드 재검증
-    revalidatePath("/", "page");
-    revalidatePath("/dashboard", "page");
+    // 3. Next.js 캐시 무효화 - 모든 페이지 재검증 (세션도 재조회됨)
+    revalidatePath("/", "layout");
 
     return successResult(undefined);
   } catch (error) {

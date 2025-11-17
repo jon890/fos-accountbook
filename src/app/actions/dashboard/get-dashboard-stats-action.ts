@@ -11,8 +11,10 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { serverApiGet } from "@/lib/server/api";
-import { requireAuth } from "@/lib/server/auth-helpers";
-import { getSelectedFamilyUuid } from "@/lib/server/cookies";
+import {
+  requireAuth,
+  getSelectedFamilyUuidFromSession,
+} from "@/lib/server/auth-helpers";
 import type { DashboardStats } from "@/types/dashboard";
 
 export async function getDashboardStatsAction(): Promise<
@@ -22,8 +24,8 @@ export async function getDashboardStatsAction(): Promise<
     // 인증 확인
     await requireAuth();
 
-    // 선택된 가족 UUID 가져오기
-    const selectedFamilyUuid = await getSelectedFamilyUuid();
+    // 선택된 가족 UUID 가져오기 (세션에서)
+    const selectedFamilyUuid = await getSelectedFamilyUuidFromSession();
 
     // 선택된 가족이 없으면 에러
     if (!selectedFamilyUuid) {

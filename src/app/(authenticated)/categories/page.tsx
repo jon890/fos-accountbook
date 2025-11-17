@@ -5,12 +5,9 @@
 import { getFamilyCategoriesAction } from "@/app/actions/category/get-categories-action";
 import { checkUserFamilyAction } from "@/app/actions/family/check-user-family-action";
 import { CategoryPageClient } from "./_components/CategoryPageClient";
-import { getSelectedFamilyUuid } from "@/lib/server/cookies";
+import { getSelectedFamilyUuidFromSession } from "@/lib/server/auth-helpers";
 import type { CategoryResponse } from "@/types/category";
 import { redirect } from "next/navigation";
-
-// 동적 렌더링 강제
-export const dynamic = "force-dynamic";
 
 export default async function CategoriesPage() {
   // 가족 존재 여부 확인
@@ -20,8 +17,8 @@ export default async function CategoriesPage() {
     redirect("/families/create");
   }
 
-  // 선택된 가족 UUID 가져오기
-  const familyUuid = await getSelectedFamilyUuid();
+  // 선택된 가족 UUID 가져오기 (세션에서)
+  const familyUuid = await getSelectedFamilyUuidFromSession();
 
   if (!familyUuid) {
     redirect("/families/create");

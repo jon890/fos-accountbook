@@ -11,8 +11,10 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { serverApiPost } from "@/lib/server/api";
-import { requireAuth } from "@/lib/server/auth-helpers";
-import { getSelectedFamilyUuid } from "@/lib/server/cookies";
+import {
+  requireAuth,
+  getSelectedFamilyUuidFromSession,
+} from "@/lib/server/auth-helpers";
 import type { CategoryResponse } from "@/types/category";
 import { revalidatePath } from "next/cache";
 
@@ -28,8 +30,9 @@ export async function createCategoryAction(
     // 인증 확인
     await requireAuth();
 
-    // familyUuid가 없으면 쿠키에서 가져오기
-    const selectedFamilyUuid = familyUuid || (await getSelectedFamilyUuid());
+    // familyUuid가 없으면 세션에서 가져오기
+    const selectedFamilyUuid =
+      familyUuid || (await getSelectedFamilyUuidFromSession());
 
     // 선택된 가족이 없으면 에러
     if (!selectedFamilyUuid) {

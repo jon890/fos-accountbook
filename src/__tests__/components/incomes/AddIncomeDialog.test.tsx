@@ -6,10 +6,7 @@
 jest.mock("@/lib/server/auth-helpers", () => ({
   requireAuth: jest.fn(),
   requireAuthOrRedirect: jest.fn(),
-}));
-
-jest.mock("@/lib/server/cookies", () => ({
-  getSelectedFamilyUuid: jest.fn(),
+  getSelectedFamilyUuidFromSession: jest.fn(),
 }));
 
 jest.mock("@/lib/server/api", () => ({

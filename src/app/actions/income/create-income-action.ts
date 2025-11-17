@@ -6,8 +6,10 @@
 
 import { ActionError } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
-import { requireAuthOrRedirect } from "@/lib/server/auth-helpers";
-import { getSelectedFamilyUuid } from "@/lib/server/cookies";
+import {
+  requireAuthOrRedirect,
+  getSelectedFamilyUuidFromSession,
+} from "@/lib/server/auth-helpers";
 import type { CreateIncomeRequest, IncomeResponse } from "@/types/income";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -38,12 +40,12 @@ export async function createIncomeAction(
     // 인증 확인
     await requireAuthOrRedirect();
 
-    // familyUuid 가져오기 (폼에서 전달되거나 쿠키에서)
+    // familyUuid 가져오기 (폼에서 전달되거나 세션에서)
     let familyUuid = formData.get("familyUuid")?.toString();
 
-    // 폼에서 전달되지 않았다면 쿠키에서 가져오기
+    // 폼에서 전달되지 않았다면 세션에서 가져오기
     if (!familyUuid) {
-      const selectedUuid = await getSelectedFamilyUuid();
+      const selectedUuid = await getSelectedFamilyUuidFromSession();
       familyUuid = selectedUuid || undefined;
     }
 

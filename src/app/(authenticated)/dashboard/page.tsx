@@ -15,11 +15,8 @@ import { StatsCards } from "@/components/dashboard/StatsCards";
 import { WelcomeSection } from "@/components/dashboard/WelcomeSection";
 import { getActionDataOrDefault } from "@/lib/server/action-result-handler";
 import { auth } from "@/lib/server/auth";
-import { getSelectedFamilyUuid } from "@/lib/server/cookies";
+import { getSelectedFamilyUuidFromSession } from "@/lib/server/auth-helpers";
 import { redirect } from "next/navigation";
-
-// 쿠키를 사용하므로 동적 렌더링 필요
-export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   // 1. 인증 확인
@@ -28,8 +25,8 @@ export default async function DashboardPage() {
     redirect("/auth/signin");
   }
 
-  // 2. 선택된 가족 확인
-  const selectedFamilyUuid = await getSelectedFamilyUuid();
+  // 2. 선택된 가족 확인 (세션에서 가져오기)
+  const selectedFamilyUuid = await getSelectedFamilyUuidFromSession();
   if (!selectedFamilyUuid) {
     // 선택된 가족이 없으면 홈으로 (홈에서 리다이렉트 처리)
     redirect("/");
