@@ -8,7 +8,9 @@ import { z } from "zod";
 
 export const serverEnvSchema = z.object({
   // NextAuth
-  NEXTAUTH_URL: z.string().url("NEXTAUTH_URL must be a valid URL"),
+  NEXTAUTH_URL: z.url({
+    message: "NEXTAUTH_URL must be a valid URL",
+  }),
   NEXTAUTH_SECRET: z
     .string()
     .min(32, "NEXTAUTH_SECRET must be at least 32 characters"),
@@ -22,7 +24,9 @@ export const serverEnvSchema = z.object({
   NAVER_CLIENT_SECRET: z.string().min(1, "NAVER_CLIENT_SECRET is required"),
 
   // Backend API (서버 사이드 전용)
-  BACKEND_API_URL: z.string().url("BACKEND_API_URL must be a valid URL"),
+  BACKEND_API_URL: z.url({
+    message: "BACKEND_API_URL must be a valid URL",
+  }),
 
   // Node Environment
   NODE_ENV: z

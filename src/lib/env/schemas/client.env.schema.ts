@@ -9,9 +9,9 @@ import { z } from "zod";
 
 export const clientEnvSchema = z.object({
   // Public API URL (클라이언트에서 백엔드 API 호출)
-  NEXT_PUBLIC_API_BASE_URL: z
-    .string()
-    .url("NEXT_PUBLIC_API_BASE_URL must be a valid URL"),
+  NEXT_PUBLIC_API_BASE_URL: z.url({
+    message: "NEXT_PUBLIC_API_BASE_URL must be a valid URL",
+  }),
 });
 
 // 타입 export
