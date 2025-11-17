@@ -5,6 +5,8 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { cookies } from "next/headers";
 import { getBackendJWT, refreshAccessToken } from "../api/backend-auth";
+import { serverApiClient } from "../api/client";
+import type { UserProfile } from "@/types/next-auth";
 
 /**
  * JWT Secret Key (백엔드와 동일한 키 사용)
@@ -249,6 +251,38 @@ export const authConfig: NextAuthConfig = {
       // JWT payload의 userUuid를 session에 포함
       if (token.userUuid) {
         session.user.id = token.userUuid as string;
+      }
+
+      // 사용자 프로필 정보 조회 및 세션에 포함
+      try {
+        const response = await serverApiClient<{
+          data: {
+            userUuid: string;
+            timezone: string;
+            language: string;
+            currency: string;
+            defaultFamilyUuid: string | null;
+          };
+        }>("/users/me/profile", {
+          method: "GET",
+        });
+
+        const profile = response.data;
+        session.user.profile = {
+          timezone: profile.timezone || "Asia/Seoul",
+          language: profile.language || "ko",
+          currency: profile.currency || "KRW",
+          defaultFamilyUuid: profile.defaultFamilyUuid || null,
+        };
+      } catch (error) {
+        // 프로필 조회 실패 시 기본값 사용
+        console.error("Failed to fetch user profile in session:", error);
+        session.user.profile = {
+          timezone: "Asia/Seoul",
+          language: "ko",
+          currency: "KRW",
+          defaultFamilyUuid: null,
+        };
       }
 
       return session;
