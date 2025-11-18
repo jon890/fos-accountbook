@@ -12,7 +12,9 @@
 - GC 일시정지 시간 목표 설정 (`-XX:MaxGCPauseMillis=200`)
 - 문자열 중복 제거 활성화 (`-XX:+UseStringDeduplication`)
 - 문자열 중복 제거 통계 출력 (`-XX:+PrintStringDeduplicationStatistics`) - 모니터링용
-- 참고: Java 21의 기본 GC는 이미 G1GC이므로 명시적으로 지정 불필요
+- 참고:
+  - Java 21의 기본 GC는 이미 G1GC이므로 명시적으로 지정 불필요
+  - `UseContainerSupport`는 Java 10+부터 기본 활성화되어 명시 불필요 (Java 21에서 제거됨)
 
 **설명:**
 
