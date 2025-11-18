@@ -23,7 +23,7 @@ Spring Boot 3.5 + Java 21 기반 가계부 애플리케이션 백엔드 API 서�
 
 ### Core
 
-- **Language**: Java 21
+- **Language**: Java 21¬
 - **Framework**: Spring Boot 3.5.7
 - **Build Tool**: Gradle 9.2 (Version Catalogs 사용)
 - **Database**: MySQL 8.0+
@@ -145,7 +145,8 @@ fos-accountbook-backend/
 │       └── railway.md                        # Railway 배포 가이드
 ├── Dockerfile                                 # Docker 이미지 빌드
 ├── railway.json                              # Railway 설정
-├── docker-compose.yml                        # 로컬 MySQL 설정
+├── docker/
+│   └── compose.yml                          # 로컬 MySQL 설정 (최신 Docker Compose 스펙)
 ├── build.gradle.kts                          # Gradle 빌드 설정
 └── README.md                                 # 이 파일
 ```

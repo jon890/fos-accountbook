@@ -15,11 +15,14 @@ MySQL Connector/J 버전 업그레이드 시 실제 MySQL 데이터베이스로 
 ### 1단계: MySQL 컨테이너 시작
 
 ```bash
+# docker 폴더로 이동
+cd docker
+
 # MySQL 컨테이너 시작
-docker-compose up -d mysql
+docker compose up -d mysql
 
 # MySQL이 준비될 때까지 대기 (약 30초)
-docker-compose logs -f mysql
+docker compose logs -f mysql
 # "ready for connections" 메시지 확인
 ```
 
@@ -64,11 +67,14 @@ Schema: information_schema
 ### 5단계: 정리
 
 ```bash
+# docker 폴더에서 실행 (또는 루트에서: docker compose -f docker/compose.yml down)
+cd docker
+
 # MySQL 컨테이너 종료
-docker-compose down
+docker compose down
 
 # 또는 데이터까지 삭제
-docker-compose down -v
+docker compose down -v
 ```
 
 ## 🧪 테스트 항목
@@ -115,37 +121,45 @@ docker-compose down -v
 
 ```bash
 # MySQL 로그 확인
-docker-compose logs mysql
+docker compose logs mysql
 
 # MySQL 컨테이너 상태 확인
 docker ps -a
 
 # MySQL 재시작
-docker-compose restart mysql
+docker compose restart mysql
 ```
 
-### 포트 충돌 (3306 already in use)
+### 포트 충돌
+
+기본적으로 포트 13306을 사용하므로 일반 MySQL 포트(3306)와 충돌하지 않습니다.
+
+다른 포트를 사용해야 하는 경우:
 
 ```bash
 # 기존 MySQL 프로세스 확인
-lsof -i :3306
+lsof -i :13306
 
-# 포트 변경 (docker-compose.yml)
+# 포트 변경 (docker/compose.yml)
 ports:
-  - "3307:3306"  # 3307로 변경
+  - "13307:3306"  # 13307로 변경
 
-# application-test-mysql.yml도 수정
-url: jdbc:mysql://localhost:3307/accountbook?...
+# application-local.yml도 수정
+url: jdbc:mysql://localhost:13307/accountbook?...
 ```
 
 ### Flyway 마이그레이션 실패
 
 ```bash
-# MySQL 초기화
-docker-compose down -v
-docker-compose up -d mysql
+# docker 폴더에서 실행
+cd docker
 
-# 마이그레이션 파일 확인
+# MySQL 초기화
+docker compose down -v
+docker compose up -d mysql
+
+# 마이그레이션 파일 확인 (루트 폴더에서)
+cd ..
 ls -la src/main/resources/db/migration/
 ```
 

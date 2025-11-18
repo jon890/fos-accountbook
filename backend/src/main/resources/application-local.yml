@@ -7,7 +7,7 @@
 spring:
   # 로컬 MySQL 설정 (Docker Compose)
   datasource:
-    url: jdbc:mysql://localhost:3306/accountbook?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    url: jdbc:mysql://localhost:13306/accountbook?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: accountbook_user
     password: accountbook_password
     driver-class-name: com.mysql.cj.jdbc.Driver
