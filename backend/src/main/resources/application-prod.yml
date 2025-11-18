@@ -4,6 +4,15 @@
 # Railway에서 SPRING_PROFILES_ACTIVE=prod 환경변수 설정 필수
 
 spring:
+  # 프로덕션에서 ANSI 색상 출력 비활성화 (메모리 절약)
+  output:
+    ansi:
+      enabled: never
+  # 메모리 최적화: 지연 초기화 활성화
+  # 빈을 필요할 때만 생성하여 시작 시 메모리 사용량 감소
+  main:
+    lazy-initialization: true
+
   # Railway MySQL 설정 (조합된 URL 사용)
   # Railway Variables 탭에서 다음 변수 설정:
   #   SPRING_DATASOURCE_URL=jdbc:mysql://${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}/${{MySQL.MYSQLDATABASE}}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
@@ -15,16 +24,18 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
-    # HikariCP 커넥션 풀 최적화
+    # HikariCP 커넥션 풀 최적화 (메모리 절약)
     hikari:
-      maximum-pool-size: 10 # 최대 커넥션 수
-      minimum-idle: 2 # 최소 유휴 커넥션
+      maximum-pool-size: 5 # 최대 커넥션 수 (10 → 5로 감소)
+      minimum-idle: 1 # 최소 유휴 커넥션 (2 → 1로 감소)
       connection-timeout: 30000 # 30초
       idle-timeout: 600000 # 10분
       max-lifetime: 1800000 # 30분
       connection-test-query: SELECT 1 # 연결 테스트
+      # 메모리 절약을 위한 추가 설정
+      leak-detection-threshold: 60000 # 커넥션 누수 감지 (60초)
 
-  # JPA 프로덕션 설정
+  # JPA 프로덕션 설정 (메모리 최적화)
   jpa:
     hibernate:
       ddl-auto: validate # Flyway가 스키마 관리 (변경 금지)
@@ -32,6 +43,12 @@ spring:
       hibernate:
         format_sql: false # SQL 포맷팅 비활성화
         show_sql: false # SQL 로깅 비활성화
+        # 메모리 최적화 설정
+        jdbc:
+          batch_size: 20 # 배치 크기 (기본값 15에서 약간 증가)
+        order_inserts: true # INSERT 순서 최적화
+        order_updates: true # UPDATE 순서 최적화
+        jdbc.batch_versioned_data: true # 버전 관리된 데이터 배치 처리
 
   # Flyway 프로덕션 설정
   flyway:
@@ -45,20 +62,31 @@ springdoc:
   swagger-ui:
     enabled: ${SWAGGER_ENABLED:false} # 기본 비활성화
 
-# Actuator 프로덕션 설정 (보안을 위해 최소화)
+# Actuator 프로덕션 설정 (보안 및 메모리 절약을 위해 최소화)
 management:
   endpoints:
     web:
       exposure:
-        # 프로덕션에서는 health만 노출
+        # 프로덕션에서는 health만 노출 (메모리 절약)
         include: health
   endpoint:
     health:
       # 헬스 체크는 기본 정보만 표시 (보안)
       show-details: when-authorized
       show-components: when-authorized
+  # 메트릭 수집 비활성화 (메모리 절약)
+  metrics:
+    export:
+      prometheus:
+        enabled: false
 
 # CORS 설정 (프로덕션 환경) - allowed-origins만 오버라이드
 cors:
   allowed-origins:
     - https://fos-accountbook.vercel.app
+
+# P6Spy SQL 로깅 비활성화 (프로덕션에서 메모리 절약)
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: false

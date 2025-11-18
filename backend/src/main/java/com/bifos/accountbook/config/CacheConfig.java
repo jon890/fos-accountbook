@@ -30,8 +30,8 @@ public class CacheConfig {
    *
    * 캐시 전략:
    * - TTL: 1시간 (expireAfterWrite)
-   * - 최대 크기: 1000개 (familyUuid별 캐시)
-   * - 통계 활성화: 캐시 히트율 모니터링
+   * - 최대 크기: 500개 (메모리 절약을 위해 1000 → 500으로 감소)
+   * - 통계 활성화: 캐시 히트율 모니터링 (프로덕션에서 비활성화 가능)
    */
   @Bean
   public CacheManager cacheManager() {
@@ -41,18 +41,21 @@ public class CacheConfig {
                                      // TTL: 1시간 (카테고리는 자주 변경되지 않으므로 긴 TTL 설정)
                                      .expireAfterWrite(1, TimeUnit.HOURS)
 
-                                     // 최대 크기: 1000개 (가족 수 * 카테고리 수를 고려)
-                                     .maximumSize(1000)
+                                     // 최대 크기: 500개 (메모리 절약을 위해 감소)
+                                     // 가족 수 * 카테고리 수를 고려하여 충분한 크기 유지
+                                     .maximumSize(500)
 
                                      // 통계 활성화 (캐시 히트율 모니터링)
+                                     // 프로덕션에서 메모리 절약이 필요하면 비활성화 가능
                                      .recordStats()
 
                                      // 제거 리스너: 캐시 항목이 제거될 때 로그 출력
+                                     // 프로덕션에서는 로그 레벨이 WARN이므로 실제로는 출력되지 않음
                                      .removalListener((key, value, cause) ->
                                                           log.debug("Cache eviction - key: {}, cause: {}", key, cause))
     );
 
-    log.info("Caffeine CacheManager initialized with cache: {}", CATEGORIES_CACHE);
+    log.info("Caffeine CacheManager initialized with cache: {} (max size: 500)", CATEGORIES_CACHE);
 
     return cacheManager;
   }
