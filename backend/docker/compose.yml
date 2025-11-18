@@ -13,7 +13,6 @@ services:
       - "13306:3306"  # 호스트 포트 13306 → 컨테이너 포트 3306 (일반 MySQL 포트와 충돌 방지)
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./mysql/init:/docker-entrypoint-initdb.d
       - ./mysql/conf.d:/etc/mysql/conf.d
     command:
       - --character-set-server=utf8mb4
