@@ -25,7 +25,7 @@ lombok = "1.18.42"
 querydsl = "5.1.0"
 
 # Cache
-caffeine = "3.1.8"
+caffeine = "3.2.3"
 
 # Testing
 # JUnit 버전은 Spring Boot가 자동 관리
