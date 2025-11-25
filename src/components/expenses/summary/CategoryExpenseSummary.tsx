@@ -63,7 +63,7 @@ export function CategoryExpenseSummary({
                       key={stat.categoryUuid}
                       onClick={() => handleCategoryClick(stat.categoryUuid)}
                       className={cn(
-                        "relative overflow-hidden rounded-xl md:rounded-2xl bg-gradient-to-r from-gray-50 to-white p-3 md:p-4 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg",
+                        "relative overflow-hidden rounded-xl md:rounded-2xl bg-linear-to-r from-gray-50 to-white p-3 md:p-4 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg",
                         isSelected
                           ? "border-2 shadow-md"
                           : "border border-gray-100"

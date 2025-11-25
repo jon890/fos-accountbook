@@ -39,7 +39,7 @@ export function QuickActions() {
         >
           <CardContent className="p-3 md:p-6">
             <div className="flex items-center space-x-2 md:space-x-4">
-              <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl md:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
+              <div className="w-10 h-10 md:w-14 md:h-14 bg-linear-to-r from-blue-500 to-blue-600 rounded-xl md:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
                 <Plus className="w-5 h-5 md:w-7 md:h-7 text-white" />
               </div>
               <div>
@@ -60,7 +60,7 @@ export function QuickActions() {
         >
           <CardContent className="p-3 md:p-6">
             <div className="flex items-center space-x-2 md:space-x-4">
-              <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl md:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
+              <div className="w-10 h-10 md:w-14 md:h-14 bg-linear-to-r from-emerald-500 to-emerald-600 rounded-xl md:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
                 <TrendingUp className="w-5 h-5 md:w-7 md:h-7 text-white" />
               </div>
               <div>
@@ -81,7 +81,7 @@ export function QuickActions() {
         >
           <CardContent className="p-3 md:p-6">
             <div className="flex items-center space-x-2 md:space-x-4">
-              <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl md:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
+              <div className="w-10 h-10 md:w-14 md:h-14 bg-linear-to-r from-purple-500 to-pink-600 rounded-xl md:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
                 <UserPlus className="w-5 h-5 md:w-7 md:h-7 text-white" />
               </div>
               <div>
@@ -100,7 +100,7 @@ export function QuickActions() {
         >
           <CardContent className="p-3 md:p-6">
             <div className="flex items-center space-x-2 md:space-x-4">
-              <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-r from-green-500 to-green-600 rounded-xl md:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
+              <div className="w-10 h-10 md:w-14 md:h-14 bg-linear-to-r from-green-500 to-green-600 rounded-xl md:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
                 <Settings className="w-5 h-5 md:w-7 md:h-7 text-white" />
               </div>
               <div>

@@ -9,6 +9,7 @@ import { Header } from "@/components/layout/Header";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { TimeZoneProvider } from "@/lib/client/timezone-context";
 import { auth } from "@/lib/server/auth";
+import { getSelectedFamilyUuid } from "@/lib/server/auth/auth-helpers";
 import { redirect } from "next/navigation";
 import { ReactNode } from "react";
 
@@ -24,6 +25,7 @@ export default async function AuthenticatedLayout({
     redirect("/auth/signin");
   }
 
+  const selectedFamilyUuid = await getSelectedFamilyUuid();
   const timezone = session.user.profile?.timezone ?? "Asia/Seoul";
 
   return (
@@ -36,7 +38,7 @@ export default async function AuthenticatedLayout({
             "linear-gradient(135deg, #f8fafc 0%, rgba(59, 130, 246, 0.1) 50%, rgba(99, 102, 241, 0.1) 100%)",
         }}
       >
-        <Header session={session} />
+        <Header session={session} selectedFamilyUuid={selectedFamilyUuid} />
 
         <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 md:py-6 pb-20 md:pb-24">
           {children}
