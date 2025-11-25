@@ -20,11 +20,6 @@ jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
 }));
 
-// Server Actions 모킹
-jest.mock("@/app/actions/family/get-selected-family-action", () => ({
-  getSelectedFamilyAction: jest.fn(),
-}));
-
 jest.mock("@/components/families/FamilySelectorDropdown", () => ({
   FamilySelectorDropdown: () => (
     <div data-testid="family-selector">Family Selector</div>
@@ -37,17 +32,10 @@ jest.mock("@/components/notifications/NotificationBell", () => ({
   ),
 }));
 
-import { getSelectedFamilyAction } from "@/app/actions/family/get-selected-family-action";
-
 const mockRouter = {
   push: jest.fn(),
   refresh: jest.fn(),
 };
-
-const mockGetSelectedFamilyAction =
-  getSelectedFamilyAction as jest.MockedFunction<
-    typeof getSelectedFamilyAction
-  >;
 
 // Mock Session 데이터
 const createMockSession = (overrides?: Partial<Session>): Session => ({
@@ -64,33 +52,32 @@ const createMockSession = (overrides?: Partial<Session>): Session => ({
 describe("Header", () => {
   beforeEach(() => {
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
-    mockGetSelectedFamilyAction.mockResolvedValue({
-      success: true,
-      data: "family-uuid-123",
-    });
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it("기본 요소들을 렌더링한다", () => {
+  it("기본 요소들을 렌더링한다", async () => {
     // Given
     const session = createMockSession();
 
     // When
-    render(<Header session={session} />);
+    render(<Header session={session} selectedFamilyUuid={null} />);
 
     // Then
     expect(screen.getByText("우리집 가계부")).toBeInTheDocument();
-    expect(screen.getByTestId("family-selector")).toBeInTheDocument();
+    // FamilySelectorDropdown은 dynamic import로 로드되므로 waitFor 사용
+    await waitFor(() => {
+      expect(screen.getByTestId("family-selector")).toBeInTheDocument();
+    });
   });
 
   it("로고를 클릭하면 대시보드로 이동한다", async () => {
     // Given
     const session = createMockSession();
     const user = userEvent.setup();
-    render(<Header session={session} />);
+    render(<Header session={session} selectedFamilyUuid={null} />);
 
     // When
     const logo = screen.getByText("우리집 가계부").closest("a");
@@ -107,7 +94,7 @@ describe("Header", () => {
     const session = createMockSession();
 
     // When
-    render(<Header session={session} />);
+    render(<Header session={session} selectedFamilyUuid={null} />);
 
     // Then
     const avatar = screen.getByText("홍");
@@ -126,7 +113,7 @@ describe("Header", () => {
     });
 
     // When
-    render(<Header session={session} />);
+    render(<Header session={session} selectedFamilyUuid={null} />);
 
     // Then
     expect(screen.getByText("김")).toBeInTheDocument();
@@ -144,7 +131,7 @@ describe("Header", () => {
     });
 
     // When
-    render(<Header session={session} />);
+    render(<Header session={session} selectedFamilyUuid={null} />);
 
     // Then
     expect(screen.getByText("U")).toBeInTheDocument();
@@ -154,7 +141,7 @@ describe("Header", () => {
     // Given
     const session = createMockSession();
     const user = userEvent.setup();
-    render(<Header session={session} />);
+    render(<Header session={session} selectedFamilyUuid={null} />);
 
     // When
     const avatarButton = screen
@@ -175,7 +162,7 @@ describe("Header", () => {
     // Given
     const session = createMockSession();
     const user = userEvent.setup();
-    render(<Header session={session} />);
+    render(<Header session={session} selectedFamilyUuid={null} />);
 
     // When
     const avatarButton = screen
@@ -198,7 +185,7 @@ describe("Header", () => {
     // Given
     const session = createMockSession();
     const user = userEvent.setup();
-    render(<Header session={session} />);
+    render(<Header session={session} selectedFamilyUuid={null} />);
 
     // When
     const avatarButton = screen
@@ -220,15 +207,15 @@ describe("Header", () => {
   it("선택된 가족이 있을 때 알림 벨을 표시한다", async () => {
     // Given
     const session = createMockSession();
-    mockGetSelectedFamilyAction.mockResolvedValue({
-      success: true,
-      data: "family-uuid-123",
-    });
+    const selectedFamilyUuid = "family-uuid-123";
 
     // When
-    render(<Header session={session} />);
+    render(
+      <Header session={session} selectedFamilyUuid={selectedFamilyUuid} />
+    );
 
     // Then
+    // NotificationBell은 dynamic import로 로드되므로 waitFor 사용
     await waitFor(() => {
       expect(screen.getByTestId("notification-bell")).toBeInTheDocument();
       expect(
@@ -240,31 +227,29 @@ describe("Header", () => {
   it("선택된 가족이 없을 때 알림 벨을 표시하지 않는다", async () => {
     // Given
     const session = createMockSession();
-    mockGetSelectedFamilyAction.mockResolvedValue({
-      success: true,
-      data: null,
-    });
 
     // When
-    render(<Header session={session} />);
+    render(<Header session={session} selectedFamilyUuid={null} />);
 
     // Then
-    await waitFor(() => {
-      expect(screen.queryByTestId("notification-bell")).not.toBeInTheDocument();
-    });
+    // NotificationBell은 selectedFamilyUuid가 null이면 렌더링되지 않음
+    expect(screen.queryByTestId("notification-bell")).not.toBeInTheDocument();
   });
 
-  it("FamilySelector에 모바일 숨김 클래스가 적용되어 있다", () => {
+  it("FamilySelector에 모바일 숨김 클래스가 적용되어 있다", async () => {
     // Given
     const session = createMockSession();
 
     // When
-    render(<Header session={session} />);
+    render(<Header session={session} selectedFamilyUuid={null} />);
 
     // Then
-    const familySelector = screen.getByTestId("family-selector");
-    const familySelectorWrapper = familySelector.parentElement;
-    expect(familySelectorWrapper).toHaveClass("hidden");
-    expect(familySelectorWrapper).toHaveClass("md:block");
+    // FamilySelectorDropdown은 dynamic import로 로드되므로 waitFor 사용
+    await waitFor(() => {
+      const familySelector = screen.getByTestId("family-selector");
+      const familySelectorWrapper = familySelector.parentElement;
+      expect(familySelectorWrapper).toHaveClass("hidden");
+      expect(familySelectorWrapper).toHaveClass("md:block");
+    });
   });
 });
