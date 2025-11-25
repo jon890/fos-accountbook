@@ -92,7 +92,8 @@ class NotificationControllerTest extends AbstractControllerTest {
     CreateExpenseRequest expenseRequest = new CreateExpenseRequest(testCategory.getUuid().getValue(),
                                                                    new BigDecimal("550000.00"),
                                                                    "테스트 지출",
-                                                                   LocalDateTime.now()
+                                                                   LocalDateTime.now(),
+                                                                   null
     );
     expenseService.createExpense(testUser.getUuid(), testFamily.getUuid(), expenseRequest);
 
@@ -114,7 +115,8 @@ class NotificationControllerTest extends AbstractControllerTest {
     CreateExpenseRequest expenseRequest = new CreateExpenseRequest(testCategory.getUuid().getValue(),
                                                                    new BigDecimal("550000.00"),
                                                                    "테스트 지출",
-                                                                   LocalDateTime.now());
+                                                                   LocalDateTime.now(),
+                                                                   null);
     expenseService.createExpense(testUser.getUuid(), testFamily.getUuid(), expenseRequest);
 
     // When & Then
@@ -133,7 +135,8 @@ class NotificationControllerTest extends AbstractControllerTest {
     CreateExpenseRequest expenseRequest = new CreateExpenseRequest(testCategory.getUuid().getValue(),
                                                                    new BigDecimal("550000.00"),
                                                                    "테스트 지출",
-                                                                   LocalDateTime.now());
+                                                                   LocalDateTime.now(),
+                                                                   null);
     expenseService.createExpense(testUser.getUuid(), testFamily.getUuid(), expenseRequest);
 
     // 현재 사용자의 알림 조회
@@ -160,7 +163,8 @@ class NotificationControllerTest extends AbstractControllerTest {
     CreateExpenseRequest expenseRequest = new CreateExpenseRequest(testCategory.getUuid().getValue(),
                                                                    new BigDecimal("550000.00"),
                                                                    "테스트 지출",
-                                                                   LocalDateTime.now());
+                                                                   LocalDateTime.now(),
+                                                                   null);
     expenseService.createExpense(testUser.getUuid(), testFamily.getUuid(), expenseRequest);
 
     // When & Then
@@ -199,7 +203,8 @@ class NotificationControllerTest extends AbstractControllerTest {
     CreateExpenseRequest expenseRequest = new CreateExpenseRequest(testCategory.getUuid().getValue(),
                                                                    new BigDecimal("550000.00"),
                                                                    "테스트 지출",
-                                                                   LocalDateTime.now());
+                                                                   LocalDateTime.now(),
+                                                                   null);
     expenseService.createExpense(testUser.getUuid(), testFamily.getUuid(), expenseRequest);
 
     // 알림 조회
@@ -233,7 +238,8 @@ class NotificationControllerTest extends AbstractControllerTest {
     CreateExpenseRequest expenseRequest = new CreateExpenseRequest(testCategory.getUuid().getValue(),
                                                                    new BigDecimal("850000.00"),
                                                                    "80% 초과 지출",
-                                                                   LocalDateTime.now());
+                                                                   LocalDateTime.now(),
+                                                                   null);
     expenseService.createExpense(testUser.getUuid(), testFamily.getUuid(), expenseRequest);
 
     // When: testUser의 알림 조회
@@ -269,7 +275,8 @@ class NotificationControllerTest extends AbstractControllerTest {
     CreateExpenseRequest expenseRequest = new CreateExpenseRequest(testCategory.getUuid().getValue(),
                                                                    new BigDecimal("850000.00"),
                                                                    "80% 초과 지출",
-                                                                   LocalDateTime.now());
+                                                                   LocalDateTime.now(),
+                                                                   null);
     expenseService.createExpense(testUser.getUuid(), testFamily.getUuid(), expenseRequest);
 
     // 다른 사용자의 알림 조회 (반드시 존재해야 함)
@@ -302,7 +309,8 @@ class NotificationControllerTest extends AbstractControllerTest {
     CreateExpenseRequest expenseRequest = new CreateExpenseRequest(testCategory.getUuid().getValue(),
                                                                    new BigDecimal("850000.00"),
                                                                    "80% 초과 지출",
-                                                                   LocalDateTime.now());
+                                                                   LocalDateTime.now(),
+                                                                   null);
     expenseService.createExpense(testUser.getUuid(), testFamily.getUuid(), expenseRequest);
 
     // testUser의 알림 조회 (반드시 존재해야 함)

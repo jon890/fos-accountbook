@@ -88,6 +88,14 @@ public class Expense {
   private ExpenseStatus status = ExpenseStatus.ACTIVE;
 
   /**
+   * 예산 계산에서 제외 여부
+   * true인 경우 월별 예산 합계 계산에서 제외됩니다.
+   */
+  @Column(name = "exclude_from_budget", nullable = false)
+  @Builder.Default
+  private boolean excludeFromBudget = false;
+
+  /**
    * JPA 연관관계 정책:
    * - Family: @ManyToOne 사용 (ORM의 장점 활용)
    * - Category: UUID만 사용 (CategoryService 캐시 활용)
@@ -131,6 +139,13 @@ public class Expense {
     if (date != null) {
       this.date = date;
     }
+  }
+
+  /**
+   * 예산 제외 여부 설정
+   */
+  public void setExcludeFromBudget(boolean excludeFromBudget) {
+    this.excludeFromBudget = excludeFromBudget;
   }
 
   /**

@@ -19,6 +19,7 @@ public class CategoryResponse {
   private String name;
   private String color;
   private String icon;
+  private boolean excludeFromBudget;
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
 
@@ -29,6 +30,7 @@ public class CategoryResponse {
                            .name(category.getName())
                            .color(category.getColor())
                            .icon(category.getIcon())
+                           .excludeFromBudget(category.isExcludeFromBudget())
                            .createdAt(category.getCreatedAt())
                            .updatedAt(category.getUpdatedAt())
                            .build();

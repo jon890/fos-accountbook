@@ -44,13 +44,6 @@ public interface ExpenseRepository {
       LocalDateTime endDate);
 
   /**
-   * 가족 UUID와 카테고리 UUID로 지출 조회
-   */
-  List<Expense> findByFamilyUuidAndCategoryUuid(
-      CustomUuid familyUuid,
-      CustomUuid categoryUuid);
-
-  /**
    * 가족 UUID와 필터링 조건으로 지출 조회 (페이징)
    */
   Page<Expense> findByFamilyUuidWithFilters(

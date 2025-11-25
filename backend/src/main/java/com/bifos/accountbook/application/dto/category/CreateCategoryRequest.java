@@ -21,5 +21,11 @@ public class CreateCategoryRequest {
 
   @Size(max = 50, message = "아이콘은 최대 50자까지 가능합니다")
   private String icon;
+
+  /**
+   * 예산 계산에서 제외 여부
+   * true인 경우 이 카테고리의 모든 지출이 월별 예산 합계 계산에서 제외됩니다.
+   */
+  private Boolean excludeFromBudget;
 }
 

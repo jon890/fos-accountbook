@@ -95,7 +95,8 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
     CreateCategoryRequest request = new CreateCategoryRequest(
         "New Category",
         "#00ff00",
-        "🍏"
+        "🍏",
+        null
     );
     categoryService.createCategory(testUser.getUuid(), familyUuid, request);
 
@@ -125,6 +126,7 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
     // When: 카테고리 수정
     UpdateCategoryRequest request = new UpdateCategoryRequest(
         "Updated Category",
+        null,
         null,
         null
     );

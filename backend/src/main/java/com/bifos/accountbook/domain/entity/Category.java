@@ -67,6 +67,14 @@ public class Category implements Serializable {
   @Builder.Default
   private CategoryStatus status = CategoryStatus.ACTIVE;
 
+  /**
+   * 예산 계산에서 제외 여부
+   * true인 경우 이 카테고리의 모든 지출이 월별 예산 합계 계산에서 제외됩니다.
+   */
+  @Column(name = "exclude_from_budget", nullable = false)
+  @Builder.Default
+  private boolean excludeFromBudget = false;
+
   // JPA 연관관계 제거
   // family, expenses는 UUID로만 참조하고 필요 시 Service 계층에서 조회
   // 장점:
@@ -116,5 +124,12 @@ public class Category implements Serializable {
    */
   public void delete() {
     this.status = CategoryStatus.DELETED;
+  }
+
+  /**
+   * 예산 제외 여부 설정
+   */
+  public void setExcludeFromBudget(boolean excludeFromBudget) {
+    this.excludeFromBudget = excludeFromBudget;
   }
 }

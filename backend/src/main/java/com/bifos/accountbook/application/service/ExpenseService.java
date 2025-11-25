@@ -63,6 +63,11 @@ public class ExpenseService {
         request.getDate() != null ? request.getDate() : LocalDateTime.now()
     );
 
+    // 예산 제외 플래그 설정
+    if (request.getExcludeFromBudget() != null) {
+      expense.setExcludeFromBudget(request.getExcludeFromBudget());
+    }
+
     expense = expenseRepository.save(expense);
 
     // 이벤트 발행 - 예산 알림 체크를 트리거
@@ -173,15 +178,15 @@ public class ExpenseService {
     // 권한 확인
     familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
 
-    // 이벤트 발행을 위해 기존 금액 저장
-    BigDecimal oldAmount = expense.getAmount();
-
     // 카테고리 변경 검증 + 가족 소속 검증 (캐시 활용, DB 조회 없음)
     CustomUuid categoryCustomUuid = null;
     if (request.getCategoryUuid() != null) {
       categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
       categoryService.validateAndFindCached(expense.getFamilyUuid(), categoryCustomUuid);
     }
+
+    // 이벤트 발행을 위해 기존 금액 저장
+    BigDecimal oldAmount = expense.getAmount();
 
     // 지출 정보 업데이트
     expense.update(
@@ -190,6 +195,11 @@ public class ExpenseService {
         request.getDescription(),
         request.getDate()
     );
+
+    // 예산 제외 플래그 업데이트
+    if (request.getExcludeFromBudget() != null) {
+      expense.setExcludeFromBudget(request.getExcludeFromBudget());
+    }
 
     // 이벤트 발행 - 금액이 변경된 경우 예산 알림 체크를 트리거
     if (request.getAmount() != null && !oldAmount.equals(request.getAmount())) {

@@ -56,6 +56,7 @@ public class CategoryService {
                                 .name(request.getName())
                                 .color(request.getColor() != null ? request.getColor() : "#6366f1")
                                 .icon(request.getIcon())
+                                .excludeFromBudget(request.getExcludeFromBudget() != null && request.getExcludeFromBudget())
                                 .build();
 
     category = categoryRepository.save(category);
@@ -195,6 +196,11 @@ public class CategoryService {
 
     if (request.getIcon() != null) {
       category.updateIcon(request.getIcon());
+    }
+
+    // 예산 제외 플래그 업데이트
+    if (request.getExcludeFromBudget() != null) {
+      category.setExcludeFromBudget(request.getExcludeFromBudget());
     }
 
     // 캐시 무효화 (CacheManager를 직접 사용)

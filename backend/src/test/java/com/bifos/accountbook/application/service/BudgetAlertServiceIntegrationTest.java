@@ -70,7 +70,8 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
     CreateExpenseRequest request = new CreateExpenseRequest(data.testCategory.getUuid().getValue(),
                                                             new BigDecimal("550000.00"),  // 55만원 (예산의 55%)
                                                             "50% 초과 테스트 지출",
-                                                            LocalDateTime.now()
+                                                            LocalDateTime.now(),
+                                                            null
     );
 
     // When: 지출 생성
@@ -100,7 +101,8 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
         data.testCategory.getUuid().getValue(),
         new BigDecimal("850000.00"),  // 85만원 (예산의 85%)
         "80% 초과 테스트 지출",
-        LocalDateTime.now()
+        LocalDateTime.now(),
+        null
     );
 
     // When: 지출 생성
@@ -129,7 +131,8 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
         data.testCategory.getUuid().getValue(),
         new BigDecimal("1050000.00"),  // 105만원 (예산의 105%)
         "100% 초과 테스트 지출",
-        LocalDateTime.now()
+        LocalDateTime.now(),
+        null
     );
 
     // When: 지출 생성
@@ -159,7 +162,8 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
         data.testCategory.getUuid().getValue(),
         new BigDecimal("550000.00"),
         "첫 번째 지출",
-        LocalDateTime.now()
+        LocalDateTime.now(),
+        null
     );
 
     expenseService.createExpense(data.testUser.getUuid(), CustomUuid.from(data.testFamily.getUuid()), firstRequest);
@@ -169,7 +173,8 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
         data.testCategory.getUuid().getValue(),
         new BigDecimal("50000.00"),
         "두 번째 지출",
-        LocalDateTime.now()
+        LocalDateTime.now(),
+        null
     );
 
     expenseService.createExpense(data.testUser.getUuid(), CustomUuid.from(data.testFamily.getUuid()), secondRequest);
@@ -216,7 +221,8 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
         data.testCategory.getUuid().getValue(),
         new BigDecimal("550000.00"),
         "50% 초과 테스트 지출",
-        LocalDateTime.now()
+        LocalDateTime.now(),
+        null
     );
 
     expenseService.createExpense(data.testUser.getUuid(), CustomUuid.from(data.testFamily.getUuid()), request);
@@ -266,7 +272,8 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
         category.getUuid().getValue(),
         new BigDecimal("999999.00"),  // 아무리 큰 금액이어도
         "예산 미설정 가족 지출",
-        LocalDateTime.now()
+        LocalDateTime.now(),
+        null
     );
 
     expenseService.createExpense(testUser.getUuid(), CustomUuid.from(noBudgetFamily.getUuid()), request);
@@ -290,7 +297,8 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
         data.testCategory.getUuid().getValue(),
         new BigDecimal("550000.00"),
         "50% 초과",
-        LocalDateTime.now()
+        LocalDateTime.now(),
+        null
     );
     expenseService.createExpense(data.testUser.getUuid(), CustomUuid.from(data.testFamily.getUuid()), request1);
 
@@ -304,7 +312,8 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
         data.testCategory.getUuid().getValue(),
         new BigDecimal("300000.00"),
         "80% 초과",
-        LocalDateTime.now()
+        LocalDateTime.now(),
+        null
     );
     expenseService.createExpense(data.testUser.getUuid(), CustomUuid.from(data.testFamily.getUuid()), request2);
 
@@ -318,7 +327,8 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
         data.testCategory.getUuid().getValue(),
         new BigDecimal("200000.00"),
         "100% 초과",
-        LocalDateTime.now()
+        LocalDateTime.now(),
+        null
     );
     expenseService.createExpense(data.testUser.getUuid(), CustomUuid.from(data.testFamily.getUuid()), request3);
 

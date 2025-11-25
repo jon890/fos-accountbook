@@ -22,6 +22,7 @@ public class ExpenseResponse {
   private BigDecimal amount;
   private String description;
   private LocalDateTime date;
+  private boolean excludeFromBudget;
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
 
@@ -41,6 +42,7 @@ public class ExpenseResponse {
                           .amount(expense.getAmount())
                           .description(expense.getDescription())
                           .date(expense.getDate())
+                          .excludeFromBudget(expense.isExcludeFromBudget())
                           .createdAt(expense.getCreatedAt())
                           .updatedAt(expense.getUpdatedAt())
                           .build();
@@ -60,6 +62,7 @@ public class ExpenseResponse {
                           .amount(expense.getAmount())
                           .description(expense.getDescription())
                           .date(expense.getDate())
+                          .excludeFromBudget(expense.isExcludeFromBudget())
                           .createdAt(expense.getCreatedAt())
                           .updatedAt(expense.getUpdatedAt())
                           .build();

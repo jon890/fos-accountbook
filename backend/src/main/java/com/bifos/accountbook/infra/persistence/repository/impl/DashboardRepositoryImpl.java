@@ -156,6 +156,8 @@ public class DashboardRepositoryImpl implements DashboardRepository {
    * 특정 월의 지출 합계 조회 (QueryDSL)
    * - YEAR(date), MONTH(date) 조건 사용
    * - ACTIVE 상태만 집계
+   * - 예산 제외 플래그가 true인 지출 제외
+   * - 카테고리의 예산 제외 플래그가 true인 지출도 제외
    */
   @Override
   public BigDecimal getMonthlyExpenseAmount(
@@ -164,15 +166,31 @@ public class DashboardRepositoryImpl implements DashboardRepository {
       int month) {
 
     QExpense expense = QExpense.expense;
+    QCategory category = QCategory.category;
 
     BigDecimal result = queryFactory
         .select(expense.amount.sum().coalesce(BigDecimal.ZERO))
         .from(expense)
+        .leftJoin(category)
+        .on(expense.categoryUuid.eq(category.uuid)
+                                .and(category.status.eq(CategoryStatus.ACTIVE)))
         .where(
             expense.family.uuid.eq(familyUuid),
             expense.status.eq(ExpenseStatus.ACTIVE),
             expense.date.year().eq(year),
-            expense.date.month().eq(month)
+            expense.date.month().eq(month),
+            // 예산 제외 로직 (단순화):
+            // 1. 지출의 excludeFromBudget이 true이면 제외
+            // 2. 지출의 excludeFromBudget이 false이면:
+            //    - 카테고리의 excludeFromBudget이 true이면 제외
+            //    - 카테고리의 excludeFromBudget이 false이거나 null이면 포함
+            // 즉, 지출 또는 카테고리 중 하나라도 excludeFromBudget이 true이면 제외
+            // 카테고리의 기본값은 false(포함)이고, 유저가 원하면 true(제외)로 변경 가능
+            expense.excludeFromBudget.eq(false)
+                .and(
+                    category.excludeFromBudget.isNull()
+                        .or(category.excludeFromBudget.eq(false))
+                )
         )
         .fetchOne();
 

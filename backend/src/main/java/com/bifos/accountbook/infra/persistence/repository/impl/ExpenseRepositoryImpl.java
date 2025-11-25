@@ -58,12 +58,6 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
     return jpaRepository.findByFamilyUuidAndDateBetween(familyUuid, startDate, endDate);
   }
 
-  @Override
-  public List<Expense> findByFamilyUuidAndCategoryUuid(CustomUuid familyUuid,
-                                                       CustomUuid categoryUuid) {
-    return jpaRepository.findByFamilyUuidAndCategoryUuid(familyUuid, categoryUuid);
-  }
-
   /**
    * 가족 UUID와 필터링 조건으로 지출 조회 (QueryDSL)
    * - 동적 조건을 BooleanExpression으로 처리
