@@ -1,5 +1,39 @@
 @import "tailwindcss";
 
+/**
+ * Tailwind v4 Theme 정의
+ * 
+ * Tailwind v4에서는 @theme 블록을 사용하여 테마 변수를 정의합니다.
+ * CSS 변수는 HSL 형식의 값만 저장하고 있으므로, hsl() 함수로 래핑하여 참조합니다.
+ * 
+ * 참고: https://tailwindcss.com/docs/upgrade-guide
+ */
+@theme {
+  /* 색상: CSS 변수를 참조하여 다크 모드 지원 */
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  /* Border Radius */
+  --radius: var(--radius);
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -71,11 +105,21 @@
   }
 
   .gradient-expense {
-    background-image: linear-gradient(135deg, #f43f5e 0%, #ef4444 50%, #db2777 100%);
+    background-image: linear-gradient(
+      135deg,
+      #f43f5e 0%,
+      #ef4444 50%,
+      #db2777 100%
+    );
   }
 
   .gradient-income {
-    background-image: linear-gradient(135deg, #10b981 0%, #22c55e 50%, #0d9488 100%);
+    background-image: linear-gradient(
+      135deg,
+      #10b981 0%,
+      #22c55e 50%,
+      #0d9488 100%
+    );
   }
 
   .glass {
