@@ -24,9 +24,9 @@ Spring Boot 3.5 + Java 21 기반 가계부 애플리케이션 백엔드 API 서�
 ### Core
 
 - **Language**: Java 21¬
-- **Framework**: Spring Boot 3.5.7
+- **Framework**: Spring Boot 4.0.0
 - **Build Tool**: Gradle 9.2 (Version Catalogs 사용)
-- **Database**: MySQL 8.0+
+- **Database**: MySQL 9.4+
 
 ### Libraries
 

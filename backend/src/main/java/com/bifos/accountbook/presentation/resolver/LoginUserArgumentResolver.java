@@ -4,7 +4,10 @@ import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.presentation.annotation.LoginUser;
 import com.bifos.accountbook.presentation.dto.LoginUserDto;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.core.MethodParameter;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -15,7 +18,6 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 
 /**
  * @LoginUser 애노테이션이 붙은 파라미터에 로그인한 사용자 정보를 주입하는 ArgumentResolver
- *
  *            SecurityContext에서 Authentication 객체를 가져와 principal(userUuid)을
  *            추출합니다.
  */
@@ -41,28 +43,23 @@ public class LoginUserArgumentResolver implements HandlerMethodArgumentResolver 
    * SecurityContext에서 인증된 사용자의 UUID를 추출하여 LoginUserDto로 반환
    */
   @Override
-  public Object resolveArgument(
-      MethodParameter parameter,
-      ModelAndViewContainer mavContainer,
-      NativeWebRequest webRequest,
-      WebDataBinderFactory binderFactory) {
+  public Object resolveArgument(@NonNull MethodParameter parameter,
+                                ModelAndViewContainer mavContainer,
+                                @NonNull NativeWebRequest webRequest,
+                                WebDataBinderFactory binderFactory) {
 
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
     if (authentication == null) {
-      log.warn("Authentication is null in SecurityContext");
-      throw new IllegalStateException("인증 정보가 없습니다");
+      throw new AuthenticationCredentialsNotFoundException("Authentication object is null");
     }
 
     // NextAuthTokenFilter에서 설정한 principal(userUuid)을 가져옴
     Object principal = authentication.getPrincipal();
 
-    if (principal == null || !(principal instanceof String userUuidString)) {
-      log.warn("Principal is not a String: {}", principal);
-      throw new IllegalStateException("인증 정보가 올바르지 않습니다");
+    if (!(principal instanceof String userUuidString)) {
+      throw new AuthenticationServiceException("Authentication object is not of type String");
     }
-
-    log.debug("Resolved userUuid from authentication: {}", userUuidString);
 
     // CustomUuid로 변환하여 LoginUserDto 생성
     return new LoginUserDto(CustomUuid.from(userUuidString));

@@ -33,7 +33,7 @@ public class SecurityConfig {
   private final RequestResponseLoggingFilter requestResponseLoggingFilter;
 
   @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+  public SecurityFilterChain filterChain(HttpSecurity http) {
     http
         // CSRF 비활성화 (JWT 사용)
         .csrf(AbstractHttpConfigurer::disable)

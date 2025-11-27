@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
  * 등의 문제를 조기에 발견할 수 있습니다.
  */
 @FosSpringBootTest
-class ApplicationTest {
+class AccountBookApplicationTest {
 
   /**
    * Spring Context가 정상적으로 로드되는지 확인

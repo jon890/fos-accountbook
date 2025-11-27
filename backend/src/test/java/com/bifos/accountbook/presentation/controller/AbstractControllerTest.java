@@ -1,13 +1,20 @@
 package com.bifos.accountbook.presentation.controller;
 
 import com.bifos.accountbook.common.DatabaseCleanupListener;
+import com.bifos.accountbook.common.FosSpringBootTest;
 import com.bifos.accountbook.common.TestFixtures;
 import com.bifos.accountbook.common.TestFixturesSupport;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.filter.CharacterEncodingFilter;
 
 /**
  * Presentation Layer 통합 테스트를 위한 추상 클래스
@@ -15,8 +22,6 @@ import org.springframework.transaction.support.TransactionTemplate;
  * <h3>제공되는 기능:</h3>
  * <ul>
  *     <li>Spring Boot 테스트 컨텍스트 로딩 ({@link FosSpringBootTest})</li>
- *     <li>MockMvc 자동 설정 ({@link AutoConfigureMockMvc})</li>
- *     <li>ObjectMapper 자동 주입 (JSON 직렬화/역직렬화)</li>
  *     <li>TestFixtures 자동 초기화 (Fluent API로 테스트 데이터 생성)</li>
  *     <li>데이터베이스 자동 정리 (각 테스트 메서드 후)</li>
  * </ul>
@@ -62,35 +67,29 @@ import org.springframework.transaction.support.TransactionTemplate;
  * @see TestFixtures
  * @see DatabaseCleanupListener
  */
-@AutoConfigureMockMvc
 public abstract class AbstractControllerTest extends TestFixturesSupport {
 
-  /**
-   * Spring MockMvc 인스턴스
-   *
-   * Controller API를 테스트하기 위한 MockMvc.
-   * 실제 HTTP 요청 없이 Controller 메서드를 호출할 수 있습니다.
-   */
-  @Autowired
   protected MockMvc mockMvc;
 
-  /**
-   * Jackson ObjectMapper
-   *
-   * Request/Response 객체를 JSON으로 직렬화/역직렬화할 때 사용합니다.
-   *
-   * <pre>{@code
-   * String json = objectMapper.writeValueAsString(request);
-   * mockMvc.perform(post("/api/users").content(json))
-   * }</pre>
-   */
-  @Autowired
   protected ObjectMapper objectMapper;
 
   @Autowired
+  private WebApplicationContext context;
+  @Autowired
   private TransactionTemplate transactionTemplate;
 
-  public <T> void doTransactionWithoutResult(SimpleFunction func) {
+  @BeforeEach
+  void setup() {
+    mockMvc = MockMvcBuilders.webAppContextSetup(context)
+                             .addFilter(new CharacterEncodingFilter("UTF-8", true))
+                             .apply(springSecurity())
+                             .build();
+    objectMapper = new ObjectMapper()
+        .registerModule(new JavaTimeModule())
+        .registerModule(new ParameterNamesModule());
+  }
+
+  public void doTransactionWithoutResult(SimpleFunction func) {
     transactionTemplate.executeWithoutResult(status -> {
       func.apply();
     });

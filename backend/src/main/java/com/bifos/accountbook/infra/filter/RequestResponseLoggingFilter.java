@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.NonNull;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingRequestWrapper;
@@ -29,10 +29,9 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
   private static final int MAX_PAYLOAD_LENGTH = 1000; // 로그에 표시할 최대 길이
 
   @Override
-  protected void doFilterInternal(
-      @NonNull HttpServletRequest request,
-      @NonNull HttpServletResponse response,
-      @NonNull FilterChain filterChain) throws ServletException, IOException {
+  protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                  @NonNull HttpServletResponse response,
+                                  @NonNull FilterChain filterChain) throws ServletException, IOException {
 
     // Swagger UI 및 정적 리소스는 로깅 제외
     if (isAsyncDispatch(request) || shouldNotFilter(request)) {
@@ -41,7 +40,7 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
     }
 
     // Request/Response 래핑 (body를 여러 번 읽을 수 있도록)
-    ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(request);
+    ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(request, 1000);
     ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(response);
 
     Instant start = Instant.now();

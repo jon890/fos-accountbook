@@ -1,9 +1,6 @@
 [versions]
-# Java
-java = "21"
-
 # Spring Boot & Framework
-spring-boot = "3.5.7"
+spring-boot = "4.0.0"
 spring-dependency-management = "1.1.7"
 
 # Database
@@ -27,19 +24,15 @@ querydsl = "5.1.0"
 # Cache
 caffeine = "3.2.3"
 
-# Testing
-# JUnit 버전은 Spring Boot가 자동 관리
-awaitility = "4.2.0"
-
 [libraries]
 # Spring Boot Starters
-spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
+spring-boot-starter-webmvc = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
 spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
 spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
 spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
 spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
 spring-boot-starter-cache = { module = "org.springframework.boot:spring-boot-starter-cache" }
-spring-boot-starter-aop = { module = "org.springframework.boot:spring-boot-starter-aop" }
+spring-boot-starter-aspectj = { module = "org.springframework.boot:spring-boot-starter-aspectj" }
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 
 # Database
@@ -72,7 +65,10 @@ caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "c
 spring-security-test = { module = "org.springframework.security:spring-security-test" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 h2-database = { module = "com.h2database:h2", version.ref = "h2" }
-awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility" }
+
+# Jackson
+jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
+jackson-module-parameter-names = { module = "com.fasterxml.jackson.module:jackson-module-parameter-names" }
 
 [bundles]
 # JWT 관련 라이브러리 번들
@@ -83,19 +79,19 @@ flyway = ["flyway-core", "flyway-mysql"]
 
 # Spring Boot Starters 번들
 spring-boot-starters = [
-    "spring-boot-starter-web",
-    "spring-boot-starter-data-jpa",
-    "spring-boot-starter-security",
-    "spring-boot-starter-validation",
-    "spring-boot-starter-actuator",
-    "spring-boot-starter-cache",
-    "spring-boot-starter-aop"
+  "spring-boot-starter-webmvc",
+  "spring-boot-starter-data-jpa",
+  "spring-boot-starter-security",
+  "spring-boot-starter-validation",
+  "spring-boot-starter-actuator",
+  "spring-boot-starter-cache",
+  "spring-boot-starter-aspectj"
 ]
 
 # 테스트 관련 라이브러리 번들
-testing = [
-    "spring-boot-starter-test",
-    "spring-security-test"
+spring-test = [
+  "spring-boot-starter-test",
+  "spring-security-test"
 ]
 
 [plugins]

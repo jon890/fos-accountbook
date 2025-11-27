@@ -52,15 +52,16 @@ dependencies {
     // QueryDSL
     implementation("${libs.querydsl.jpa.get()}:jakarta")
     annotationProcessor("${libs.querydsl.apt.get()}:jakarta")
-    annotationProcessor("jakarta.persistence:jakarta.persistence-api")
+    annotationProcessor(libs.spring.boot.starter.data.jpa)
+
+    // Jackson
+    implementation(libs.jackson.module.parameter.names)
+    implementation(libs.jackson.datatype.jsr310)
 
     // Test (Bundle 사용)
-    testImplementation(libs.bundles.testing)
+    testImplementation(libs.bundles.spring.test)
     testRuntimeOnly(libs.junit.platform.launcher)
     testRuntimeOnly(libs.h2.database)
-
-    // Awaitility for async testing
-    testImplementation(libs.awaitility)
 }
 
 // QueryDSL 컴파일 설정

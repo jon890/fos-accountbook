@@ -6,6 +6,7 @@ import com.bifos.accountbook.domain.entity.Family;
 import com.bifos.accountbook.domain.entity.Income;
 import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.ExpenseRepository;
+import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.repository.IncomeRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.domain.value.ExpenseStatus;
@@ -37,13 +38,12 @@ class DashboardControllerTest extends AbstractControllerTest {
   private IncomeRepository incomeRepository;
 
   @Autowired
-  private com.bifos.accountbook.domain.repository.FamilyRepository familyRepository;
+  private FamilyRepository familyRepository;
 
   @Test
   @DisplayName("카테고리별 지출 요약 조회 - 성공")
   void getCategoryExpenseSummary_Success() throws Exception {
     // Given: 테스트 데이터 생성 (Fluent API)
-    User user = fixtures.getDefaultUser();
     Family family = fixtures.getDefaultFamily();
     Category foodCategory = fixtures.categories.category(family).name("식비").color("#FF5733").icon("🍕").build();
     Category transportCategory = fixtures.categories.category(family).name("교통비").color("#3498DB").icon("🚗").build();
@@ -142,6 +142,7 @@ class DashboardControllerTest extends AbstractControllerTest {
   @DisplayName("카테고리별 지출 요약 - 권한 없는 가족 조회 실패")
   void getCategoryExpenseSummary_UnauthorizedFamily() throws Exception {
     // Given: 다른 가족 생성 (현재 사용자를 멤버로 추가하지 않음)
+    User user = fixtures.getDefaultUser();
     CustomUuid otherFamilyUuid = CustomUuid.generate();
 
     // When & Then: 권한 없는 가족 조회 시 에러
