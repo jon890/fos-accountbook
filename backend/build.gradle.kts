@@ -28,7 +28,7 @@ dependencies {
 
     // Database
     runtimeOnly(libs.mysql.connector.j)
-    implementation(libs.bundles.flyway)
+    implementation(libs.flyway.mysql)
 
     // SQL Logging (DataSource Proxy)
     implementation(libs.p6spy.spring.boot.starter)

@@ -5,7 +5,6 @@ spring-dependency-management = "1.1.7"
 
 # Database
 mysql-connector = "9.5.0"
-flyway = "11.17.1"
 h2 = "2.4.240"
 
 # Security & JWT
@@ -34,11 +33,11 @@ spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-
 spring-boot-starter-cache = { module = "org.springframework.boot:spring-boot-starter-cache" }
 spring-boot-starter-aspectj = { module = "org.springframework.boot:spring-boot-starter-aspectj" }
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-boot-starter-flyway = { module = "org.springframework.boot:spring-boot-starter-flyway" }
 
 # Database
 mysql-connector-j = { module = "com.mysql:mysql-connector-j", version.ref = "mysql-connector" }
-flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
-flyway-mysql = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway" }
+flyway-mysql = { module = "org.flywaydb:flyway-mysql" }
 
 # SQL Logging
 p6spy-spring-boot-starter = { module = "com.github.gavlyukovskiy:p6spy-spring-boot-starter", version.ref = "p6spy" }
@@ -74,9 +73,6 @@ jackson-module-parameter-names = { module = "com.fasterxml.jackson.module:jackso
 # JWT 관련 라이브러리 번들
 jwt = ["jjwt-api", "jjwt-impl", "jjwt-jackson"]
 
-# Flyway 관련 라이브러리 번들
-flyway = ["flyway-core", "flyway-mysql"]
-
 # Spring Boot Starters 번들
 spring-boot-starters = [
   "spring-boot-starter-webmvc",
@@ -85,7 +81,8 @@ spring-boot-starters = [
   "spring-boot-starter-validation",
   "spring-boot-starter-actuator",
   "spring-boot-starter-cache",
-  "spring-boot-starter-aspectj"
+  "spring-boot-starter-aspectj",
+  "spring-boot-starter-flyway"
 ]
 
 # 테스트 관련 라이브러리 번들
