@@ -39,7 +39,7 @@ export function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemProps) {
   return (
     <div
       key={uuid}
-      className={`p-2.5 md:p-4 rounded-xl md:rounded-2xl bg-linear-to-r ${
+      className={`p-2.5 md:p-4 rounded-xl md:rounded-2xl bg-gradient-to-r ${
         isExpanded
           ? "from-blue-50 to-white border-blue-200"
           : "from-gray-50 to-white border-gray-100"

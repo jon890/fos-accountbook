@@ -43,10 +43,10 @@ export function StatsCards({ data }: StatsCardsProps) {
     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-8">
       {/* Monthly Expense Card */}
       <Card
-        className="relative overflow-hidden bg-linear-to-br from-blue-500 via-blue-600 to-blue-700 text-white border-0 shadow-xl cursor-pointer transition-transform hover:scale-105 active:scale-95"
+        className="relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white border-0 shadow-xl cursor-pointer transition-transform hover:scale-105 active:scale-95"
         onClick={() => router.push("/transactions?tab=expenses")}
       >
-        <div className="absolute inset-0 bg-linear-to-br from-white/10 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
         <CardContent className="relative p-3 md:p-6">
           <div className="flex items-center justify-between mb-2 md:mb-4">
             <div className="p-1.5 md:p-3 bg-white/20 rounded-lg md:rounded-2xl backdrop-blur-sm">
@@ -76,10 +76,10 @@ export function StatsCards({ data }: StatsCardsProps) {
 
       {/* Monthly Income Card */}
       <Card
-        className="relative overflow-hidden bg-linear-to-br from-emerald-500 via-green-600 to-green-700 text-white border-0 shadow-xl cursor-pointer transition-transform hover:scale-105 active:scale-95"
+        className="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-green-600 to-green-700 text-white border-0 shadow-xl cursor-pointer transition-transform hover:scale-105 active:scale-95"
         onClick={() => router.push("/transactions?tab=incomes")}
       >
-        <div className="absolute inset-0 bg-linear-to-br from-white/10 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
         <CardContent className="relative p-3 md:p-6">
           <div className="flex items-center justify-between mb-2 md:mb-4">
             <div className="p-1.5 md:p-3 bg-white/20 rounded-lg md:rounded-2xl backdrop-blur-sm">
@@ -106,12 +106,12 @@ export function StatsCards({ data }: StatsCardsProps) {
       <Card
         className={`relative overflow-hidden ${
           isBudgetExceeded
-            ? "bg-linear-to-br from-red-500 via-red-600 to-red-700"
-            : "bg-linear-to-br from-amber-500 via-orange-600 to-orange-700"
+            ? "bg-gradient-to-br from-red-500 via-red-600 to-red-700"
+            : "bg-gradient-to-br from-amber-500 via-orange-600 to-orange-700"
         } text-white border-0 shadow-xl cursor-pointer transition-transform hover:scale-105 active:scale-95`}
         onClick={() => router.push("/settings")}
       >
-        <div className="absolute inset-0 bg-linear-to-br from-white/10 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
         <CardContent className="relative p-3 md:p-6">
           <div className="flex items-center justify-between mb-2 md:mb-4">
             <div className="p-1.5 md:p-3 bg-white/20 rounded-lg md:rounded-2xl backdrop-blur-sm">
@@ -156,10 +156,10 @@ export function StatsCards({ data }: StatsCardsProps) {
 
       {/* Family Members Card */}
       <Card
-        className="relative overflow-hidden bg-linear-to-br from-purple-500 via-purple-600 to-indigo-700 text-white border-0 shadow-xl cursor-pointer transition-transform hover:scale-105 active:scale-95"
+        className="relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-700 text-white border-0 shadow-xl cursor-pointer transition-transform hover:scale-105 active:scale-95"
         onClick={() => router.push("/settings")}
       >
-        <div className="absolute inset-0 bg-linear-to-br from-white/10 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
         <CardContent className="relative p-3 md:p-6">
           <div className="flex items-center justify-between mb-2 md:mb-4">
             <div className="p-1.5 md:p-3 bg-white/20 rounded-lg md:rounded-2xl backdrop-blur-sm">
