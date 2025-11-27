@@ -5,7 +5,7 @@
 
 "use server";
 
-import { signIn } from "@/lib/server/auth";
+import { signIn } from "@/lib/server/auth/auth";
 import { signInSchema } from "./schema";
 
 /**

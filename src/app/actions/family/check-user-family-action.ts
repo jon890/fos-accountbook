@@ -5,7 +5,7 @@
 
 "use server";
 
-import { auth } from "@/lib/server/auth";
+import { auth } from "@/lib/server/auth/auth";
 import { getSelectedFamilyUuid } from "@/lib/server/auth/auth-helpers";
 import { getFamiliesAction } from "./get-families-action";
 

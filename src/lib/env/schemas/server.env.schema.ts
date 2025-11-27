@@ -16,12 +16,12 @@ export const serverEnvSchema = z.object({
     .min(32, "NEXTAUTH_SECRET must be at least 32 characters"),
 
   // Google OAuth
-  GOOGLE_CLIENT_ID: z.string().min(1, "GOOGLE_CLIENT_ID is required"),
-  GOOGLE_CLIENT_SECRET: z.string().min(1, "GOOGLE_CLIENT_SECRET is required"),
+  AUTH_GOOGLE_ID: z.string().min(1, "AUTH_GOOGLE_ID is required"),
+  AUTH_GOOGLE_SECRET: z.string().min(1, "AUTH_GOOGLE_SECRET is required"),
 
   // Naver OAuth
-  NAVER_CLIENT_ID: z.string().min(1, "NAVER_CLIENT_ID is required"),
-  NAVER_CLIENT_SECRET: z.string().min(1, "NAVER_CLIENT_SECRET is required"),
+  AUTH_NAVER_ID: z.string().min(1, "AUTH_NAVER_ID is required"),
+  AUTH_NAVER_SECRET: z.string().min(1, "AUTH_NAVER_SECRET is required"),
 
   // Backend API (서버 사이드 전용)
   BACKEND_API_URL: z.url({

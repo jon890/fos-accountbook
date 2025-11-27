@@ -4,9 +4,9 @@
  */
 
 import { ActionError } from "@/lib/errors";
-import { auth } from "@/lib/server/auth";
 import type { Session } from "next-auth";
 import { redirect } from "next/navigation";
+import { auth } from "./auth";
 
 /**
  * 인증 확인 및 세션 반환

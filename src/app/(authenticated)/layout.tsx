@@ -5,12 +5,13 @@
  * 로그인하지 않은 사용자는 자동으로 로그인 페이지로 리다이렉트됩니다.
  */
 
-import { Header } from "@/components/layout/Header";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
+import { Header } from "@/components/layout/Header";
 import { TimeZoneProvider } from "@/lib/client/timezone-context";
-import { auth } from "@/lib/server/auth";
-import { getSelectedFamilyUuid } from "@/lib/server/auth/auth-helpers";
-import { redirect } from "next/navigation";
+import {
+  getSelectedFamilyUuid,
+  requireAuth,
+} from "@/lib/server/auth/auth-helpers";
 import { ReactNode } from "react";
 
 interface AuthenticatedLayoutProps {
@@ -20,11 +21,7 @@ interface AuthenticatedLayoutProps {
 export default async function AuthenticatedLayout({
   children,
 }: AuthenticatedLayoutProps) {
-  const session = await auth();
-  if (!session?.user) {
-    redirect("/auth/signin");
-  }
-
+  const session = await requireAuth();
   const selectedFamilyUuid = await getSelectedFamilyUuid();
   const timezone = session.user.profile?.timezone ?? "Asia/Seoul";
 
