@@ -7,10 +7,6 @@ import {
 } from "@/components/ui/card";
 import { SignInForm } from "@/components/auth/SignInForm";
 
-/**
- * 로그인 페이지
- * Google OAuth를 통한 로그인
- */
 export default async function SignInPage({
   searchParams,
 }: {

@@ -85,7 +85,7 @@ export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-white">
         <DialogHeader>
           <DialogTitle>수입 추가</DialogTitle>
           <DialogDescription>새로운 수입 내역을 추가합니다</DialogDescription>
@@ -127,7 +127,7 @@ export function AddIncomeDialog({ open, onOpenChange }: AddIncomeDialogProps) {
               <select
                 id="categoryId"
                 name="categoryId"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 required
               >
                 <option value="">카테고리를 선택하세요</option>

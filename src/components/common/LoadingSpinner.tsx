@@ -1,4 +1,4 @@
-import { Wallet } from "lucide-react"
+import { Wallet } from "lucide-react";
 
 export function LoadingSpinner() {
   return (
@@ -13,5 +13,5 @@ export function LoadingSpinner() {
         <div className="text-sm text-gray-600 font-medium">로딩 중...</div>
       </div>
     </div>
-  )
+  );
 }

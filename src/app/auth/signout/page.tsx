@@ -1,5 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { signOutAction } from "@/app/actions/auth/signout-action";
 import { LogOut } from "lucide-react";
 import Link from "next/link";
@@ -18,16 +25,15 @@ export default function SignOutPage() {
               <LogOut className="w-8 h-8 text-gray-600" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">
-            로그아웃
-          </CardTitle>
+          <CardTitle className="text-2xl font-bold">로그아웃</CardTitle>
           <CardDescription className="text-base">
             정말 로그아웃 하시겠습니까?
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-600 text-center">
-            로그아웃하시면 모든 세션 및 저장된 정보가 삭제되며,<br />
+            로그아웃하시면 모든 세션 및 저장된 정보가 삭제되며,
+            <br />
             다시 사용하려면 로그인이 필요합니다.
           </p>
         </CardContent>
@@ -48,4 +54,3 @@ export default function SignOutPage() {
     </div>
   );
 }
-
