@@ -30,8 +30,8 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
 
-  /* Border Radius */
-  --radius: var(--radius);
+  /* Border Radius: 직접 값을 정의 (Tailwind v4 @theme 블록에서는 자기 참조 금지) */
+  --radius: 0.5rem;
 }
 
 @layer base {
