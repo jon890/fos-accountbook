@@ -7,7 +7,7 @@ import type { UserInfo } from "./user-info";
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
-  tokenType: string;
-  expiresIn: number;
+  issuedAt: string;
+  expiredAt: string;
   user: UserInfo;
 }

@@ -6,16 +6,8 @@
  */
 
 import { DefaultSession } from "next-auth";
-
-/**
- * 사용자 프로필 정보
- */
-export interface UserProfile {
-  timezone: string;
-  language: string;
-  currency: string;
-  defaultFamilyUuid: string | null;
-}
+import "next-auth/jwt";
+import { UserProfile } from "./auth";
 
 declare module "next-auth" {
   /**
@@ -26,34 +18,18 @@ declare module "next-auth" {
    */
   interface Session {
     user: {
-      id: string;
+      userUuid: string;
       profile?: UserProfile;
     } & DefaultSession["user"];
-  }
-
-  /**
-   * User 타입 확장
-   */
-  interface User {
-    id: string;
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
   }
 }
 
 declare module "next-auth/jwt" {
-  /**
-   * JWT 타입 확장
-   *
-   * userUuid: 백엔드에서 발급한 JWT의 sub (사용자 ID)
-   * accessTokenExpires: 백엔드 Access Token 만료 시간 (토큰 갱신 판단용)
-   *
-   * ⚠️ accessToken과 refreshToken은 HTTP-only 쿠키로 별도 관리됨
-   */
   interface JWT {
-    sub?: string;
-    userUuid?: string;
-    accessTokenExpires?: number;
+    userUuid: string;
+    backendAccessToken: string;
+    backendRefreshToken: string;
+    backendTokenExpiredAt: string;
+    backendTokenIssuedAt: string;
   }
 }

@@ -40,7 +40,7 @@ const mockRouter = {
 // Mock Session 데이터
 const createMockSession = (overrides?: Partial<Session>): Session => ({
   user: {
-    id: "user-123",
+    userUuid: "user-123",
     name: "홍길동",
     email: "test@example.com",
     image: "https://example.com/avatar.jpg",
@@ -105,7 +105,7 @@ describe("Header", () => {
     // Given
     const session = createMockSession({
       user: {
-        id: "user-456",
+        userUuid: "user-456",
         name: "김철수",
         email: "kim@example.com",
         image: undefined,
@@ -123,7 +123,7 @@ describe("Header", () => {
     // Given
     const session = createMockSession({
       user: {
-        id: "user-789",
+        userUuid: "user-789",
         name: undefined,
         email: "test@example.com",
         image: undefined,

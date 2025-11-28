@@ -13,12 +13,11 @@ import {
 } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
 import {
-  requireAuth,
   getSelectedFamilyUuid,
+  requireAuth,
 } from "@/lib/server/auth/auth-helpers";
-import type { InvitationInfo } from "@/types/invitation";
-import type { InvitationResponse } from "@/types/invitation";
 import type { FamilyResponse } from "@/types/family";
+import type { InvitationInfo, InvitationResponse } from "@/types/invitation";
 
 export async function getActiveInvitationsAction(): Promise<
   ActionResult<InvitationInfo[]>
@@ -61,7 +60,7 @@ export async function getActiveInvitationsAction(): Promise<
         createdAt: new Date(inv.createdAt),
         isExpired: now > expiresAt || inv.status === "EXPIRED",
         isUsed: inv.status === "ACCEPTED",
-        inviteUrl: `${serverEnv.NEXTAUTH_URL}/invite/${inv.token}`,
+        inviteUrl: `${serverEnv.AUTH_URL}/invite/${inv.token}`,
       };
     });
 

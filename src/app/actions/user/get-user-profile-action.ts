@@ -7,16 +7,7 @@ import {
 } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
 import { requireAuth } from "@/lib/server/auth/auth-helpers";
-
-export interface UserProfile {
-  userUuid: string;
-  timezone: string;
-  language: string;
-  currency: string;
-  defaultFamilyUuid: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
+import { UserProfile } from "@/types";
 
 /**
  * 사용자 프로필 조회 Server Action

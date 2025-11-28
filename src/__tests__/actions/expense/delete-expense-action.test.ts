@@ -9,12 +9,13 @@ jest.mock("@/lib/env/server.env", () => ({
     BACKEND_API_URL: "http://localhost:8080",
   },
 }));
-
-jest.mock("@/lib/server/auth/config", () => ({
-  authConfig: { providers: [], session: { strategy: "jwt" } },
+jest.mock("@/lib/server/auth/auth", () => ({
+  handlers: {},
+  auth: jest.fn(),
+  signIn: jest.fn(),
+  signOut: jest.fn(),
 }));
 jest.mock("@/lib/server/auth/auth-helpers");
-jest.mock("@/lib/server/auth");
 jest.mock("@/lib/server/api/client");
 jest.mock("next/cache");
 
@@ -36,8 +37,7 @@ const mockRevalidatePath = revalidatePath as jest.MockedFunction<
 // Mock Session 데이터
 const mockSession: Session = {
   user: {
-    id: "user-1",
-    email: "test@example.com",
+    userUuid: "user-1",
   },
   expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
 };

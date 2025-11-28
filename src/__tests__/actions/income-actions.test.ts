@@ -34,7 +34,7 @@ const mockRequireAuth = requireAuthOrRedirect as jest.MockedFunction<
 // Mock Session 데이터
 const mockSession: Session = {
   user: {
-    id: "user-1",
+    userUuid: "user-1",
     email: "test@example.com",
   },
   expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
