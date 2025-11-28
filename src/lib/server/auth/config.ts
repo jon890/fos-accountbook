@@ -1,9 +1,9 @@
-import { AuthResponse, UserProfile } from "@/types";
+import { UserProfile } from "@/types";
 import type { NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
 import Naver from "next-auth/providers/naver";
-import { cookies } from "next/headers";
-import { serverApiGet, serverApiPost } from "../api";
+import { serverApiGet } from "../api";
+import { refreshBackendToken, requestSocialLogin } from "./backend-auth";
 
 export const authConfig = {
   providers: [Google, Naver],
@@ -21,35 +21,52 @@ export const authConfig = {
      * 이 시점에서, backend를 호출하여 backend 호출용 jwt 토큰을 발급받아 와야한다.
      */
     async jwt({ token, user, account }) {
-      if (user && account) {
-        console.log("[auth.js callback (JWT)] backend social-login request");
-
-        const data = {
+      // 초기 로그인 시
+      const firstJwtCreated = user && account;
+      if (firstJwtCreated) {
+        const socialLoginResponse = await requestSocialLogin({
           provider: account.provider,
           providerId: account.providerAccountId,
           email: user.email,
           name: user.name,
           image: user.image,
-        };
-
-        const responseData = await serverApiPost<AuthResponse>(
-          "/auth/social-login",
-          data
-        );
-
-        // todo 이 토큰을 쿠키에 저장하지 않고 사용할 방법?
-        const cookieStore = await cookies();
-        cookieStore.set("backend_access_token", responseData.accessToken, {
-          httpOnly: true,
-          secure: true,
-          maxAge: 24 * 60 * 60,
         });
-        cookieStore.set("backend_refresh_token", responseData.refreshToken, {
-          httpOnly: true,
-          secure: true,
-          maxAge: 30 * 24 * 60 * 60,
-        });
-        token.userUuid = responseData.user.uuid;
+
+        // JWT 토큰에도 저장 (session 콜백에서 사용)
+        token.userUuid = socialLoginResponse.user.uuid;
+        token.backendAccessToken = socialLoginResponse.accessToken;
+        token.backendRefreshToken = socialLoginResponse.refreshToken;
+        token.backendTokenExpiredAt = socialLoginResponse.expiredAt;
+        token.backendTokenIssuedAt = socialLoginResponse.issuedAt;
+
+        return token;
+      }
+
+      // 토큰 갱신이 필요한 경우 (만료 시간 체크)
+      if (
+        token.backendTokenExpiredAt &&
+        token.backendRefreshToken &&
+        token.backendAccessToken
+      ) {
+        const expiredAt = new Date(token.backendTokenExpiredAt);
+        const now = new Date();
+        const bufferTime = 5 * 60 * 1000; // 5분 전에 갱신
+
+        // 토큰이 만료되기 5분 전이면 갱신
+        if (now.getTime() >= expiredAt.getTime() - bufferTime) {
+          console.log("[auth.js callback (JWT)] refreshing backend token");
+          const refreshedResponse = await refreshBackendToken({
+            refreshToken: token.backendRefreshToken,
+          });
+
+          if (refreshedResponse) {
+            // 새로 받은 토큰으로 업데이트
+            token.backendAccessToken = refreshedResponse.accessToken;
+            token.backendRefreshToken = refreshedResponse.refreshToken;
+            token.backendTokenExpiredAt = refreshedResponse.expiredAt;
+            token.backendTokenIssuedAt = refreshedResponse.issuedAt;
+          }
+        }
       }
 
       return token;
@@ -67,9 +84,6 @@ export const authConfig = {
         ...session,
         user: {
           ...session.user,
-          backendAccessToken: token.backendAccessToken,
-          backendRefreshToken: token.backendRefreshToken,
-          backendExpiresIn: token.backendExpiresIn,
           userUuid: token.userUuid,
           profile: userProfile,
         },

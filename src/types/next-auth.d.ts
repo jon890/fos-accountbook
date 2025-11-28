@@ -19,9 +19,6 @@ declare module "next-auth" {
   interface Session {
     user: {
       userUuid: string;
-      backendAccessToken: string;
-      backendRefreshToken: string;
-      backendExpiresIn: number;
       profile?: UserProfile;
     } & DefaultSession["user"];
   }
@@ -32,6 +29,7 @@ declare module "next-auth/jwt" {
     userUuid: string;
     backendAccessToken: string;
     backendRefreshToken: string;
-    backendExpiresIn: number;
+    backendTokenExpiredAt: string;
+    backendTokenIssuedAt: string;
   }
 }
