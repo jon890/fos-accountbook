@@ -59,12 +59,11 @@ export const authConfig = {
             refreshToken: token.backendRefreshToken,
           });
 
-          if (refreshedResponse) {
-            // 새로 받은 토큰으로 업데이트
-            token.backendAccessToken = refreshedResponse.accessToken;
-            token.backendRefreshToken = refreshedResponse.refreshToken;
-            token.backendTokenExpiredAt = refreshedResponse.expiredAt;
-            token.backendTokenIssuedAt = refreshedResponse.issuedAt;
+          if (refreshedResponse.success) {
+            token.backendAccessToken = refreshedResponse.data.accessToken;
+            token.backendRefreshToken = refreshedResponse.data.refreshToken;
+            token.backendTokenExpiredAt = refreshedResponse.data.expiredAt;
+            token.backendTokenIssuedAt = refreshedResponse.data.issuedAt;
           }
         }
       }

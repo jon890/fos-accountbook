@@ -1,7 +1,7 @@
+import { serverEnv } from "@/lib/env/server.env";
 import { AuthResponse, RefreshTokenRequest } from "@/types";
 import { cookies } from "next/headers";
 import { serverApiPost } from "../api";
-import { serverEnv } from "@/lib/env/server.env";
 
 type SocialLoginRequest = {
   provider: string;
@@ -29,30 +29,41 @@ export async function requestSocialLogin(
 
 export async function refreshBackendToken(
   data: RefreshTokenRequest
-): Promise<AuthResponse> {
-  const socialLoginResponse = await serverApiPost<AuthResponse>(
-    "/auth/refresh",
-    data
-  );
+): Promise<
+  { success: true; data: AuthResponse } | { success: false; error: string }
+> {
+  try {
+    const refreshTokenResponse = await serverApiPost<AuthResponse>(
+      "/auth/refresh",
+      data
+    );
 
-  await savedTokensToCookies(
-    socialLoginResponse.accessToken,
-    socialLoginResponse.refreshToken
-  );
+    await savedTokensToCookies(
+      refreshTokenResponse.accessToken,
+      refreshTokenResponse.refreshToken
+    );
 
-  return socialLoginResponse;
+    return { success: true, data: refreshTokenResponse };
+  } catch (error) {
+    console.error("[backend-auth.ts] refreshBackendToken error", error);
+    return {
+      success: false,
+      error: (error as Error).message || "Unknown error",
+    };
+  }
 }
-
 async function savedTokensToCookies(accessToken: string, refreshToken: string) {
   const cookieStore = await cookies();
   cookieStore.set("backend_access_token", accessToken, {
     httpOnly: true,
     secure: serverEnv.NODE_ENV === "production",
     maxAge: 24 * 60 * 60,
+    path: "/api/auth/callback",
   });
   cookieStore.set("backend_refresh_token", refreshToken, {
     httpOnly: true,
     secure: serverEnv.NODE_ENV === "production",
     maxAge: 30 * 24 * 60 * 60,
+    path: "/api/auth/callback",
   });
 }
