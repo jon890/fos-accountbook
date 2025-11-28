@@ -152,7 +152,7 @@ describe("updateFamilyAction", () => {
 
   it("API 호출이 실패하면 에러를 반환한다", async () => {
     // Given
-    const mockSession = { user: { id: "test-user" } };
+    const mockSession = { user: { userUuid: "test-user" } };
     mockRequireAuth.mockResolvedValue(mockSession as never);
     mockServerApiClient.mockRejectedValue(new Error("Network error"));
 
