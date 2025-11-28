@@ -10,9 +10,6 @@ import { cookies } from "next/headers";
 import type { ApiResponse, ServerApiOptions } from "./types";
 import { ServerApiError } from "./types";
 
-// ServerApiError를 re-export하여 다른 파일에서 사용 가능하도록 함
-export { ServerApiError };
-
 const API_URL = serverEnv.BACKEND_API_URL;
 
 /**
@@ -84,9 +81,8 @@ export async function serverApiClient<T = unknown>(
 
     return response.json();
   } catch (error) {
-    // fetch 자체가 실패한 경우 (네트워크 오류 등)
     if (error instanceof ServerApiError) {
-      throw error; // 이미 처리된 에러는 그대로 throw
+      throw error;
     }
 
     // 네트워크 오류나 기타 예상치 못한 오류

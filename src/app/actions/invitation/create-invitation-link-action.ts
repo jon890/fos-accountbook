@@ -13,15 +13,15 @@ import {
 } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
 import {
-  requireAuth,
   getSelectedFamilyUuid,
+  requireAuth,
 } from "@/lib/server/auth/auth-helpers";
-import type { InvitationInfo } from "@/types/invitation";
+import type { FamilyResponse } from "@/types/family";
 import type {
   CreateInvitationRequest,
+  InvitationInfo,
   InvitationResponse,
 } from "@/types/invitation";
-import type { FamilyResponse } from "@/types/family";
 
 export async function createInvitationLinkAction(): Promise<
   ActionResult<InvitationInfo>
@@ -61,7 +61,7 @@ export async function createInvitationLinkAction(): Promise<
     const invitation = invitationResponse.data;
 
     // 초대 링크 URL 생성
-    const inviteUrl = `${serverEnv.NEXTAUTH_URL}/invite/${invitation.token}`;
+    const inviteUrl = `${serverEnv.AUTH_URL}/invite/${invitation.token}`;
 
     const now = new Date();
     const expiresAt = new Date(invitation.expiresAt);

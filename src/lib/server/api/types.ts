@@ -33,18 +33,3 @@ export interface ServerApiOptions extends RequestInit {
   /** 인증 헤더를 포함하지 않음 (공개 API 호출 시 사용) */
   skipAuth?: boolean;
 }
-
-/**
- * 백엔드 JWT 응답 타입
- */
-export interface BackendAuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-  user?: {
-    id: string;
-    email: string;
-    name?: string;
-    image?: string;
-  };
-}

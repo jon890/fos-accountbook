@@ -26,7 +26,7 @@ import { redirect } from "next/navigation";
 export async function requireAuth(): Promise<Session> {
   const session = await auth();
 
-  if (!session?.user?.id) {
+  if (!session?.user?.userUuid) {
     throw ActionError.unauthorized();
   }
 
@@ -38,21 +38,13 @@ export async function requireAuth(): Promise<Session> {
  * 인증되지 않은 경우 로그인 페이지로 리다이렉트
  *
  * @param callbackUrl - 로그인 후 돌아올 URL (선택)
- *
- * @example
- * ```typescript
- * export async function myAction() {
- *   const session = await requireAuthOrRedirect('/my-page');
- *   // session.user.id를 사용할 수 있음
- * }
- * ```
  */
 export async function requireAuthOrRedirect(
   callbackUrl?: string
 ): Promise<Session> {
   const session = await auth();
 
-  if (!session?.user?.id) {
+  if (!session?.user?.userUuid) {
     const url = callbackUrl
       ? `/api/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`
       : "/api/auth/signin";
