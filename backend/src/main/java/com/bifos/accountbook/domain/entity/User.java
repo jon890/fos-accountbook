@@ -47,10 +47,10 @@ public class User {
   @Column(name = "provider_id", nullable = false, length = 255)
   private String providerId; // OAuth provider account ID
 
-  @Column(length = 255)
+  @Column()
   private String name;
 
-  @Column(nullable = false, length = 255)
+  @Column(nullable = false)
   private String email;
 
   // Auth.js Prisma Adapter가 camelCase 컬럼명을 사용하므로 통일

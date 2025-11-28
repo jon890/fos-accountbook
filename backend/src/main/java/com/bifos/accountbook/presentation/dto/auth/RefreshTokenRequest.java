@@ -1,4 +1,4 @@
-package com.bifos.accountbook.application.dto.auth;
+package com.bifos.accountbook.presentation.dto.auth;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;

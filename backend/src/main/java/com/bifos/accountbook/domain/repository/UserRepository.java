@@ -16,11 +16,6 @@ public interface UserRepository {
   User save(User user);
 
   /**
-   * ID로 사용자 조회
-   */
-  Optional<User> findById(Long id);
-
-  /**
    * 이메일로 사용자 조회
    */
   Optional<User> findByEmail(String email);

@@ -1,4 +1,4 @@
-package com.bifos.accountbook.infra.security;
+package com.bifos.accountbook.config.security;
 
 import lombok.Getter;
 import org.springframework.boot.context.properties.ConfigurationProperties;

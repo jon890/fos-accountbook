@@ -1,4 +1,4 @@
-package com.bifos.accountbook.infra.security;
+package com.bifos.accountbook.config.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -21,20 +22,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private final JwtTokenProvider jwtTokenProvider;
 
   @Override
-  protected void doFilterInternal(HttpServletRequest request,
-                                  HttpServletResponse response,
-                                  FilterChain filterChain) throws ServletException, IOException {
-    try {
-      String jwt = getJwtFromRequest(request);
-
-      if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
-        Authentication authentication = jwtTokenProvider.getAuthentication(jwt);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        log.debug("Set Authentication to security context for '{}', uri: {}",
-                  authentication.getName(), request.getRequestURI());
-      }
-    } catch (Exception ex) {
-      log.error("Could not set user authentication in security context", ex);
+  protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                  @NonNull HttpServletResponse response,
+                                  @NonNull FilterChain filterChain) throws ServletException, IOException {
+    String jwt = getJwtFromRequest(request);
+    if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
+      Authentication authentication = jwtTokenProvider.createAuthentication(jwt);
+      SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
     filterChain.doFilter(request, response);

@@ -47,16 +47,10 @@ spring:
     filter:
       dispatcher-types: async, error, request
 
-# JWT 설정 (백엔드 자체 JWT + NextAuth 세션 검증 공통 사용)
-# AUTH_SECRET: 프론트엔드와 동일한 비밀키 사용 (npx auth secret으로 생성)
 jwt:
   secret: ${AUTH_SECRET}
-  expiration: ${JWT_EXPIRATION:86400000} # 기본 24시간 (밀리초)
-  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 기본 7일 (밀리초)
-
-# NextAuth 설정 (Auth.js 세션 검증용) - JWT와 동일한 SECRET 사용
-nextauth:
-  secret: ${AUTH_SECRET}
+  expiration: ${JWT_EXPIRATION}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION}
 
 # SpringDoc OpenAPI 공통 설정
 springdoc:

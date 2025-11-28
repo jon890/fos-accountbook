@@ -1,8 +1,7 @@
 package com.bifos.accountbook.config;
 
 import com.bifos.accountbook.infra.filter.RequestResponseLoggingFilter;
-import com.bifos.accountbook.infra.security.JwtAuthenticationFilter;
-import com.bifos.accountbook.infra.security.NextAuthTokenFilter;
+import com.bifos.accountbook.config.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,7 +27,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
-  private final NextAuthTokenFilter nextAuthTokenFilter;
   private final CorsProperties corsProperties;
   private final RequestResponseLoggingFilter requestResponseLoggingFilter;
 
@@ -63,15 +61,8 @@ public class SecurityConfig {
                 "/swagger-resources/**",
                 "/webjars/**")
             .permitAll()
-
-            // 나머지 요청은 인증 필요
             .anyRequest().authenticated())
-
-        // 로깅 필터 추가 (가장 먼저 실행)
         .addFilterBefore(requestResponseLoggingFilter, SecurityContextHolderFilter.class)
-        // NextAuth 세션 필터 추가 (JWT 필터보다 먼저 실행)
-        .addFilterBefore(nextAuthTokenFilter, UsernamePasswordAuthenticationFilter.class)
-        // JWT 필터 추가
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();

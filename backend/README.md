@@ -1,6 +1,6 @@
 # FOS Accountbook Backend
 
-Spring Boot 3.5 + Java 21 기반 가계부 애플리케이션 백엔드 API 서버
+Spring Boot 4 + Java 21 기반 가계부 애플리케이션 백엔드 API 서버
 
 ## 📖 프로젝트 소개
 
@@ -23,7 +23,7 @@ Spring Boot 3.5 + Java 21 기반 가계부 애플리케이션 백엔드 API 서�
 
 ### Core
 
-- **Language**: Java 21¬
+- **Language**: Java 21
 - **Framework**: Spring Boot 4.0.0
 - **Build Tool**: Gradle 9.2 (Version Catalogs 사용)
 - **Database**: MySQL 9.4+

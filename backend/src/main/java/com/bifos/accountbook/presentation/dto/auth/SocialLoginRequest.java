@@ -1,4 +1,4 @@
-package com.bifos.accountbook.application.dto.auth;
+package com.bifos.accountbook.presentation.dto.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class RegisterRequest {
+public class SocialLoginRequest {
 
   @NotBlank(message = "OAuth provider는 필수입니다")
   @Size(max = 50, message = "Provider는 최대 50자까지 가능합니다")
@@ -30,3 +30,4 @@ public class RegisterRequest {
   @Size(max = 500, message = "이미지 URL은 최대 500자까지 가능합니다")
   private String image;
 }
+

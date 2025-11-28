@@ -1,5 +1,6 @@
-package com.bifos.accountbook.application.dto.auth;
+package com.bifos.accountbook.presentation.dto.auth;
 
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,8 +14,8 @@ public class AuthResponse {
 
   private String accessToken;
   private String refreshToken;
-  private String tokenType;
-  private Long expiresIn; // 초 단위
+  private LocalDateTime issuedAt;
+  private LocalDateTime expiredAt;
   private UserInfo user;
 
   @Getter
