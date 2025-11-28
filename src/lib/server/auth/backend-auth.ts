@@ -1,6 +1,7 @@
 import { AuthResponse, RefreshTokenRequest } from "@/types";
 import { cookies } from "next/headers";
 import { serverApiPost } from "../api";
+import { serverEnv } from "@/lib/env/server.env";
 
 type SocialLoginRequest = {
   provider: string;
@@ -46,12 +47,12 @@ async function savedTokensToCookies(accessToken: string, refreshToken: string) {
   const cookieStore = await cookies();
   cookieStore.set("backend_access_token", accessToken, {
     httpOnly: true,
-    secure: true,
+    secure: serverEnv.NODE_ENV === "production",
     maxAge: 24 * 60 * 60,
   });
   cookieStore.set("backend_refresh_token", refreshToken, {
     httpOnly: true,
-    secure: true,
+    secure: serverEnv.NODE_ENV === "production",
     maxAge: 30 * 24 * 60 * 60,
   });
 }
