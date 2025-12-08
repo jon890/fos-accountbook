@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useSessionRefresh } from "@/lib/client/use-session-refresh";
 import type { Family } from "@/types/family";
 import { Users } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -17,6 +18,7 @@ import { useEffect, useState } from "react";
 
 export function FamilySelectorDropdown() {
   const router = useRouter();
+  const { refreshSession } = useSessionRefresh();
   const [families, setFamilies] = useState<Family[]>([]);
   const [selectedFamily, setSelectedFamily] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -47,7 +49,10 @@ export function FamilySelectorDropdown() {
           setSelectedFamily(firstFamilyUuid);
 
           // 쿠키에도 저장 (특히 가족이 1개일 때 중요)
-          await selectFamilyAction(firstFamilyUuid);
+          const result = await selectFamilyAction(firstFamilyUuid);
+          if (result.success) {
+            await refreshSession();
+          }
         }
       }
     } catch (err) {
@@ -69,6 +74,8 @@ export function FamilySelectorDropdown() {
     const result = await selectFamilyAction(familyUuid);
 
     if (result.success) {
+      // 세션 갱신 (프로필의 defaultFamilyUuid가 변경됨)
+      await refreshSession();
       // 페이지 새로고침하여 선택된 가족의 데이터 표시
       router.refresh();
     } else {

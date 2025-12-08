@@ -1,6 +1,7 @@
 "use client";
 
 import { setDefaultFamilyAction } from "@/app/actions/user/set-default-family-action";
+import { useSessionRefresh } from "@/lib/client/use-session-refresh";
 import type { Family } from "@/types/family";
 import { useRouter } from "next/navigation";
 import { FamilySelector } from "./FamilySelector";
@@ -15,12 +16,15 @@ interface FamilySelectorPageProps {
  */
 export function FamilySelectorPage({ families }: FamilySelectorPageProps) {
   const router = useRouter();
+  const { refreshSession } = useSessionRefresh();
 
   const handleFamilySelect = async (family: Family) => {
     // 선택한 가족을 기본 가족으로 설정
     const result = await setDefaultFamilyAction(family.uuid);
 
     if (result.success) {
+      // 세션 갱신 (프로필의 defaultFamilyUuid가 변경됨)
+      await refreshSession();
       // 기본 가족 설정 완료 → 대시보드로 이동
       router.push("/dashboard");
     }

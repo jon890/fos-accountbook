@@ -1,6 +1,9 @@
 /**
  * 선택된 가족 설정 Server Action
- * 프로필의 defaultFamilyUuid를 업데이트하고 페이지를 새로고침
+ * 프로필의 defaultFamilyUuid를 업데이트
+ *
+ * ⚠️ 주의: 이 액션 호출 후 클라이언트에서 세션 갱신이 필요합니다.
+ * useSessionRefresh 훅의 refreshSession()을 호출하세요.
  */
 
 "use server";
@@ -12,9 +15,8 @@ import {
   type ActionResult,
 } from "@/lib/errors";
 import { requireAuth } from "@/lib/server/auth/auth-helpers";
-import { getFamiliesAction } from "./get-families-action";
 import { setDefaultFamilyAction } from "../user/set-default-family-action";
-import { revalidatePath } from "next/cache";
+import { getFamiliesAction } from "./get-families-action";
 
 export async function selectFamilyAction(
   familyUuid: string
@@ -48,9 +50,6 @@ export async function selectFamilyAction(
     if (!result.success) {
       throw ActionError.internalError("기본 가족 설정에 실패했습니다");
     }
-
-    // 모든 페이지 재검증
-    revalidatePath("/", "layout");
 
     return successResult(undefined);
   } catch (error) {

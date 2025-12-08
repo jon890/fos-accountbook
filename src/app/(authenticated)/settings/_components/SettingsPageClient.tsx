@@ -1,14 +1,15 @@
 "use client";
 
-import { setDefaultFamilyAction } from "@/app/actions/user/set-default-family-action";
 import { updateFamilyAction } from "@/app/actions/family/update-family-action";
+import { setDefaultFamilyAction } from "@/app/actions/user/set-default-family-action";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useSessionRefresh } from "@/lib/client/use-session-refresh";
 import type { Family } from "@/types/family";
-import { Check, Users, DollarSign, Edit2, Save, X } from "lucide-react";
+import { Check, DollarSign, Edit2, Save, Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ export function SettingsPageClient({
   defaultFamilyUuid,
 }: SettingsPageClientProps) {
   const router = useRouter();
+  const { refreshSession } = useSessionRefresh();
   const [selectedFamily, setSelectedFamily] = useState<string>("");
   const [currentDefaultFamily, setCurrentDefaultFamily] = useState<string>(
     defaultFamilyUuid || ""
@@ -43,6 +45,8 @@ export function SettingsPageClient({
 
       if (result.success) {
         setCurrentDefaultFamily(selectedFamily);
+        // 세션 갱신 (프로필의 defaultFamilyUuid가 변경됨)
+        await refreshSession();
         toast.success("기본 가족이 설정되었습니다");
         router.refresh();
       } else {

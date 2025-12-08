@@ -19,6 +19,12 @@ jest.mock("@/app/actions/user/set-default-family-action", () => ({
 jest.mock("@/app/actions/family/update-family-action", () => ({
   updateFamilyAction: jest.fn(),
 }));
+// useSessionRefresh 훅 모킹
+jest.mock("@/lib/client/use-session-refresh", () => ({
+  useSessionRefresh: () => ({
+    refreshSession: jest.fn().mockResolvedValue(undefined),
+  }),
+}));
 
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(() => ({
@@ -33,12 +39,12 @@ jest.mock("sonner", () => ({
   },
 }));
 
-import { render, screen, waitFor, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { SettingsPageClient } from "@/app/(authenticated)/settings/_components/SettingsPageClient";
-import { setDefaultFamilyAction } from "@/app/actions/user/set-default-family-action";
 import { updateFamilyAction } from "@/app/actions/family/update-family-action";
+import { setDefaultFamilyAction } from "@/app/actions/user/set-default-family-action";
 import type { Family } from "@/types/family";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 const mockSetDefaultFamilyAction =
   setDefaultFamilyAction as jest.MockedFunction<typeof setDefaultFamilyAction>;

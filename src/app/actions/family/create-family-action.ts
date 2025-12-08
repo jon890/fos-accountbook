@@ -1,5 +1,8 @@
 /**
  * 가족 생성 Server Action
+ *
+ * ⚠️ 주의: 이 액션 호출 후 클라이언트에서 세션 갱신이 필요합니다.
+ * useSessionRefresh 훅의 refreshSession()을 호출하세요.
  */
 
 "use server";
@@ -12,9 +15,8 @@ import {
 } from "@/lib/errors";
 import { serverApiClient } from "@/lib/server/api/client";
 import { requireAuth } from "@/lib/server/auth/auth-helpers";
-import { setDefaultFamilyAction } from "../user/set-default-family-action";
 import type { CreateFamilyData, CreateFamilyResult } from "@/types/family";
-import { revalidatePath } from "next/cache";
+import { setDefaultFamilyAction } from "../user/set-default-family-action";
 
 export async function createFamilyAction(
   data: CreateFamilyData
@@ -42,11 +44,6 @@ export async function createFamilyAction(
     // 백엔드에서 첫 가족 생성 시 자동으로 defaultFamilyUuid 설정됨
     // 프론트엔드에서도 명시적으로 설정 (중복 호출이지만 안전장치)
     await setDefaultFamilyAction(result.data.uuid);
-
-    // 세션 업데이트를 위해 관련 경로 revalidate
-    // session callback에서 프로필을 다시 조회하도록 함
-    revalidatePath("/");
-    revalidatePath("/dashboard");
 
     return successResult(result.data);
   } catch (error) {

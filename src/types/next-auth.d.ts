@@ -31,5 +31,7 @@ declare module "next-auth/jwt" {
     backendRefreshToken: string;
     backendTokenExpiredAt: string;
     backendTokenIssuedAt: string;
+    /** 사용자 프로필 정보 (jwt callback에서 캐싱) */
+    profile: UserProfile | null;
   }
 }

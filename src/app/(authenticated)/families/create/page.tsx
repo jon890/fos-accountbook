@@ -1,5 +1,6 @@
 "use client";
 
+import { createFamilyAction } from "@/app/actions/family/create-family-action";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createFamilyAction } from "@/app/actions/family/create-family-action";
+import { useSessionRefresh } from "@/lib/client/use-session-refresh";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -20,6 +21,7 @@ export default function CreateFamilyPage() {
   const [familyType, setFamilyType] = useState<"personal" | "family">("family");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { refreshSession } = useSessionRefresh();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +41,8 @@ export default function CreateFamilyPage() {
       });
 
       if (result.success) {
+        // 세션 갱신 (프로필의 defaultFamilyUuid가 변경됨)
+        await refreshSession();
         toast.success("가족이 성공적으로 생성되었습니다!");
         // 백엔드에서 첫 가족 생성 시 자동으로 defaultFamilyUuid 설정됨
         // 대시보드로 바로 이동 (홈에서 리다이렉트 처리)
