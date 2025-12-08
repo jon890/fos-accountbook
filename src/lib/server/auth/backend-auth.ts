@@ -52,18 +52,31 @@ export async function refreshBackendToken(
     };
   }
 }
+
+/**
+ * 백엔드 JWT 토큰을 HTTP-only 쿠키에 저장
+ *
+ * @param accessToken - 백엔드 Access Token
+ * @param refreshToken - 백엔드 Refresh Token
+ */
 async function savedTokensToCookies(accessToken: string, refreshToken: string) {
   const cookieStore = await cookies();
+
+  // Access Token 쿠키 설정
   cookieStore.set("backend_access_token", accessToken, {
     httpOnly: true,
     secure: serverEnv.NODE_ENV === "production",
-    maxAge: 24 * 60 * 60,
-    path: "/api/auth/callback",
+    sameSite: "lax",
+    maxAge: 24 * 60 * 60, // 24시간
+    path: "/", // ✅ 전체 애플리케이션에서 접근 가능하도록 설정
   });
+
+  // Refresh Token 쿠키 설정
   cookieStore.set("backend_refresh_token", refreshToken, {
     httpOnly: true,
     secure: serverEnv.NODE_ENV === "production",
-    maxAge: 30 * 24 * 60 * 60,
-    path: "/api/auth/callback",
+    sameSite: "lax",
+    maxAge: 30 * 24 * 60 * 60, // 30일
+    path: "/", // ✅ 전체 애플리케이션에서 접근 가능하도록 설정
   });
 }
