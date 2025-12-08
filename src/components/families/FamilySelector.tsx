@@ -7,6 +7,7 @@ import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useSessionRefresh } from "@/lib/client/use-session-refresh";
 import type { Family } from "@/types/family";
 import { ChevronRight, Plus, User, Users } from "lucide-react";
 import Image from "next/image";
@@ -25,6 +26,7 @@ export function FamilySelector({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const autoSelectedRef = useRef(false);
+  const { refreshSession } = useSessionRefresh();
 
   useEffect(() => {
     initializeSelector();
@@ -86,7 +88,11 @@ export function FamilySelector({
 
   const handleFamilySelect = async (family: Family) => {
     // 선택한 가족을 기본 가족으로 저장
-    await setDefaultFamilyAction(family.uuid);
+    const result = await setDefaultFamilyAction(family.uuid);
+    if (result.success) {
+      // 세션 갱신 (프로필의 defaultFamilyUuid가 변경됨)
+      await refreshSession();
+    }
     onFamilySelect(family);
   };
 

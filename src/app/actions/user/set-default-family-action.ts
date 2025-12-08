@@ -5,13 +5,28 @@ import {
   successResult,
   type ActionResult,
 } from "@/lib/errors";
+import { auth } from "@/lib/server";
 import { serverApiClient } from "@/lib/server/api/client";
 import { requireAuth } from "@/lib/server/auth/auth-helpers";
-import { revalidatePath } from "next/cache";
 
 /**
  * 기본 가족 설정 Server Action
  * UserProfile의 defaultFamilyUuid를 업데이트
+ *
+ * ⚠️ 주의: 이 액션 호출 후 클라이언트에서 세션 갱신이 필요합니다.
+ * useSessionRefresh 훅의 refreshSession()을 호출하세요.
+ *
+ * @example
+ * ```tsx
+ * const { refreshSession } = useSessionRefresh();
+ *
+ * const handleSetDefaultFamily = async (familyUuid: string) => {
+ *   const result = await setDefaultFamilyAction(familyUuid);
+ *   if (result.success) {
+ *     await refreshSession(); // 세션 갱신
+ *   }
+ * };
+ * ```
  */
 export async function setDefaultFamilyAction(
   familyUuid: string
@@ -25,9 +40,6 @@ export async function setDefaultFamilyAction(
       method: "PUT",
       body: JSON.stringify({ defaultFamilyUuid: familyUuid }),
     });
-
-    // 3. Next.js 캐시 무효화 - 모든 페이지 재검증 (세션도 재조회됨)
-    revalidatePath("/", "layout");
 
     return successResult(undefined);
   } catch (error) {

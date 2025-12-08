@@ -2,8 +2,8 @@ import { UserProfile } from "@/types";
 import type { NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
 import Naver from "next-auth/providers/naver";
-import { serverApiGet } from "../api";
 import { refreshBackendToken, requestSocialLogin } from "./backend-auth";
+import { fetchUserProfile } from "./profile-fetcher";
 
 export const authConfig = {
   providers: [Google, Naver],
@@ -19,8 +19,12 @@ export const authConfig = {
     /**
      * auth.js JWT 토큰이 생성된 후에 호출되는 콜백
      * 이 시점에서, backend를 호출하여 backend 호출용 jwt 토큰을 발급받아 와야한다.
+     *
+     * 프로필 정보도 JWT 토큰에 캐싱하여 session callback에서 매번 API 호출하지 않도록 함.
+     * - 초기 로그인 시: 프로필 조회 후 토큰에 저장
+     * - trigger === "update" 시: 프로필 재조회 (클라이언트에서 update() 호출 시)
      */
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger }) {
       // 초기 로그인 시
       const firstJwtCreated = user && account;
       if (firstJwtCreated) {
@@ -42,6 +46,19 @@ export const authConfig = {
         token.backendTokenExpiredAt = socialLoginResponse.expiredAt;
         token.backendTokenIssuedAt = socialLoginResponse.issuedAt;
 
+        // 프로필 정보 조회 후 토큰에 저장
+        token.profile = await fetchUserProfile();
+
+        return token;
+      }
+
+      // 세션 업데이트 요청 시 (클라이언트에서 update() 호출)
+      // 프로필이 변경되었을 수 있으므로 다시 조회
+      if (trigger === "update") {
+        console.log(
+          "[auth.js callback (JWT)] session update - refetching profile"
+        );
+        token.profile = await fetchUserProfile();
         return token;
       }
 
@@ -74,24 +91,26 @@ export const authConfig = {
       return token;
     },
 
-    // 3. Session Object 생성 단계
+    /**
+     * Session Object 생성 단계
+     *
+     * server component + server action 모두 auth()를 자주 호출하므로
+     * session callback이 지속적으로 호출됨.
+     * 따라서 외부 API 호출 없이 JWT 토큰에 캐싱된 프로필을 사용.
+     *
+     * 프로필 업데이트가 필요한 경우:
+     * 1. Server Action에서 프로필 수정 후 update() 호출
+     * 2. jwt callback(trigger="update")에서 프로필 재조회
+     */
     async session({ session, token }) {
-      // 유저 프로필이 있다면 조회 후, session 데이터에 추가
-      let userProfile: UserProfile | null = null;
-      try {
-        userProfile = await serverApiGet<UserProfile>("/users/me/profile");
-      } catch (error) {}
-
-      const newSession = {
+      return {
         ...session,
         user: {
           ...session.user,
           userUuid: token.userUuid,
-          profile: userProfile,
+          profile: token.profile ?? null,
         },
       };
-
-      return newSession;
     },
   },
   pages: {
