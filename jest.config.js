@@ -17,7 +17,7 @@ const customJestConfig = {
     // ESM 모듈을 mock으로 대체 (ky)
     "^ky$": "<rootDir>/src/__mocks__/ky.ts",
   },
-  transformIgnorePatterns: ["node_modules/(?!(@auth/core|jose|next-auth)/)"],
+  transformIgnorePatterns: ["node_modules/(?!(@auth/core|next-auth)/)"],
   collectCoverageFrom: [
     "src/**/*.{js,jsx,ts,tsx}",
     "!src/**/*.d.ts",

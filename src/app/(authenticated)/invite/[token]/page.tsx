@@ -9,13 +9,13 @@ import { auth } from "@/lib/server/auth";
 import { redirect } from "next/navigation";
 
 interface InvitePageProps {
-  params: {
+  params: Promise<{
     token: string;
-  };
+  }>;
 }
 
 export default async function InvitePage({ params }: InvitePageProps) {
-  const { token } = params;
+  const { token } = await params;
 
   // Layout에서 이미 인증 체크 완료 ✅
   const session = await auth();
