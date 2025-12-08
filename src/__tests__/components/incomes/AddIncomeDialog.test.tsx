@@ -2,7 +2,7 @@
  * AddIncomeDialog 컴포넌트 테스트
  */
 
-// Mock modules (jose 오류 방지를 위해 먼저 모킹)
+// Mock modules
 jest.mock("@/lib/env/server.env", () => ({
   serverEnv: {
     BACKEND_API_URL: "http://localhost:8080",

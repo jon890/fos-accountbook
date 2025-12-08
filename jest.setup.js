@@ -26,21 +26,6 @@ jest.mock("next-auth", () => ({
   getServerSession: jest.fn(),
 }));
 
-// Mock jose (ESM 패키지)
-jest.mock("jose", () => ({
-  SignJWT: jest.fn().mockImplementation(() => ({
-    setProtectedHeader: jest.fn().mockReturnThis(),
-    setExpirationTime: jest.fn().mockReturnThis(),
-    sign: jest.fn().mockResolvedValue("mocked-jwt-token"),
-  })),
-  jwtVerify: jest.fn().mockResolvedValue({
-    payload: {
-      sub: "test-user-id",
-      email: "test@example.com",
-    },
-  }),
-}));
-
 // Mock next-auth providers (ESM 패키지)
 jest.mock("next-auth/providers/google", () => ({
   default: jest.fn(() => ({
@@ -58,5 +43,3 @@ jest.mock("@/lib/server/auth/config", () => ({
     secret: "test-secret",
   },
 }));
-
-// 환경변수는 setup/env.js에서 처리
