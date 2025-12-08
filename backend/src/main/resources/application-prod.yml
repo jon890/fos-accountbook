@@ -13,11 +13,6 @@ spring:
   main:
     lazy-initialization: true
 
-  # Railway MySQL 설정 (조합된 URL 사용)
-  # Railway Variables 탭에서 다음 변수 설정:
-  #   SPRING_DATASOURCE_URL=jdbc:mysql://${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}/${{MySQL.MYSQLDATABASE}}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
-  #   SPRING_DATASOURCE_USERNAME=${{MySQL.MYSQLUSER}}
-  #   SPRING_DATASOURCE_PASSWORD=${{MySQL.MYSQLPASSWORD}}
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
