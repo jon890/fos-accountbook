@@ -24,6 +24,9 @@ export const authConfig = {
       // 초기 로그인 시
       const firstJwtCreated = user && account;
       if (firstJwtCreated) {
+        console.log(
+          `[auth.js callback (JWT)] social login started - userId: ${user.id}`
+        );
         const socialLoginResponse = await requestSocialLogin({
           provider: account.provider,
           providerId: account.providerAccountId,

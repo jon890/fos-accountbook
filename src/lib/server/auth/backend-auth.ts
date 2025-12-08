@@ -52,6 +52,7 @@ export async function refreshBackendToken(
     };
   }
 }
+
 async function savedTokensToCookies(accessToken: string, refreshToken: string) {
   const cookieStore = await cookies();
   cookieStore.set("backend_access_token", accessToken, {

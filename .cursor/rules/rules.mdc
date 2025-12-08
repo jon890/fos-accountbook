@@ -7,33 +7,40 @@ version: "2.0"
 # 우리집 가계부 - Cursor AI 개발 규칙 (요약)
 
 ## 개요
+
 - Next.js 15 + React 19 + TypeScript, Tailwind CSS + shadcn/ui, NextAuth(Google/Naver), pnpm. Turbopack 기반.
 - 이 문서는 프론트엔드 전용 규칙만 다룹니다(백엔드는 별도 리포).
 
 ## 구조 & 아키텍처
+
 - `src/app`: App Router. `(authenticated)/layout.tsx`에서 인증 리다이렉트 강제, `auth/` 등 공개 경로 분리. `actions/`는 Server Actions, `api/`는 불가피할 때만 사용.
 - `src/components`: `ui/`(shadcn), `common/`, 도메인별 폴더. 파일/컴포넌트는 PascalCase.
 - `src/lib`: `client/`(브라우저 안전), `server/`(NextAuth 설정, 서버 API 클라이언트, env 파싱), `env/`(Zod로 환경변수 검증). `types/`에 전역 타입. 테스트는 `src/__tests__/`에 도메인별로 배치.
 - `public` 정적 자산, `docs/` 참고 문서.
 
 ## 주요 명령어
+
 - `pnpm dev` 개발 서버, `pnpm build` 프로덕션 빌드(환경변수 검증), `pnpm start` 빌드 결과 실행.
 - `pnpm lint` ESLint(next/core-web-vitals + TS), `pnpm test` 전체 테스트. 필요 시 `test:unit`, `test:integration`, `test:watch`, `test:coverage`.
 
 ## 코딩 스타일 & 패턴
+
 - Server Component/Server Actions 우선. 상호작용이 필요한 경우에만 `"use client"` 사용.
 - Zod로 폼/입력/환경변수 검증. `any` 금지, 타입 안전성 유지.
 - 경로 alias `@/...` 사용; 라우트 세그먼트는 소문자-kebab, 컴포넌트·타입은 PascalCase.
 - Tailwind + shadcn/ui 활용, class-variance-authority/tailwind-merge 조합 허용. 서버 전용 로직은 `lib/server/**`, 클라이언트 유틸은 `lib/client/**`.
 
 ## 테스트
+
 - Jest + Testing Library(jsdom). 파일명 `*.test.ts(x)`로 도메인 구조를 따라 `src/__tests__/`에 배치.
 - 네트워크는 MSW 등으로 모킹, 백엔드 실호출 금지. 커버리지 깨지지 않도록 `pnpm test:coverage` 확인.
 
 ## 커밋 & PR
+
 - 커밋 형식: `<type>: <summary> (#issue)` 예) `feat: 로그인 UI 개선 (#30)`, `fix: ExpensePagination 동작 수정 (#28)`.
 - PR에는 의도/범위, 관련 이슈 링크, UI 변경 시 스크린샷·GIF, 실행한 테스트 명시. 변경 범위를 작고 명확하게 유지.
 
 ## 환경 & 보안
+
 - 비밀은 `.env.local`에만. 필수 키: `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, `GOOGLE_CLIENT_ID/SECRET`, `NAVER_CLIENT_ID/SECRET`, `BACKEND_API_URL`, `NODE_ENV` (`src/lib/env/schemas/server.env.schema.ts`로 검증).
 - 인증이 필요한 페이지는 반드시 `src/app/(authenticated)/` 아래 두고 레이아웃 보호를 활용.
