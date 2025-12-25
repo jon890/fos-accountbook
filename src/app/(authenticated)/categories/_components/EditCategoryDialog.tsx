@@ -84,6 +84,9 @@ export function EditCategoryDialog({
   const [name, setName] = useState(category.name);
   const [color, setColor] = useState(category.color);
   const [icon, setIcon] = useState(category.icon || "📦");
+  const [excludeFromBudget, setExcludeFromBudget] = useState(
+    category.excludeFromBudget || false
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // category가 변경되면 폼 값 업데이트
@@ -91,6 +94,7 @@ export function EditCategoryDialog({
     setName(category.name);
     setColor(category.color);
     setIcon(category.icon || "📦");
+    setExcludeFromBudget(category.excludeFromBudget || false);
   }, [category]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -107,6 +111,7 @@ export function EditCategoryDialog({
         name: name.trim(),
         color,
         icon,
+        excludeFromBudget,
       });
 
       if (result.success) {
@@ -200,6 +205,20 @@ export function EditCategoryDialog({
                 />
               ))}
             </div>
+          </div>
+
+          {/* 예산 포함 여부 */}
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="excludeFromBudget-edit"
+              checked={excludeFromBudget}
+              onChange={(e) => setExcludeFromBudget(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <Label htmlFor="excludeFromBudget-edit" className="cursor-pointer">
+              예산 합계에서 제외
+            </Label>
           </div>
 
           {/* 버튼 */}

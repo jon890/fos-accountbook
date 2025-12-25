@@ -84,6 +84,7 @@ export function AddCategoryDialog({
   const [name, setName] = useState("");
   const [color, setColor] = useState("#6366f1");
   const [icon, setIcon] = useState("📦");
+  const [excludeFromBudget, setExcludeFromBudget] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -100,6 +101,7 @@ export function AddCategoryDialog({
         name: name.trim(),
         color,
         icon,
+        excludeFromBudget,
       });
 
       if (result.success) {
@@ -110,6 +112,7 @@ export function AddCategoryDialog({
         setName("");
         setColor("#6366f1");
         setIcon("📦");
+        setExcludeFromBudget(false);
       } else {
         toast.error(result.error.message);
       }
@@ -199,6 +202,20 @@ export function AddCategoryDialog({
                 />
               ))}
             </div>
+          </div>
+
+          {/* 예산 포함 여부 */}
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="excludeFromBudget"
+              checked={excludeFromBudget}
+              onChange={(e) => setExcludeFromBudget(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <Label htmlFor="excludeFromBudget" className="cursor-pointer">
+              예산 합계에서 제외
+            </Label>
           </div>
 
           {/* 버튼 */}

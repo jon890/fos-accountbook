@@ -24,6 +24,7 @@ export async function createCategoryAction(
     name: string;
     color?: string;
     icon?: string;
+    excludeFromBudget?: boolean;
   }
 ): Promise<ActionResult<CategoryResponse>> {
   try {

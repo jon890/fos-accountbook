@@ -11,6 +11,7 @@ export interface CategoryResponse {
   name: string;
   icon?: string;
   color?: string;
+  excludeFromBudget?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -22,6 +23,7 @@ export interface CreateCategoryRequest {
   name: string;
   icon?: string;
   color?: string;
+  excludeFromBudget?: boolean;
 }
 
 /**
@@ -31,4 +33,5 @@ export interface UpdateCategoryRequest {
   name?: string;
   icon?: string;
   color?: string;
+  excludeFromBudget?: boolean;
 }

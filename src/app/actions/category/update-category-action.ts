@@ -21,6 +21,7 @@ export async function updateCategoryAction(
     name?: string;
     color?: string;
     icon?: string;
+    excludeFromBudget?: boolean;
   }
 ): Promise<ActionResult<CategoryResponse>> {
   try {
@@ -37,7 +38,12 @@ export async function updateCategoryAction(
     }
 
     // 수정할 데이터가 있는지 검증
-    if (!data.name && !data.color && !data.icon) {
+    if (
+      !data.name &&
+      !data.color &&
+      !data.icon &&
+      data.excludeFromBudget === undefined
+    ) {
       throw ActionError.invalidInput(
         "수정 데이터",
         data,
