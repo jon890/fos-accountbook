@@ -13,8 +13,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import type { CategoryResponse } from "@/types/category";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -92,9 +93,20 @@ export function CategoryList({
                     {category.icon}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">
-                      {category.name}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-gray-900">
+                        {category.name}
+                      </h3>
+                      {category.excludeFromBudget && (
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] px-1.5 py-0 h-5 gap-1 text-gray-500"
+                        >
+                          <EyeOff className="w-3 h-3" />
+                          예산 제외
+                        </Badge>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2 mt-1">
                       <div
                         className="w-4 h-4 rounded"
