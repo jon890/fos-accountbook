@@ -15,21 +15,43 @@ import {
   requireAuth,
   getSelectedFamilyUuid,
 } from "@/lib/server/auth/auth-helpers";
-import type { CategoryResponse } from "@/types/category";
+import { createCategorySchema } from "@/lib/schemas/category";
+import type { CategoryResponse, CreateCategoryInput } from "@/types/category";
 import { revalidatePath } from "next/cache";
 
 export async function createCategoryAction(
   familyUuid: string | null,
-  data: {
-    name: string;
-    color?: string;
-    icon?: string;
-    excludeFromBudget?: boolean;
-  }
+  data: CreateCategoryInput
 ): Promise<ActionResult<CategoryResponse>> {
   try {
     // 인증 확인
     await requireAuth();
+
+    // 입력값 검증 (Zod)
+    const validationResult = createCategorySchema.safeParse(data);
+    if (!validationResult.success) {
+      const flattened = validationResult.error.flatten();
+      const firstField = Object.keys(flattened.fieldErrors)[0];
+
+      if (firstField) {
+        const message =
+          flattened.fieldErrors[
+            firstField as keyof typeof flattened.fieldErrors
+          ]?.[0] || "입력값이 올바르지 않습니다";
+        throw ActionError.invalidInput(
+          firstField,
+          data[firstField as keyof CreateCategoryInput],
+          message
+        );
+      }
+
+      throw ActionError.invalidInput(
+        "unknown",
+        data,
+        "입력값 검증에 실패했습니다"
+      );
+    }
+    const validData = validationResult.data;
 
     // familyUuid가 없으면 기본값 가져오기
     const selectedFamilyUuid = familyUuid || (await getSelectedFamilyUuid());
@@ -39,18 +61,9 @@ export async function createCategoryAction(
       throw ActionError.familyNotSelected();
     }
 
-    // 입력값 검증
-    if (!data.name || data.name.trim().length === 0) {
-      throw ActionError.invalidInput(
-        "카테고리 이름",
-        data.name,
-        "이름은 필수입니다"
-      );
-    }
-
     const category = await serverApiPost<CategoryResponse>(
       `/families/${selectedFamilyUuid}/categories`,
-      data
+      validData
     );
 
     revalidatePath("/");
