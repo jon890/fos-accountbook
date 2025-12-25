@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createCategorySchema = z.object({
-  name: z.string().min(1, "이름은 필수입니다").trim(),
+  name: z.string().trim().min(1, "이름은 필수입니다"),
   color: z.string().optional(),
   icon: z.string().optional(),
   excludeFromBudget: z.boolean().optional(),
@@ -9,7 +9,7 @@ export const createCategorySchema = z.object({
 
 export const updateCategorySchema = z
   .object({
-    name: z.string().min(1, "이름은 필수입니다").trim().optional(),
+    name: z.string().trim().min(1, "이름은 필수입니다").optional(),
     color: z.string().optional(),
     icon: z.string().optional(),
     excludeFromBudget: z.boolean().optional(),
