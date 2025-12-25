@@ -27,6 +27,9 @@ public interface CategoryJpaRepository extends JpaRepository<Category, Long> {
       @Param("familyUuid") CustomUuid familyUuid,
       @Param("name") String name);
 
+  @Query("SELECT c FROM Category c WHERE c.familyUuid = :familyUuid AND c.isDefault = true AND c.status = com.bifos.accountbook.domain.value.CategoryStatus.ACTIVE")
+  Optional<Category> findByFamilyUuidAndIsDefaultTrue(@Param("familyUuid") CustomUuid familyUuid);
+
   @Query("SELECT COUNT(c) FROM Category c WHERE c.familyUuid = :familyUuid AND c.status = com.bifos.accountbook.domain.value.CategoryStatus.ACTIVE")
   int countByFamilyUuid(@Param("familyUuid") CustomUuid familyUuid);
 }

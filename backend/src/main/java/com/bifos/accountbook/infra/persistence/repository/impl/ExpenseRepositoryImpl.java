@@ -137,4 +137,9 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
                                                         LocalDateTime endDate) {
     return jpaRepository.sumAmountByFamilyUuidAndDateBetween(familyUuid, startDate, endDate);
   }
+
+  @Override
+  public void moveExpenses(CustomUuid oldCategoryUuid, CustomUuid newCategoryUuid) {
+    jpaRepository.moveExpenses(oldCategoryUuid, newCategoryUuid);
+  }
 }

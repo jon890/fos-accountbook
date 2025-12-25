@@ -8,8 +8,10 @@ import com.bifos.accountbook.application.event.ExpenseCreatedEvent;
 import com.bifos.accountbook.application.event.ExpenseUpdatedEvent;
 import com.bifos.accountbook.application.exception.BusinessException;
 import com.bifos.accountbook.application.exception.ErrorCode;
+import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Expense;
 import com.bifos.accountbook.domain.entity.User;
+import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.presentation.annotation.FamilyUuid;
@@ -33,10 +35,36 @@ import org.springframework.transaction.annotation.Transactional;
 public class ExpenseService {
 
   private final ExpenseRepository expenseRepository;
+  private final CategoryRepository categoryRepository;
   private final CategoryService categoryService; // 카테고리 조회 (캐시 활용)
   private final UserService userService; // 사용자 조회
   private final FamilyValidationService familyValidationService; // 가족 검증 로직
   private final ApplicationEventPublisher eventPublisher; // 이벤트 발행
+
+  /**
+   * 특정 카테고리의 모든 지출을 가족의 기본 카테고리로 이동
+   * CategoryService에서 카테고리 삭제 시 호출됨
+   */
+  @Transactional
+  public void moveExpensesToDefaultCategory(CustomUuid familyUuid, CustomUuid oldCategoryUuid) {
+    // 기본 카테고리(미분류) 조회 또는 생성
+    Category defaultCategory = categoryRepository.getDefaultCategoryByFamily(familyUuid)
+        .orElseGet(() -> {
+          log.warn("Default category not found for family: {}. Creating new one.", familyUuid.getValue());
+          Category newDefault = Category.builder()
+                                        .familyUuid(familyUuid)
+                                        .name("미분류")
+                                        .color("#9ca3af")
+                                        .icon("📂")
+                                        .isDefault(true)
+                                        .build();
+          return categoryRepository.save(newDefault);
+        });
+
+    // 지출 이동
+    expenseRepository.moveExpenses(oldCategoryUuid, defaultCategory.getUuid());
+    log.info("Moved expenses from category {} to default category {}", oldCategoryUuid, defaultCategory.getUuid());
+  }
 
   /**
    * 지출 생성

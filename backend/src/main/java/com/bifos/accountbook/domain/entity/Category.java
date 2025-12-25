@@ -75,6 +75,15 @@ public class Category implements Serializable {
   @Builder.Default
   private boolean excludeFromBudget = false;
 
+  /**
+   * 기본 카테고리 여부
+   * true인 경우 삭제할 수 없습니다.
+   * 각 가족마다 최소 하나 이상의 기본 카테고리('미분류')가 존재해야 합니다.
+   */
+  @Column(name = "is_default", nullable = false)
+  @Builder.Default
+  private boolean isDefault = false;
+
   // JPA 연관관계 제거
   // family, expenses는 UUID로만 참조하고 필요 시 Service 계층에서 조회
   // 장점:

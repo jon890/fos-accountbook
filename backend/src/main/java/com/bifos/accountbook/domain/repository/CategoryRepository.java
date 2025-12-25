@@ -37,6 +37,11 @@ public interface CategoryRepository {
   Optional<Category> findByFamilyUuidAndName(CustomUuid familyUuid, String name);
 
   /**
+   * 가족의 기본 카테고리 조회 ('미분류')
+   */
+  Optional<Category> getDefaultCategoryByFamily(CustomUuid familyUuid);
+
+  /**
    * 가족 UUID로 카테고리 개수 조회 (삭제되지 않은)
    */
   int countByFamilyUuid(CustomUuid familyUuid);

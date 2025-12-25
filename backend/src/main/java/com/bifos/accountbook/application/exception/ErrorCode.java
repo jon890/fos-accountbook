@@ -54,6 +54,7 @@ public enum ErrorCode {
   CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "CT001", "카테고리를 찾을 수 없습니다"),
   CATEGORY_ALREADY_EXISTS(HttpStatus.CONFLICT, "CT002", "이미 존재하는 카테고리입니다"),
   CANNOT_DELETE_CATEGORY_IN_USE(HttpStatus.BAD_REQUEST, "CT003", "사용 중인 카테고리는 삭제할 수 없습니다"),
+  CANNOT_DELETE_DEFAULT_CATEGORY(HttpStatus.BAD_REQUEST, "CT004", "기본 카테고리는 삭제할 수 없습니다"),
 
   // ============================================
   // Expense Errors (6000~6999)

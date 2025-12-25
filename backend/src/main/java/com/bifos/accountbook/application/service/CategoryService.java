@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CategoryService {
 
   private final CategoryRepository categoryRepository;
+  private final ObjectProvider<ExpenseService> expenseServiceProvider;
   private final FamilyValidationService familyValidationService; // 가족 검증 로직
   private final CacheManager cacheManager; // 캐시 관리자
 
@@ -177,7 +179,7 @@ public class CategoryService {
     familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
 
     // 캐시 무효화를 위해 familyUuid 저장
-    String familyUuidStr = category.getFamilyUuid().getValue();
+    final String familyUuidStr = category.getFamilyUuid().getValue();
 
     // 이름 변경 시 중복 확인
     if (request.getName() != null && !request.getName().equals(category.getName())) {
@@ -226,7 +228,16 @@ public class CategoryService {
     familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
 
     // 캐시 무효화를 위해 familyUuid 저장
-    String familyUuidStr = category.getFamilyUuid().getValue();
+    final String familyUuidStr = category.getFamilyUuid().getValue();
+
+    // 기본 카테고리는 삭제 불가
+    if (category.isDefault()) {
+      throw new BusinessException(ErrorCode.CANNOT_DELETE_DEFAULT_CATEGORY)
+          .addParameter("categoryUuid", categoryUuid);
+    }
+
+    // 삭제되는 카테고리의 지출들을 기본 카테고리로 이동 (ExpenseService에 위임)
+    expenseServiceProvider.getObject().moveExpensesToDefaultCategory(category.getFamilyUuid(), category.getUuid());
 
     category.delete();
 
@@ -246,16 +257,17 @@ public class CategoryService {
   @CacheEvict(value = CacheConfig.CATEGORIES_CACHE, key = "#familyUuid.value")
   public void createDefaultCategoriesForFamily(CustomUuid familyUuid) {
     List<DefaultCategory> defaultCategories = Arrays.asList(
-        new DefaultCategory("식비", "#ef4444", "🍚"),
-        new DefaultCategory("카페", "#f59e0b", "☕"),
-        new DefaultCategory("간식", "#ec4899", "🍰"),
-        new DefaultCategory("생활비", "#10b981", "🏠"),
-        new DefaultCategory("교통비", "#3b82f6", "🚗"),
-        new DefaultCategory("쇼핑", "#8b5cf6", "🛍️"),
-        new DefaultCategory("의료", "#06b6d4", "💊"),
-        new DefaultCategory("문화생활", "#f43f5e", "🎬"),
-        new DefaultCategory("교육", "#14b8a6", "📚"),
-        new DefaultCategory("기타", "#6b7280", "📦"));
+        new DefaultCategory("미분류", "#9ca3af", "📂", true),
+        new DefaultCategory("식비", "#ef4444", "🍚", false),
+        new DefaultCategory("카페", "#f59e0b", "☕", false),
+        new DefaultCategory("간식", "#ec4899", "🍰", false),
+        new DefaultCategory("생활비", "#10b981", "🏠", false),
+        new DefaultCategory("교통비", "#3b82f6", "🚗", false),
+        new DefaultCategory("쇼핑", "#8b5cf6", "🛍️", false),
+        new DefaultCategory("의료", "#06b6d4", "💊", false),
+        new DefaultCategory("문화생활", "#f43f5e", "🎬", false),
+        new DefaultCategory("교육", "#14b8a6", "📚", false),
+        new DefaultCategory("기타", "#6b7280", "📦", false));
 
     for (DefaultCategory defaultCategory : defaultCategories) {
       Category category = Category.builder()
@@ -263,6 +275,7 @@ public class CategoryService {
                                   .name(defaultCategory.name)
                                   .color(defaultCategory.color)
                                   .icon(defaultCategory.icon)
+                                  .isDefault(defaultCategory.isDefault)
                                   .build();
 
       categoryRepository.save(category);
@@ -293,11 +306,13 @@ public class CategoryService {
     String name;
     String color;
     String icon;
+    boolean isDefault;
 
-    DefaultCategory(String name, String color, String icon) {
+    DefaultCategory(String name, String color, String icon, boolean isDefault) {
       this.name = name;
       this.color = color;
       this.icon = icon;
+      this.isDefault = isDefault;
     }
   }
 }

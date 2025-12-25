@@ -9,6 +9,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -27,6 +28,11 @@ public interface ExpenseJpaRepository extends JpaRepository<Expense, Long> {
          AND e.status = com.bifos.accountbook.domain.value.ExpenseStatus.ACTIVE
       """)
   Optional<Expense> findActiveByUuid(@Param("uuid") CustomUuid uuid);
+
+  @Modifying
+  @Query("UPDATE Expense e SET e.categoryUuid = :newCategoryUuid, e.updatedAt = CURRENT_TIMESTAMP WHERE e.categoryUuid = :oldCategoryUuid")
+  void moveExpenses(@Param("oldCategoryUuid") CustomUuid oldCategoryUuid,
+                    @Param("newCategoryUuid") CustomUuid newCategoryUuid);
 
   @Query("""
       SELECT e

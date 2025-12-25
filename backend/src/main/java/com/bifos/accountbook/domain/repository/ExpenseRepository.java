@@ -66,4 +66,13 @@ public interface ExpenseRepository {
       CustomUuid familyUuid,
       LocalDateTime startDate,
       LocalDateTime endDate);
+
+  /**
+   * 특정 카테고리의 모든 지출을 다른 카테고리로 이동
+   * 카테고리 삭제 시 호출됨
+   *
+   * @param oldCategoryUuid 이동 전 카테고리 UUID
+   * @param newCategoryUuid 이동 후 카테고리 UUID
+   */
+  void moveExpenses(CustomUuid oldCategoryUuid, CustomUuid newCategoryUuid);
 }
