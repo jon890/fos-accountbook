@@ -22,6 +22,8 @@ export function CalendarView() {
 
   // 월이 변경될 때마다 데이터 로드
   useEffect(() => {
+    let ignore = false;
+
     const fetchStats = async () => {
       setIsLoading(true);
       const year = currentMonth.getFullYear();
@@ -29,15 +31,21 @@ export function CalendarView() {
 
       const result = await getMonthlyDailyStatsAction(year, month);
 
-      if (result.success) {
-        setDailyStats(result.data || []);
-      } else {
-        toast.error("달력 데이터를 불러오는데 실패했습니다.");
+      if (!ignore) {
+        if (result.success) {
+          setDailyStats(result.data || []);
+        } else {
+          toast.error("달력 데이터를 불러오는데 실패했습니다.");
+        }
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     fetchStats();
+
+    return () => {
+      ignore = true;
+    };
   }, [currentMonth]);
 
   // 특정 날짜의 통계 찾기
@@ -111,7 +119,7 @@ export function CalendarView() {
             }}
             components={{
               DayButton: (props: DayButtonProps) => {
-                const { day, modifiers, ...buttonProps } = props;
+                const { day, ...buttonProps } = props;
                 const date = day.date;
                 const stats = getStatsForDay(date);
                 const isToday =
