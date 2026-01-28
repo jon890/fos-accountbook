@@ -85,24 +85,8 @@ public interface DashboardRepository {
       int month
   );
 
-  // ===== 향후 추가 가능한 메서드 =====
+  java.util.Map<Integer, BigDecimal> getDailyExpenseAmounts(CustomUuid familyUuid, int year, int month);
 
-  /**
-   * 월별 지출 트렌드 조회
-   * TODO: 향후 구현
-   */
-  // List<MonthlyExpenseTrend> getMonthlyExpenseTrend(CustomUuid familyUuid, int months);
-
-  /**
-   * 카테고리별 수입 통계 조회
-   * TODO: 향후 구현
-   */
-  // List<CategoryIncomeProjection> getCategoryIncomeStats(...);
-
-  /**
-   * 가족 멤버별 지출 통계 조회
-   * TODO: 향후 구현
-   */
-  // List<MemberExpenseProjection> getMemberExpenseStats(...);
+  java.util.Map<Integer, BigDecimal> getDailyIncomeAmounts(CustomUuid familyUuid, int year, int month);
 }
 

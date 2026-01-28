@@ -11,11 +11,14 @@ import com.bifos.accountbook.domain.value.ExpenseStatus;
 import com.bifos.accountbook.domain.value.IncomeStatus;
 import com.bifos.accountbook.infra.persistence.repository.projection.CategoryExpenseProjectionImpl;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -179,18 +182,11 @@ public class DashboardRepositoryImpl implements DashboardRepository {
             expense.status.eq(ExpenseStatus.ACTIVE),
             expense.date.year().eq(year),
             expense.date.month().eq(month),
-            // 예산 제외 로직 (단순화):
-            // 1. 지출의 excludeFromBudget이 true이면 제외
-            // 2. 지출의 excludeFromBudget이 false이면:
-            //    - 카테고리의 excludeFromBudget이 true이면 제외
-            //    - 카테고리의 excludeFromBudget이 false이거나 null이면 포함
-            // 즉, 지출 또는 카테고리 중 하나라도 excludeFromBudget이 true이면 제외
-            // 카테고리의 기본값은 false(포함)이고, 유저가 원하면 true(제외)로 변경 가능
             expense.excludeFromBudget.eq(false)
-                .and(
-                    category.excludeFromBudget.isNull()
-                        .or(category.excludeFromBudget.eq(false))
-                )
+                                     .and(
+                                         category.excludeFromBudget.isNull()
+                                                                   .or(category.excludeFromBudget.eq(false))
+                                     )
         )
         .fetchOne();
 
@@ -222,6 +218,60 @@ public class DashboardRepositoryImpl implements DashboardRepository {
         .fetchOne();
 
     return result != null ? result : BigDecimal.ZERO;
+  }
+
+  @Override
+  public Map<Integer, BigDecimal> getDailyExpenseAmounts(CustomUuid familyUuid, int year, int month) {
+    QExpense expense = QExpense.expense;
+
+    List<Tuple> tuples = queryFactory
+        .select(expense.date.dayOfMonth(), expense.amount.sum())
+        .from(expense)
+        .where(
+            expense.family.uuid.eq(familyUuid),
+            expense.status.eq(ExpenseStatus.ACTIVE),
+            expense.date.year().eq(year),
+            expense.date.month().eq(month)
+        )
+        .groupBy(expense.date.dayOfMonth())
+        .fetch();
+
+    return toAmountByDayMap(tuples, expense.date.dayOfMonth(), expense.amount.sum());
+  }
+
+  @Override
+  public Map<Integer, BigDecimal> getDailyIncomeAmounts(CustomUuid familyUuid, int year, int month) {
+    QIncome income = QIncome.income;
+
+    List<Tuple> tuples = queryFactory
+        .select(income.date.dayOfMonth(), income.amount.sum())
+        .from(income)
+        .where(
+            income.family.uuid.eq(familyUuid),
+            income.status.eq(IncomeStatus.ACTIVE),
+            income.date.year().eq(year),
+            income.date.month().eq(month)
+        )
+        .groupBy(income.date.dayOfMonth())
+        .fetch();
+
+    return toAmountByDayMap(tuples, income.date.dayOfMonth(), income.amount.sum());
+  }
+
+  private <T> Map<Integer, BigDecimal> toAmountByDayMap(
+      List<Tuple> tuples,
+      Expression<Integer> dayExpression,
+      Expression<BigDecimal> amountExpression) {
+
+    Map<Integer, BigDecimal> amountByDay = new HashMap<>();
+    for (Tuple tuple : tuples) {
+      Integer day = tuple.get(dayExpression);
+      BigDecimal amount = tuple.get(amountExpression);
+      if (day != null) {
+        amountByDay.put(day, amount != null ? amount : BigDecimal.ZERO);
+      }
+    }
+    return amountByDay;
   }
 }
 
