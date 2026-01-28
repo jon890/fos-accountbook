@@ -12,10 +12,11 @@ git diff --staged
 git log -5 --oneline
 ```
 
-If the repo has a standard test command, run it before proposing a commit:
+If the repo has a standard test/lint command, run it before proposing a commit:
 
 ```bash
-./gradlew test
+./gradlew checkstyleMain checkstyleTest  # Checkstyle first (fast)
+./gradlew test                            # Then tests
 ```
 
 ## Expected user input (if available)
@@ -36,10 +37,11 @@ If missing, infer from repo defaults, but keep actions conservative.
 - Flag risky files (examples): `.env`, `*.pem`, `id_rsa`, `credentials.*`, `secrets.*`, large binaries
   - If suspicious: **stop** and ask the user what to do (do not commit/push).
 
-### 1) Verify (test gate)
+### 1) Verify (lint + test gate)
 
+- Run checkstyle first (default: `./gradlew checkstyleMain checkstyleTest`) - it's fast and catches style issues early.
 - Run the test command (default: `./gradlew test`) unless the user explicitly asks to skip.
-- If tests fail: summarize failure + propose a fix; do not proceed to commit.
+- If checkstyle or tests fail: summarize failure + propose a fix; do not proceed to commit.
 
 ### 2) Propose a staging plan
 
