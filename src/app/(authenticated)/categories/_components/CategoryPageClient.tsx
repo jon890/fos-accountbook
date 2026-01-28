@@ -20,7 +20,6 @@ export function CategoryPageClient({
   familyUuid,
   hasInitialError = false,
 }: CategoryPageClientProps) {
-  // 초기 로드 시 에러 알림
   useEffect(() => {
     if (hasInitialError) {
       toast.error(

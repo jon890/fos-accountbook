@@ -85,11 +85,10 @@ export function EditCategoryDialog({
   const [color, setColor] = useState(category.color);
   const [icon, setIcon] = useState(category.icon || "📦");
   const [excludeFromBudget, setExcludeFromBudget] = useState(
-    category.excludeFromBudget || false
+    category.excludeFromBudget || false,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // category가 변경되면 폼 값 업데이트
   useEffect(() => {
     setName(category.name);
     setColor(category.color);
@@ -207,7 +206,6 @@ export function EditCategoryDialog({
             </div>
           </div>
 
-          {/* 예산 포함 여부 */}
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
@@ -221,7 +219,6 @@ export function EditCategoryDialog({
             </Label>
           </div>
 
-          {/* 버튼 */}
           <div className="flex gap-2 pt-4">
             <Button
               type="button"
