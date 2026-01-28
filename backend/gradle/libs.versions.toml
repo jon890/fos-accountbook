@@ -1,6 +1,6 @@
 [versions]
 # Spring Boot & Framework
-spring-boot = "4.0.1"
+spring-boot = "4.0.2"
 spring-dependency-management = "1.1.7"
 
 # Database
