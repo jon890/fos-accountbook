@@ -1,11 +1,13 @@
 # Gemini Context File (GEMINI.md)
 
 ## Project Overview
+
 **Name**: fos-accountbook (우리집 가계부)
 **Description**: A smart family budget application designed for managing shared family finances, incomes, expenses, and categories.
 **Language**: Korean (UI/UX), English (Code/Comments)
 
 ## Tech Stack
+
 - **Framework**: Next.js 16 (App Router)
 - **Library**: React 19
 - **Language**: TypeScript
@@ -17,6 +19,7 @@
 - **Package Manager**: pnpm
 
 ## Architecture & Directory Structure
+
 The project follows a feature-based structure within the Next.js App Router conventions.
 
 ```
@@ -56,35 +59,42 @@ src/
 ## Key Conventions & Patterns
 
 ### 1. Authentication
+
 - **Route Groups**: `src/app/(authenticated)` is used to group routes requiring login. The `layout.tsx` in this directory handles session validation.
 - **NextAuth**: Handles OAuth (Google/Naver). JWT is exchanged/managed for backend API communication.
 
 ### 2. Data Fetching & Mutations
+
 - **Server Actions**: Used for form submissions and data mutations. Located in `src/app/actions`.
 - **API Wrappers**:
-    - `src/lib/server/api`: Use `serverApiGet`, `serverApiPost` for fetching data inside Server Components/Actions.
-    - `src/lib/client/api`: Use `apiGet`, `apiPost` for fetching data inside Client Components.
+  - `src/lib/server/api`: Use `serverApiGet`, `serverApiPost` for fetching data inside Server Components/Actions.
+  - `src/lib/client/api`: Use `apiGet`, `apiPost` for fetching data inside Client Components.
 - **HTTP Client**: `ky` is used under the hood.
 
 ### 3. Styling
+
 - **Tailwind CSS**: Utility-first styling.
 - **Shadcn UI**: Used for base components (`Button`, `Dialog`, `Input`, etc.) in `src/components/ui`.
 - **Icons**: `lucide-react`.
 
 ### 4. Testing
+
 - **Jest**: Test runner.
 - **Testing Library**: For component testing.
 - **Naming**: `*.test.ts` or `*.test.tsx`.
 - **Location**: `src/__tests__` mirrors the `src` structure.
 
 ## Development Commands
+
 - `pnpm dev`: Start development server.
 - `pnpm build`: Build for production.
 - `pnpm test`: Run tests.
 - `pnpm lint`: Run ESLint.
 
 ## Environment Variables
+
 Required variables in `.env.local`:
+
 - `NEXTAUTH_URL`, `NEXTAUTH_SECRET`
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 - `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET`
