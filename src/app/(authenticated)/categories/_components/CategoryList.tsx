@@ -77,62 +77,65 @@ export function CategoryList({
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
         {categories.map((category) => (
           <Card
             key={category.uuid}
             className="hover:shadow-md transition-shadow"
           >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3 flex-1">
+            <CardContent className="p-3 md:p-4">
+              <div className="flex flex-col justify-between h-full gap-3">
+                <div className="flex items-start justify-between">
                   <div
-                    className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl"
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center text-xl md:text-2xl shrink-0"
                     style={{ backgroundColor: category.color + "20" }}
                   >
                     {category.icon}
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-gray-900">
-                        {category.name}
-                      </h3>
-                      {category.excludeFromBudget && (
-                        <Badge
-                          variant="secondary"
-                          className="text-[10px] px-1.5 py-0 h-5 gap-1 text-gray-500"
-                        >
-                          <EyeOff className="w-3 h-3" />
-                          예산 제외
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div
-                        className="w-4 h-4 rounded"
-                        style={{ backgroundColor: category.color }}
-                      />
-                      <span className="text-xs text-gray-500">
-                        {category.color}
-                      </span>
-                    </div>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 md:h-8 md:w-8"
+                      onClick={() => onEdit(category)}
+                    >
+                      <Edit2 className="w-3 h-3 md:w-4 md:h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 md:h-8 md:w-8"
+                      onClick={() => handleDeleteClick(category)}
+                    >
+                      <Trash2 className="w-3 h-3 md:w-4 md:h-4 text-red-500" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEdit(category)}
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteClick(category)}
-                  >
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </Button>
+
+                <div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <h3 className="font-semibold text-sm md:text-base text-gray-900 truncate w-full">
+                      {category.name}
+                    </h3>
+                    {category.excludeFromBudget && (
+                      <Badge
+                        variant="secondary"
+                        className="text-[10px] px-1.5 py-0 h-5 gap-1 text-gray-500 w-fit whitespace-nowrap"
+                      >
+                        <EyeOff className="w-3 h-3" />
+                        <span className="hidden md:inline">예산 제외</span>
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-1.5 md:mt-1">
+                    <div
+                      className="w-3 h-3 md:w-4 md:h-4 rounded-full"
+                      style={{ backgroundColor: category.color }}
+                    />
+                    <span className="text-xs text-gray-500 hidden md:inline">
+                      {category.color}
+                    </span>
+                  </div>
                 </div>
               </div>
             </CardContent>
