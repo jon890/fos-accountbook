@@ -288,26 +288,21 @@ class DashboardControllerTest extends AbstractControllerTest {
     Category transportCategory = fixtures.categories.category(family).name("교통비").color("#3498DB").icon("🚗").build();
 
     LocalDateTime now = LocalDateTime.now();
-    int year = now.getYear();
-    int month = now.getMonthValue();
 
-    // 1일: 지출 50,000원, 수입 100,000원
     createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
                   BigDecimal.valueOf(30000), now.withDayOfMonth(1));
     createExpense(family.getUuid(), user.getUuid(), transportCategory.getUuid(),
                   BigDecimal.valueOf(20000), now.withDayOfMonth(1));
     createIncome(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
                  BigDecimal.valueOf(100000), now.withDayOfMonth(1));
-
-    // 5일: 지출 15,000원
     createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
                   BigDecimal.valueOf(15000), now.withDayOfMonth(5));
-
-    // 10일: 수입 200,000원
     createIncome(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
                  BigDecimal.valueOf(200000), now.withDayOfMonth(10));
 
-    // When & Then: 일별 통계 조회
+    int year = now.getYear();
+    int month = now.getMonthValue();
+
     mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/daily-stats", family.getUuid().getValue())
                         .param("year", String.valueOf(year))
                         .param("month", String.valueOf(month))
@@ -355,22 +350,17 @@ class DashboardControllerTest extends AbstractControllerTest {
     Category foodCategory = fixtures.categories.category(family).build();
 
     LocalDateTime now = LocalDateTime.now();
-    int year = now.getYear();
-    int month = now.getMonthValue();
 
-    // 이번 달 지출: 30,000원
     createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
                   BigDecimal.valueOf(30000), now.withDayOfMonth(1));
-
-    // 지난 달 지출: 50,000원 (집계에서 제외되어야 함)
     createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
                   BigDecimal.valueOf(50000), now.minusMonths(1));
-
-    // 다음 달 지출: 40,000원 (집계에서 제외되어야 함)
     createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
                   BigDecimal.valueOf(40000), now.plusMonths(1));
 
-    // When & Then: 이번 달만 집계됨
+    int year = now.getYear();
+    int month = now.getMonthValue();
+
     mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/daily-stats", family.getUuid().getValue())
                         .param("year", String.valueOf(year))
                         .param("month", String.valueOf(month))
