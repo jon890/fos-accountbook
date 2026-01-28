@@ -276,6 +276,115 @@ class DashboardControllerTest extends AbstractControllerTest {
            .andExpect(jsonPath("$.data.remainingBudget").value(-50000)); // 100,000 - 150,000 = -50,000
   }
 
+  // ===== 일별 통계 조회 (캘린더 뷰) 테스트 =====
+
+  @Test
+  @DisplayName("일별 통계 조회 - 성공 (캘린더 뷰)")
+  void getDailyStats_Success() throws Exception {
+    // Given: 테스트 데이터 생성
+    User user = fixtures.getDefaultUser();
+    Family family = fixtures.getDefaultFamily();
+    Category foodCategory = fixtures.categories.category(family).name("식비").color("#FF5733").icon("🍕").build();
+    Category transportCategory = fixtures.categories.category(family).name("교통비").color("#3498DB").icon("🚗").build();
+
+    LocalDateTime now = LocalDateTime.now();
+
+    createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
+                  BigDecimal.valueOf(30000), now.withDayOfMonth(1));
+    createExpense(family.getUuid(), user.getUuid(), transportCategory.getUuid(),
+                  BigDecimal.valueOf(20000), now.withDayOfMonth(1));
+    createIncome(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
+                 BigDecimal.valueOf(100000), now.withDayOfMonth(1));
+    createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
+                  BigDecimal.valueOf(15000), now.withDayOfMonth(5));
+    createIncome(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
+                 BigDecimal.valueOf(200000), now.withDayOfMonth(10));
+
+    int year = now.getYear();
+    int month = now.getMonthValue();
+
+    mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/daily-stats", family.getUuid().getValue())
+                        .param("year", String.valueOf(year))
+                        .param("month", String.valueOf(month))
+                        .contentType(MediaType.APPLICATION_JSON))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.success").value(true))
+           .andExpect(jsonPath("$.data.year").value(year))
+           .andExpect(jsonPath("$.data.month").value(month))
+           .andExpect(jsonPath("$.data.totalExpense").value(65000)) // 50,000 + 15,000
+           .andExpect(jsonPath("$.data.totalIncome").value(300000)) // 100,000 + 200,000
+           .andExpect(jsonPath("$.data.dailyStats").isArray())
+           .andExpect(jsonPath("$.data.dailyStats.length()").value(3)); // 거래가 있는 3일만 포함
+  }
+
+  @Test
+  @DisplayName("일별 통계 조회 - 거래 없는 달")
+  void getDailyStats_NoTransactions() throws Exception {
+    // Given: 빈 가족
+    Family family = fixtures.getDefaultFamily();
+
+    LocalDateTime now = LocalDateTime.now();
+    int year = now.getYear();
+    int month = now.getMonthValue();
+
+    // When & Then: 빈 통계 반환
+    mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/daily-stats", family.getUuid().getValue())
+                        .param("year", String.valueOf(year))
+                        .param("month", String.valueOf(month))
+                        .contentType(MediaType.APPLICATION_JSON))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.success").value(true))
+           .andExpect(jsonPath("$.data.year").value(year))
+           .andExpect(jsonPath("$.data.month").value(month))
+           .andExpect(jsonPath("$.data.totalExpense").value(0))
+           .andExpect(jsonPath("$.data.totalIncome").value(0))
+           .andExpect(jsonPath("$.data.dailyStats").isEmpty());
+  }
+
+  @Test
+  @DisplayName("일별 통계 조회 - 다른 달 데이터 제외")
+  void getDailyStats_ExcludesOtherMonths() throws Exception {
+    // Given: 테스트 데이터 생성
+    User user = fixtures.getDefaultUser();
+    Family family = fixtures.getDefaultFamily();
+    Category foodCategory = fixtures.categories.category(family).build();
+
+    LocalDateTime now = LocalDateTime.now();
+
+    createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
+                  BigDecimal.valueOf(30000), now.withDayOfMonth(1));
+    createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
+                  BigDecimal.valueOf(50000), now.minusMonths(1));
+    createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
+                  BigDecimal.valueOf(40000), now.plusMonths(1));
+
+    int year = now.getYear();
+    int month = now.getMonthValue();
+
+    mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/daily-stats", family.getUuid().getValue())
+                        .param("year", String.valueOf(year))
+                        .param("month", String.valueOf(month))
+                        .contentType(MediaType.APPLICATION_JSON))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.success").value(true))
+           .andExpect(jsonPath("$.data.totalExpense").value(30000)) // 이번 달만
+           .andExpect(jsonPath("$.data.dailyStats.length()").value(1));
+  }
+
+  @Test
+  @DisplayName("일별 통계 조회 - 권한 없는 가족 조회 실패")
+  void getDailyStats_UnauthorizedFamily() throws Exception {
+    // Given: 다른 가족 생성 (현재 사용자를 멤버로 추가하지 않음)
+    CustomUuid otherFamilyUuid = CustomUuid.generate();
+
+    // When & Then: 권한 없는 가족 조회 시 에러
+    mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/daily-stats", otherFamilyUuid.getValue())
+                        .param("year", "2024")
+                        .param("month", "1")
+                        .contentType(MediaType.APPLICATION_JSON))
+           .andExpect(status().isForbidden());
+  }
+
   // ===== Helper Methods =====
 
   private Expense createExpense(CustomUuid familyUuid, CustomUuid userUuid, CustomUuid categoryUuid,

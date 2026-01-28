@@ -1,5 +1,6 @@
 package com.bifos.accountbook.presentation.controller;
 
+import com.bifos.accountbook.application.dto.dashboard.DailyStatsResponse;
 import com.bifos.accountbook.application.dto.dashboard.MonthlyStatsResponse;
 import com.bifos.accountbook.application.dto.expense.CategoryExpenseSummaryResponse;
 import com.bifos.accountbook.application.dto.expense.ExpenseSummarySearchRequest;
@@ -18,12 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 대시보드 컨트롤러
- * - 대시보드 통계 데이터 API
- * - 지출/수입 요약
- * - 카테고리별 집계
- */
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/families/{familyUuid}/dashboard")
@@ -60,9 +55,7 @@ public class DashboardController {
   }
 
   /**
-   * 월별 통계 조회 (QueryDSL 기반)
-   * - 지출 합계, 수입 합계를 DB에서 직접 집계
-   * - 기존 프론트에서 1000개 가져와서 필터링하던 방식 개선
+   * 월별 통계 조회
    *
    * @param loginUser  로그인 사용자
    * @param familyUuid 가족 UUID
@@ -88,27 +81,17 @@ public class DashboardController {
     return ResponseEntity.ok(ApiSuccessResponse.of(response));
   }
 
-  // ===== 향후 추가 가능한 대시보드 API =====
+  @GetMapping("/daily-stats")
+  public ResponseEntity<ApiSuccessResponse<DailyStatsResponse>> getDailyStats(
+      @LoginUser LoginUserDto loginUser,
+      @PathVariable CustomUuid familyUuid,
+      @RequestParam Integer year,
+      @RequestParam Integer month) {
 
-  /**
-   * 월별 지출 트렌드 조회
-   * TODO: 향후 구현
-   */
-  // @GetMapping("/expenses/monthly-trend")
-  // public ResponseEntity<ApiSuccessResponse<MonthlyTrendResponse>> getMonthlyExpenseTrend(...) { }
+    DailyStatsResponse response = dashboardService.getDailyStats(
+        loginUser.userUuid(), familyUuid, year, month);
 
-  /**
-   * 카테고리별 수입 요약 조회
-   * TODO: 향후 구현
-   */
-  // @GetMapping("/incomes/by-category")
-  // public ResponseEntity<ApiSuccessResponse<CategoryIncomeSummaryResponse>> getCategoryIncomeSummary(...) { }
-
-  /**
-   * 지출 vs 수입 비교
-   * TODO: 향후 구현
-   */
-  // @GetMapping("/comparison")
-  // public ResponseEntity<ApiSuccessResponse<ExpenseIncomeComparisonResponse>> compareExpenseAndIncome(...) { }
+    return ResponseEntity.ok(ApiSuccessResponse.of(response));
+  }
 }
 

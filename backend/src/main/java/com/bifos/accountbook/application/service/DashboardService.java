@@ -1,5 +1,7 @@
 package com.bifos.accountbook.application.service;
 
+import com.bifos.accountbook.application.dto.dashboard.DailyStat;
+import com.bifos.accountbook.application.dto.dashboard.DailyStatsResponse;
 import com.bifos.accountbook.application.dto.dashboard.MonthlyStatsResponse;
 import com.bifos.accountbook.application.dto.expense.CategoryExpenseStat;
 import com.bifos.accountbook.application.dto.expense.CategoryExpenseSummaryResponse;
@@ -14,8 +16,13 @@ import com.bifos.accountbook.presentation.annotation.UserUuid;
 import com.bifos.accountbook.presentation.annotation.ValidateFamilyAccess;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -158,6 +165,47 @@ public class DashboardService {
                                .year(year)
                                .month(month)
                                .build();
+  }
+
+  @ValidateFamilyAccess
+  public DailyStatsResponse getDailyStats(@UserUuid CustomUuid userUuid,
+                                          @FamilyUuid CustomUuid familyUuid,
+                                          int year,
+                                          int month) {
+    Map<Integer, BigDecimal> expenseByDay = dashboardRepository.getDailyExpenseAmounts(familyUuid, year, month);
+    Map<Integer, BigDecimal> incomeByDay = dashboardRepository.getDailyIncomeAmounts(familyUuid, year, month);
+
+    Set<Integer> daysWithTransactions = new HashSet<>();
+    daysWithTransactions.addAll(expenseByDay.keySet());
+    daysWithTransactions.addAll(incomeByDay.keySet());
+
+    List<DailyStat> dailyStats = new ArrayList<>();
+    BigDecimal totalIncome = BigDecimal.ZERO;
+    BigDecimal totalExpense = BigDecimal.ZERO;
+
+    for (Integer day : daysWithTransactions) {
+      BigDecimal income = incomeByDay.getOrDefault(day, BigDecimal.ZERO);
+      BigDecimal expense = expenseByDay.getOrDefault(day, BigDecimal.ZERO);
+
+      dailyStats.add(DailyStat.builder()
+                              .date(LocalDate.of(year, month, day))
+                              .income(income)
+                              .expense(expense)
+                              .build());
+
+      totalIncome = totalIncome.add(income);
+      totalExpense = totalExpense.add(expense);
+    }
+
+    dailyStats.sort(Comparator.comparing(DailyStat::getDate));
+
+    return DailyStatsResponse.builder()
+                             .year(year)
+                             .month(month)
+                             .dailyStats(dailyStats)
+                             .totalIncome(totalIncome)
+                             .totalExpense(totalExpense)
+                             .build();
   }
 }
 
