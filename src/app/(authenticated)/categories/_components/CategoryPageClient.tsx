@@ -20,11 +20,10 @@ export function CategoryPageClient({
   familyUuid,
   hasInitialError = false,
 }: CategoryPageClientProps) {
-  // 초기 로드 시 에러 알림
   useEffect(() => {
     if (hasInitialError) {
       toast.error(
-        "카테고리 목록을 불러오는데 실패했습니다. 다시 시도해주세요."
+        "카테고리 목록을 불러오는데 실패했습니다. 다시 시도해주세요.",
       );
     }
   }, [hasInitialError]);
@@ -41,8 +40,8 @@ export function CategoryPageClient({
   const handleCategoryUpdated = (updatedCategory: CategoryResponse) => {
     setCategories(
       categories.map((cat) =>
-        cat.uuid === updatedCategory.uuid ? updatedCategory : cat
-      )
+        cat.uuid === updatedCategory.uuid ? updatedCategory : cat,
+      ),
     );
   };
 
@@ -57,7 +56,7 @@ export function CategoryPageClient({
 
   return (
     <>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <p className="text-sm text-gray-600">
           총{" "}
           <span className="font-semibold text-gray-900">
