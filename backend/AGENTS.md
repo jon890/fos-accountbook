@@ -73,6 +73,12 @@ src/main/java/com/bifos/accountbook/
 - **Commits**: Follow conventional commits (e.g., `feat:`, `fix:`, `docs:`).
 - **Testing**: Unit tests for logic, Integration tests (`@SpringBootTest`) for flows.
 
+### Comments Strategy
+- **Express intent through naming**: Use readable variable/method names instead of comments
+- **Minimize comments**: Only add comments for complex logic that's hard to understand from code alone
+- **Avoid obvious comments**: Don't use comments like "// Given", "// When", "// Then"
+- **No TODO/Future work**: Don't leave "TODO" or "future implementation" comments in code. Suggest via conversation instead
+
 ## 7. Important Configuration Files
 - `build.gradle.kts`: Main build script.
 - `gradle/libs.versions.toml`: Dependency version catalog.
