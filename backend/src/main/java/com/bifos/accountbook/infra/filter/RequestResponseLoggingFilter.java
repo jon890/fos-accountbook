@@ -18,7 +18,6 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
 
 /**
  * HTTP 요청/응답 로깅 필터
- * <p>
  * 개발 환경에서 API 요청/응답을 상세하게 로깅합니다.
  * RequestBody와 ResponseBody도 캡처하여 로깅합니다.
  */
@@ -46,106 +45,79 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
     Instant start = Instant.now();
 
     try {
-      // 요청 로깅
       logRequest(wrappedRequest);
 
-      // 필터 체인 실행
       filterChain.doFilter(wrappedRequest, wrappedResponse);
 
-      // 응답 로깅
       long duration = Duration.between(start, Instant.now()).toMillis();
       logResponse(wrappedRequest, wrappedResponse, duration);
 
     } finally {
-      // ResponseBody를 실제 응답으로 복사 (매우 중요!)
       wrappedResponse.copyBodyToResponse();
     }
   }
 
-  /**
-   * 요청 로깅
-   */
   private void logRequest(ContentCachingRequestWrapper request) {
     String method = request.getMethod();
     String uri = request.getRequestURI();
     String queryString = request.getQueryString();
     String fullUrl = queryString != null ? uri + "?" + queryString : uri;
 
-    log.info("┌─────────────────────────────────────────────────────────────");
-    log.info("│ 📨 HTTP Request: {} {}", method, fullUrl);
-    log.info("├─────────────────────────────────────────────────────────────");
+    StringBuilder sb = new StringBuilder();
+    sb.append("[REQ] ").append(method).append(" ").append(fullUrl);
 
-    // Authorization 헤더만 출력
     String authHeader = request.getHeader("Authorization");
     if (authHeader != null) {
-      log.info("│ [Authorization]");
-      log.info("│   {}", maskToken(authHeader));
+      sb.append(" | Auth: ").append(maskToken(authHeader));
     }
 
-    // Session Token 쿠키만 출력
-    Cookie[] cookies = request.getCookies();
-    if (cookies != null && cookies.length > 0) {
-      boolean hasSessionToken = false;
-      for (Cookie cookie : cookies) {
-        String name = cookie.getName();
-        // NextAuth/Auth.js 세션 토큰만 로깅
-        if (name.contains("session-token") || name.contains("authjs")) {
-          if (!hasSessionToken) {
-            log.info("│ [Session Cookie]");
-            hasSessionToken = true;
-          }
-          log.info("│   {}: {}", name, maskToken(cookie.getValue()));
-        }
-      }
-
-      // 세션 토큰이 없으면 경고
-      if (!hasSessionToken) {
-        log.warn("│ ⚠️  No session-token found in cookies");
-      }
-    } else {
-      log.warn("│ ⚠️  No cookies in request");
+    String sessionToken = extractSessionToken(request.getCookies());
+    if (sessionToken != null) {
+      sb.append(" | Session: ").append(maskToken(sessionToken));
     }
 
-    // Request Body
     byte[] content = request.getContentAsByteArray();
     if (content.length > 0) {
       String body = new String(content, StandardCharsets.UTF_8);
-      log.info("│ [Body]");
-      log.info("│   {}", truncate(body, MAX_PAYLOAD_LENGTH));
+      sb.append(" | Body: ").append(truncate(body, MAX_PAYLOAD_LENGTH));
     }
 
-    log.info("└─────────────────────────────────────────────────────────────");
+    log.info("{}", sb);
   }
 
-  /**
-   * 응답 로깅
-   */
-  private void logResponse(
-      ContentCachingRequestWrapper request,
-      ContentCachingResponseWrapper response,
-      long duration) {
+  private String extractSessionToken(Cookie[] cookies) {
+    if (cookies == null) {
+      return null;
+    }
+    for (Cookie cookie : cookies) {
+      String name = cookie.getName();
+      if (name.contains("session-token") || name.contains("authjs")) {
+        return cookie.getValue();
+      }
+    }
+    return null;
+  }
+
+  private void logResponse(ContentCachingRequestWrapper request,
+                           ContentCachingResponseWrapper response,
+                           long duration) {
     String method = request.getMethod();
     String uri = request.getRequestURI();
     int status = response.getStatus();
 
-    log.info("┌─────────────────────────────────────────────────────────────");
-    log.info("│ 📤 HTTP Response: {} {} → {} ({}ms)", method, uri, status, duration);
-    log.info("├─────────────────────────────────────────────────────────────");
+    StringBuilder sb = new StringBuilder();
+    sb.append("[RES] ").append(method).append(" ").append(uri);
+    sb.append(" → ").append(status).append(" (").append(duration).append("ms)");
 
-    // Response Body
     byte[] content = response.getContentAsByteArray();
     if (content.length > 0) {
       String body = new String(content, StandardCharsets.UTF_8);
-      log.info("│ [Body]");
-      log.info("│   {}", truncate(body, MAX_PAYLOAD_LENGTH));
+      sb.append(" | Body: ").append(truncate(body, MAX_PAYLOAD_LENGTH));
     }
 
-    log.info("└─────────────────────────────────────────────────────────────");
+    log.info("{}", sb);
   }
 
-  /**
-   * 토큰 마스킹 (앞 10자 + *** + 뒤 10자)
-   */
   private String maskToken(String token) {
     if (token == null || token.length() < 20) {
       return "***";
@@ -153,9 +125,6 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
     return token.substring(0, 10) + "***" + token.substring(token.length() - 10);
   }
 
-  /**
-   * 문자열 잘라내기
-   */
   private String truncate(String str, int maxLength) {
     if (str.length() <= maxLength) {
       return str;
