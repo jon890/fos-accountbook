@@ -12,7 +12,7 @@
 - **Security**: Spring Security + JWT (jjwt 0.13.0)
 - **Migration**: Flyway
 - **Documentation**: SpringDoc OpenAPI 2.8.14 (Swagger UI)
-- **Infrastructure**: Docker Compose, Railway
+- **Infrastructure**: Docker Compose
 
 ## 3. Architecture & Project Structure
 The project follows a strict **Layered Architecture**:
