@@ -18,7 +18,7 @@ docker/
 
 ### MySQL 컨테이너
 
-- **이미지**: MySQL 9.4 (Railway 프로덕션과 동일)
+- **이미지**: MySQL 9.4
 - **컨테이너명**: fos-accountbook-mysql
 - **포트**: 13306 (호스트) → 3306 (컨테이너) - 일반 MySQL 포트(3306)와 충돌 방지
 - **네트워크**: fos-accountbook-network

@@ -39,7 +39,6 @@ Spring Boot 4 + Java 21 기반 가계부 애플리케이션 백엔드 API 서버
 ### DevOps
 
 - **Container**: Docker
-- **Platform**: Railway
 - **Dependency Management**: Dependabot (매주 자동 업데이트)
 
 ---
@@ -90,7 +89,7 @@ infra/            # 기술적 구현 (Config, Security, Exception)
 | Profile   | 용도         | 데이터베이스  | Swagger | 로깅           |
 | --------- | ------------ | ------------- | ------- | -------------- |
 | **local** | 로컬 개발    | Docker MySQL  | ✅      | Console + File |
-| **prod**  | Railway 배포 | Railway MySQL | ❌      | Console만      |
+| **prod**  | 프로덕션     | MySQL         | ❌      | Console만      |
 | **test**  | 테스트       | H2 in-memory  | ❌      | Console만      |
 
 ### Dependabot 자동 의존성 관리
@@ -141,10 +140,7 @@ fos-accountbook-backend/
 ├── .github/
 │   └── dependabot.yml                        # Dependabot 설정
 ├── docs/                                      # 문서
-│   └── deploy/
-│       └── railway.md                        # Railway 배포 가이드
 ├── Dockerfile                                 # Docker 이미지 빌드
-├── railway.json                              # Railway 설정
 ├── docker/
 │   └── compose.yml                          # 로컬 MySQL 설정 (최신 Docker Compose 스펙)
 ├── build.gradle.kts                          # Gradle 빌드 설정

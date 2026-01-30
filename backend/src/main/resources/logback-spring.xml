@@ -72,7 +72,7 @@
     <logger name="p6spy" level="INFO"/>
   </springProfile>
 
-  <!-- 프로덕션 환경 (Railway, Docker 등): 콘솔만 (stdout/stderr) -->
+  <!-- 프로덕션 환경: 콘솔만 (stdout/stderr) -->
   <springProfile name="prod">
     <root level="INFO">
       <appender-ref ref="CONSOLE"/>

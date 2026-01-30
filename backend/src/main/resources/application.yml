@@ -3,7 +3,7 @@
 # ============================================
 # Profile별 설정 파일:
 #   - application-local.yml (로컬 개발)
-#   - application-prod.yml (Railway 프로덕션)
+#   - application-prod.yml (프로덕션)
 #   - application-test.yml (테스트)
 
 server:
@@ -26,7 +26,7 @@ spring:
 
   # 데이터베이스 설정 (Profile별로 설정)
   # - application-local.yml: 로컬 MySQL 직접 설정
-  # - application-prod.yml: Railway MySQL 환경변수 사용
+  # - application-prod.yml: 프로덕션 MySQL 환경변수 사용
 
   # JPA 공통 설정
   jpa:

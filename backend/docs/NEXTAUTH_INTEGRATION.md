@@ -300,16 +300,14 @@ NEXT_PUBLIC_API_URL="http://localhost:8080/api/v1"
 BACKEND_API_URL="http://localhost:8080/api/v1"
 ```
 
-### 백엔드 (Railway 환경변수)
-
-Railway 대시보드 → Backend 서비스 → Variables 탭:
+### 백엔드 (환경변수)
 
 | 변수명 | 값 | 설명 |
 |--------|------|------|
 | `AUTH_SECRET` | (프론트엔드와 동일한 값) | **JWT + NextAuth 공통 비밀키** 🔑 |
-| `SPRING_DATASOURCE_URL` | `jdbc:mysql://${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}/${{MySQL.MYSQLDATABASE}}?...` | MySQL 연결 |
-| `SPRING_DATASOURCE_USERNAME` | `${{MySQL.MYSQLUSER}}` | MySQL 사용자 |
-| `SPRING_DATASOURCE_PASSWORD` | `${{MySQL.MYSQLPASSWORD}}` | MySQL 비밀번호 |
+| `SPRING_DATASOURCE_URL` | MySQL JDBC URL | MySQL 연결 |
+| `SPRING_DATASOURCE_USERNAME` | MySQL 사용자명 | MySQL 사용자 |
+| `SPRING_DATASOURCE_PASSWORD` | MySQL 비밀번호 | MySQL 비밀번호 |
 | `SPRING_PROFILES_ACTIVE` | `prod` | 프로파일 |
 
 **✅ 통합 완료**: `AUTH_SECRET` 하나로 백엔드 JWT와 NextAuth 세션을 모두 검증합니다!
@@ -412,7 +410,7 @@ jwt: {
 
 **해결:**
 1. 프론트엔드 `.env.local`의 `AUTH_SECRET` 확인
-2. 백엔드 Railway의 `AUTH_SECRET` 환경변수 확인
+2. 백엔드의 `AUTH_SECRET` 환경변수 확인
 3. **동일한 값**인지 확인!
 
 ### 문제 3: Token이 추출되지 않음
@@ -489,7 +487,7 @@ HMACSHA256(
 배포 전 확인사항:
 
 - [ ] 프론트엔드 `.env.local`에 `AUTH_SECRET` 설정
-- [ ] 백엔드 Railway에 `AUTH_SECRET` 환경변수 설정
+- [ ] 백엔드에 `AUTH_SECRET` 환경변수 설정
 - [ ] 프론트엔드와 백엔드의 `AUTH_SECRET`이 동일한지 확인
 - [ ] NextAuth JWT 커스텀 encode/decode 설정 완료
 - [ ] 백엔드 Security 설정에 NextAuthTokenFilter 추가
