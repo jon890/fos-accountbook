@@ -6,6 +6,8 @@ import com.bifos.accountbook.application.dto.dashboard.MonthlyStatsResponse;
 import com.bifos.accountbook.application.dto.expense.CategoryExpenseStat;
 import com.bifos.accountbook.application.dto.expense.CategoryExpenseSummaryResponse;
 import com.bifos.accountbook.application.dto.expense.ExpenseSummarySearchRequest;
+import com.bifos.accountbook.application.exception.BusinessException;
+import com.bifos.accountbook.application.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.Family;
 import com.bifos.accountbook.domain.repository.DashboardRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
@@ -138,7 +140,7 @@ public class DashboardService {
                                               int month) {
     // 가족 정보 조회 (구성원 수)
     Family family = familyRepository.findByUuid(familyUuid)
-                                    .orElseThrow(() -> new IllegalArgumentException("가족을 찾을 수 없습니다"));
+                                    .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND));
 
     // QueryDSL로 월별 지출 합계 조회 (DB에서 직접 집계)
     BigDecimal monthlyExpense = dashboardRepository.getMonthlyExpenseAmount(
