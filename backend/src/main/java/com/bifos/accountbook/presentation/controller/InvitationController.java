@@ -72,7 +72,7 @@ public class InvitationController {
   @GetMapping("/token/{token}")
   public ResponseEntity<ApiSuccessResponse<InvitationResponse>> getInvitationByToken(
       @PathVariable String token) {
-    log.info("Fetching invitation by token: {}", token);
+    log.info("Fetching invitation by token: {}...", token.substring(0, Math.min(8, token.length())));
 
     InvitationResponse invitation = invitationService.getInvitationByToken(token);
 
@@ -86,7 +86,7 @@ public class InvitationController {
   public ResponseEntity<ApiSuccessResponse<Void>> acceptInvitation(
       @LoginUser LoginUserDto loginUser,
       @Valid @RequestBody AcceptInvitationRequest request) {
-    log.info("User: {} accepting invitation with token: {}", loginUser.userUuid(), request.getToken());
+    log.info("User: {} accepting invitation with token: {}...", loginUser.userUuid(), request.getToken().substring(0, Math.min(8, request.getToken().length())));
 
     invitationService.acceptInvitation(loginUser.userUuid(), request.getToken());
 
