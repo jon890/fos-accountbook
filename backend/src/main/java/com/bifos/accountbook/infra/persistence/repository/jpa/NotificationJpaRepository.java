@@ -56,7 +56,6 @@ public interface NotificationJpaRepository extends JpaRepository<Notification, L
 
   @Query("SELECT n FROM Notification n " +
       "WHERE n.familyUuid = :familyUuid " +
-      "AND n.userUuid IS NOT NULL " +
       "AND n.userUuid = :userUuid " +
       "ORDER BY n.createdAt DESC")
   List<Notification> findAllByFamilyUuidAndUserUuidOrderByCreatedAtDesc(
@@ -65,7 +64,6 @@ public interface NotificationJpaRepository extends JpaRepository<Notification, L
 
   @Query("SELECT COUNT(n) FROM Notification n " +
       "WHERE n.familyUuid = :familyUuid " +
-      "AND n.userUuid IS NOT NULL " +
       "AND n.userUuid = :userUuid " +
       "AND n.isRead = false")
   long countByFamilyUuidAndUserUuidAndIsReadFalse(

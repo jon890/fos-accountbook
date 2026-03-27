@@ -121,13 +121,13 @@ public class IncomeService {
                                     .orElseThrow(() -> new BusinessException(ErrorCode.INCOME_NOT_FOUND)
                                         .addParameter("incomeUuid", incomeCustomUuid.getValue()));
 
-    // 권한 확인
-    familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());
-
     // URL familyUuid와 수입의 familyUuid 일치 여부 검증 (IDOR 방지)
     if (!income.getFamilyUuid().equals(familyUuid)) {
       throw new BusinessException(ErrorCode.ACCESS_DENIED);
     }
+
+    // 권한 확인
+    familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());
 
     return IncomeResponse.fromWithoutCategory(income);
   }
@@ -144,13 +144,13 @@ public class IncomeService {
                                     .orElseThrow(() -> new BusinessException(ErrorCode.INCOME_NOT_FOUND)
                                         .addParameter("incomeUuid", incomeCustomUuid.getValue()));
 
-    // 권한 확인
-    familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());
-
     // URL familyUuid와 수입의 familyUuid 일치 여부 검증 (IDOR 방지)
     if (!income.getFamilyUuid().equals(familyUuid)) {
       throw new BusinessException(ErrorCode.ACCESS_DENIED);
     }
+
+    // 권한 확인
+    familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());
 
     // 카테고리 변경 검증 + 가족 소속 검증 (캐시 활용, DB 조회 없음)
     CustomUuid categoryCustomUuid = null;
@@ -181,13 +181,13 @@ public class IncomeService {
                                     .orElseThrow(() -> new BusinessException(ErrorCode.INCOME_NOT_FOUND)
                                         .addParameter("incomeUuid", incomeCustomUuid.getValue()));
 
-    // 권한 확인
-    familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());
-
     // URL familyUuid와 수입의 familyUuid 일치 여부 검증 (IDOR 방지)
     if (!income.getFamilyUuid().equals(familyUuid)) {
       throw new BusinessException(ErrorCode.ACCESS_DENIED);
     }
+
+    // 권한 확인
+    familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());
 
     income.delete();
   }

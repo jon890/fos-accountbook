@@ -184,13 +184,13 @@ public class ExpenseService {
                                        .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_NOT_FOUND)
                                            .addParameter("expenseUuid", expenseCustomUuid.getValue()));
 
-    // 권한 확인
-    familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
-
     // URL familyUuid와 지출의 familyUuid 일치 여부 검증 (IDOR 방지)
     if (!expense.getFamilyUuid().equals(familyUuid)) {
       throw new BusinessException(ErrorCode.ACCESS_DENIED);
     }
+
+    // 권한 확인
+    familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
 
     return ExpenseResponse.fromWithoutCategory(expense);
   }
@@ -207,13 +207,13 @@ public class ExpenseService {
                                        .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_NOT_FOUND)
                                            .addParameter("expenseUuid", expenseCustomUuid.getValue()));
 
-    // 권한 확인
-    familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
-
     // URL familyUuid와 지출의 familyUuid 일치 여부 검증 (IDOR 방지)
     if (!expense.getFamilyUuid().equals(familyUuid)) {
       throw new BusinessException(ErrorCode.ACCESS_DENIED);
     }
+
+    // 권한 확인
+    familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
 
     // 카테고리 변경 검증 + 가족 소속 검증 (캐시 활용, DB 조회 없음)
     CustomUuid categoryCustomUuid = null;
@@ -264,13 +264,13 @@ public class ExpenseService {
                                        .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_NOT_FOUND)
                                            .addParameter("expenseUuid", expenseCustomUuid.getValue()));
 
-    // 권한 확인
-    familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
-
     // URL familyUuid와 지출의 familyUuid 일치 여부 검증 (IDOR 방지)
     if (!expense.getFamilyUuid().equals(familyUuid)) {
       throw new BusinessException(ErrorCode.ACCESS_DENIED);
     }
+
+    // 권한 확인
+    familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
 
     expense.delete();
   }

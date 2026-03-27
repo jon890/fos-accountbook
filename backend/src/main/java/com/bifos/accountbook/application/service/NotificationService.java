@@ -39,8 +39,7 @@ public class NotificationService {
     // 현재 사용자의 알림 목록 조회 (가족 내에서)
     List<Notification> notifications = notificationRepository.findByFamilyAndUser(familyUuid, userUuid);
 
-    // 현재 사용자의 읽지 않은 알림 수 (가족 내에서) - DB COUNT 쿼리로 조회
-    long unreadCount = notificationRepository.countUnreadByFamilyAndUser(familyUuid, userUuid);
+    long unreadCount = notifications.stream().filter(n -> !Boolean.TRUE.equals(n.getIsRead())).count();
 
     List<NotificationResponse> responses = notifications.stream()
                                                         .map(NotificationResponse::from)

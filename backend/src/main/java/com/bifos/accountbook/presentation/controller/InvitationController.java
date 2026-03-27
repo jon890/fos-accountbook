@@ -86,9 +86,10 @@ public class InvitationController {
   public ResponseEntity<ApiSuccessResponse<Void>> acceptInvitation(
       @LoginUser LoginUserDto loginUser,
       @Valid @RequestBody AcceptInvitationRequest request) {
-    log.info("User: {} accepting invitation with token: {}...", loginUser.userUuid(), request.getToken().substring(0, Math.min(8, request.getToken().length())));
+    String token = request.getToken();
+    log.info("User: {} accepting invitation with token: {}...", loginUser.userUuid(), token.substring(0, Math.min(8, token.length())));
 
-    invitationService.acceptInvitation(loginUser.userUuid(), request.getToken());
+    invitationService.acceptInvitation(loginUser.userUuid(), token);
 
     return ResponseEntity.ok(ApiSuccessResponse.of("초대를 수락했습니다. 가족에 가입되었습니다.", null));
   }
