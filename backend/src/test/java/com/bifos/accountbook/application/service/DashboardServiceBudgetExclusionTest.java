@@ -135,6 +135,7 @@ class DashboardServiceBudgetExclusionTest extends TestFixturesSupport {
     );
     categoryService.updateCategory(
         testUser.getUuid(),
+        testFamily.getUuid(),
         transportCategory.getUuid().getValue(),
         updateRequest
     );
@@ -192,6 +193,7 @@ class DashboardServiceBudgetExclusionTest extends TestFixturesSupport {
         );
     categoryService.updateCategory(
         testUser.getUuid(),
+        testFamily.getUuid(),
         transportCategory.getUuid().getValue(),
         updateRequest
     );
@@ -236,6 +238,7 @@ class DashboardServiceBudgetExclusionTest extends TestFixturesSupport {
     );
     categoryService.updateCategory(
         testUser.getUuid(),
+        testFamily.getUuid(),
         transportCategory.getUuid().getValue(),
         updateRequest
     );

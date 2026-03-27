@@ -73,27 +73,43 @@ public class NotificationService {
    * 알림 읽음 처리
    * 현재 사용자의 알림만 읽음 처리합니다.
    */
+  @ValidateFamilyAccess
   @Transactional
-  public NotificationResponse markAsRead(CustomUuid userUuid, String notificationUuid) {
+  public NotificationResponse markAsRead(@UserUuid CustomUuid userUuid,
+                                         @FamilyUuid CustomUuid familyUuid,
+                                         String notificationUuid) {
     CustomUuid notificationCustomUuid = CustomUuid.from(notificationUuid);
 
     Notification notification = notificationRepository.findByNotificationUuid(notificationCustomUuid)
                                                       .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND)
                                                           .addParameter("notificationUuid", notificationUuid));
 
-    // 권한 확인
-    familyValidationService.validateFamilyAccess(userUuid, notification.getFamilyUuid());
+    // 알림이 해당 가족에 속하는지 확인
+    if (!notification.getFamilyUuid().equals(familyUuid)) {
+      throw new BusinessException(ErrorCode.ACCESS_DENIED)
+          .addParameter("notificationUuid", notificationUuid);
+    }
 
     // 현재 사용자의 알림인지 확인
     if (notification.getUserUuid() == null || !notification.getUserUuid().equals(userUuid)) {
-      throw new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND)
-          .addParameter("notificationUuid", notificationUuid)
-          .addParameter("message", "해당 알림은 현재 사용자의 알림이 아닙니다");
+      throw new BusinessException(ErrorCode.ACCESS_DENIED)
+          .addParameter("notificationUuid", notificationUuid);
     }
 
     notification.markAsRead();
 
     return NotificationResponse.from(notification);
+  }
+
+  /**
+   * 알림이 속한 familyUuid 조회 (레거시 엔드포인트 하위호환용)
+   */
+  @Transactional(readOnly = true)
+  public CustomUuid resolveNotificationFamilyUuid(String notificationUuid) {
+    return notificationRepository.findByNotificationUuid(CustomUuid.from(notificationUuid))
+                                 .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND)
+                                     .addParameter("notificationUuid", notificationUuid))
+                                 .getFamilyUuid();
   }
 
   /**
