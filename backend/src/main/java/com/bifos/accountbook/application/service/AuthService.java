@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AuthService {
 
   private final UserRepository userRepository;
@@ -60,7 +61,6 @@ public class AuthService {
   /**
    * Refresh 토큰으로 새 Access 토큰 발급
    */
-  @Transactional(readOnly = true)
   public AuthResponse refreshToken(String refreshToken) {
     if (!jwtTokenProvider.validateToken(refreshToken)) {
       throw new BusinessException(ErrorCode.INVALID_TOKEN, "유효하지 않은 refresh 토큰입니다");
@@ -96,7 +96,7 @@ public class AuthService {
                        .issuedAt(accessToken.getIssuedAt())
                        .expiredAt(accessToken.getExpiresAt())
                        .user(AuthResponse.UserInfo.builder()
-                                                  .id(user.getId().toString())
+                                                  .id(user.getUuid().getValue())
                                                   .uuid(userUuid)
                                                   .email(user.getEmail())
                                                   .name(user.getName())
