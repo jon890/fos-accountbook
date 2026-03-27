@@ -163,23 +163,39 @@ public class CategoryService {
   }
 
   /**
+   * 카테고리가 속한 familyUuid 조회 (레거시 엔드포인트 하위호환용)
+   */
+  @Transactional(readOnly = true)
+  public CustomUuid resolveCategoryFamilyUuid(String categoryUuid) {
+    return categoryRepository.findActiveByUuid(CustomUuid.from(categoryUuid))
+                             .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
+                                 .addParameter("categoryUuid", categoryUuid))
+                             .getFamilyUuid();
+  }
+
+  /**
    * 카테고리 수정
    * <p>
    * 카테고리 수정 후 해당 가족의 캐시를 무효화합니다.
    */
+  @ValidateFamilyAccess
   @Transactional
-  public CategoryResponse updateCategory(CustomUuid userUuid, String categoryUuid, UpdateCategoryRequest request) {
+  public CategoryResponse updateCategory(@UserUuid CustomUuid userUuid, @FamilyUuid CustomUuid familyUuid,
+                                         String categoryUuid, UpdateCategoryRequest request) {
     CustomUuid categoryCustomUuid = CustomUuid.from(categoryUuid);
 
     Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
                                           .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
                                               .addParameter("categoryUuid", categoryCustomUuid.getValue()));
 
-    // 권한 확인
-    familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
+    // 카테고리가 해당 가족에 속하는지 확인
+    if (!category.getFamilyUuid().equals(familyUuid)) {
+      throw new BusinessException(ErrorCode.ACCESS_DENIED)
+          .addParameter("categoryUuid", categoryUuid);
+    }
 
     // 캐시 무효화를 위해 familyUuid 저장
-    final String familyUuidStr = category.getFamilyUuid().getValue();
+    final String familyUuidStr = familyUuid.getValue();
 
     // 이름 변경 시 중복 확인
     if (request.getName() != null && !request.getName().equals(category.getName())) {
@@ -216,19 +232,23 @@ public class CategoryService {
    * <p>
    * 카테고리 삭제 후 해당 가족의 캐시를 무효화합니다.
    */
+  @ValidateFamilyAccess
   @Transactional
-  public void deleteCategory(CustomUuid userUuid, String categoryUuid) {
+  public void deleteCategory(@UserUuid CustomUuid userUuid, @FamilyUuid CustomUuid familyUuid, String categoryUuid) {
     CustomUuid categoryCustomUuid = CustomUuid.from(categoryUuid);
 
     Category category = categoryRepository.findActiveByUuid(categoryCustomUuid)
                                           .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
                                               .addParameter("categoryUuid", categoryCustomUuid.getValue()));
 
-    // 권한 확인
-    familyValidationService.validateFamilyAccess(userUuid, category.getFamilyUuid());
+    // 카테고리가 해당 가족에 속하는지 확인
+    if (!category.getFamilyUuid().equals(familyUuid)) {
+      throw new BusinessException(ErrorCode.ACCESS_DENIED)
+          .addParameter("categoryUuid", categoryUuid);
+    }
 
     // 캐시 무효화를 위해 familyUuid 저장
-    final String familyUuidStr = category.getFamilyUuid().getValue();
+    final String familyUuidStr = familyUuid.getValue();
 
     // 기본 카테고리는 삭제 불가
     if (category.isDefault()) {

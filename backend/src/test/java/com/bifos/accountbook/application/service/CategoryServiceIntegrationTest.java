@@ -62,7 +62,7 @@ class CategoryServiceIntegrationTest extends TestFixturesSupport {
     Category defaultCategory = categoryRepository.getDefaultCategoryByFamily(family.getUuid()).orElseThrow();
 
     // when & then
-    assertThatThrownBy(() -> categoryService.deleteCategory(user.getUuid(), defaultCategory.getUuid().getValue()))
+    assertThatThrownBy(() -> categoryService.deleteCategory(user.getUuid(), family.getUuid(), defaultCategory.getUuid().getValue()))
         .isInstanceOf(BusinessException.class)
         .extracting("errorCode")
         .isEqualTo(ErrorCode.CANNOT_DELETE_DEFAULT_CATEGORY);
@@ -86,7 +86,7 @@ class CategoryServiceIntegrationTest extends TestFixturesSupport {
         .build();
 
     // when
-    categoryService.deleteCategory(user.getUuid(), normalCategory.getUuid().getValue());
+    categoryService.deleteCategory(user.getUuid(), family.getUuid(), normalCategory.getUuid().getValue());
 
     // then
     // 1. 일반 카테고리는 삭제 상태

@@ -147,7 +147,8 @@ class NotificationControllerTest extends AbstractControllerTest {
         .getValue();
 
     // When & Then
-    mockMvc.perform(patch("/api/v1/notifications/{notificationUuid}/read", notificationUuid)
+    mockMvc.perform(patch("/api/v1/families/{familyUuid}/notifications/{notificationUuid}/read",
+                         testFamily.getUuid().getValue(), notificationUuid)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-User-UUID", testUser.getUuid().getValue()))
            .andExpect(status().isOk())
@@ -291,11 +292,12 @@ class NotificationControllerTest extends AbstractControllerTest {
     String otherUserNotificationUuid = otherUserNotification.getNotificationUuid()
                                                             .getValue();
 
-    // When & Then: testUser가 otherUser의 알림을 읽으려고 하면 실패
-    mockMvc.perform(patch("/api/v1/notifications/{notificationUuid}/read", otherUserNotificationUuid)
+    // When & Then: testUser가 otherUser의 알림을 읽으려고 하면 실패 (403 Forbidden)
+    mockMvc.perform(patch("/api/v1/families/{familyUuid}/notifications/{notificationUuid}/read",
+                         testFamily.getUuid().getValue(), otherUserNotificationUuid)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-User-UUID", testUser.getUuid().getValue()))
-           .andExpect(status().isNotFound());
+           .andExpect(status().isForbidden());
   }
 
   @Test
@@ -321,7 +323,8 @@ class NotificationControllerTest extends AbstractControllerTest {
                                                            .getValue();
 
     // When: testUser의 알림 읽음 처리
-    mockMvc.perform(patch("/api/v1/notifications/{notificationUuid}/read", testUserNotificationUuid)
+    mockMvc.perform(patch("/api/v1/families/{familyUuid}/notifications/{notificationUuid}/read",
+                         testFamily.getUuid().getValue(), testUserNotificationUuid)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-User-UUID", testUser.getUuid().getValue()))
            .andExpect(status().isOk());
