@@ -81,7 +81,7 @@ public class ExpenseController {
       @LoginUser LoginUserDto loginUser,
       @PathVariable CustomUuid familyUuid,
       @PathVariable String expenseUuid) {
-    ExpenseResponse expense = expenseService.getExpense(loginUser.userUuid(), expenseUuid);
+    ExpenseResponse expense = expenseService.getExpense(loginUser.userUuid(), familyUuid, expenseUuid);
 
     return ResponseEntity.ok(ApiSuccessResponse.of(expense));
   }
@@ -95,7 +95,7 @@ public class ExpenseController {
       @PathVariable CustomUuid familyUuid,
       @PathVariable String expenseUuid,
       @Valid @RequestBody UpdateExpenseRequest request) {
-    ExpenseResponse response = expenseService.updateExpense(loginUser.userUuid(), expenseUuid, request);
+    ExpenseResponse response = expenseService.updateExpense(loginUser.userUuid(), familyUuid, expenseUuid, request);
 
     return ResponseEntity.ok(ApiSuccessResponse.of("지출이 수정되었습니다", response));
   }
@@ -108,7 +108,7 @@ public class ExpenseController {
       @LoginUser LoginUserDto loginUser,
       @PathVariable CustomUuid familyUuid,
       @PathVariable String expenseUuid) {
-    expenseService.deleteExpense(loginUser.userUuid(), expenseUuid);
+    expenseService.deleteExpense(loginUser.userUuid(), familyUuid, expenseUuid);
 
     return ResponseEntity.ok(ApiSuccessResponse.of("지출이 삭제되었습니다", null));
   }

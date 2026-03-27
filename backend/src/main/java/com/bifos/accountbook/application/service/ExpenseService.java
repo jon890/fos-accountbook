@@ -32,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ExpenseService {
 
   private final ExpenseRepository expenseRepository;
@@ -113,7 +114,6 @@ public class ExpenseService {
   /**
    * 가족의 지출 목록 조회 (페이징)
    */
-  @Transactional(readOnly = true)
   public Page<ExpenseResponse> getFamilyExpenses(CustomUuid userUuid, CustomUuid familyUuid, int page, int size) {
     ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
                                                              .page(page)
@@ -128,7 +128,6 @@ public class ExpenseService {
    * QueryDSL 동적 쿼리로 필터링을 처리합니다.
    */
   @ValidateFamilyAccess
-  @Transactional(readOnly = true)
   public Page<ExpenseResponse> getFamilyExpenses(
       @UserUuid CustomUuid userUuid,
       @FamilyUuid CustomUuid familyUuid,
@@ -178,8 +177,7 @@ public class ExpenseService {
   /**
    * 지출 상세 조회
    */
-  @Transactional(readOnly = true)
-  public ExpenseResponse getExpense(CustomUuid userUuid, String expenseUuid) {
+  public ExpenseResponse getExpense(CustomUuid userUuid, CustomUuid familyUuid, String expenseUuid) {
     CustomUuid expenseCustomUuid = CustomUuid.from(expenseUuid);
 
     Expense expense = expenseRepository.findActiveByUuid(expenseCustomUuid)
@@ -188,6 +186,11 @@ public class ExpenseService {
 
     // 권한 확인
     familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
+
+    // URL familyUuid와 지출의 familyUuid 일치 여부 검증 (IDOR 방지)
+    if (!expense.getFamilyUuid().equals(familyUuid)) {
+      throw new BusinessException(ErrorCode.ACCESS_DENIED);
+    }
 
     return ExpenseResponse.fromWithoutCategory(expense);
   }
@@ -196,7 +199,8 @@ public class ExpenseService {
    * 지출 수정
    */
   @Transactional
-  public ExpenseResponse updateExpense(CustomUuid userUuid, String expenseUuid, UpdateExpenseRequest request) {
+  public ExpenseResponse updateExpense(
+      CustomUuid userUuid, CustomUuid familyUuid, String expenseUuid, UpdateExpenseRequest request) {
     CustomUuid expenseCustomUuid = CustomUuid.from(expenseUuid);
 
     Expense expense = expenseRepository.findActiveByUuid(expenseCustomUuid)
@@ -205,6 +209,11 @@ public class ExpenseService {
 
     // 권한 확인
     familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
+
+    // URL familyUuid와 지출의 familyUuid 일치 여부 검증 (IDOR 방지)
+    if (!expense.getFamilyUuid().equals(familyUuid)) {
+      throw new BusinessException(ErrorCode.ACCESS_DENIED);
+    }
 
     // 카테고리 변경 검증 + 가족 소속 검증 (캐시 활용, DB 조회 없음)
     CustomUuid categoryCustomUuid = null;
@@ -248,7 +257,7 @@ public class ExpenseService {
    * 지출 삭제 (Soft Delete)
    */
   @Transactional
-  public void deleteExpense(CustomUuid userUuid, String expenseUuid) {
+  public void deleteExpense(CustomUuid userUuid, CustomUuid familyUuid, String expenseUuid) {
     CustomUuid expenseCustomUuid = CustomUuid.from(expenseUuid);
 
     Expense expense = expenseRepository.findActiveByUuid(expenseCustomUuid)
@@ -257,6 +266,11 @@ public class ExpenseService {
 
     // 권한 확인
     familyValidationService.validateFamilyAccess(userUuid, expense.getFamilyUuid());
+
+    // URL familyUuid와 지출의 familyUuid 일치 여부 검증 (IDOR 방지)
+    if (!expense.getFamilyUuid().equals(familyUuid)) {
+      throw new BusinessException(ErrorCode.ACCESS_DENIED);
+    }
 
     expense.delete();
   }

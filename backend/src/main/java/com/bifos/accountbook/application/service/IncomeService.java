@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class IncomeService {
 
   private final IncomeRepository incomeRepository;
@@ -74,7 +75,6 @@ public class IncomeService {
    * Repository 캐시를 활용하여 성능을 최적화합니다.
    */
   @ValidateFamilyAccess
-  @Transactional(readOnly = true)
   public Page<IncomeResponse> getFamilyIncomes(@UserUuid CustomUuid userUuid,
                                                @FamilyUuid CustomUuid familyUuid,
                                                IncomeSearchRequest searchRequest) {
@@ -114,8 +114,7 @@ public class IncomeService {
   /**
    * 수입 상세 조회
    */
-  @Transactional(readOnly = true)
-  public IncomeResponse getIncome(CustomUuid userUuid, String incomeUuid) {
+  public IncomeResponse getIncome(CustomUuid userUuid, CustomUuid familyUuid, String incomeUuid) {
     CustomUuid incomeCustomUuid = CustomUuid.from(incomeUuid);
 
     Income income = incomeRepository.findActiveByUuid(incomeCustomUuid)
@@ -124,6 +123,11 @@ public class IncomeService {
 
     // 권한 확인
     familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());
+
+    // URL familyUuid와 수입의 familyUuid 일치 여부 검증 (IDOR 방지)
+    if (!income.getFamilyUuid().equals(familyUuid)) {
+      throw new BusinessException(ErrorCode.ACCESS_DENIED);
+    }
 
     return IncomeResponse.fromWithoutCategory(income);
   }
@@ -132,7 +136,8 @@ public class IncomeService {
    * 수입 수정
    */
   @Transactional
-  public IncomeResponse updateIncome(CustomUuid userUuid, String incomeUuid, UpdateIncomeRequest request) {
+  public IncomeResponse updateIncome(
+      CustomUuid userUuid, CustomUuid familyUuid, String incomeUuid, UpdateIncomeRequest request) {
     CustomUuid incomeCustomUuid = CustomUuid.from(incomeUuid);
 
     Income income = incomeRepository.findActiveByUuid(incomeCustomUuid)
@@ -141,6 +146,11 @@ public class IncomeService {
 
     // 권한 확인
     familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());
+
+    // URL familyUuid와 수입의 familyUuid 일치 여부 검증 (IDOR 방지)
+    if (!income.getFamilyUuid().equals(familyUuid)) {
+      throw new BusinessException(ErrorCode.ACCESS_DENIED);
+    }
 
     // 카테고리 변경 검증 + 가족 소속 검증 (캐시 활용, DB 조회 없음)
     CustomUuid categoryCustomUuid = null;
@@ -164,7 +174,7 @@ public class IncomeService {
    * 수입 삭제 (Soft Delete)
    */
   @Transactional
-  public void deleteIncome(CustomUuid userUuid, String incomeUuid) {
+  public void deleteIncome(CustomUuid userUuid, CustomUuid familyUuid, String incomeUuid) {
     CustomUuid incomeCustomUuid = CustomUuid.from(incomeUuid);
 
     Income income = incomeRepository.findActiveByUuid(incomeCustomUuid)
@@ -174,7 +184,11 @@ public class IncomeService {
     // 권한 확인
     familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());
 
+    // URL familyUuid와 수입의 familyUuid 일치 여부 검증 (IDOR 방지)
+    if (!income.getFamilyUuid().equals(familyUuid)) {
+      throw new BusinessException(ErrorCode.ACCESS_DENIED);
+    }
+
     income.delete();
   }
 }
-
