@@ -71,11 +71,13 @@ public class CategoryController {
   @Operation(summary = "카테고리 상세 조회", description = "카테고리 UUID로 상세 정보를 조회합니다.")
   @ApiResponse(responseCode = "200", description = "조회 성공")
   @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음")
-  @GetMapping("/categories/{categoryUuid}")
+  @GetMapping("/families/{familyUuid}/categories/{categoryUuid}")
   public ResponseEntity<ApiSuccessResponse<CategoryResponse>> getCategory(
       @LoginUser LoginUserDto loginUser,
+      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
       @PathVariable String categoryUuid) {
-    log.info("Fetching category: {} by user: {}", categoryUuid, loginUser.userUuid());
+    log.info("Fetching category: {} in family: {} by user: {}", categoryUuid, familyUuid.getValue(),
+        loginUser.userUuid());
 
     CategoryResponse category = categoryService.getCategory(loginUser.userUuid(), categoryUuid);
 
