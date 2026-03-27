@@ -18,14 +18,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Table(name = "family_members", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"family_uuid", "user_uuid"})
 })
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

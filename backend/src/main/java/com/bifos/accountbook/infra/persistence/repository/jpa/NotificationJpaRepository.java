@@ -63,6 +63,15 @@ public interface NotificationJpaRepository extends JpaRepository<Notification, L
       @Param("familyUuid") CustomUuid familyUuid,
       @Param("userUuid") CustomUuid userUuid);
 
+  @Query("SELECT COUNT(n) FROM Notification n " +
+      "WHERE n.familyUuid = :familyUuid " +
+      "AND n.userUuid IS NOT NULL " +
+      "AND n.userUuid = :userUuid " +
+      "AND n.isRead = false")
+  long countByFamilyUuidAndUserUuidAndIsReadFalse(
+      @Param("familyUuid") CustomUuid familyUuid,
+      @Param("userUuid") CustomUuid userUuid);
+
   @Modifying
   @Query("DELETE FROM Notification n WHERE n.createdAt < :dateTime")
   void deleteByCreatedAtBefore(@Param("dateTime") LocalDateTime dateTime);
