@@ -70,6 +70,11 @@ public class NotificationRepositoryImpl implements NotificationRepository {
   }
 
   @Override
+  public long countUnreadByFamilyAndUser(CustomUuid familyUuid, CustomUuid userUuid) {
+    return jpaRepository.countByFamilyUuidAndUserUuidAndIsReadFalse(familyUuid, userUuid);
+  }
+
+  @Override
   public void deleteByCreatedAtBefore(LocalDateTime dateTime) {
     jpaRepository.deleteByCreatedAtBefore(dateTime);
   }

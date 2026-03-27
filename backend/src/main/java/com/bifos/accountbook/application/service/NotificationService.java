@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class NotificationService {
 
   private final NotificationRepository notificationRepository;
@@ -33,16 +34,13 @@ public class NotificationService {
    * 가족의 알림이지만 현재 사용자에게 전달된 알림만 조회합니다.
    */
   @ValidateFamilyAccess
-  @Transactional(readOnly = true)
   public NotificationListResponse getFamilyNotifications(@UserUuid CustomUuid userUuid,
                                                          @FamilyUuid CustomUuid familyUuid) {
     // 현재 사용자의 알림 목록 조회 (가족 내에서)
     List<Notification> notifications = notificationRepository.findByFamilyAndUser(familyUuid, userUuid);
 
-    // 현재 사용자의 읽지 않은 알림 수 (가족 내에서)
-    long unreadCount = notifications.stream()
-                                    .filter(n -> !n.getIsRead())
-                                    .count();
+    // 현재 사용자의 읽지 않은 알림 수 (가족 내에서) - DB COUNT 쿼리로 조회
+    long unreadCount = notificationRepository.countUnreadByFamilyAndUser(familyUuid, userUuid);
 
     List<NotificationResponse> responses = notifications.stream()
                                                         .map(NotificationResponse::from)
@@ -54,7 +52,6 @@ public class NotificationService {
   /**
    * 알림 상세 조회
    */
-  @Transactional(readOnly = true)
   public NotificationResponse getNotification(CustomUuid userUuid, String notificationUuid) {
     CustomUuid notificationCustomUuid = CustomUuid.from(notificationUuid);
 
@@ -104,7 +101,6 @@ public class NotificationService {
   /**
    * 알림이 속한 familyUuid 조회 (레거시 엔드포인트 하위호환용)
    */
-  @Transactional(readOnly = true)
   public CustomUuid resolveNotificationFamilyUuid(String notificationUuid) {
     return notificationRepository.findByNotificationUuid(CustomUuid.from(notificationUuid))
                                  .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND)
@@ -136,15 +132,9 @@ public class NotificationService {
    * 가족 내에서 현재 사용자의 읽지 않은 알림 수를 조회합니다.
    */
   @ValidateFamilyAccess
-  @Transactional(readOnly = true)
   public Long getUnreadCount(@UserUuid CustomUuid userUuid, @FamilyUuid CustomUuid familyUuid) {
-    // 가족 내에서 현재 사용자의 읽지 않은 알림 수만 조회
-    List<Notification> notifications = notificationRepository
-        .findByFamilyAndUser(familyUuid, userUuid);
-
-    return notifications.stream()
-                        .filter(n -> !n.getIsRead())
-                        .count();
+    // 가족 내에서 현재 사용자의 읽지 않은 알림 수만 조회 - DB COUNT 쿼리로 최적화
+    return notificationRepository.countUnreadByFamilyAndUser(familyUuid, userUuid);
   }
 }
 
