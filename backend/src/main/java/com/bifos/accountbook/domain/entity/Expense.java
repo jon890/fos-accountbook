@@ -16,6 +16,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -50,6 +51,14 @@ public class Expense {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "family_uuid", referencedColumnName = "uuid", nullable = false)
   private Family family;
+
+  /**
+   * 가족 UUID (읽기 전용 — QueryDSL 서브쿼리에서 묵시적 JOIN 방지용)
+   * JPA 쓰기는 family 연관관계가 담당하므로 insertable/updatable = false
+   */
+  @Getter(AccessLevel.NONE)
+  @Column(name = "family_uuid", insertable = false, updatable = false, length = 36)
+  private CustomUuid familyUuid;
 
   /**
    * 카테고리 UUID (캐시 활용을 위해 연관관계 사용 안함)

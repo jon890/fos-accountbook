@@ -3,6 +3,7 @@ package com.bifos.accountbook.domain.repository.projection;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,7 +15,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Builder
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor
 public class FamilyWithCountsProjection {
 

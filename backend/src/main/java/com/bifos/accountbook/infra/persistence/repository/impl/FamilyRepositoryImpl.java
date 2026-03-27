@@ -60,7 +60,7 @@ public class FamilyRepositoryImpl implements FamilyRepository {
     QFamilyMember fm = new QFamilyMember("fm");
     QFamilyMember fmc = new QFamilyMember("fmc");
     QExpense exp = QExpense.expense;
-    QCategory cat = new QCategory("cat");
+    QCategory cat = QCategory.category;
 
     JPQLQuery<Long> memberCountSubQ = JPAExpressions
         .select(fmc.id.count())
@@ -71,7 +71,7 @@ public class FamilyRepositoryImpl implements FamilyRepository {
     JPQLQuery<Long> expenseCountSubQ = JPAExpressions
         .select(exp.id.count())
         .from(exp)
-        .where(exp.family.uuid.eq(f.uuid)
+        .where(exp.familyUuid.eq(f.uuid)
                               .and(exp.status.eq(ExpenseStatus.ACTIVE)));
 
     JPQLQuery<Long> categoryCountSubQ = JPAExpressions

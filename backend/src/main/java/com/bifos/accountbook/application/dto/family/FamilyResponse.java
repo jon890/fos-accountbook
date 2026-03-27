@@ -70,9 +70,9 @@ public class FamilyResponse {
                          .monthlyBudget(projection.getMonthlyBudget())
                          .createdAt(projection.getCreatedAt())
                          .updatedAt(projection.getUpdatedAt())
-                         .memberCount((int) projection.getMemberCount())
-                         .expenseCount((int) projection.getExpenseCount())
-                         .categoryCount((int) projection.getCategoryCount())
+                         .memberCount(Math.toIntExact(projection.getMemberCount()))
+                         .expenseCount(Math.toIntExact(projection.getExpenseCount()))
+                         .categoryCount(Math.toIntExact(projection.getCategoryCount()))
                          .build();
   }
 }
