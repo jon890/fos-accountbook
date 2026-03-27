@@ -39,10 +39,10 @@ spring:
     enabled: true
     clean-disabled: true # 프로덕션에서 clean 금지 (데이터 보호)
 
-# OpenAPI: 환경변수로 제어 (기본 비활성화), Swagger UI는 항상 비활성화
+# OpenAPI: JSON 스펙은 항상 공개 (프론트엔드 스키마 조회용), Swagger UI는 비활성화
 springdoc:
   api-docs:
-    enabled: ${SWAGGER_ENABLED:false}
+    enabled: true
   swagger-ui:
     enabled: false
 
