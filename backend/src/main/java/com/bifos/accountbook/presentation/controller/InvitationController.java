@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -72,9 +73,10 @@ public class InvitationController {
     return ResponseEntity.ok(ApiSuccessResponse.of(invitations));
   }
 
-  @Operation(summary = "초대장 토큰 조회 (공개)", description = "토큰으로 초대장 정보를 조회합니다. (공개 API)")
+  @Operation(summary = "초대장 토큰 조회 (공개)", description = "토큰으로 초대장 정보를 조회합니다. (공개 API — 인증 불필요)")
   @ApiResponse(responseCode = "200", description = "조회 성공")
   @ApiResponse(responseCode = "404", description = "초대장을 찾을 수 없음")
+  @SecurityRequirements({})
   @GetMapping("/token/{token}")
   public ResponseEntity<ApiSuccessResponse<InvitationResponse>> getInvitationByToken(
       @PathVariable String token) {
