@@ -114,12 +114,10 @@ public class IncomeService {
   /**
    * 수입 상세 조회
    */
-  public IncomeResponse getIncome(CustomUuid userUuid, CustomUuid familyUuid, String incomeUuid) {
-    CustomUuid incomeCustomUuid = CustomUuid.from(incomeUuid);
-
-    Income income = incomeRepository.findActiveByUuid(incomeCustomUuid)
+  public IncomeResponse getIncome(CustomUuid userUuid, CustomUuid familyUuid, CustomUuid incomeUuid) {
+    Income income = incomeRepository.findActiveByUuid(incomeUuid)
                                     .orElseThrow(() -> new BusinessException(ErrorCode.INCOME_NOT_FOUND)
-                                        .addParameter("incomeUuid", incomeCustomUuid.getValue()));
+                                        .addParameter("incomeUuid", incomeUuid.getValue()));
 
     // URL familyUuid와 수입의 familyUuid 일치 여부 검증 (IDOR 방지)
     if (!income.getFamilyUuid().equals(familyUuid)) {
@@ -137,12 +135,10 @@ public class IncomeService {
    */
   @Transactional
   public IncomeResponse updateIncome(
-      CustomUuid userUuid, CustomUuid familyUuid, String incomeUuid, UpdateIncomeRequest request) {
-    CustomUuid incomeCustomUuid = CustomUuid.from(incomeUuid);
-
-    Income income = incomeRepository.findActiveByUuid(incomeCustomUuid)
+      CustomUuid userUuid, CustomUuid familyUuid, CustomUuid incomeUuid, UpdateIncomeRequest request) {
+    Income income = incomeRepository.findActiveByUuid(incomeUuid)
                                     .orElseThrow(() -> new BusinessException(ErrorCode.INCOME_NOT_FOUND)
-                                        .addParameter("incomeUuid", incomeCustomUuid.getValue()));
+                                        .addParameter("incomeUuid", incomeUuid.getValue()));
 
     // URL familyUuid와 수입의 familyUuid 일치 여부 검증 (IDOR 방지)
     if (!income.getFamilyUuid().equals(familyUuid)) {
@@ -174,12 +170,10 @@ public class IncomeService {
    * 수입 삭제 (Soft Delete)
    */
   @Transactional
-  public void deleteIncome(CustomUuid userUuid, CustomUuid familyUuid, String incomeUuid) {
-    CustomUuid incomeCustomUuid = CustomUuid.from(incomeUuid);
-
-    Income income = incomeRepository.findActiveByUuid(incomeCustomUuid)
+  public void deleteIncome(CustomUuid userUuid, CustomUuid familyUuid, CustomUuid incomeUuid) {
+    Income income = incomeRepository.findActiveByUuid(incomeUuid)
                                     .orElseThrow(() -> new BusinessException(ErrorCode.INCOME_NOT_FOUND)
-                                        .addParameter("incomeUuid", incomeCustomUuid.getValue()));
+                                        .addParameter("incomeUuid", incomeUuid.getValue()));
 
     // URL familyUuid와 수입의 familyUuid 일치 여부 검증 (IDOR 방지)
     if (!income.getFamilyUuid().equals(familyUuid)) {

@@ -177,12 +177,10 @@ public class ExpenseService {
   /**
    * 지출 상세 조회
    */
-  public ExpenseResponse getExpense(CustomUuid userUuid, CustomUuid familyUuid, String expenseUuid) {
-    CustomUuid expenseCustomUuid = CustomUuid.from(expenseUuid);
-
-    Expense expense = expenseRepository.findActiveByUuid(expenseCustomUuid)
+  public ExpenseResponse getExpense(CustomUuid userUuid, CustomUuid familyUuid, CustomUuid expenseUuid) {
+    Expense expense = expenseRepository.findActiveByUuid(expenseUuid)
                                        .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_NOT_FOUND)
-                                           .addParameter("expenseUuid", expenseCustomUuid.getValue()));
+                                           .addParameter("expenseUuid", expenseUuid.getValue()));
 
     // URL familyUuid와 지출의 familyUuid 일치 여부 검증 (IDOR 방지)
     if (!expense.getFamilyUuid().equals(familyUuid)) {
@@ -200,12 +198,10 @@ public class ExpenseService {
    */
   @Transactional
   public ExpenseResponse updateExpense(
-      CustomUuid userUuid, CustomUuid familyUuid, String expenseUuid, UpdateExpenseRequest request) {
-    CustomUuid expenseCustomUuid = CustomUuid.from(expenseUuid);
-
-    Expense expense = expenseRepository.findActiveByUuid(expenseCustomUuid)
+      CustomUuid userUuid, CustomUuid familyUuid, CustomUuid expenseUuid, UpdateExpenseRequest request) {
+    Expense expense = expenseRepository.findActiveByUuid(expenseUuid)
                                        .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_NOT_FOUND)
-                                           .addParameter("expenseUuid", expenseCustomUuid.getValue()));
+                                           .addParameter("expenseUuid", expenseUuid.getValue()));
 
     // URL familyUuid와 지출의 familyUuid 일치 여부 검증 (IDOR 방지)
     if (!expense.getFamilyUuid().equals(familyUuid)) {
@@ -257,12 +253,10 @@ public class ExpenseService {
    * 지출 삭제 (Soft Delete)
    */
   @Transactional
-  public void deleteExpense(CustomUuid userUuid, CustomUuid familyUuid, String expenseUuid) {
-    CustomUuid expenseCustomUuid = CustomUuid.from(expenseUuid);
-
-    Expense expense = expenseRepository.findActiveByUuid(expenseCustomUuid)
+  public void deleteExpense(CustomUuid userUuid, CustomUuid familyUuid, CustomUuid expenseUuid) {
+    Expense expense = expenseRepository.findActiveByUuid(expenseUuid)
                                        .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_NOT_FOUND)
-                                           .addParameter("expenseUuid", expenseCustomUuid.getValue()));
+                                           .addParameter("expenseUuid", expenseUuid.getValue()));
 
     // URL familyUuid와 지출의 familyUuid 일치 여부 검증 (IDOR 방지)
     if (!expense.getFamilyUuid().equals(familyUuid)) {

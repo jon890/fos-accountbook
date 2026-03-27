@@ -78,7 +78,7 @@ public class IncomeController {
   public ResponseEntity<ApiSuccessResponse<IncomeResponse>> getIncome(
       @LoginUser LoginUserDto loginUser,
       @PathVariable CustomUuid familyUuid,
-      @PathVariable String incomeUuid) {
+      @PathVariable CustomUuid incomeUuid) {
     IncomeResponse income = incomeService.getIncome(loginUser.userUuid(), familyUuid, incomeUuid);
     return ResponseEntity.ok(ApiSuccessResponse.of(income));
   }
@@ -90,7 +90,7 @@ public class IncomeController {
   public ResponseEntity<ApiSuccessResponse<IncomeResponse>> updateIncome(
       @LoginUser LoginUserDto loginUser,
       @PathVariable CustomUuid familyUuid,
-      @PathVariable String incomeUuid,
+      @PathVariable CustomUuid incomeUuid,
       @Valid @RequestBody UpdateIncomeRequest request) {
     IncomeResponse response = incomeService.updateIncome(
         loginUser.userUuid(), familyUuid, incomeUuid, request);
@@ -104,7 +104,7 @@ public class IncomeController {
   public ResponseEntity<ApiSuccessResponse<Void>> deleteIncome(
       @LoginUser LoginUserDto loginUser,
       @PathVariable CustomUuid familyUuid,
-      @PathVariable String incomeUuid) {
+      @PathVariable CustomUuid incomeUuid) {
     incomeService.deleteIncome(loginUser.userUuid(), familyUuid, incomeUuid);
     return ResponseEntity.ok(ApiSuccessResponse.of("수입이 삭제되었습니다", null));
   }
