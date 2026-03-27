@@ -12,6 +12,7 @@ import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.repository.InvitationRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.domain.value.FamilyMemberRole;
 import com.bifos.accountbook.presentation.annotation.FamilyUuid;
 import com.bifos.accountbook.presentation.annotation.UserUuid;
 import com.bifos.accountbook.presentation.annotation.ValidateFamilyAccess;
@@ -128,7 +129,7 @@ public class InvitationService {
     FamilyMember member = FamilyMember.builder()
                                       .familyUuid(invitation.getFamilyUuid())
                                       .userUuid(user.getUuid())
-                                      .role("member")
+                                      .role(FamilyMemberRole.MEMBER)
                                       .build();
 
     familyMemberRepository.save(member);
@@ -182,11 +183,11 @@ public class InvitationService {
                                                         .addParameter("userUuid", userUuid.getValue())
                                                         .addParameter("familyUuid", invitation.getFamilyUuid().getValue()));
 
-    if (!"owner".equals(membership.getRole())) {
+    if (membership.getRole() != FamilyMemberRole.OWNER) {
       throw new BusinessException(ErrorCode.FORBIDDEN, "초대장을 삭제할 권한이 없습니다")
           .addParameter("userUuid", userUuid.getValue())
           .addParameter("familyUuid", invitation.getFamilyUuid().getValue())
-          .addParameter("role", membership.getRole());
+          .addParameter("role", membership.getRole().getCode());
     }
   }
 }

@@ -1,6 +1,7 @@
 package com.bifos.accountbook.domain.entity;
 
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.domain.value.FamilyMemberRole;
 import com.bifos.accountbook.domain.value.FamilyMemberStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -44,7 +45,7 @@ public class FamilyMember {
 
   @Column(nullable = false, length = 20)
   @Builder.Default
-  private String role = "member";
+  private FamilyMemberRole role = FamilyMemberRole.MEMBER;
 
   @Column(name = "joined_at", nullable = false)
   @Builder.Default
