@@ -17,7 +17,6 @@ import com.bifos.accountbook.presentation.annotation.UserUuid;
 import com.bifos.accountbook.presentation.annotation.ValidateFamilyAccess;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -84,7 +83,7 @@ public class FamilyService {
     return familyRepository.findFamiliesWithCountsByUserUuid(user.getUuid())
                             .stream()
                             .map(FamilyResponse::fromProjection)
-                            .collect(Collectors.toList());
+                            .toList();
   }
 
   /**

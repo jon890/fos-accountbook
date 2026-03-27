@@ -8,16 +8,17 @@ import com.bifos.accountbook.domain.entity.QFamilyMember;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.repository.projection.FamilyWithCountsProjection;
 import com.bifos.accountbook.domain.value.CategoryStatus;
-import com.bifos.accountbook.infra.persistence.repository.jpa.FamilyJpaRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.domain.value.ExpenseStatus;
 import com.bifos.accountbook.domain.value.FamilyMemberStatus;
 import com.bifos.accountbook.domain.value.FamilyStatus;
+import com.bifos.accountbook.infra.persistence.repository.jpa.FamilyJpaRepository;
 import com.querydsl.core.Tuple;
-import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.JPAExpressions;
+import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -104,7 +105,7 @@ public class FamilyRepositoryImpl implements FamilyRepository {
   }
 
   private long nullToZero(Long value) {
-    return value != null ? value : 0L;
+    return Objects.requireNonNullElse(value, 0L);
   }
 }
 
