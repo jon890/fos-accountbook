@@ -56,9 +56,9 @@ management:
     health:
       show-details: when-authorized
       show-components: when-authorized
-  metrics:
-    export:
-      prometheus:
+  prometheus:
+    metrics:
+      export:
         enabled: true
 
 # CORS 설정 (프로덕션 환경) - allowed-origins만 오버라이드
