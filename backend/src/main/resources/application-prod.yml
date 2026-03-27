@@ -65,6 +65,7 @@ management:
 cors:
   allowed-origins:
     - https://fos-accountbook.vercel.app
+    - https://accountbook.fosworld.co.kr
 
 # P6Spy SQL 로깅 비활성화
 decorator:
