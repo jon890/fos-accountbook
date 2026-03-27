@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class InvitationService {
 
   private final InvitationRepository invitationRepository;
@@ -75,7 +76,6 @@ public class InvitationService {
    * 가족의 활성 초대장 목록 조회
    */
   @ValidateFamilyAccess
-  @Transactional(readOnly = true)
   public List<InvitationResponse> getFamilyInvitations(@UserUuid CustomUuid userUuid, @FamilyUuid CustomUuid familyUuid) {
     Family family = familyRepository.findActiveByUuid(familyUuid)
                                     .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
@@ -92,7 +92,6 @@ public class InvitationService {
   /**
    * 초대장으로 가족 정보 조회 (공개 API - 인증 불필요)
    */
-  @Transactional(readOnly = true)
   public InvitationResponse getInvitationByToken(String token) {
     Invitation invitation = invitationRepository.findValidByToken(token, LocalDateTime.now())
                                                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INVITATION_TOKEN)

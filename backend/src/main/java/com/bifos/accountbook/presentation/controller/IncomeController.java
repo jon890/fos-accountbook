@@ -77,8 +77,9 @@ public class IncomeController {
   @GetMapping("/{incomeUuid}")
   public ResponseEntity<ApiSuccessResponse<IncomeResponse>> getIncome(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable String incomeUuid) {
-    IncomeResponse income = incomeService.getIncome(loginUser.userUuid(), incomeUuid);
+      @PathVariable CustomUuid familyUuid,
+      @PathVariable CustomUuid incomeUuid) {
+    IncomeResponse income = incomeService.getIncome(loginUser.userUuid(), familyUuid, incomeUuid);
     return ResponseEntity.ok(ApiSuccessResponse.of(income));
   }
 
@@ -88,10 +89,11 @@ public class IncomeController {
   @PutMapping("/{incomeUuid}")
   public ResponseEntity<ApiSuccessResponse<IncomeResponse>> updateIncome(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable String incomeUuid,
+      @PathVariable CustomUuid familyUuid,
+      @PathVariable CustomUuid incomeUuid,
       @Valid @RequestBody UpdateIncomeRequest request) {
     IncomeResponse response = incomeService.updateIncome(
-        loginUser.userUuid(), incomeUuid, request);
+        loginUser.userUuid(), familyUuid, incomeUuid, request);
     return ResponseEntity.ok(ApiSuccessResponse.of("수입이 수정되었습니다", response));
   }
 
@@ -101,8 +103,9 @@ public class IncomeController {
   @DeleteMapping("/{incomeUuid}")
   public ResponseEntity<ApiSuccessResponse<Void>> deleteIncome(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable String incomeUuid) {
-    incomeService.deleteIncome(loginUser.userUuid(), incomeUuid);
+      @PathVariable CustomUuid familyUuid,
+      @PathVariable CustomUuid incomeUuid) {
+    incomeService.deleteIncome(loginUser.userUuid(), familyUuid, incomeUuid);
     return ResponseEntity.ok(ApiSuccessResponse.of("수입이 삭제되었습니다", null));
   }
 }
