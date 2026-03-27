@@ -1,6 +1,7 @@
 package com.bifos.accountbook.application.dto.family;
 
 import com.bifos.accountbook.domain.entity.Family;
+import com.bifos.accountbook.domain.repository.projection.FamilyWithCountsProjection;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -59,6 +60,19 @@ public class FamilyResponse {
                          .memberCount(memberCount)
                          .expenseCount(expenseCount)
                          .categoryCount(categoryCount)
+                         .build();
+  }
+
+  public static FamilyResponse fromProjection(FamilyWithCountsProjection projection) {
+    return FamilyResponse.builder()
+                         .uuid(projection.getUuid().getValue())
+                         .name(projection.getName())
+                         .monthlyBudget(projection.getMonthlyBudget())
+                         .createdAt(projection.getCreatedAt())
+                         .updatedAt(projection.getUpdatedAt())
+                         .memberCount((int) projection.getMemberCount())
+                         .expenseCount((int) projection.getExpenseCount())
+                         .categoryCount((int) projection.getCategoryCount())
                          .build();
   }
 }

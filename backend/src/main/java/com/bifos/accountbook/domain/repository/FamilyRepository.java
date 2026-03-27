@@ -1,6 +1,7 @@
 package com.bifos.accountbook.domain.repository;
 
 import com.bifos.accountbook.domain.entity.Family;
+import com.bifos.accountbook.domain.repository.projection.FamilyWithCountsProjection;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import java.util.List;
 import java.util.Optional;
@@ -30,4 +31,9 @@ public interface FamilyRepository {
    * 모든 활성 가족 조회
    */
   List<Family> findAllActive();
+
+  /**
+   * 사용자가 속한 가족 목록을 멤버/지출/카테고리 카운트와 함께 단일 쿼리로 조회 (N+1 방지)
+   */
+  List<FamilyWithCountsProjection> findFamiliesWithCountsByUserUuid(CustomUuid userUuid);
 }

@@ -8,8 +8,6 @@ import com.bifos.accountbook.application.exception.ErrorCode;
 import com.bifos.accountbook.domain.entity.Family;
 import com.bifos.accountbook.domain.entity.FamilyMember;
 import com.bifos.accountbook.domain.entity.User;
-import com.bifos.accountbook.domain.repository.CategoryRepository;
-import com.bifos.accountbook.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
@@ -18,7 +16,6 @@ import com.bifos.accountbook.presentation.annotation.UserUuid;
 import com.bifos.accountbook.presentation.annotation.ValidateFamilyAccess;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,8 +33,6 @@ public class FamilyService {
   private final CategoryService categoryService;
   private final FamilyValidationService familyValidationService;
   private final UserProfileService userProfileService;
-  private final ExpenseRepository expenseRepository;
-  private final CategoryRepository categoryRepository;
 
   /**
    * 가족 생성 (생성자를 owner로 자동 추가 + 기본 카테고리 생성)
@@ -85,26 +80,10 @@ public class FamilyService {
   public List<FamilyResponse> getUserFamilies(CustomUuid userUuid) {
     User user = userService.getUser(userUuid);
 
-    // 사용자가 속한 가족 멤버십 조회
-    List<FamilyMember> memberships = familyMemberRepository.findAllByUserUuid(user.getUuid());
-
-    // 가족 정보 조회 (memberCount, expenseCount, categoryCount 포함)
-    return memberships.stream()
-                      .map(FamilyMember::getFamilyUuid)
-                      .map(familyUuid -> {
-                        Family family = familyRepository.findActiveByUuid(familyUuid).orElse(null);
-                        if (family == null) {
-                          return null;
-                        }
-
-                        int memberCount = familyMemberRepository.countByFamilyUuid(familyUuid);
-                        int expenseCount = expenseRepository.countByFamilyUuid(familyUuid);
-                        int categoryCount = categoryRepository.countByFamilyUuid(familyUuid);
-
-                        return FamilyResponse.fromWithCounts(family, memberCount, expenseCount, categoryCount);
-                      })
-                      .filter(Objects::nonNull)
-                      .collect(Collectors.toList());
+    return familyRepository.findFamiliesWithCountsByUserUuid(user.getUuid())
+                            .stream()
+                            .map(FamilyResponse::fromProjection)
+                            .collect(Collectors.toList());
   }
 
   /**
