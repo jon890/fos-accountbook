@@ -43,14 +43,14 @@ public abstract class AbstractCodeEnumConverter<E extends Enum<E> & CodeEnum>
       return null;
     }
 
-    try {
-      return Enum.valueOf(enumClass, dbData);
-    } catch (IllegalArgumentException e) {
-      throw new IllegalArgumentException(
-          String.format("DB 값 '%s'를 %s로 변환할 수 없습니다", dbData, enumClass.getSimpleName()),
-          e
-      );
+    for (E enumValue : enumClass.getEnumConstants()) {
+      if (enumValue.getCode().equals(dbData)) {
+        return enumValue;
+      }
     }
+    throw new IllegalArgumentException(
+        String.format("DB 값 '%s'를 %s로 변환할 수 없습니다", dbData, enumClass.getSimpleName())
+    );
   }
 }
 
