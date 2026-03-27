@@ -102,6 +102,17 @@ public class NotificationService {
   }
 
   /**
+   * 알림이 속한 familyUuid 조회 (레거시 엔드포인트 하위호환용)
+   */
+  @Transactional(readOnly = true)
+  public CustomUuid resolveNotificationFamilyUuid(String notificationUuid) {
+    return notificationRepository.findByNotificationUuid(CustomUuid.from(notificationUuid))
+                                 .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND)
+                                     .addParameter("notificationUuid", notificationUuid))
+                                 .getFamilyUuid();
+  }
+
+  /**
    * 가족의 모든 알림 읽음 처리 (현재 사용자 기준)
    * 현재 사용자의 모든 알림만 읽음 처리합니다.
    */

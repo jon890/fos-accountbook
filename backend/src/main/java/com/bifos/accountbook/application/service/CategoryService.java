@@ -163,6 +163,17 @@ public class CategoryService {
   }
 
   /**
+   * 카테고리가 속한 familyUuid 조회 (레거시 엔드포인트 하위호환용)
+   */
+  @Transactional(readOnly = true)
+  public CustomUuid resolveCategoryFamilyUuid(String categoryUuid) {
+    return categoryRepository.findActiveByUuid(CustomUuid.from(categoryUuid))
+                             .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)
+                                 .addParameter("categoryUuid", categoryUuid))
+                             .getFamilyUuid();
+  }
+
+  /**
    * 카테고리 수정
    * <p>
    * 카테고리 수정 후 해당 가족의 캐시를 무효화합니다.

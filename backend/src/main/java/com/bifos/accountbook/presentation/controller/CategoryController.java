@@ -77,6 +77,43 @@ public class CategoryController {
   }
 
   /**
+   * 카테고리 수정 (Deprecated)
+   *
+   * @deprecated PUT /families/{familyUuid}/categories/{categoryUuid} 를 사용해주세요.
+   */
+  @Deprecated
+  @PutMapping("/categories/{categoryUuid}")
+  public ResponseEntity<ApiSuccessResponse<CategoryResponse>> updateCategoryLegacy(
+      @LoginUser LoginUserDto loginUser,
+      @PathVariable String categoryUuid,
+      @Valid @RequestBody UpdateCategoryRequest request) {
+    log.info("[Deprecated] Updating category: {} by user: {}", categoryUuid, loginUser.userUuid());
+
+    CustomUuid familyUuid = categoryService.resolveCategoryFamilyUuid(categoryUuid);
+    CategoryResponse response = categoryService.updateCategory(loginUser.userUuid(), familyUuid, categoryUuid, request);
+
+    return ResponseEntity.ok(ApiSuccessResponse.of("카테고리가 수정되었습니다", response));
+  }
+
+  /**
+   * 카테고리 삭제 (Deprecated)
+   *
+   * @deprecated DELETE /families/{familyUuid}/categories/{categoryUuid} 를 사용해주세요.
+   */
+  @Deprecated
+  @DeleteMapping("/categories/{categoryUuid}")
+  public ResponseEntity<ApiSuccessResponse<Void>> deleteCategoryLegacy(
+      @LoginUser LoginUserDto loginUser,
+      @PathVariable String categoryUuid) {
+    log.info("[Deprecated] Deleting category: {} by user: {}", categoryUuid, loginUser.userUuid());
+
+    CustomUuid familyUuid = categoryService.resolveCategoryFamilyUuid(categoryUuid);
+    categoryService.deleteCategory(loginUser.userUuid(), familyUuid, categoryUuid);
+
+    return ResponseEntity.ok(ApiSuccessResponse.of("카테고리가 삭제되었습니다", null));
+  }
+
+  /**
    * 카테고리 수정
    */
   @PutMapping("/families/{familyUuid}/categories/{categoryUuid}")
