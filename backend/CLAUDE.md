@@ -196,3 +196,13 @@ class SomeServiceTest extends TestFixturesSupport {
 | `local` | Docker MySQL | ✅ |
 | `prod`  | MySQL | ❌ |
 | `test`  | H2 in-memory | ❌ |
+
+## Git & PR Workflow
+
+- **1 이슈 = 1 PR = 1 브랜치**: 여러 이슈를 하나의 PR로 묶지 않는다.
+- **모든 브랜치는 `main`에서 분기**: 다른 feature/fix 브랜치에서 새 브랜치를 파생하지 않는다.
+  ```bash
+  git checkout main && git pull
+  git checkout -b fix/issue-description
+  ```
+- 병렬 에이전트로 여러 이슈를 처리할 때도 각 에이전트는 정확히 하나의 이슈 + 하나의 PR만 담당한다.
