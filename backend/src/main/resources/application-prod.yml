@@ -47,7 +47,11 @@ springdoc:
     enabled: false
 
 # Actuator 프로덕션 설정
+# management.server.port를 별도 포트로 분리하여 외부망 노출 차단
+# Docker 배포 시 8081 포트는 내부 네트워크에서만 접근 가능하도록 설정
 management:
+  server:
+    port: 8081
   endpoints:
     web:
       exposure:

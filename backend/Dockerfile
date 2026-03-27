@@ -34,12 +34,14 @@ USER spring:spring
 # Copy built jar from builder stage (only boot jar will be created)
 COPY --from=builder /app/build/libs/*.jar app.jar
 
-# Expose port
-EXPOSE 8080
+# Expose ports
+# 8080: API 서버 (외부 노출)
+# 8081: Management/Actuator (내부 네트워크 전용)
+EXPOSE 8080 8081
 
-# Health check
+# Health check (management port 8081 사용)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:${PORT:-8080}/actuator/health || exit 1
+  CMD curl -f http://localhost:8081/actuator/health || exit 1
 
 # Run the application
 # JVM 옵션:
