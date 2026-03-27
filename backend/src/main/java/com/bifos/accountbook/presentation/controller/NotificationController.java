@@ -71,15 +71,18 @@ public class NotificationController {
 
   @Operation(summary = "알림 읽음 처리", description = "특정 알림을 읽음 상태로 변경합니다.")
   @ApiResponse(responseCode = "200", description = "읽음 처리 성공")
+  @ApiResponse(responseCode = "403", description = "접근 권한 없음")
   @ApiResponse(responseCode = "404", description = "알림을 찾을 수 없음")
-  @PatchMapping("/notifications/{notificationUuid}/read")
+  @PatchMapping("/families/{familyUuid}/notifications/{notificationUuid}/read")
   public ResponseEntity<ApiSuccessResponse<NotificationResponse>> markAsRead(
       @LoginUser LoginUserDto loginUser,
+      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
       @Parameter(description = "알림 UUID") @PathVariable String notificationUuid) {
-    log.info("Marking notification as read: {} by user: {}", notificationUuid, loginUser.userUuid());
+    log.info("Marking notification as read: {} by user: {} in family: {}", notificationUuid,
+        loginUser.userUuid(), familyUuid);
 
     NotificationResponse response = notificationService.markAsRead(
-        loginUser.userUuid(), notificationUuid);
+        loginUser.userUuid(), familyUuid, notificationUuid);
 
     return ResponseEntity.ok(ApiSuccessResponse.of("알림을 읽음 처리했습니다", response));
   }

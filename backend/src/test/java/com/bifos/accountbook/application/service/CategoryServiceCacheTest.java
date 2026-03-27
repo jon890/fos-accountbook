@@ -130,7 +130,7 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
         null,
         null
     );
-    categoryService.updateCategory(testUser.getUuid(), category.getUuid().getValue(), request);
+    categoryService.updateCategory(testUser.getUuid(), familyUuid, category.getUuid().getValue(), request);
 
     // Then: 캐시가 무효화됨
     assertThat(cache.get(familyUuidStr)).isNull();
@@ -156,7 +156,7 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
     assertThat(cache.get(familyUuidStr)).isNotNull();
 
     // When: 카테고리 삭제
-    categoryService.deleteCategory(testUser.getUuid(), category.getUuid().getValue());
+    categoryService.deleteCategory(testUser.getUuid(), familyUuid, category.getUuid().getValue());
 
     // Then: 캐시가 무효화됨
     assertThat(cache.get(familyUuidStr)).isNull();

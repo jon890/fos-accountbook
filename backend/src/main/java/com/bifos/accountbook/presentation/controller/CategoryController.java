@@ -79,14 +79,16 @@ public class CategoryController {
   /**
    * 카테고리 수정
    */
-  @PutMapping("/categories/{categoryUuid}")
+  @PutMapping("/families/{familyUuid}/categories/{categoryUuid}")
   public ResponseEntity<ApiSuccessResponse<CategoryResponse>> updateCategory(
       @LoginUser LoginUserDto loginUser,
+      @PathVariable CustomUuid familyUuid,
       @PathVariable String categoryUuid,
       @Valid @RequestBody UpdateCategoryRequest request) {
-    log.info("Updating category: {} by user: {}", categoryUuid, loginUser.userUuid());
+    log.info("Updating category: {} in family: {} by user: {}", categoryUuid, familyUuid.getValue(),
+        loginUser.userUuid());
 
-    CategoryResponse response = categoryService.updateCategory(loginUser.userUuid(), categoryUuid, request);
+    CategoryResponse response = categoryService.updateCategory(loginUser.userUuid(), familyUuid, categoryUuid, request);
 
     return ResponseEntity.ok(ApiSuccessResponse.of("카테고리가 수정되었습니다", response));
   }
@@ -94,13 +96,15 @@ public class CategoryController {
   /**
    * 카테고리 삭제
    */
-  @DeleteMapping("/categories/{categoryUuid}")
+  @DeleteMapping("/families/{familyUuid}/categories/{categoryUuid}")
   public ResponseEntity<ApiSuccessResponse<Void>> deleteCategory(
       @LoginUser LoginUserDto loginUser,
+      @PathVariable CustomUuid familyUuid,
       @PathVariable String categoryUuid) {
-    log.info("Deleting category: {} by user: {}", categoryUuid, loginUser.userUuid());
+    log.info("Deleting category: {} in family: {} by user: {}", categoryUuid, familyUuid.getValue(),
+        loginUser.userUuid());
 
-    categoryService.deleteCategory(loginUser.userUuid(), categoryUuid);
+    categoryService.deleteCategory(loginUser.userUuid(), familyUuid, categoryUuid);
 
     return ResponseEntity.ok(ApiSuccessResponse.of("카테고리가 삭제되었습니다", null));
   }
