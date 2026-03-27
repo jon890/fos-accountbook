@@ -3,6 +3,7 @@ package com.bifos.accountbook.infra.persistence.repository.impl;
 import com.bifos.accountbook.domain.entity.Invitation;
 import com.bifos.accountbook.domain.repository.InvitationRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.domain.value.InvitationStatus;
 import com.bifos.accountbook.infra.persistence.repository.jpa.InvitationJpaRepository;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,12 +38,12 @@ public class InvitationRepositoryImpl implements InvitationRepository {
 
   @Override
   public List<Invitation> findActiveByFamilyUuid(CustomUuid familyUuid, LocalDateTime now) {
-    return jpaRepository.findActiveByFamilyUuid(familyUuid, now);
+    return jpaRepository.findActiveByFamilyUuid(familyUuid, InvitationStatus.PENDING, now);
   }
 
   @Override
   public Optional<Invitation> findValidByToken(String token, LocalDateTime now) {
-    return jpaRepository.findValidByToken(token, now);
+    return jpaRepository.findValidByToken(token, InvitationStatus.PENDING, now);
   }
 
   @Override

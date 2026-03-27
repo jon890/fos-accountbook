@@ -1,6 +1,7 @@
 package com.bifos.accountbook.application.dto.invitation;
 
 import com.bifos.accountbook.domain.entity.Invitation;
+import com.bifos.accountbook.domain.value.InvitationStatus;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,7 +18,7 @@ public class InvitationResponse {
   private String familyUuid;
   private String familyName;
   private String token;
-  private String status;
+  private InvitationStatus status;
   private LocalDateTime expiresAt;
   private LocalDateTime createdAt;
   private boolean isExpired;
@@ -25,7 +26,7 @@ public class InvitationResponse {
 
   public static InvitationResponse from(Invitation invitation) {
     boolean isExpired = invitation.getExpiresAt().isBefore(LocalDateTime.now());
-    boolean isUsed = "ACCEPTED".equals(invitation.getStatus());
+    boolean isUsed = InvitationStatus.ACCEPTED == invitation.getStatus();
 
     return InvitationResponse.builder()
                              .uuid(invitation.getUuid().getValue())

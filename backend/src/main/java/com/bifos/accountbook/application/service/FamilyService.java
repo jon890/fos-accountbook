@@ -11,6 +11,7 @@ import com.bifos.accountbook.domain.entity.User;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.domain.value.FamilyMemberRole;
 import com.bifos.accountbook.presentation.annotation.FamilyUuid;
 import com.bifos.accountbook.presentation.annotation.UserUuid;
 import com.bifos.accountbook.presentation.annotation.ValidateFamilyAccess;
@@ -55,7 +56,7 @@ public class FamilyService {
     FamilyMember member = FamilyMember.builder()
                                       .familyUuid(family.getUuid())
                                       .userUuid(user.getUuid())
-                                      .role("owner")
+                                      .role(FamilyMemberRole.OWNER)
                                       .build();
 
     familyMemberRepository.save(member);
