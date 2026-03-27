@@ -89,6 +89,24 @@ return ResponseEntity.ok(ApiSuccessResponse.of("메시지", data));
 `BusinessException(ErrorCode.XXX)` 사용. `ErrorCode`에 HTTP 상태코드 정의됨:
 - `ACCESS_DENIED` (403), `NOT_FAMILY_MEMBER` (403), `CATEGORY_NOT_FOUND` (404) 등
 
+### 이벤트 기반 사이드이펙트
+
+지출 생성/수정은 Spring Application Event로 사이드이펙트(예산 알림)를 트리거한다:
+
+```java
+// Service: 이벤트 발행
+applicationEventPublisher.publishEvent(new ExpenseCreatedEvent(familyUuid, date));
+
+// Listener: 트랜잭션 커밋 후 처리 (AFTER_COMMIT)
+@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+public void handleExpenseCreated(ExpenseCreatedEvent event) {
+    budgetAlertService.checkAndCreateBudgetAlert(...);
+    // 예외는 삼킴 — 알림 실패가 지출 생성을 막으면 안 됨
+}
+```
+
+`Notification` 엔티티: 예산 경고(80%)/초과(100%) 발생 시 생성됨. `is_read`, `alert_month` 컬럼으로 중복 방지.
+
 ### 캐시 무효화
 
 같은 클래스 내에서 `@CacheEvict` 메서드를 자기 호출하면 AOP 프록시를 우회하므로 `CacheManager`를 직접 사용한다. `createCategory()`처럼 외부에서 호출되는 메서드는 `@CacheEvict` 어노테이션 사용 가능.
@@ -166,6 +184,10 @@ class SomeServiceTest extends TestFixturesSupport {
 - 테이블/컬럼명: `snake_case`, PK: `id BIGINT AUTO_INCREMENT`
 - UUID 컬럼: `VARCHAR(36)` + UNIQUE 인덱스
 - **스키마 변경은 반드시 Flyway 마이그레이션으로만**
+
+**주요 도메인 개념**:
+- `expenses.exclude_from_budget` / `categories.exclude_from_budget`: 예산 집계에서 제외하는 플래그 (예: 보험, 저축)
+- `categories.is_default`: 가족당 하나의 기본 카테고리("미분류") 존재 — 카테고리 삭제 시 해당 지출이 이 카테고리로 이동. 기본 카테고리는 삭제 불가
 
 ## Spring Profiles
 
