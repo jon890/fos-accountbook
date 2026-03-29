@@ -13,12 +13,11 @@ import com.bifos.accountbook.domain.value.ExpenseStatus;
 import com.bifos.accountbook.domain.value.FamilyMemberStatus;
 import com.bifos.accountbook.domain.value.FamilyStatus;
 import com.bifos.accountbook.infra.persistence.repository.jpa.FamilyJpaRepository;
-import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -80,32 +79,16 @@ public class FamilyRepositoryImpl implements FamilyRepository {
         .where(cat.familyUuid.eq(f.uuid)
                               .and(cat.status.eq(CategoryStatus.ACTIVE)));
 
-    List<Tuple> tuples = queryFactory
-        .select(f.uuid, f.name, f.monthlyBudget, f.createdAt, f.updatedAt,
-            memberCountSubQ, expenseCountSubQ, categoryCountSubQ)
+    return queryFactory
+        .select(Projections.constructor(FamilyWithCountsProjection.class,
+            f.uuid, f.name, f.monthlyBudget, f.createdAt, f.updatedAt,
+            memberCountSubQ, expenseCountSubQ, categoryCountSubQ))
         .from(f)
         .join(fm).on(fm.familyUuid.eq(f.uuid)
                                   .and(fm.userUuid.eq(userUuid))
                                   .and(fm.status.eq(FamilyMemberStatus.ACTIVE)))
         .where(f.status.eq(FamilyStatus.ACTIVE))
         .fetch();
-
-    return tuples.stream()
-                 .map(t -> FamilyWithCountsProjection.builder()
-                                                     .uuid(t.get(f.uuid))
-                                                     .name(t.get(f.name))
-                                                     .monthlyBudget(t.get(f.monthlyBudget))
-                                                     .createdAt(t.get(f.createdAt))
-                                                     .updatedAt(t.get(f.updatedAt))
-                                                     .memberCount(nullToZero(t.get(memberCountSubQ)))
-                                                     .expenseCount(nullToZero(t.get(expenseCountSubQ)))
-                                                     .categoryCount(nullToZero(t.get(categoryCountSubQ)))
-                                                     .build())
-                 .toList();
-  }
-
-  private long nullToZero(Long value) {
-    return Objects.requireNonNullElse(value, 0L);
   }
 }
 

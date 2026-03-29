@@ -3,19 +3,15 @@ package com.bifos.accountbook.domain.repository.projection;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 /**
  * 가족 정보 + 멤버/지출/카테고리 카운트 프로젝션
  * FamilyRepository.findFamiliesWithCountsByUserUuid 단일 쿼리 결과에 사용
+ * QueryDSL Projections.constructor()로 생성 — 필드 순서가 생성자 순서와 일치해야 합니다.
  */
 @Getter
-@Builder
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor
 public class FamilyWithCountsProjection {
 
@@ -25,6 +21,7 @@ public class FamilyWithCountsProjection {
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
   private long memberCount;
+  /** 전체 활성 지출 수 (예산 제외 여부와 무관, 표시용) */
   private long expenseCount;
   private long categoryCount;
 }
