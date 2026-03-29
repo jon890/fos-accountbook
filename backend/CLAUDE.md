@@ -191,11 +191,13 @@ class SomeServiceTest extends TestFixturesSupport {
 
 ## Spring Profiles
 
-| Profile | DB | Swagger |
-|---------|-----|---------|
-| `local` | Docker MySQL | ✅ |
-| `prod`  | MySQL | ❌ |
-| `test`  | H2 in-memory | ❌ |
+| Profile | DB | Swagger UI | API Docs (`/v3/api-docs`) |
+|---------|-----|------------|--------------------------|
+| `local` | Docker MySQL | ✅ | ✅ |
+| `prod`  | MySQL | ❌ | ✅ (의도적 공개) |
+| `test`  | H2 in-memory | ❌ | ❌ |
+
+> **스펙**: `prod`에서 `/v3/api-docs` JSON 스펙은 항상 공개합니다. 프론트엔드가 언제든 API 스키마를 조회할 수 있도록 하기 위함입니다. Swagger UI(`/swagger-ui`)는 비활성화 상태를 유지합니다.
 
 ## Git & PR Workflow
 
