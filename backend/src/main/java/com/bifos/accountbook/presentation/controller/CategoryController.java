@@ -8,6 +8,11 @@ import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.presentation.annotation.LoginUser;
 import com.bifos.accountbook.presentation.dto.ApiSuccessResponse;
 import com.bifos.accountbook.presentation.dto.LoginUserDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -23,21 +28,23 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "카테고리 (Category)", description = "지출 카테고리 관리 API")
 @Slf4j
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class CategoryController {
 
   private final CategoryService categoryService;
 
-  /**
-   * 카테고리 생성
-   */
+  @Operation(summary = "카테고리 생성", description = "가족의 새 지출 카테고리를 생성합니다.")
+  @ApiResponse(responseCode = "201", description = "생성 성공")
+  @ApiResponse(responseCode = "403", description = "접근 권한 없음")
   @PostMapping("/families/{familyUuid}/categories")
   public ResponseEntity<ApiSuccessResponse<CategoryResponse>> createCategory(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable CustomUuid familyUuid,
+      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
       @Valid @RequestBody CreateCategoryRequest request) {
     log.info("Creating category in family: {} by user: {}", familyUuid.getValue(), loginUser.userUuid());
 
@@ -48,13 +55,12 @@ public class CategoryController {
         .body(ApiSuccessResponse.of("카테고리가 생성되었습니다", response));
   }
 
-  /**
-   * 가족의 카테고리 목록 조회
-   */
+  @Operation(summary = "카테고리 목록 조회", description = "가족의 모든 활성 카테고리 목록을 조회합니다.")
+  @ApiResponse(responseCode = "200", description = "조회 성공")
   @GetMapping("/families/{familyUuid}/categories")
   public ResponseEntity<ApiSuccessResponse<List<CategoryResponse>>> getFamilyCategories(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable CustomUuid familyUuid) {
+      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid) {
     log.info("Fetching categories for family: {} by user: {}", familyUuid.getValue(), loginUser.userUuid());
 
     List<CategoryResponse> categories = categoryService.getFamilyCategories(loginUser.userUuid(), familyUuid);
@@ -62,14 +68,16 @@ public class CategoryController {
     return ResponseEntity.ok(ApiSuccessResponse.of(categories));
   }
 
-  /**
-   * 카테고리 상세 조회
-   */
-  @GetMapping("/categories/{categoryUuid}")
+  @Operation(summary = "카테고리 상세 조회", description = "카테고리 UUID로 상세 정보를 조회합니다.")
+  @ApiResponse(responseCode = "200", description = "조회 성공")
+  @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음")
+  @GetMapping("/families/{familyUuid}/categories/{categoryUuid}")
   public ResponseEntity<ApiSuccessResponse<CategoryResponse>> getCategory(
       @LoginUser LoginUserDto loginUser,
+      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
       @PathVariable String categoryUuid) {
-    log.info("Fetching category: {} by user: {}", categoryUuid, loginUser.userUuid());
+    log.info("Fetching category: {} in family: {} by user: {}", categoryUuid, familyUuid.getValue(),
+        loginUser.userUuid());
 
     CategoryResponse category = categoryService.getCategory(loginUser.userUuid(), categoryUuid);
 
@@ -82,6 +90,11 @@ public class CategoryController {
    * @deprecated PUT /families/{familyUuid}/categories/{categoryUuid} 를 사용해주세요.
    */
   @Deprecated
+  @Operation(summary = "[Deprecated] 카테고리 수정", description = "⚠️ Deprecated: /families/{familyUuid}/categories/{categoryUuid} 를 사용해주세요.",
+      deprecated = true)
+  @ApiResponse(responseCode = "200", description = "수정 성공")
+  @ApiResponse(responseCode = "403", description = "접근 권한 없음")
+  @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음")
   @PutMapping("/categories/{categoryUuid}")
   public ResponseEntity<ApiSuccessResponse<CategoryResponse>> updateCategoryLegacy(
       @LoginUser LoginUserDto loginUser,
@@ -101,6 +114,12 @@ public class CategoryController {
    * @deprecated DELETE /families/{familyUuid}/categories/{categoryUuid} 를 사용해주세요.
    */
   @Deprecated
+  @Operation(summary = "[Deprecated] 카테고리 삭제", description = "⚠️ Deprecated: /families/{familyUuid}/categories/{categoryUuid} 를 사용해주세요.",
+      deprecated = true)
+  @ApiResponse(responseCode = "200", description = "삭제 성공")
+  @ApiResponse(responseCode = "400", description = "기본 카테고리는 삭제 불가")
+  @ApiResponse(responseCode = "403", description = "접근 권한 없음")
+  @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음")
   @DeleteMapping("/categories/{categoryUuid}")
   public ResponseEntity<ApiSuccessResponse<Void>> deleteCategoryLegacy(
       @LoginUser LoginUserDto loginUser,
@@ -113,13 +132,14 @@ public class CategoryController {
     return ResponseEntity.ok(ApiSuccessResponse.of("카테고리가 삭제되었습니다", null));
   }
 
-  /**
-   * 카테고리 수정
-   */
+  @Operation(summary = "카테고리 수정", description = "카테고리 정보를 수정합니다.")
+  @ApiResponse(responseCode = "200", description = "수정 성공")
+  @ApiResponse(responseCode = "403", description = "접근 권한 없음")
+  @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음")
   @PutMapping("/families/{familyUuid}/categories/{categoryUuid}")
   public ResponseEntity<ApiSuccessResponse<CategoryResponse>> updateCategory(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable CustomUuid familyUuid,
+      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
       @PathVariable String categoryUuid,
       @Valid @RequestBody UpdateCategoryRequest request) {
     log.info("Updating category: {} in family: {} by user: {}", categoryUuid, familyUuid.getValue(),
@@ -130,13 +150,15 @@ public class CategoryController {
     return ResponseEntity.ok(ApiSuccessResponse.of("카테고리가 수정되었습니다", response));
   }
 
-  /**
-   * 카테고리 삭제
-   */
+  @Operation(summary = "카테고리 삭제", description = "카테고리를 삭제합니다. 해당 카테고리의 지출은 기본 카테고리로 이동됩니다.")
+  @ApiResponse(responseCode = "200", description = "삭제 성공")
+  @ApiResponse(responseCode = "400", description = "기본 카테고리는 삭제 불가")
+  @ApiResponse(responseCode = "403", description = "접근 권한 없음")
+  @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음")
   @DeleteMapping("/families/{familyUuid}/categories/{categoryUuid}")
   public ResponseEntity<ApiSuccessResponse<Void>> deleteCategory(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable CustomUuid familyUuid,
+      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
       @PathVariable String categoryUuid) {
     log.info("Deleting category: {} in family: {} by user: {}", categoryUuid, familyUuid.getValue(),
         loginUser.userUuid());
