@@ -124,6 +124,11 @@ public class Expense {
    * Family UUID 조회 (편의 메서드)
    */
   public CustomUuid getFamilyUuid() {
+    // DB에서 로드된 경우 컬럼 필드 직접 반환 (LAZY 로딩 불필요)
+    // Builder로 생성 직후(save 전/직후)에는 familyUuid 컬럼이 아직 null이므로 연관관계로 fallback
+    if (this.familyUuid != null) {
+      return this.familyUuid;
+    }
     return family != null ? family.getUuid() : null;
   }
 

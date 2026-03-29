@@ -55,7 +55,7 @@ public class FamilyRepositoryImpl implements FamilyRepository {
 
   @Override
   public List<FamilyWithCountsProjection> findFamiliesWithCountsByUserUuid(CustomUuid userUuid) {
-    QFamily f = QFamily.family;
+    QFamily f = new QFamily("f");
     QFamilyMember fm = new QFamilyMember("fm");
     QFamilyMember fmc = new QFamilyMember("fmc");
     QExpense exp = QExpense.expense;
@@ -79,6 +79,7 @@ public class FamilyRepositoryImpl implements FamilyRepository {
         .where(cat.familyUuid.eq(f.uuid)
                               .and(cat.status.eq(CategoryStatus.ACTIVE)));
 
+    // Projections.constructor()는 FamilyWithCountsProjection 생성자 파라미터 순서와 일치해야 합니다.
     return queryFactory
         .select(Projections.constructor(FamilyWithCountsProjection.class,
             f.uuid, f.name, f.monthlyBudget, f.createdAt, f.updatedAt,

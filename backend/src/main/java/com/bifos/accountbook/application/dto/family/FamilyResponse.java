@@ -20,9 +20,9 @@ public class FamilyResponse {
   private BigDecimal monthlyBudget;
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
-  private Integer memberCount;
-  private Integer expenseCount;
-  private Integer categoryCount;
+  private long memberCount;
+  private long expenseCount;
+  private long categoryCount;
 
   public static FamilyResponse from(Family family) {
     return FamilyResponse.builder()
@@ -70,9 +70,9 @@ public class FamilyResponse {
                          .monthlyBudget(projection.getMonthlyBudget())
                          .createdAt(projection.getCreatedAt())
                          .updatedAt(projection.getUpdatedAt())
-                         .memberCount(Math.toIntExact(projection.getMemberCount()))
-                         .expenseCount(Math.toIntExact(projection.getExpenseCount()))
-                         .categoryCount(Math.toIntExact(projection.getCategoryCount()))
+                         .memberCount(projection.getMemberCount())
+                         .expenseCount(projection.getExpenseCount())
+                         .categoryCount(projection.getCategoryCount())
                          .build();
   }
 }
