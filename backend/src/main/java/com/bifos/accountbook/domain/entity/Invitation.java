@@ -1,6 +1,7 @@
 package com.bifos.accountbook.domain.entity;
 
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.domain.value.InvitationStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -54,7 +55,7 @@ public class Invitation {
 
   @Column(nullable = false, length = 50)
   @Builder.Default
-  private String status = "PENDING";
+  private InvitationStatus status = InvitationStatus.PENDING;
 
   @CreatedDate
   @Column(name = "created_at", nullable = false, updatable = false)
@@ -82,13 +83,13 @@ public class Invitation {
    * 초대 수락
    */
   public void accept() {
-    if (!"PENDING".equals(this.status)) {
+    if (this.status != InvitationStatus.PENDING) {
       throw new IllegalStateException("수락할 수 없는 초대 상태입니다");
     }
     if (LocalDateTime.now().isAfter(this.expiresAt)) {
       throw new IllegalStateException("만료된 초대입니다");
     }
-    this.status = "ACCEPTED";
+    this.status = InvitationStatus.ACCEPTED;
   }
 
   /**
@@ -102,6 +103,6 @@ public class Invitation {
    * 초대 수락 가능 여부 확인
    */
   public boolean canAccept() {
-    return "PENDING".equals(this.status) && !isExpired();
+    return this.status == InvitationStatus.PENDING && !isExpired();
   }
 }

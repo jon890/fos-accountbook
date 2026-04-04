@@ -7,6 +7,7 @@ import com.bifos.accountbook.domain.entity.FamilyMember;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.domain.value.FamilyMemberRole;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -59,11 +60,11 @@ public class FamilyValidationService {
                                                         .addParameter("userUuid", userUuid.getValue())
                                                         .addParameter("familyUuid", familyUuid.getValue()));
 
-    if (!"owner".equals(membership.getRole())) {
+    if (membership.getRole() != FamilyMemberRole.OWNER) {
       throw new BusinessException(ErrorCode.FORBIDDEN, "가족 소유자만 이 작업을 수행할 수 있습니다")
           .addParameter("userUuid", userUuid.getValue())
           .addParameter("familyUuid", familyUuid.getValue())
-          .addParameter("role", membership.getRole());
+          .addParameter("role", membership.getRole().getCode());
     }
   }
 

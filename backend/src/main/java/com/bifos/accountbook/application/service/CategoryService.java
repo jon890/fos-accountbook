@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CategoryService {
 
   private final CategoryRepository categoryRepository;
@@ -73,7 +74,6 @@ public class CategoryService {
    * 이를 통해 다양한 Response 형태로 유연하게 변환할 수 있습니다.
    */
   @ValidateFamilyAccess
-  @Transactional(readOnly = true)
   public List<CategoryResponse> getFamilyCategories(@UserUuid CustomUuid userUuid,
                                                     @FamilyUuid CustomUuid familyUuid) {
     // Repository에서 캐시된 Entity 조회
@@ -94,7 +94,6 @@ public class CategoryService {
    * @param categoryUuid 조회할 카테고리 UUID (필터링)
    * @return 카테고리 응답 (없으면 예외)
    */
-  @Transactional(readOnly = true)
   public CategoryResponse findByUuidCached(CustomUuid familyUuid, CustomUuid categoryUuid) {
     // Repository에서 캐시된 Entity 조회
     List<Category> categories = categoryRepository.findAllByFamilyUuid(familyUuid);
@@ -120,7 +119,6 @@ public class CategoryService {
    * @return 카테고리 응답 (없거나 가족에 속하지 않으면 예외)
    * @throws BusinessException 카테고리가 해당 가족에 속하지 않는 경우
    */
-  @Transactional(readOnly = true)
   public CategoryResponse validateAndFindCached(CustomUuid familyUuid, CustomUuid categoryUuid) {
     CategoryResponse category = findByUuidCached(familyUuid, categoryUuid);
 
@@ -140,7 +138,6 @@ public class CategoryService {
    * Repository에서 캐시된 Entity를 직접 반환합니다.
    * IncomeService, ExpenseService에서 CategoryInfo 변환을 위해 사용됩니다.
    */
-  @Transactional(readOnly = true)
   public List<Category> getFamilyCategoriesEntity(CustomUuid familyUuid) {
     return categoryRepository.findAllByFamilyUuid(familyUuid);
   }
@@ -148,7 +145,6 @@ public class CategoryService {
   /**
    * 카테고리 상세 조회
    */
-  @Transactional(readOnly = true)
   public CategoryResponse getCategory(CustomUuid userUuid, String categoryUuid) {
     CustomUuid categoryCustomUuid = CustomUuid.from(categoryUuid);
 
@@ -165,7 +161,6 @@ public class CategoryService {
   /**
    * 카테고리가 속한 familyUuid 조회 (레거시 엔드포인트 하위호환용)
    */
-  @Transactional(readOnly = true)
   public CustomUuid resolveCategoryFamilyUuid(String categoryUuid) {
     return categoryRepository.findActiveByUuid(CustomUuid.from(categoryUuid))
                              .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND)

@@ -9,6 +9,11 @@ import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.presentation.annotation.LoginUser;
 import com.bifos.accountbook.presentation.dto.ApiSuccessResponse;
 import com.bifos.accountbook.presentation.dto.LoginUserDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,28 +24,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "대시보드 (Dashboard)", description = "지출 통계 및 대시보드 API")
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/families/{familyUuid}/dashboard")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class DashboardController {
 
   private final DashboardService dashboardService;
 
-  /**
-   * 카테고리별 지출 요약 조회
-   *
-   * @param loginUser    로그인 사용자
-   * @param familyUuid   가족 UUID
-   * @param startDate    시작 날짜 (선택)
-   * @param endDate      종료 날짜 (선택)
-   * @param categoryUuid 카테고리 UUID (선택)
-   * @return 카테고리별 지출 요약 (전체 합계 + 카테고리별 통계)
-   */
+  @Operation(summary = "카테고리별 지출 요약", description = "가족의 카테고리별 지출 요약을 조회합니다.")
+  @ApiResponse(responseCode = "200", description = "조회 성공")
   @GetMapping("/expenses/by-category")
   public ResponseEntity<ApiSuccessResponse<CategoryExpenseSummaryResponse>> getCategoryExpenseSummary(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable CustomUuid familyUuid,
+      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
       @RequestParam(required = false) String startDate,
       @RequestParam(required = false) String endDate,
       @RequestParam(required = false) String categoryUuid) {
@@ -54,19 +53,12 @@ public class DashboardController {
     return ResponseEntity.ok(ApiSuccessResponse.of(response));
   }
 
-  /**
-   * 월별 통계 조회
-   *
-   * @param loginUser  로그인 사용자
-   * @param familyUuid 가족 UUID
-   * @param year       연도 (선택, 기본값: 현재 연도)
-   * @param month      월 (선택, 기본값: 현재 월)
-   * @return 월별 통계 (지출, 수입, 예산, 가족 구성원 수)
-   */
+  @Operation(summary = "월별 통계 조회", description = "가족의 월별 통계를 조회합니다.")
+  @ApiResponse(responseCode = "200", description = "조회 성공")
   @GetMapping("/stats/monthly")
   public ResponseEntity<ApiSuccessResponse<MonthlyStatsResponse>> getMonthlyStats(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable CustomUuid familyUuid,
+      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
       @RequestParam(required = false) Integer year,
       @RequestParam(required = false) Integer month) {
 
@@ -81,10 +73,12 @@ public class DashboardController {
     return ResponseEntity.ok(ApiSuccessResponse.of(response));
   }
 
+  @Operation(summary = "일별 통계 조회", description = "가족의 일별 통계를 조회합니다.")
+  @ApiResponse(responseCode = "200", description = "조회 성공")
   @GetMapping("/daily-stats")
   public ResponseEntity<ApiSuccessResponse<DailyStatsResponse>> getDailyStats(
       @LoginUser LoginUserDto loginUser,
-      @PathVariable CustomUuid familyUuid,
+      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
       @RequestParam Integer year,
       @RequestParam Integer month) {
 
