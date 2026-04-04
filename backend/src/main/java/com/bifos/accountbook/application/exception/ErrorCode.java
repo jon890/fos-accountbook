@@ -82,6 +82,12 @@ public enum ErrorCode {
   ALREADY_FAMILY_MEMBER(HttpStatus.CONFLICT, "I005", "이미 해당 가족의 구성원입니다"),
 
   // ============================================
+  // Recurring Expense Errors (6500~6599)
+  // ============================================
+  RECURRING_EXPENSE_NOT_FOUND(HttpStatus.NOT_FOUND, "RE001", "반복 지출을 찾을 수 없습니다"),
+  INVALID_DAY_OF_MONTH(HttpStatus.BAD_REQUEST, "RE002", "반복일은 1~28 사이여야 합니다"),
+
+  // ============================================
   // Notification Errors (8000~8999)
   // ============================================
   NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "알림을 찾을 수 없습니다");

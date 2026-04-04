@@ -1,0 +1,111 @@
+{
+  "name": "v2-recurring-backend",
+  "description": "반복 지출 스케줄링 백엔드 구현 — Flyway 마이그레이션부터 Controller까지",
+  "created_at": "2026-04-04T00:00:00Z",
+  "updated_at": "2026-04-04T12:16:11.409470+00:00",
+  "status": "completed",
+  "current_phase": 7,
+  "total_phases": 7,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "Flyway 마이그레이션 (V13, V14)",
+      "file": "phase-01.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 2,
+      "title": "도메인 레이어 — Entity + Repository 인터페이스",
+      "file": "phase-02.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 3,
+      "title": "인프라 레이어 — Repository 구현체",
+      "file": "phase-03.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 4,
+      "title": "애플리케이션 레이어 — Service + Scheduler + Event",
+      "file": "phase-04.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 5,
+      "title": "프레젠테이션 레이어 — Controller + DTO",
+      "file": "phase-05.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 6,
+      "title": "통합 테스트",
+      "file": "phase-06.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 7,
+      "title": "전체 빌드 검증",
+      "file": "phase-07.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    }
+  ]
+}

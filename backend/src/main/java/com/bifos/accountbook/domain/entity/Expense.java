@@ -95,6 +95,12 @@ public class Expense {
   @Builder.Default
   private boolean excludeFromBudget = false;
 
+  @Column(name = "recurring_expense_uuid", length = 36)
+  private String recurringExpenseUuid;
+
+  @Column(name = "year_month", length = 7)
+  private String yearMonth;
+
   /**
    * JPA 연관관계 정책:
    * - Family: @ManyToOne 사용 (ORM의 장점 활용)

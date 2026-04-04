@@ -208,6 +208,8 @@ public class BudgetAlertService {
       case BUDGET_100_EXCEEDED -> String.format("%s의 이번 달 예산을 초과했습니다! " +
                                                     "예산 %s원 중 %s원(%s%%)을 사용했습니다.",
                                                 familyName, budgetStr, expenseStr, percentageStr);
+      case RECURRING_EXPENSE_CREATED -> throw new IllegalArgumentException(
+          "예산 알림 메시지에 RECURRING_EXPENSE_CREATED 타입은 사용할 수 없습니다");
     };
   }
 
