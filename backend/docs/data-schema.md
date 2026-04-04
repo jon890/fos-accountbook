@@ -179,7 +179,7 @@ CREATE TABLE notifications (
     notification_uuid VARCHAR(36)  NOT NULL UNIQUE,
     family_uuid       VARCHAR(36)  NOT NULL,
     user_uuid         VARCHAR(36),                    -- NULL = 가족 전체
-    type              VARCHAR(50)  NOT NULL,           -- BUDGET_WARNING | BUDGET_EXCEEDED
+    type              VARCHAR(50)  NOT NULL,           -- BUDGET_WARNING | BUDGET_EXCEEDED | RECURRING_EXPENSE_CREATED
     title             VARCHAR(200) NOT NULL,
     message           TEXT         NOT NULL,
     reference_uuid    VARCHAR(36),

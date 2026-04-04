@@ -46,13 +46,76 @@ def notify(message: str) -> None:
 
 # ── Task 파일 헬퍼 ────────────────────────────────────────────────────────────
 
+def validate_task(task: dict, task_dir: Path) -> None:
+    """index.json 필수 필드 검증. tasks/schema.ts 참고."""
+    errors: list[str] = []
+
+    # Task 메타데이터 필수 필드
+    required_task_fields = [
+        "name", "description", "created_at", "updated_at",
+        "status", "current_phase", "total_phases",
+        "error_message", "blocked_reason", "phases",
+    ]
+    for field in required_task_fields:
+        if field not in task:
+            errors.append(f"task 필수 필드 누락: '{field}'")
+
+    if "phases" in task:
+        phases = task["phases"]
+        if not isinstance(phases, list) or len(phases) == 0:
+            errors.append("phases는 1개 이상의 배열이어야 합니다")
+        else:
+            # total_phases 일치 확인
+            if task.get("total_phases") != len(phases):
+                errors.append(
+                    f"total_phases({task.get('total_phases')}) != "
+                    f"phases 배열 길이({len(phases)})"
+                )
+
+            # Phase 필수 필드 검증
+            required_phase_fields = [
+                "number", "title", "file", "status", "allowedTools",
+            ]
+            for i, phase in enumerate(phases):
+                for field in required_phase_fields:
+                    if field not in phase:
+                        errors.append(
+                            f"phase[{i}] 필수 필드 누락: '{field}'"
+                        )
+
+                # number 순차 증가 확인
+                expected_num = i + 1
+                if phase.get("number") != expected_num:
+                    errors.append(
+                        f"phase[{i}].number={phase.get('number')}, "
+                        f"expected={expected_num}"
+                    )
+
+                # phase 파일 존재 확인
+                phase_file = task_dir / phase.get("file", "")
+                if phase.get("file") and not phase_file.exists():
+                    errors.append(f"phase 파일 없음: {phase_file}")
+
+    if errors:
+        print("\n❌ index.json 검증 실패:\n", file=sys.stderr)
+        for e in errors:
+            print(f"  - {e}", file=sys.stderr)
+        print(
+            "\n  → tasks/schema.ts 및 prompts/task-create.md 참고\n",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+
 def load_task(task_dir: Path) -> tuple[dict, Path]:
     index_path = task_dir / "index.json"
     if not index_path.exists():
         print(f"[error] index.json not found: {index_path}", file=sys.stderr)
         sys.exit(1)
     with open(index_path, encoding="utf-8") as f:
-        return json.load(f), index_path
+        task = json.load(f)
+    validate_task(task, task_dir)
+    return task, index_path
 
 
 def save_task(task: dict, index_path: Path) -> None:

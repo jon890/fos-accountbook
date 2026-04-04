@@ -1,0 +1,39 @@
+{
+  "name": "v2-recurring-tests",
+  "description": "v2 반복 지출 테스트 보강 — 스케줄러 Clock 주입, 통합 테스트 추가, OpenAPI 스냅샷 추출",
+  "status": "completed",
+  "phases": [
+    {
+      "number": 1,
+      "file": "phase-01.md",
+      "title": "Clock 주입 리팩토링",
+      "status": "completed"
+    },
+    {
+      "number": 2,
+      "file": "phase-02.md",
+      "title": "스케줄러 통합 테스트",
+      "status": "completed"
+    },
+    {
+      "number": 3,
+      "file": "phase-03.md",
+      "title": "컨트롤러 추가 테스트",
+      "status": "completed"
+    },
+    {
+      "number": 4,
+      "file": "phase-04.md",
+      "title": "OpenAPI 스냅샷 추출 테스트",
+      "status": "completed"
+    },
+    {
+      "number": 5,
+      "file": "phase-05.md",
+      "title": "전체 빌드 검증",
+      "status": "completed"
+    }
+  ],
+  "current_phase": 5,
+  "updated_at": "2026-04-04T14:11:54.906832+00:00"
+}

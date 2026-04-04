@@ -15,26 +15,39 @@ tasks/
 
 ## index.json 스키마
 
-```json
+**모든 필드가 필수**. 생략하면 `run-phases.py`가 오류를 발생시키거나 기존 task와 구조가 불일치한다.
+
+```jsonc
 {
-  "name": "task-name",
+  // ── Task 메타데이터 (필수) ──
+  "name": "task-name", // kebab-case, 디렉터리명과 일치
   "description": "무엇을 구현하는 task인지 한 줄 설명",
-  "created_at": "2026-04-04T00:00:00Z",
-  "updated_at": "2026-04-04T00:00:00Z",
-  "status": "pending",
-  "current_phase": 0,
-  "total_phases": 7,
-  "error_message": null,
-  "blocked_reason": null,
+  "created_at": "2026-04-04T00:00:00Z", // ISO 8601, 최초 생성 시각
+  "updated_at": "2026-04-04T00:00:00Z", // run-phases.py가 자동 갱신
+  "status": "pending", // pending | running | completed | failed | blocked
+  "current_phase": 0, // 현재 실행 중인 phase 번호 (0 = 미시작)
+  "total_phases": 7, // phases 배열 길이와 일치해야 함
+  "error_message": null, // failed 시 오류 메시지
+  "blocked_reason": null, // blocked 시 사유
+
+  // ── Phase 목록 (필수, 1개 이상) ──
   "phases": [
     {
-      "number": 1,
-      "title": "Flyway 마이그레이션",
-      "file": "phase-01.md",
-      "status": "pending",
-      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
-    }
-  ]
+      "number": 1, // 1부터 순차 증가
+      "title": "Flyway 마이그레이션", // 간결하게 (한글 OK)
+      "file": "phase-01.md", // 동일 디렉터리 내 파일명
+      "status": "pending", // pending | running | completed | failed | blocked
+      "allowedTools": [
+        // Claude CLI에 전달할 도구 목록
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep",
+      ],
+    },
+  ],
 }
 ```
 
@@ -45,6 +58,16 @@ tasks/
 - `completed` — 성공 완료
 - `failed` — 오류 발생 (error_message 참고)
 - `blocked` — 사용자 개입 필요 (blocked_reason 참고)
+
+### 검증 체크리스트
+
+index.json 작성 후 아래를 확인:
+
+- [ ] `total_phases` == `phases` 배열 길이
+- [ ] 모든 phase에 `number`, `title`, `file`, `status`, `allowedTools` 존재
+- [ ] `number`가 1부터 순차 증가
+- [ ] 각 `file`에 해당하는 `.md` 파일이 실제로 존재
+- [ ] `created_at`이 ISO 8601 형식
 
 ---
 
@@ -102,14 +125,14 @@ PHASE_FAILED: {오류}     # 복구 불가능 → exit 1
 
 새 도메인 추가 시 권장 phase 분리:
 
-| Phase | 레이어 | 내용 |
-|-------|--------|------|
-| 1 | DB | Flyway 마이그레이션 SQL |
-| 2 | Domain | Entity + Repository 인터페이스 + Value Object |
-| 3 | Infra | Repository 구현체 (JPA + QueryDSL) |
-| 4 | Application | Service + DTO + Event + Scheduler |
-| 5 | Presentation | Controller + Request/Response DTO |
-| 6 | Test | Controller 통합 테스트 (AbstractControllerTest) |
-| 7 | Build | `./gradlew build --no-daemon` 전체 검증 |
+| Phase | 레이어       | 내용                                            |
+| ----- | ------------ | ----------------------------------------------- |
+| 1     | DB           | Flyway 마이그레이션 SQL                         |
+| 2     | Domain       | Entity + Repository 인터페이스 + Value Object   |
+| 3     | Infra        | Repository 구현체 (JPA + QueryDSL)              |
+| 4     | Application  | Service + DTO + Event + Scheduler               |
+| 5     | Presentation | Controller + Request/Response DTO               |
+| 6     | Test         | Controller 통합 테스트 (AbstractControllerTest) |
+| 7     | Build        | `./gradlew build --no-daemon` 전체 검증         |
 
 각 phase에서 중간 검증: `./gradlew build -x test -x checkstyleMain -x checkstyleTest --no-daemon`

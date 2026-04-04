@@ -8,6 +8,7 @@ import com.bifos.accountbook.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.repository.RecurringExpenseRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -33,10 +34,11 @@ public class RecurringExpenseScheduler {
   private final ExpenseRepository expenseRepository;
   private final FamilyRepository familyRepository;
   private final ApplicationEventPublisher eventPublisher;
+  private final Clock clock;
 
   @Scheduled(cron = "0 0 1 * * ?")
   public void generateRecurringExpenses() {
-    LocalDate today = LocalDate.now();
+    LocalDate today = LocalDate.now(clock);
     int dayOfMonth = today.getDayOfMonth();
     String yearMonth = today.format(YEAR_MONTH_FORMATTER);
 

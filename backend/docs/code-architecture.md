@@ -75,6 +75,44 @@ public class RecurringExpenseScheduler {
 
 멱등성: DB UNIQUE constraint로 보장. 재실행 시 중복 생성 없음.
 
+### 테스트 가능한 시간 의존성 — Clock 주입
+
+날짜/시간에 의존하는 로직(스케줄러 등)은 `Clock` Bean을 주입하여 테스트 가능성을 확보한다:
+
+```java
+// Config: Clock Bean 등록
+@Bean
+public Clock clock() {
+    return Clock.systemDefaultZone();
+}
+
+// Scheduler: LocalDate.now(clock) 사용
+@RequiredArgsConstructor
+public class RecurringExpenseScheduler {
+    private final Clock clock;
+
+    public void generateRecurringExpenses() {
+        LocalDate today = LocalDate.now(clock);
+        // ...
+    }
+}
+
+// Test: 고정 날짜 Clock 주입
+@TestConfiguration
+static class TestClockConfig {
+    @Bean @Primary
+    public Clock clock() {
+        return Clock.fixed(Instant.parse("2026-04-15T00:00:00Z"), ZoneId.of("Asia/Seoul"));
+    }
+}
+```
+
+---
+
+## 테스트 전략
+
+상세한 테스트 피라미드, 필수 시나리오, OpenAPI 계약 검증 방식은 `docs/testing-strategy.md` 참고.
+
 ---
 
 ## 기술 결정 참조

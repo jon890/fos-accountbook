@@ -201,10 +201,10 @@ class SomeServiceTest extends TestFixturesSupport {
 | Profile | DB           | Swagger UI | API Docs (`/v3/api-docs`) |
 | ------- | ------------ | ---------- | ------------------------- |
 | `local` | Docker MySQL | ✅         | ✅                        |
-| `prod`  | MySQL        | ❌         | ✅ (의도적 공개)          |
-| `test`  | H2 in-memory | ❌         | ❌                        |
+| `prod`  | MySQL        | ❌         | ❌ (보안상 비활성화)      |
+| `test`  | H2 in-memory | ❌         | ✅ (CI 스냅샷 추출용)     |
 
-> **스펙**: `prod`에서 `/v3/api-docs` JSON 스펙은 항상 공개합니다. 프론트엔드가 언제든 API 스키마를 조회할 수 있도록 하기 위함입니다. Swagger UI(`/swagger-ui`)는 비활성화 상태를 유지합니다.
+> **스펙**: `prod`에서 `/v3/api-docs`는 비활성화. OpenAPI 스냅샷은 **CI의 `test` 프로파일에서 `@SpringBootTest`로 추출**하여 artifact로 공유. 프론트엔드는 이 스냅샷으로 API 계약 drift를 감지한다. 상세: `docs/testing-strategy.md` 참고.
 
 ## Git & PR Workflow
 
