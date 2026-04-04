@@ -194,3 +194,29 @@
 - MVP 단순성 우선
 
 **트레이드오프**: 이번 달만 임시 변경하려면 자동 생성된 Expense를 수동으로 직접 편집해야 함. 이 워크어라운드를 UI 안내 문구로 명시.
+
+---
+
+## ADR-B14: CI 코드 리뷰 워크플로 설계 (2026-04-04)
+
+**결정**: Claude Code Action 기반 자동 코드 리뷰 워크플로를 아래 방침으로 운영
+
+**핵심 결정 사항**:
+
+| 항목 | 결정 | 이유 |
+|------|------|------|
+| 트리거 | `opened` + `/review` 수동 | `synchronize` 제거 — 매 push마다 토큰 소비 방지 |
+| Review Event | 🔴 → `REQUEST_CHANGES`, 없으면 `APPROVE` | PR 머지 안전망 역할 |
+| 일반 코멘트 | 제거 — Review body로 통합 | Review API의 body 필드가 요약 역할. 별도 코멘트는 중복 |
+| 코멘트 정리 | minimize (OUTDATED) | delete보다 이력 보존에 유리. 인라인 리뷰 코멘트도 포함 |
+| 모델 | orchestrator=sonnet, specialist=haiku | 토큰 비용 최적화. haiku로 충분한 단일 관점 분석 |
+| allowed_bots | 필요한 봇만 명시 | `"*"` 와일드카드 보안 위험. 봇 추가 시 명시적 업데이트 |
+| diff 필터 | `gradle/`, `gradlew*`, `*.lock` 제외. SQL은 포함 | 빌드 도구 노이즈 제거, SQL 마이그레이션은 리뷰 대상 |
+| Job timeout | 15분 | agent hang 시 불필요한 비용 방지 |
+| 프롬프트 관리 | yml 인라인 유지 | 4개 agent 규모에서 파일 분리는 오버엔지니어링. 단일 파일에서 전체 흐름 파악 가능 |
+| 소규모 PR 스킵 | 안 함 | 추후 재논의. 현재는 모든 PR 동일 리뷰 |
+
+**트레이드오프**:
+- `/review` 수동 트리거는 리뷰를 잊을 수 있음 → `opened` 시 자동 1회 실행으로 보완
+- `REQUEST_CHANGES`는 머지를 차단할 수 있음 → 의도적 안전망으로 수용
+- minimize된 코멘트가 쌓이면 PR 스레드가 길어질 수 있음 → OUTDATED 라벨로 접힌 상태이므로 가독성 영향 최소
