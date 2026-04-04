@@ -4,6 +4,7 @@ import com.bifos.accountbook.common.fixtures.CategoryFixtures;
 import com.bifos.accountbook.common.fixtures.ExpenseFixtures;
 import com.bifos.accountbook.common.fixtures.FamilyFixtures;
 import com.bifos.accountbook.common.fixtures.IncomeFixtures;
+import com.bifos.accountbook.common.fixtures.RecurringExpenseFixtures;
 import com.bifos.accountbook.common.fixtures.UserFixtures;
 import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.Family;
@@ -13,6 +14,7 @@ import com.bifos.accountbook.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.domain.repository.FamilyRepository;
 import com.bifos.accountbook.domain.repository.IncomeRepository;
+import com.bifos.accountbook.domain.repository.RecurringExpenseRepository;
 import com.bifos.accountbook.domain.repository.UserRepository;
 import org.springframework.context.ApplicationContext;
 
@@ -78,6 +80,7 @@ public class TestFixtures {
   public final CategoryFixtures categories;
   public final ExpenseFixtures expenses;
   public final IncomeFixtures incomes;
+  public final RecurringExpenseFixtures recurringExpenses;
 
   public TestFixtures(ApplicationContext applicationContext) {
     final UserRepository userRepository = applicationContext.getBean(UserRepository.class);
@@ -86,6 +89,7 @@ public class TestFixtures {
     final CategoryRepository categoryRepository = applicationContext.getBean(CategoryRepository.class);
     final ExpenseRepository expenseRepository = applicationContext.getBean(ExpenseRepository.class);
     final IncomeRepository incomeRepository = applicationContext.getBean(IncomeRepository.class);
+    final RecurringExpenseRepository recurringExpenseRepository = applicationContext.getBean(RecurringExpenseRepository.class);
 
     // 의존성 순서대로 초기화
     this.users = new UserFixtures(userRepository);
@@ -93,6 +97,7 @@ public class TestFixtures {
     this.categories = new CategoryFixtures(categoryRepository, families);
     this.expenses = new ExpenseFixtures(expenseRepository, users);
     this.incomes = new IncomeFixtures(incomeRepository, users);
+    this.recurringExpenses = new RecurringExpenseFixtures(recurringExpenseRepository, users);
   }
 
   /**

@@ -50,6 +50,7 @@ public SomeResponse doSomething(@UserUuid CustomUuid userUuid, @FamilyUuid Custo
 ```
 
 모든 가족 리소스(지출, 카테고리, 알림 등)는 반드시 `familyUuid`를 URL에 포함하여 소유권 검증을 가능하게 한다:
+
 ```
 GET    /families/{familyUuid}/categories
 POST   /families/{familyUuid}/categories
@@ -87,6 +88,7 @@ return ResponseEntity.ok(ApiSuccessResponse.of("메시지", data));
 ### 에러 처리
 
 `BusinessException(ErrorCode.XXX)` 사용. `ErrorCode`에 HTTP 상태코드 정의됨:
+
 - `ACCESS_DENIED` (403), `NOT_FAMILY_MEMBER` (403), `CATEGORY_NOT_FOUND` (404) 등
 
 ### 이벤트 기반 사이드이펙트
@@ -114,20 +116,24 @@ public void handleExpenseCreated(ExpenseCreatedEvent event) {
 ## Code Conventions
 
 ### Entity 규칙
+
 - `@Entity` + `@Getter` + `@Builder` + `@NoArgsConstructor` + `@AllArgsConstructor`
 - **`@Data` 사용 금지** (equals/hashCode 연관관계 무한루프 위험)
 - PK: `Long id` (auto_increment), 관계: UUID 기반
 - Soft Delete: `deleted_at DATETIME` 컬럼 또는 `status` Enum (`ACTIVE`, `DELETED`)
 
 ### DTO 규칙
+
 - `@Getter` + `@Builder` + `@NoArgsConstructor` + `@AllArgsConstructor` (Setter 없음)
 - Response DTO는 `static from(Entity entity)` 정적 팩토리 메서드로 변환
 
 ### Service 규칙
+
 - 클래스 레벨에 `@Transactional(readOnly = true)` 기본 적용
 - 쓰기 작업 메서드에만 `@Transactional` 추가
 
 ### 코드 스타일 (Google Java Style + Naver Convention)
+
 - 들여쓰기: 2 spaces, 연속 들여쓰기: 4 spaces
 - 메서드 체이닝: `.`은 새 줄의 시작에 위치
 - `import java.util.*` 같은 와일드카드 import 금지 (static import 제외)
@@ -186,18 +192,19 @@ class SomeServiceTest extends TestFixturesSupport {
 - **스키마 변경은 반드시 Flyway 마이그레이션으로만**
 
 **주요 도메인 개념**:
+
 - `expenses.exclude_from_budget` / `categories.exclude_from_budget`: 예산 집계에서 제외하는 플래그 (예: 보험, 저축)
 - `categories.is_default`: 가족당 하나의 기본 카테고리("미분류") 존재 — 카테고리 삭제 시 해당 지출이 이 카테고리로 이동. 기본 카테고리는 삭제 불가
 
 ## Spring Profiles
 
-| Profile | DB | Swagger UI | API Docs (`/v3/api-docs`) |
-|---------|-----|------------|--------------------------|
-| `local` | Docker MySQL | ✅ | ✅ |
-| `prod`  | MySQL | ❌ | ✅ (의도적 공개) |
-| `test`  | H2 in-memory | ❌ | ❌ |
+| Profile | DB           | Swagger UI | API Docs (`/v3/api-docs`) |
+| ------- | ------------ | ---------- | ------------------------- |
+| `local` | Docker MySQL | ✅         | ✅                        |
+| `prod`  | MySQL        | ❌         | ❌ (보안상 비활성화)      |
+| `test`  | H2 in-memory | ❌         | ✅ (CI 스냅샷 추출용)     |
 
-> **스펙**: `prod`에서 `/v3/api-docs` JSON 스펙은 항상 공개합니다. 프론트엔드가 언제든 API 스키마를 조회할 수 있도록 하기 위함입니다. Swagger UI(`/swagger-ui`)는 비활성화 상태를 유지합니다.
+> **스펙**: `prod`에서 `/v3/api-docs`는 비활성화. OpenAPI 스냅샷은 **CI의 `test` 프로파일에서 `@SpringBootTest`로 추출**하여 artifact로 공유. 프론트엔드는 이 스냅샷으로 API 계약 drift를 감지한다. 상세: `docs/testing-strategy.md` 참고.
 
 ## Git & PR Workflow
 

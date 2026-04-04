@@ -2,14 +2,26 @@ name: Claude Code Review
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened]
+  issue_comment:
+    types: [created]
 
 jobs:
   claude-review:
+    if: |
+      github.actor != 'dependabot[bot]' &&
+      github.actor != 'claude[bot]' && (
+        github.event_name == 'pull_request' ||
+        (github.event_name == 'issue_comment' &&
+         github.event.issue.pull_request != null &&
+         contains(github.event.comment.body, '/review'))
+      )
     runs-on: ubuntu-latest
-    # 같은 PR에 대해 동시에 실행 중인 이전 리뷰 run을 취소하여 중복 코멘트 방지
+    timeout-minutes: 15
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
     concurrency:
-      group: claude-review-${{ github.event.pull_request.number }}
+      group: claude-review-${{ github.event.pull_request.number || github.event.issue.number }}
       cancel-in-progress: true
     permissions:
       contents: read
@@ -19,90 +31,94 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
-      - name: Dismiss old Claude bot comments
+      - name: Minimize old Claude bot comments
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           REPO="${{ github.repository }}"
-          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_NUMBER="${{ env.PR_NUMBER }}"
 
-          # 이전 일반 코멘트 숨기기
+          # 이전 일반 PR 코멘트 숨기기
           gh api "repos/$REPO/issues/$PR_NUMBER/comments" \
             --jq '.[] | select(.user.login == "claude[bot]") | .node_id' \
-            | while read -r comment_node_id; do
-              if [ -n "$comment_node_id" ]; then
-                echo "Hiding outdated Claude comment: $comment_node_id"
+            | while read -r node_id; do
+              if [ -n "$node_id" ]; then
+                echo "Minimizing outdated Claude comment: $node_id"
                 gh api graphql -f query='
                   mutation($id: ID!) {
                     minimizeComment(input: {subjectId: $id, classifier: OUTDATED}) {
-                      minimizedComment {
-                        isMinimized
-                      }
+                      minimizedComment { isMinimized }
                     }
-                  }' -f id="$comment_node_id"
+                  }' -f id="$node_id" || true
               fi
             done
 
-      - name: Run Claude Code Review (Parallel Agents + Inline Review)
+          # 이전 인라인 리뷰 코멘트 숨기기
+          gh api "repos/$REPO/pulls/$PR_NUMBER/comments" \
+            --jq '.[] | select(.user.login == "claude[bot]") | .node_id' \
+            | while read -r node_id; do
+              if [ -n "$node_id" ]; then
+                echo "Minimizing outdated Claude inline comment: $node_id"
+                gh api graphql -f query='
+                  mutation($id: ID!) {
+                    minimizeComment(input: {subjectId: $id, classifier: OUTDATED}) {
+                      minimizedComment { isMinimized }
+                    }
+                  }' -f id="$node_id" || true
+              fi
+            done
+
+      - name: Run Claude Code Review
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          allowed_bots: "*"
           prompt: |
-            You are a code review orchestrator for the fos-accountbook-backend project (Spring Boot 가계부 백엔드 API).
-            Your job is to coordinate 4 parallel specialist reviewers, then:
-            1. Post inline review comments on specific changed lines via GitHub's review API
-            2. Post one general summary comment with all findings
+            You are a code review orchestrator for the fos-accountbook-backend project (Spring Boot family budget API).
+            Your job is to coordinate 4 parallel specialist reviewers, then post a single GitHub review.
 
             ## Step 1: Fetch PR Data
 
-            Run these two commands first:
+            Run these commands first (build tooling excluded from diff to reduce noise):
             ```
-            gh pr diff ${{ github.event.pull_request.number }} --repo ${{ github.repository }}
-            gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }}
+            gh pr diff ${{ env.PR_NUMBER }} --repo ${{ github.repository }} -- ':!gradle/' ':!gradlew' ':!gradlew.bat' ':!*.lock'
+            gh pr view ${{ env.PR_NUMBER }} --repo ${{ github.repository }} --json title,body,additions,deletions
             ```
 
-            ## Step 2: Spawn 4 Parallel Specialist Agents
+            If the diff is empty after filtering, post a short approving review and stop.
 
-            Launch all 4 agents simultaneously using the Agent tool.
-            Pass the full diff content in each agent's prompt so they can work independently.
+            ## Finding Format (used by all agents)
 
-            Each agent MUST format their findings using this EXACT structure (parse-friendly):
+            Each agent outputs findings in this exact structure:
 
             ```
             FINDING_START
-            TYPE: INLINE
-            SEVERITY: 🔴
-            PATH: src/main/java/com/bifos/accountbook/presentation/controller/CategoryController.java
-            LINE: 42
+            TYPE: INLINE or GENERAL
+            SEVERITY: 🔴 or 🟡
+            PATH: src/main/java/com/bifos/accountbook/...  (INLINE only — relative path matching diff)
+            LINE: 42                                         (INLINE only — line number in new file)
             ISSUE: 문제 설명 (한국어)
             FIX: 수정 제안 (한국어)
             FINDING_END
-
-            FINDING_START
-            TYPE: GENERAL
-            SEVERITY: 🟡
-            ISSUE: 특정 라인을 꼬집기 어려운 일반적인 문제 (한국어)
-            FIX: 수정 제안 (한국어)
-            FINDING_END
             ```
+            - `TYPE: INLINE` — exact file+line identified in diff
+            - `TYPE: GENERAL` — spans multiple files or cannot be pinpointed
+            - No issues → output: `NO_ISSUES`
 
-            Rules for TYPE selection:
-            - Use `TYPE: INLINE` only when you can identify the EXACT file path and line number from the diff
-            - PATH must be a relative path matching the diff (e.g., `src/main/java/com/bifos/accountbook/...`)
-            - LINE must be the actual line number in the NEW file (right side of diff, lines starting with `+` or context)
-            - Use `TYPE: GENERAL` for findings that span multiple files or cannot be pinpointed to one line
-            - If no issues found at all, output: `NO_ISSUES`
+            ## Step 2: Spawn 4 Parallel Specialist Agents
+
+            Launch all 4 agents **simultaneously** using the Agent tool.
+            **Each agent MUST use `model: "haiku"`** to minimize token usage.
+            Pass the full filtered diff in each agent's prompt.
 
             ---
 
-            **Agent 1 — Java Code Quality & Null Safety**
+            **Agent 1 — Java Code Quality & Null Safety** (`model: "haiku"`)
 
-            Prompt template:
+            Prompt:
             ```
             You are a Java code quality specialist reviewer. Analyze this PR diff for Java code quality issues only.
 
@@ -113,37 +129,27 @@ jobs:
 
             Check for:
             🔴 MUST FIX:
-            - NullPointerException 위험: Optional을 사용하지 않고 null을 직접 반환하거나 null 체크 없이 사용
-            - `orElse(null)` 사용 후 null 체크 없이 접근 (orElseThrow() 또는 orElseGet() 권장)
-            - Unchecked cast 또는 raw type 사용
-            - Exception을 catch하고 아무것도 하지 않거나 단순히 출력만 하는 경우
+            - NullPointerException risk: returning null without Optional, accessing without null check
+            - `orElse(null)` without null check after (use orElseThrow() or orElseGet())
+            - Unchecked cast or raw type usage
+            - Empty catch blocks or catch-and-print-only
 
             🟡 SHOULD FIX:
-            - 불필요한 Lombok 어노테이션 (ex. @Data on JPA entity → equals/hashCode 문제)
-            - `List.of()` 대신 `new ArrayList<>()` 사용 (불변성 불필요한 경우)
-            - 매직 넘버/문자열 → 상수로 추출 권장
-            - Stream API를 사용할 수 있는데 for loop 사용한 경우
-            - 불필요한 타입 캐스팅
+            - @Data on JPA entity (equals/hashCode infinite loop risk)
+            - `new ArrayList<>()` where `List.of()` suffices (immutability)
+            - Magic numbers/strings that should be constants
+            - For loop replaceable with Stream API
+            - Unnecessary type casting
 
-            Output each finding using EXACTLY this format:
-
-            FINDING_START
-            TYPE: INLINE or GENERAL
-            SEVERITY: 🔴 or 🟡
-            PATH: exact/relative/path.java  (INLINE only — must match diff path exactly)
-            LINE: 42  (INLINE only — exact line number in the new file)
-            ISSUE: 한국어로 문제 설명
-            FIX: 한국어로 수정 제안
-            FINDING_END
-
-            If no issues found, output: NO_ISSUES
+            Output findings using the FINDING_START/FINDING_END format.
+            If no issues, output: NO_ISSUES
             ```
 
             ---
 
-            **Agent 2 — Project Conventions & Layer Architecture**
+            **Agent 2 — Project Conventions & Layer Architecture** (`model: "haiku"`)
 
-            Prompt template:
+            Prompt:
             ```
             You are a project conventions specialist. Analyze this PR diff for convention and architecture violations only.
 
@@ -152,136 +158,113 @@ jobs:
 
             Package structure:
             - presentation: Controller, DTO (Request/Response)
-            - application: Service, UseCase, DTO (application-level), AOP, Event
+            - application: Service, UseCase, DTO, AOP, Event
             - domain: Entity, Repository interface, Value Object
-            - infra: Repository 구현체 (JPA/QueryDSL), Filter, External services
+            - infra: Repository impl (JPA/QueryDSL), Filter, External services
 
             PR DIFF:
             <insert full diff here>
 
             🔴 MUST FIX:
-            - 레이어 의존성 위반: 상위 레이어가 하위 레이어를 직접 import (ex. domain이 application을 import)
-            - infra 레이어가 domain을 건너뛰고 presentation을 직접 참조
-            - Controller에서 Repository를 직접 주입
-            - domain Entity에 비즈니스 로직 외 Spring/JPA 외 의존성 추가
+            - Layer dependency violation: upper layer importing lower layer (e.g., domain importing application)
+            - infra layer referencing presentation directly (skipping domain)
+            - Controller injecting Repository directly
+            - Domain Entity with non-business dependencies
 
             🟡 SHOULD FIX:
-            - 메서드명이 동사로 시작하지 않는 경우 (save, find, update, delete, create...)
-            - Controller 메서드가 Service를 거치지 않고 직접 처리하는 비즈니스 로직
-            - DTO 클래스명이 역할을 명확히 나타내지 않는 경우 (Request/Response suffix 미사용)
-            - @Transactional이 서비스 레이어가 아닌 컨트롤러에 붙은 경우
+            - Method names not starting with a verb (save, find, update, delete, create...)
+            - Controller handling business logic instead of delegating to Service
+            - DTO class names missing Request/Response suffix
+            - @Transactional on Controller instead of Service
 
-            Output each finding using EXACTLY this format:
-
-            FINDING_START
-            TYPE: INLINE or GENERAL
-            SEVERITY: 🔴 or 🟡
-            PATH: exact/relative/path.java  (INLINE only — must match diff path exactly)
-            LINE: 42  (INLINE only — exact line number in the new file)
-            ISSUE: 한국어로 문제 설명
-            FIX: 한국어로 수정 제안
-            FINDING_END
-
-            If no issues found, output: NO_ISSUES
+            Output findings using the FINDING_START/FINDING_END format.
+            If no issues, output: NO_ISSUES
             ```
 
             ---
 
-            **Agent 3 — Security & Authorization**
+            **Agent 3 — Security & Authorization** (`model: "haiku"`)
 
-            Prompt template:
+            Prompt:
             ```
             You are a security specialist. Analyze this PR diff for security issues only.
 
             This is a Spring Boot REST API with Spring Security. The project uses familyUuid-based ownership validation.
-            All family-scoped resources should validate that the resource belongs to the requesting user's family.
+            All family-scoped resources must validate that the resource belongs to the requesting user's family.
 
             PR DIFF:
             <insert full diff here>
 
             🔴 MUST FIX:
-            - Controller 엔드포인트에서 인증된 사용자 정보를 검증하지 않는 경우
-            - familyUuid 없이 리소스를 수정/삭제하는 엔드포인트 (소유권 검증 불가)
-            - 타인의 리소스에 접근 가능한 IDOR(Insecure Direct Object Reference) 취약점
-            - SQL Injection 가능성 (QueryDSL 사용 시 native query에 문자열 직접 삽입)
-            - 민감한 정보(비밀번호, 토큰)를 응답 DTO에 포함하거나 로그에 출력
-            - @PreAuthorize 또는 SecurityContext 없이 관리자 전용 기능 노출
+            - Controller endpoint missing @LoginUser authentication
+            - Endpoint modifying/deleting resource without familyUuid in path (no ownership validation)
+            - IDOR vulnerability: accessing another user's resources
+            - SQL injection: string concatenation in native queries (use QueryDSL parameters)
+            - Sensitive data (passwords, tokens) in response DTO or logs
+            - Admin-only functionality without @PreAuthorize or SecurityContext check
 
             🟡 SHOULD FIX:
-            - 입력값 검증 어노테이션 누락 (@Valid, @NotNull, @NotBlank 등)
-            - 에러 메시지에 내부 구현 정보 노출 (stack trace, DB 구조 등)
-            - 403 대신 404를 반환해야 할 상황에서 403 반환 (정보 노출)
+            - Missing validation annotations (@Valid, @NotNull, @NotBlank)
+            - Internal implementation details in error messages (stack traces, DB structure)
+            - Returning 403 where 404 is more appropriate (information leakage)
 
-            Output each finding using EXACTLY this format:
-
-            FINDING_START
-            TYPE: INLINE or GENERAL
-            SEVERITY: 🔴 or 🟡
-            PATH: exact/relative/path.java  (INLINE only — must match diff path exactly)
-            LINE: 42  (INLINE only — exact line number in the new file)
-            ISSUE: 한국어로 문제 설명
-            FIX: 한국어로 수정 제안
-            FINDING_END
-
-            If no issues found, output: NO_ISSUES
+            Output findings using the FINDING_START/FINDING_END format.
+            If no issues, output: NO_ISSUES
             ```
 
             ---
 
-            **Agent 4 — Spring Boot & JPA Architecture**
+            **Agent 4 — Spring Boot & JPA Architecture** (`model: "haiku"`)
 
-            Prompt template:
+            Prompt:
             ```
-            You are a Spring Boot and JPA architecture specialist. Analyze this PR diff for Spring/JPA architectural issues only.
+            You are a Spring Boot and JPA architecture specialist. Analyze this PR diff for Spring/JPA issues only.
 
-            This project uses Spring Boot, Spring Data JPA, QueryDSL, and follows Repository pattern with domain interfaces implemented in infra layer.
+            This project uses Spring Boot, Spring Data JPA, QueryDSL, and Repository pattern
+            (domain interfaces implemented in infra layer).
 
             PR DIFF:
             <insert full diff here>
 
             🔴 MUST FIX:
-            - @Transactional 없는 서비스 메서드에서 여러 DB 작업 수행 (데이터 일관성 위험)
-            - N+1 쿼리 문제: 연관 관계를 LAZY로 설정했으나 루프 안에서 접근
-            - @Entity 클래스에 @Data 사용 (equals/hashCode/toString이 연관관계로 인한 무한루프 위험)
-            - JPA Entity를 그대로 Controller 응답으로 반환 (DTO 변환 누락)
-            - 트랜잭션 없이 @Modifying 쿼리 사용
+            - Service method performing multiple DB operations without @Transactional (data consistency risk)
+            - N+1 query: LAZY relation accessed inside a loop
+            - @Data on @Entity (equals/hashCode/toString infinite loop via relations)
+            - JPA Entity returned directly as Controller response (missing DTO conversion)
+            - @Modifying query without transaction
 
             🟡 SHOULD FIX:
-            - @Cacheable 사용 시 캐시 무효화(@CacheEvict) 로직 누락
-            - QueryDSL Q클래스를 static import 없이 매번 new로 생성
-            - 단순 존재 확인에 findById() 대신 existsBy... 메서드 미사용
-            - Optional.get() 직접 호출 (orElseThrow() 권장)
-            - 양방향 연관관계에서 편의 메서드 누락
+            - @Cacheable without corresponding @CacheEvict logic
+            - QueryDSL Q-class instantiated with `new` instead of static import
+            - Using findById() for existence check instead of existsBy...
+            - Optional.get() direct call (use orElseThrow())
+            - Bidirectional relation missing convenience method
 
-            Output each finding using EXACTLY this format:
-
-            FINDING_START
-            TYPE: INLINE or GENERAL
-            SEVERITY: 🔴 or 🟡
-            PATH: exact/relative/path.java  (INLINE only — must match diff path exactly)
-            LINE: 42  (INLINE only — exact line number in the new file)
-            ISSUE: 한국어로 문제 설명
-            FIX: 한국어로 수정 제안
-            FINDING_END
-
-            If no issues found, output: NO_ISSUES
+            Output findings using the FINDING_START/FINDING_END format.
+            If no issues, output: NO_ISSUES
             ```
 
-            ## Step 3: Post Inline Review Comments
+            ## Step 3: Post Single GitHub Review
 
             After all 4 agents complete, collect and deduplicate all FINDING_START/FINDING_END blocks.
 
-            For all `TYPE: INLINE` findings, build a single GitHub PR review with inline comments.
+            Determine the review event:
+            - If ANY 🔴 finding exists → `"REQUEST_CHANGES"`
+            - Otherwise → `"APPROVE"`
 
-            Construct the JSON and run this command (replace the comments array with the actual parsed findings):
+            Build a single GitHub review containing:
+            - `body`: summary of all findings (both INLINE and GENERAL)
+            - `comments`: array of inline comments for TYPE: INLINE findings
+            - `event`: APPROVE or REQUEST_CHANGES
 
             ```bash
-            gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
+            gh api repos/${{ github.repository }}/pulls/${{ env.PR_NUMBER }}/reviews \
               --method POST \
               --header "Content-Type: application/json" \
               --input - <<'REVIEW_EOF'
             {
-              "event": "COMMENT",
+              "event": "APPROVE or REQUEST_CHANGES",
+              "body": "## 코드 리뷰 — [PR 제목 요약]\n\n[한 줄 전체 평가]\n\n---\n\n### 🔴 머스트 픽스\n\n...\n\n### 🟡 개선 권장\n\n...\n\n### 🟢 잘 된 점\n\n- ...\n\n---\n🤖 Reviewed with [Claude Code](https://claude.com/claude-code) (Sonnet orchestrator · Haiku specialists: Java Quality · Layer Architecture · Security · Spring/JPA)",
               "comments": [
                 {
                   "path": "src/main/java/com/bifos/accountbook/example/ExampleController.java",
@@ -294,63 +277,42 @@ jobs:
             REVIEW_EOF
             ```
 
-            Format each inline comment body as:
-            `{SEVERITY} **문제**: {ISSUE}\n\n**수정**: {FIX}`
-
-            Important rules:
-            - `path` must be a relative path exactly matching the diff (do NOT add leading `/`)
-            - `line` must be a number that appears in the diff for that file — if unsure, treat as GENERAL instead
-            - `side` is always `"RIGHT"` (new file side)
-            - If there are NO inline findings, skip this step entirely
-            - If the `gh api` call fails (e.g., 422 invalid line), log the error and continue to Step 4 without retrying
-
-            ## Step 4: Post General Summary Comment
-
-            Post exactly ONE general summary comment containing ALL findings (both INLINE and GENERAL):
+            ## Review Body Format (Korean)
 
             ```
-            gh pr comment ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --body "..."
-            ```
-
-            ## Summary Comment Format
-
-            Write in Korean. Use this exact structure:
-
-            ```
-            ## 코드 리뷰 [PR 제목 요약]
+            ## 코드 리뷰 — [PR 제목 요약]
 
             [한 줄 전체 평가]
 
             ---
 
-            ### 🔴 머지 전 필수 수정 (있는 경우만)
+            ### 🔴 머스트 픽스 (있는 경우만)
 
-            **파일명 라인번호**
-            문제: ...
-            수정: ...
+            **파일명:라인** 문제: ... / 수정: ...
 
             ### 🟡 개선 권장 (있는 경우만)
 
-            **파일명 라인번호**
-            문제: ...
-            수정: ...
+            **파일명:라인** 문제: ... / 수정: ...
 
             ### 🟢 잘 된 점
 
             - ...
 
             ---
-            🤖 Reviewed with [Claude Code](https://claude.com/claude-code) (parallel agents: Java Quality · Layer Architecture · Security · Spring/JPA)
-            💬 인라인 코멘트는 **Files changed** 탭에서 확인하세요
+            🤖 Reviewed with [Claude Code](https://claude.com/claude-code) (Sonnet orchestrator · Haiku specialists: Java Quality · Layer Architecture · Security · Spring/JPA)
             ```
 
             ## Critical Rules
 
-            - **DO NOT post test comments** — this is a real production review
-            - **Post exactly ONE general comment** (Step 4) — do not call `gh pr comment` more than once
-            - **Inline review (Step 3) and general comment (Step 4) are separate** — always post both if there are findings
-            - **Only include sections that have content** — omit empty 🔴 or 🟡 sections entirely
+            - **Post exactly ONE review** — do not call the reviews API more than once
+            - **Do NOT post a separate general comment** — the review body IS the summary
+            - **Only include sections that have content** — omit empty 🔴 or 🟡 sections
+            - **If zero issues found**, post APPROVE review with 🟢 section only, no comments array
             - **Be specific** — reference exact file names and line numbers
-            - **If zero issues found**, skip Step 3 and write a short positive review with 🟢 section only in Step 4
+            - Format inline comment body as: `{SEVERITY} **문제**: {ISSUE}\n\n**수정**: {FIX}`
+            - `path` must be relative (no leading `/`), exactly matching the diff
+            - `line` must appear in the diff — if unsure, treat as GENERAL in the body
+            - `side` is always `"RIGHT"`
+            - If `gh api` returns 422, log the error and do NOT retry
 
-          claude_args: '--allowedTools "Agent,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*),Bash(gh api:*)" --disallowedTools "Read,Write,Edit,Glob,Grep,LS"'
+          claude_args: '--model claude-sonnet-4-6 --allowedTools "Agent,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh api:*)" --disallowedTools "Read,Write,Edit,Glob,Grep,LS"'
