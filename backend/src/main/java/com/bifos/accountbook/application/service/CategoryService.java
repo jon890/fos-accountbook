@@ -30,6 +30,7 @@ public class CategoryService {
 
   private final CategoryRepository categoryRepository;
   private final ObjectProvider<ExpenseService> expenseServiceProvider;
+  private final ObjectProvider<RecurringExpenseService> recurringExpenseServiceProvider;
   private final FamilyValidationService familyValidationService; // 가족 검증 로직
   private final CacheManager cacheManager; // 캐시 관리자
 
@@ -253,6 +254,10 @@ public class CategoryService {
 
     // 삭제되는 카테고리의 지출들을 기본 카테고리로 이동 (ExpenseService에 위임)
     expenseServiceProvider.getObject().moveExpensesToDefaultCategory(category.getFamilyUuid(), category.getUuid());
+
+    // 삭제되는 카테고리의 반복 지출도 기본 카테고리로 이동
+    recurringExpenseServiceProvider.getObject()
+        .moveRecurringExpensesToDefaultCategory(category.getFamilyUuid(), category.getUuid());
 
     category.delete();
 

@@ -79,4 +79,14 @@ public class RecurringExpenseRepositoryImpl implements RecurringExpenseRepositor
 
     return sum != null ? sum : BigDecimal.ZERO;
   }
+
+  @Override
+  public void moveRecurringExpenses(CustomUuid oldCategoryUuid, CustomUuid newCategoryUuid) {
+    queryFactory.update(recurringExpense)
+        .set(recurringExpense.categoryUuid, newCategoryUuid.getValue())
+        .where(
+            recurringExpense.categoryUuid.eq(oldCategoryUuid.getValue()),
+            recurringExpense.status.eq(RecurringExpenseStatus.ACTIVE))
+        .execute();
+  }
 }

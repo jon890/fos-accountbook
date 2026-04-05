@@ -1,9 +1,13 @@
 package com.bifos.accountbook.application.service;
 
+import com.bifos.accountbook.application.dto.category.CategoryResponse;
+import com.bifos.accountbook.application.dto.common.CategoryInfo;
 import com.bifos.accountbook.application.dto.recurringexpense.RecurringExpenseDto;
 import com.bifos.accountbook.application.exception.BusinessException;
 import com.bifos.accountbook.application.exception.ErrorCode;
+import com.bifos.accountbook.domain.entity.Category;
 import com.bifos.accountbook.domain.entity.RecurringExpense;
+import com.bifos.accountbook.domain.repository.CategoryRepository;
 import com.bifos.accountbook.domain.repository.RecurringExpenseRepository;
 import com.bifos.accountbook.domain.value.CustomUuid;
 import com.bifos.accountbook.presentation.annotation.FamilyUuid;
@@ -13,6 +17,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +33,7 @@ public class RecurringExpenseService {
       DateTimeFormatter.ofPattern("yyyy-MM");
 
   private final RecurringExpenseRepository recurringExpenseRepository;
+  private final CategoryRepository categoryRepository;
   private final CategoryService categoryService;
 
   @ValidateFamilyAccess
@@ -39,7 +46,8 @@ public class RecurringExpenseService {
     validateDayOfMonth(dto.getDayOfMonth());
 
     CustomUuid categoryCustomUuid = CustomUuid.from(dto.getCategoryUuid());
-    categoryService.validateAndFindCached(familyUuid, categoryCustomUuid);
+    CategoryResponse categoryResponse =
+        categoryService.validateAndFindCached(familyUuid, categoryCustomUuid);
 
     RecurringExpense entity = RecurringExpense.builder()
         .familyUuid(familyUuid.getValue())
@@ -57,7 +65,8 @@ public class RecurringExpenseService {
         .existsByRecurringExpenseUuidAndYearMonth(
             entity.getUuid().getValue(), currentYearMonth);
 
-    return RecurringExpenseDto.Response.from(entity, generated);
+    return RecurringExpenseDto.Response.from(entity, generated,
+        categoryResponse.toCategoryInfo());
   }
 
   @ValidateFamilyAccess
@@ -69,6 +78,13 @@ public class RecurringExpenseService {
     List<RecurringExpense> entities =
         recurringExpenseRepository.findAllActiveByFamilyUuid(familyUuid.getValue());
 
+    // 카테고리 맵 생성 (캐시 활용)
+    Map<String, CategoryInfo> categoryMap =
+        categoryService.getFamilyCategoriesEntity(familyUuid).stream()
+            .collect(Collectors.toMap(
+                c -> c.getUuid().getValue(),
+                CategoryInfo::from));
+
     String targetYearMonth = yearMonth != null
         ? yearMonth
         : LocalDate.now().format(YEAR_MONTH_FORMATTER);
@@ -78,7 +94,8 @@ public class RecurringExpenseService {
           boolean generated = recurringExpenseRepository
               .existsByRecurringExpenseUuidAndYearMonth(
                   entity.getUuid().getValue(), targetYearMonth);
-          return RecurringExpenseDto.Response.from(entity, generated);
+          CategoryInfo category = categoryMap.get(entity.getCategoryUuid());
+          return RecurringExpenseDto.Response.from(entity, generated, category);
         })
         .collect(Collectors.toList());
   }
@@ -123,7 +140,14 @@ public class RecurringExpenseService {
         .existsByRecurringExpenseUuidAndYearMonth(
             entity.getUuid().getValue(), currentYearMonth);
 
-    return RecurringExpenseDto.Response.from(entity, generated);
+    // 업데이트 후 카테고리 정보 조회
+    CategoryInfo category = CategoryInfo.from(
+        categoryService.getFamilyCategoriesEntity(familyUuid).stream()
+            .filter(c -> c.getUuid().getValue().equals(entity.getCategoryUuid()))
+            .findFirst()
+            .orElse(null));
+
+    return RecurringExpenseDto.Response.from(entity, generated, category);
   }
 
   @ValidateFamilyAccess
@@ -142,6 +166,15 @@ public class RecurringExpenseService {
     }
 
     entity.end();
+  }
+
+  @Transactional
+  public void moveRecurringExpensesToDefaultCategory(CustomUuid familyUuid,
+      CustomUuid oldCategoryUuid) {
+    Category defaultCategory = categoryRepository.getDefaultCategoryByFamily(familyUuid)
+        .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
+
+    recurringExpenseRepository.moveRecurringExpenses(oldCategoryUuid, defaultCategory.getUuid());
   }
 
   private void validateDayOfMonth(int dayOfMonth) {

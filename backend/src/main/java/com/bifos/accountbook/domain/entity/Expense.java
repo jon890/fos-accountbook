@@ -107,7 +107,7 @@ public class Expense {
   @Column(name = "recurring_expense_uuid", length = 36)
   private String recurringExpenseUuid;
 
-  @Column(name = "year_month", length = 7)
+  @Column(name = "`year_month`", length = 7)
   private String yearMonth;
 
   /**
