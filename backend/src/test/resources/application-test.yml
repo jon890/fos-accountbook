@@ -26,6 +26,13 @@ jwt:
 nextauth:
   secret: test-secret-key-for-jwt-token-generation-must-be-at-least-256-bits
 
+# OpenAPI: test 프로파일에서 스냅샷 추출용으로 활성화 (docs/testing-strategy.md 참고)
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: false
+
 # CORS 설정 (테스트 환경) - allowed-origins만 오버라이드
 cors:
   allowed-origins:

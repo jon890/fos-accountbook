@@ -124,13 +124,15 @@ class OpenApiSnapshotTest {
 | CRUD 5개 엔드포인트 | ✅ | `RecurringExpenseControllerTest` |
 | 타 가족 접근 차단 | ✅ | `RecurringExpenseControllerTest` |
 | dayOfMonth 29 검증 | ✅ | `RecurringExpenseControllerTest` |
-| 스케줄러 자동 생성 | ❌ 추가 필요 | — |
-| 스케줄러 멱등성 | ❌ 추가 필요 | — |
-| ENDED 상태 스케줄러 제외 | ❌ 추가 필요 | — |
-| 존재하지 않는 리소스 수정/삭제 | ❌ 추가 필요 | — |
-| monthlyTotal 엔드포인트 | ❌ 추가 필요 | — |
-| dayOfMonth 0 이하 검증 | ❌ 추가 필요 | — |
-| OpenAPI 스냅샷 추출 | ❌ 추가 필요 | — |
+| dayOfMonth 0 이하 검증 | ✅ | `RecurringExpenseControllerTest` |
+| 존재하지 않는 리소스 수정/삭제 | ✅ | `RecurringExpenseControllerTest` |
+| monthlyTotal 엔드포인트 | ✅ | `RecurringExpenseControllerTest` |
+| 스케줄러 자동 생성 | ✅ | `RecurringExpenseSchedulerTest` |
+| 스케줄러 멱등성 | ✅ | `RecurringExpenseSchedulerTest` |
+| ENDED 상태 스케줄러 제외 | ✅ | `RecurringExpenseSchedulerTest` |
+| 삭제된 가족 skip | ✅ | `RecurringExpenseSchedulerTest` |
+| 이벤트 발행 검증 | ✅ | `RecurringExpenseSchedulerTest` |
+| OpenAPI 스냅샷 추출 | ✅ | `OpenApiSnapshotTest` |
 
 ---
 
