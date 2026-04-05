@@ -26,11 +26,11 @@ docker compose -f docker/compose.yml up -d
 `presentation → application → domain → infra` 단방향 의존성 구조. 패키지 경로: `com.bifos.accountbook`.
 
 ```
-presentation/    # Controller, Request/Response DTO
-application/     # Service, application-level DTO, AOP, Event
+presentation/    # Controller, Request/Response DTO, Annotation, Resolver
+application/     # Service, application-level DTO, AOP, Event, Scheduler
 domain/          # Entity, Repository 인터페이스, Value Object
-infra/           # Repository 구현체(JPA/QueryDSL), Filter, Config, Security
-config/          # Spring 설정 (캐시, 보안 등)
+infra/           # Repository 구현체(JPA/QueryDSL), Filter
+config/          # Spring 설정 (캐시, 보안, CORS), Security (JWT 인증)
 ```
 
 **레이어 의존성 규칙**: 상위 레이어는 하위 레이어를 직접 참조하지 않는다. Controller는 Repository를 직접 주입받지 않는다.
@@ -107,7 +107,7 @@ public void handleExpenseCreated(ExpenseCreatedEvent event) {
 }
 ```
 
-`Notification` 엔티티: 예산 경고(80%)/초과(100%) 발생 시 생성됨. `is_read`, `alert_month` 컬럼으로 중복 방지.
+`Notification` 엔티티: 예산 50%/80%/100% 초과 시 생성됨 (`BUDGET_50_EXCEEDED`, `BUDGET_80_EXCEEDED`, `BUDGET_100_EXCEEDED`). `is_read`, `year_month` 컬럼으로 중복 방지.
 
 ### 캐시 무효화
 
@@ -120,7 +120,7 @@ public void handleExpenseCreated(ExpenseCreatedEvent event) {
 - `@Entity` + `@Getter` + `@Builder` + `@NoArgsConstructor` + `@AllArgsConstructor`
 - **`@Data` 사용 금지** (equals/hashCode 연관관계 무한루프 위험)
 - PK: `Long id` (auto_increment), 관계: UUID 기반
-- Soft Delete: `deleted_at DATETIME` 컬럼 또는 `status` Enum (`ACTIVE`, `DELETED`)
+- Soft Delete: `status` Enum (`ACTIVE`, `DELETED`). FamilyMember는 `ACTIVE`, `LEFT`
 
 ### DTO 규칙
 
@@ -196,15 +196,16 @@ class SomeServiceTest extends TestFixturesSupport {
 - `expenses.exclude_from_budget` / `categories.exclude_from_budget`: 예산 집계에서 제외하는 플래그 (예: 보험, 저축)
 - `categories.is_default`: 가족당 하나의 기본 카테고리("미분류") 존재 — 카테고리 삭제 시 해당 지출이 이 카테고리로 이동. 기본 카테고리는 삭제 불가
 
-## Spring Profiles
+## Documentation
 
-| Profile | DB           | Swagger UI | API Docs (`/v3/api-docs`) |
-| ------- | ------------ | ---------- | ------------------------- |
-| `local` | Docker MySQL | ✅         | ✅                        |
-| `prod`  | MySQL        | ❌         | ❌ (보안상 비활성화)      |
-| `test`  | H2 in-memory | ❌         | ✅ (CI 스냅샷 추출용)     |
+> **원칙**: 기술적 의사결정과 전략적 가이드라인은 `docs/`가 source of truth. CLAUDE.md와 docs 내용이 다르면 **docs가 우선**한다.
 
-> **스펙**: `prod`에서 `/v3/api-docs`는 비활성화. OpenAPI 스냅샷은 **CI의 `test` 프로파일에서 `@SpringBootTest`로 추출**하여 artifact로 공유. 프론트엔드는 이 스냅샷으로 API 계약 drift를 감지한다. 상세: `docs/testing-strategy.md` 참고.
+| 문서 | 역할 |
+|------|------|
+| `docs/adr.md` | 기술 의사결정 기록 (ADR-B01~B14) |
+| `docs/code-architecture.md` | 계층 구조, 핵심 패턴, 인증 흐름, 새 도메인 체크리스트 |
+| `docs/data-schema.md` | DB 스키마 canonical 소스 (프론트엔드와 공유) |
+| `docs/testing-strategy.md` | 테스트 피라미드, 필수 시나리오, OpenAPI 계약 검증, Spring Profiles 스펙 |
 
 ## Git & PR Workflow
 

@@ -8,11 +8,11 @@
 
 ```
 com.bifos.accountbook
-├── presentation/    Controller, Request/Response DTO
+├── presentation/    Controller, Request/Response DTO, Annotation, Resolver
 ├── application/     Service, 애플리케이션 DTO, AOP, Event, Scheduler
 ├── domain/          Entity, Repository 인터페이스, Value Object
-├── infra/           Repository 구현체 (JPA/QueryDSL), Filter, Security 설정
-└── config/          Spring 설정 (캐시, 보안 등)
+├── infra/           Repository 구현체 (JPA/QueryDSL), Filter
+└── config/          Spring 설정 (캐시, 보안, CORS), Security (JWT 인증)
 ```
 
 **의존성 방향**: `presentation → application → domain ← infra`
@@ -22,7 +22,28 @@ com.bifos.accountbook
 
 ## 핵심 패턴
 
-### 인증 & 소유권 검증
+### 인증 흐름
+
+```
+프론트엔드 (NextAuth)
+    │
+    │  소셜 로그인 후 백엔드 /api/v1/auth/social-login 호출
+    ▼
+백엔드 JWT 발급 (HS512, subject: user.uuid)
+    │
+    │  Access Token + Refresh Token 반환
+    ▼
+이후 API 요청: Authorization: Bearer <AccessToken>
+    │
+    ├── JwtAuthenticationFilter: 토큰 검증 → SecurityContext 설정
+    ├── LoginUserArgumentResolver: @LoginUser → LoginUserDto 주입
+    └── FamilyAccessAspect: @ValidateFamilyAccess → 가족 멤버십 AOP 검증
+```
+
+- JWT 관련 클래스: `config/security/` (AbstractJwtTokenProvider, JwtTokenProvider, JwtAuthenticationFilter)
+- 프론트엔드 인증(NextAuth)은 프론트엔드가 관리. 백엔드는 자체 JWT만 검증
+
+### 소유권 검증
 
 ```java
 // Controller: @LoginUser로 인증 사용자 주입

@@ -79,7 +79,7 @@ CREATE TABLE family_members (
     family_uuid VARCHAR(36) NOT NULL,
     user_uuid   VARCHAR(36) NOT NULL,
     role        VARCHAR(20) NOT NULL,    -- OWNER | MEMBER
-    status      VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    status      VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',  -- ACTIVE | LEFT
     joined_at   DATETIME(3) NOT NULL,
     UNIQUE KEY uq_family_user (family_uuid, user_uuid),
     FOREIGN KEY (family_uuid) REFERENCES families(uuid),
@@ -179,7 +179,7 @@ CREATE TABLE notifications (
     notification_uuid VARCHAR(36)  NOT NULL UNIQUE,
     family_uuid       VARCHAR(36)  NOT NULL,
     user_uuid         VARCHAR(36),                    -- NULL = 가족 전체
-    type              VARCHAR(50)  NOT NULL,           -- BUDGET_WARNING | BUDGET_EXCEEDED | RECURRING_EXPENSE_CREATED
+    type              VARCHAR(50)  NOT NULL,           -- BUDGET_50_EXCEEDED | BUDGET_80_EXCEEDED | BUDGET_100_EXCEEDED | RECURRING_EXPENSE_CREATED
     title             VARCHAR(200) NOT NULL,
     message           TEXT         NOT NULL,
     reference_uuid    VARCHAR(36),

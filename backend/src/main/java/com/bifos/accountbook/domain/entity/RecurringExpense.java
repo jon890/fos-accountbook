@@ -54,7 +54,7 @@ public class RecurringExpense {
   @Column(nullable = false, precision = 12, scale = 2)
   private BigDecimal amount;
 
-  @Column(name = "day_of_month", nullable = false)
+  @Column(name = "day_of_month", nullable = false, columnDefinition = "TINYINT")
   private int dayOfMonth;
 
   @Column(nullable = false, length = 20)

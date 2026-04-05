@@ -5,14 +5,15 @@
 
 ---
 
-## ADR-B01: Java 21 + Spring Boot 3
+## ADR-B01: Java 21 + Spring Boot 3 + MySQL 8.4 LTS
 
-**결정**: Java 17 대신 Java 21 (LTS), Spring Boot 3.x
+**결정**: Java 21 (LTS), Spring Boot 3.x, MySQL 8.4 LTS
 
 **이유**:
 
 - Java 21: Virtual Threads (Project Loom), 향후 성능 개선 기반
 - Spring Boot 3: Jakarta EE 10, GraalVM Native 지원
+- MySQL 8.4 LTS: 안정성 우선, 널리 사용되는 LTS 버전 채택
 - 최신 LTS → 장기 유지보수 가능
 
 ---
@@ -108,7 +109,9 @@
 - 트랜잭션 커밋 후 알림 처리 가능 (`@TransactionalEventListener`)
 - 향후 비동기 처리(`@Async`) 전환 용이
 
-**중복 방지**: `yearMonth + type` 기준으로 알림 중복 체크
+**알림 타입**: `BUDGET_50_EXCEEDED` (50% 초과) | `BUDGET_80_EXCEEDED` (80% 초과) | `BUDGET_100_EXCEEDED` (100% 초과) | `RECURRING_EXPENSE_CREATED` (반복 지출 자동 생성)
+
+**중복 방지**: `familyUuid + type + yearMonth` 기준으로 알림 중복 체크. 가족의 모든 활성 구성원에게 각각 알림 생성
 
 ---
 
