@@ -73,6 +73,7 @@ jobs:
             done
 
       - name: Run Claude Code Review
+        id: claude-review
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -244,7 +245,7 @@ jobs:
             If no issues, output: NO_ISSUES
             ```
 
-            ## Step 3: Post Single GitHub Review
+            ## Step 3: Write Review JSON to File
 
             After all 4 agents complete, collect and deduplicate all FINDING_START/FINDING_END blocks.
 
@@ -252,16 +253,11 @@ jobs:
             - If ANY 🔴 finding exists → `"REQUEST_CHANGES"`
             - Otherwise → `"APPROVE"`
 
-            Build a single GitHub review containing:
-            - `body`: summary of all findings (both INLINE and GENERAL)
-            - `comments`: array of inline comments for TYPE: INLINE findings
-            - `event`: APPROVE or REQUEST_CHANGES
+            Build a JSON object and **write it to `/tmp/review.json`** using the Write tool.
+            **Do NOT call `gh api` — you do not have permission. Only write the file.**
 
-            ```bash
-            gh api repos/${{ github.repository }}/pulls/${{ env.PR_NUMBER }}/reviews \
-              --method POST \
-              --header "Content-Type: application/json" \
-              --input - <<'REVIEW_EOF'
+            The JSON must have this exact structure:
+            ```json
             {
               "event": "APPROVE or REQUEST_CHANGES",
               "body": "## 코드 리뷰 — [PR 제목 요약]\n\n[한 줄 전체 평가]\n\n---\n\n### 🔴 머스트 픽스\n\n...\n\n### 🟡 개선 권장\n\n...\n\n### 🟢 잘 된 점\n\n- ...\n\n---\n🤖 Reviewed with [Claude Code](https://claude.com/claude-code) (Sonnet orchestrator · Haiku specialists: Java Quality · Layer Architecture · Security · Spring/JPA)",
@@ -274,7 +270,15 @@ jobs:
                 }
               ]
             }
-            REVIEW_EOF
+            ```
+
+            If zero issues found, write APPROVE review with empty comments array:
+            ```json
+            {
+              "event": "APPROVE",
+              "body": "## 코드 리뷰 — [PR 제목 요약]\n\n...\n\n### 🟢 잘 된 점\n\n- ...",
+              "comments": []
+            }
             ```
 
             ## Review Body Format (Korean)
@@ -304,15 +308,56 @@ jobs:
 
             ## Critical Rules
 
-            - **Post exactly ONE review** — do not call the reviews API more than once
-            - **Do NOT post a separate general comment** — the review body IS the summary
+            - **Write exactly ONE file: `/tmp/review.json`** — do not write any other files
+            - **Do NOT call `gh api`** — you do not have permission. Only write the JSON file
             - **Only include sections that have content** — omit empty 🔴 or 🟡 sections
-            - **If zero issues found**, post APPROVE review with 🟢 section only, no comments array
+            - **If zero issues found**, write APPROVE review with 🟢 section only, empty comments array
             - **Be specific** — reference exact file names and line numbers
             - Format inline comment body as: `{SEVERITY} **문제**: {ISSUE}\n\n**수정**: {FIX}`
             - `path` must be relative (no leading `/`), exactly matching the diff
             - `line` must appear in the diff — if unsure, treat as GENERAL in the body
             - `side` is always `"RIGHT"`
-            - If `gh api` returns 422, log the error and do NOT retry
+            - The JSON must be valid — use proper escaping for newlines and quotes
 
-          claude_args: '--model claude-sonnet-4-6 --allowedTools "Agent,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh api:*)" --disallowedTools "Read,Write,Edit,Glob,Grep,LS"'
+          claude_args: '--model claude-sonnet-4-6 --allowedTools "Agent,Bash(gh pr diff:*),Bash(gh pr view:*),Write" --disallowedTools "Read,Edit,Glob,Grep,LS"'
+
+      - name: Post review to GitHub
+        if: always() && steps.claude-review.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REVIEW_FILE="/tmp/review.json"
+
+          if [ ! -f "$REVIEW_FILE" ]; then
+            echo "::warning::Review file not found. Claude may not have generated a review."
+            exit 0
+          fi
+
+          # JSON 유효성 검증
+          if ! jq empty "$REVIEW_FILE" 2>/dev/null; then
+            echo "::error::Invalid JSON in review file"
+            cat "$REVIEW_FILE"
+            exit 1
+          fi
+
+          # 필수 필드 검증
+          EVENT=$(jq -r '.event // empty' "$REVIEW_FILE")
+          BODY=$(jq -r '.body // empty' "$REVIEW_FILE")
+
+          if [ -z "$EVENT" ] || [ -z "$BODY" ]; then
+            echo "::error::Missing required fields (event, body) in review JSON"
+            jq . "$REVIEW_FILE"
+            exit 1
+          fi
+
+          echo "Posting review: event=$EVENT"
+
+          # 단일 API 호출
+          gh api "repos/${{ github.repository }}/pulls/${{ env.PR_NUMBER }}/reviews" \
+            --method POST \
+            --input "$REVIEW_FILE" || {
+              echo "::error::Failed to post review (API returned error)"
+              exit 1
+            }
+
+          echo "Review posted successfully"
