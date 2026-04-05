@@ -20,4 +20,6 @@ public interface RecurringExpenseRepository {
       String recurringExpenseUuid, String yearMonth);
 
   BigDecimal sumActiveAmountByFamilyUuid(String familyUuid);
+
+  void moveRecurringExpenses(CustomUuid oldCategoryUuid, CustomUuid newCategoryUuid);
 }

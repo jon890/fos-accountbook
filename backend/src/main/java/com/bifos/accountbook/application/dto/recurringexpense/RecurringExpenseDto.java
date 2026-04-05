@@ -1,5 +1,6 @@
 package com.bifos.accountbook.application.dto.recurringexpense;
 
+import com.bifos.accountbook.application.dto.common.CategoryInfo;
 import com.bifos.accountbook.domain.entity.RecurringExpense;
 import com.bifos.accountbook.domain.entity.RecurringExpenseStatus;
 import java.math.BigDecimal;
@@ -41,6 +42,7 @@ public class RecurringExpenseDto {
     private String uuid;
     private String familyUuid;
     private String categoryUuid;
+    private CategoryInfo category;
     private String userUuid;
     private String name;
     private BigDecimal amount;
@@ -50,11 +52,13 @@ public class RecurringExpenseDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static Response from(RecurringExpense entity, boolean generatedThisMonth) {
+    public static Response from(RecurringExpense entity, boolean generatedThisMonth,
+        CategoryInfo category) {
       return Response.builder()
           .uuid(entity.getUuid().getValue())
           .familyUuid(entity.getFamilyUuid())
           .categoryUuid(entity.getCategoryUuid())
+          .category(category)
           .userUuid(entity.getUserUuid())
           .name(entity.getName())
           .amount(entity.getAmount())
