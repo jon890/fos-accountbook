@@ -1,0 +1,111 @@
+{
+  "name": "domain-package-restructuring",
+  "description": "레이어 기반 → 도메인 기반 패키지 구조 전환 (ADR-B16)",
+  "created_at": "2026-04-05T13:00:00Z",
+  "updated_at": "2026-04-18T00:00:00Z",
+  "status": "completed",
+  "current_phase": 7,
+  "total_phases": 7,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "shared/ 패키지 구성",
+      "file": "phase-01.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 2,
+      "title": "user + family 도메인 이동",
+      "file": "phase-02.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 3,
+      "title": "category 도메인 이동",
+      "file": "phase-03.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 4,
+      "title": "expense + income 도메인 이동",
+      "file": "phase-04.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 5,
+      "title": "recurring + invitation + notification + dashboard 도메인 이동",
+      "file": "phase-05.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 6,
+      "title": "테스트 파일 이동",
+      "file": "phase-06.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 7,
+      "title": "문서 업데이트 + 전체 빌드/테스트 검증",
+      "file": "phase-07.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    }
+  ]
+}

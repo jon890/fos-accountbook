@@ -1,7 +1,7 @@
 package com.bifos.accountbook.config;
 
 import com.bifos.accountbook.config.converter.StringToCustomUuidConverter;
-import com.bifos.accountbook.presentation.resolver.LoginUserArgumentResolver;
+import com.bifos.accountbook.shared.auth.LoginUserArgumentResolver;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;

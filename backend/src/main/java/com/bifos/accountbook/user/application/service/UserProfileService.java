@@ -1,0 +1,86 @@
+package com.bifos.accountbook.user.application.service;
+
+import com.bifos.accountbook.user.presentation.dto.UpdateUserProfileRequest;
+import com.bifos.accountbook.user.presentation.dto.UserProfileResponse;
+import com.bifos.accountbook.shared.exception.BusinessException;
+import com.bifos.accountbook.shared.exception.ErrorCode;
+import com.bifos.accountbook.user.domain.entity.UserProfile;
+import com.bifos.accountbook.user.domain.repository.UserProfileRepository;
+import com.bifos.accountbook.shared.value.CustomUuid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * 사용자 프로필 서비스
+ */
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class UserProfileService {
+
+  private final UserProfileRepository userProfileRepository;
+
+  /**
+   * 사용자 프로필 조회 (없으면 기본 프로필 생성)
+   */
+  @Transactional
+  public UserProfileResponse getOrCreateProfile(CustomUuid userUuid) {
+    UserProfile profile = userProfileRepository.findByUserUuid(userUuid)
+                                               .orElseGet(() -> createDefaultProfile(userUuid));
+
+    return UserProfileResponse.from(profile);
+  }
+
+  /**
+   * 사용자 프로필 수정
+   */
+  @Transactional
+  public UserProfileResponse updateProfile(CustomUuid userUuid, UpdateUserProfileRequest request) {
+    UserProfile profile = userProfileRepository.findByUserUuid(userUuid)
+                                               .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND, "프로필을 찾을 수 없습니다")
+                                                   .addParameter("userUuid", userUuid.getValue()));
+
+    // 각 필드가 null이 아닐 때만 업데이트
+    if (request.getTimezone() != null) {
+      profile.updateTimezone(request.getTimezone());
+    }
+    if (request.getLanguage() != null) {
+      profile.updateLanguage(request.getLanguage());
+    }
+    if (request.getCurrency() != null) {
+      profile.updateCurrency(request.getCurrency());
+    }
+    if (request.getDefaultFamilyUuid() != null) {
+      profile.updateDefaultFamily(CustomUuid.from(request.getDefaultFamilyUuid()));
+    }
+
+    return UserProfileResponse.from(profile);
+  }
+
+  /**
+   * 기본 가족 설정
+   */
+  @Transactional
+  public UserProfileResponse setDefaultFamily(CustomUuid userUuid, String familyUuid) {
+    UserProfile profile = userProfileRepository.findByUserUuid(userUuid)
+                                               .orElseGet(() -> createDefaultProfile(userUuid));
+
+    if (familyUuid == null || familyUuid.isBlank()) {
+      profile.updateDefaultFamily(null);
+    } else {
+      profile.updateDefaultFamily(CustomUuid.from(familyUuid));
+    }
+
+    return UserProfileResponse.from(profile);
+  }
+
+  /**
+   * 기본 프로필 생성
+   */
+  private UserProfile createDefaultProfile(CustomUuid userUuid) {
+    UserProfile profile = UserProfile.createDefault(userUuid);
+    return userProfileRepository.save(profile);
+  }
+}
+

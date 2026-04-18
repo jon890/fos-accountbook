@@ -1,6 +1,6 @@
 package com.bifos.accountbook;
 
-import com.bifos.accountbook.common.FosSpringBootTest;
+import com.bifos.accountbook.shared.FosSpringBootTest;
 import org.junit.jupiter.api.Test;
 
 /**

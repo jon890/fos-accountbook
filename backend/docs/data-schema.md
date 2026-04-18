@@ -20,7 +20,9 @@
 
 ## 엔티티 스키마
 
-### users
+> 도메인별로 그룹핑. 패키지 구조와 일치한다 (`docs/code-architecture.md` 참고).
+
+### [user] users
 
 ```sql
 CREATE TABLE users (
@@ -41,7 +43,7 @@ CREATE TABLE users (
 );
 ```
 
-### user_profiles
+### [user] user_profiles
 
 ```sql
 CREATE TABLE user_profiles (
@@ -56,7 +58,7 @@ CREATE TABLE user_profiles (
 );
 ```
 
-### families
+### [family] families
 
 ```sql
 CREATE TABLE families (
@@ -70,7 +72,7 @@ CREATE TABLE families (
 );
 ```
 
-### family_members
+### [family] family_members
 
 ```sql
 CREATE TABLE family_members (
@@ -87,7 +89,7 @@ CREATE TABLE family_members (
 );
 ```
 
-### categories
+### [category] categories
 
 ```sql
 CREATE TABLE categories (
@@ -106,7 +108,7 @@ CREATE TABLE categories (
 );
 ```
 
-### expenses
+### [expense] expenses
 
 ```sql
 CREATE TABLE expenses (
@@ -131,7 +133,7 @@ CREATE TABLE expenses (
 );
 ```
 
-### incomes
+### [income] incomes
 
 ```sql
 CREATE TABLE incomes (
@@ -152,7 +154,7 @@ CREATE TABLE incomes (
 );
 ```
 
-### invitations
+### [invitation] invitations
 
 ```sql
 CREATE TABLE invitations (
@@ -171,7 +173,7 @@ CREATE TABLE invitations (
 );
 ```
 
-### notifications
+### [notification] notifications
 
 ```sql
 CREATE TABLE notifications (
@@ -194,7 +196,7 @@ CREATE TABLE notifications (
 );
 ```
 
-### recurring_expenses
+### [recurring] recurring_expenses
 
 ```sql
 CREATE TABLE recurring_expenses (
@@ -240,67 +242,67 @@ CREATE TABLE recurring_expenses (
 
 ## API 엔드포인트 전체 목록
 
-```
-Base: /api/v1
+> 도메인별로 그룹핑. `Base: /api/v1`
 
-# 인증
+```
+# [user] 인증
 POST   /auth/social-login          소셜 로그인 (공개)
 POST   /auth/refresh               토큰 갱신 (공개)
 
-# 가족
+# [user] 사용자 프로필
+GET    /users/me/profile            프로필 조회
+PUT    /users/me/profile            프로필 수정
+
+# [family] 가족
 POST   /families                   가족 생성
 GET    /families                   내 가족 목록
 GET    /families/{uuid}            가족 상세
 PUT    /families/{uuid}            가족 수정 (OWNER)
 DELETE /families/{uuid}            가족 삭제 (OWNER)
 
-# 카테고리
+# [category] 카테고리
 POST   /families/{uuid}/categories            카테고리 생성
 GET    /families/{uuid}/categories            목록
 GET    /families/{uuid}/categories/{uuid}     상세
 PUT    /families/{uuid}/categories/{uuid}     수정
 DELETE /families/{uuid}/categories/{uuid}     삭제 (기본 카테고리 불가)
 
-# 지출
+# [expense] 지출
 POST   /families/{uuid}/expenses              등록
 GET    /families/{uuid}/expenses              목록 (페이징, 필터)
 GET    /families/{uuid}/expenses/{uuid}       상세
 PUT    /families/{uuid}/expenses/{uuid}       수정
 DELETE /families/{uuid}/expenses/{uuid}       삭제 (Soft Delete)
 
-# 수입
+# [income] 수입
 POST   /families/{uuid}/incomes               등록
 GET    /families/{uuid}/incomes               목록 (페이징, 필터)
 GET    /families/{uuid}/incomes/{uuid}        상세
 PUT    /families/{uuid}/incomes/{uuid}        수정
 DELETE /families/{uuid}/incomes/{uuid}        삭제 (Soft Delete)
 
-# 대시보드
-GET    /families/{uuid}/dashboard/stats/monthly          월별 통계
-GET    /families/{uuid}/dashboard/daily-stats            일별 통계
-GET    /families/{uuid}/dashboard/expenses/by-category   카테고리별 지출
-
-# 초대
-POST   /invitations/families/{uuid}           초대장 생성 (OWNER)
-GET    /invitations/families/{uuid}           초대장 목록
-GET    /invitations/token/{token}             초대장 조회 (공개)
-POST   /invitations/accept                    초대 수락
-DELETE /invitations/{uuid}                    초대장 삭제
-
-# 알림
-GET    /families/{uuid}/notifications                         알림 목록
-GET    /families/{uuid}/notifications/unread-count            읽지 않은 수
-PATCH  /families/{uuid}/notifications/{uuid}/read             읽음 처리
-POST   /families/{uuid}/notifications/mark-all-read           전체 읽음
-
-# 반복 지출
+# [recurring] 반복 지출
 POST   /families/{uuid}/recurring-expenses                    템플릿 등록
 GET    /families/{uuid}/recurring-expenses                    목록 (month=YYYY-MM, generatedThisMonth 포함)
 GET    /families/{uuid}/recurring-expenses/monthly-total      이번달 합계
 PUT    /families/{uuid}/recurring-expenses/{uuid}             수정 (즉시 전체 반영, ADR-B13)
 DELETE /families/{uuid}/recurring-expenses/{uuid}             종료 (ENDED, Soft Delete)
 
-# 사용자 프로필
-GET    /users/me/profile            프로필 조회
-PUT    /users/me/profile            프로필 수정
+# [invitation] 초대
+POST   /invitations/families/{uuid}           초대장 생성 (OWNER)
+GET    /invitations/families/{uuid}           초대장 목록
+GET    /invitations/token/{token}             초대장 조회 (공개)
+POST   /invitations/accept                    초대 수락
+DELETE /invitations/{uuid}                    초대장 삭제
+
+# [notification] 알림
+GET    /families/{uuid}/notifications                         알림 목록
+GET    /families/{uuid}/notifications/unread-count            읽지 않은 수
+PATCH  /families/{uuid}/notifications/{uuid}/read             읽음 처리
+POST   /families/{uuid}/notifications/mark-all-read           전체 읽음
+
+# [dashboard] 대시보드
+GET    /families/{uuid}/dashboard/stats/monthly          월별 통계
+GET    /families/{uuid}/dashboard/daily-stats            일별 통계
+GET    /families/{uuid}/dashboard/expenses/by-category   카테고리별 지출
 ```
