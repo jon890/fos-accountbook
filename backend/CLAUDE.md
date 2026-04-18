@@ -212,6 +212,57 @@ class SomeServiceTest extends TestFixturesSupport {
 | `docs/data-schema.md`       | DB 스키마 canonical 소스 (도메인별 그룹핑, 프론트엔드와 공유)           |
 | `docs/testing-strategy.md`  | 테스트 피라미드, 필수 시나리오, OpenAPI 계약 검증, Spring Profiles 스펙 |
 
+## 상황별 ADR 필수 참조
+
+아래 작업을 할 때는 해당 ADR을 반드시 먼저 읽는다 — 라이브러리 고유 함정·실험 결과·정책 근거가 담겨 있어 모르고 진행하면 버그 재발 위험.
+
+| 상황 | 필수 확인 ADR |
+|---|---|
+| UUID 식별자 설계 (신규 테이블) | ADR-B02 — UUID 이중 키 전략 (`id BIGINT` + `uuid VARCHAR(36)`) |
+| Soft Delete 적용 | ADR-B03 — `status` Enum 기반 (`ACTIVE`/`DELETED`) |
+| JWT/인증 관련 변경 | ADR-B04 — HS512, access 15분/refresh 7일 |
+| `@CacheEvict`/`@Cacheable`, Caffeine 조정 | ADR-B05, ADR-B06 — Category 캐시 전략, Caffeine 로컬 캐시 |
+| 금액(Money) 계산 | ADR-B07 — BigDecimal 금액 처리 (double/float 금지) |
+| Application Event 발행 (AFTER_COMMIT 등) | ADR-B08 — 이벤트 기반 예산 알림 (알림 실패가 본 작업 막지 않도록 예외 삼킴) |
+| Family/FamilyMember 권한 검사 | ADR-B09 — 역할 기반 권한 (`@ValidateFamilyAccess` AOP) |
+| QueryDSL 동적 쿼리 추가 | ADR-B10 — 동적 쿼리 패턴 |
+| 새 엔드포인트 경로 설계 | ADR-B11 — API 버전 관리 전략 |
+| 반복 지출 스케줄/수정 | ADR-B12, ADR-B13 — `@Scheduled`, 즉시 전체 반영 정책 |
+| CI/PR 리뷰 워크플로 변경 | ADR-B14 — CI 코드 리뷰 워크플로 설계 |
+| Flyway 마이그레이션 작성 | ADR-B15 — SQL 백틱 컨벤션 (예약어 이스케이프) |
+| 패키지/도메인 구조 변경 | ADR-B16 — 도메인 기반 패키지 리팩토링 |
+
+## 토큰 효율 (Opus/Sonnet 라우팅)
+
+- **논의·계획·docs 작성**: main 세션 (opus 허용)
+- **task phase 실행**: sonnet 기본 — rename, 리팩토링, 다중 파일 수정도 sonnet
+- **task phase에서 opus 사용 금지 예외**:
+  - 새 아키텍처 설계가 phase 안에 있는 경우
+  - 복잡 알고리즘 설계 (도메인 핵심 신규 설계)
+- **기계적 작업은 opus 금지** — rename/이동/경로 수정 등은 파일 수가 많아도 sonnet으로 충분
+- 빌드 검증·커밋 phase는 haiku
+
+## 파일 읽기 효율
+
+- **전체 파일 읽기 금지** (200줄 초과 시) — offset+limit로 필요한 섹션만
+- **같은 파일 반복 읽기 금지** — 같은 세션 내에서는 기억해서 재사용
+- **대형 docs 파일** (`docs/adr.md` 등)은 grep으로 필요 섹션만 찾아 offset 지정
+
+## 조사/탐색 접근 방식
+
+- **직접 질문에는 직접 답변부터** — 사용자가 특정 파일/영역/패턴을 명시했다면 해당 위치부터 확인. 광범위한 codebase 탐색 금지
+- **사용자가 조사 경로를 제시했으면 그 경로부터** — 지시받은 영역에서 codebase 전체를 먼저 뒤지지 않는다
+- **Explore agent는 최후 수단** — Grep/Glob/Read로 3번 이상 시도한 후에도 못 찾을 때만 사용
+- **가정 없이 주장하지 않기** — "dead code", "미사용" 같은 판단은 실제로 참조를 grep한 후에만 제기
+
+## Task 작업 규칙
+
+- 각 phase는 **원자적 단일 책임** — 다른 관심사면 별도 phase로 분리. **작업 항목 5개 이하** 엄수
+- **task 파일 생성 즉시 git commit** — index.json + phase 파일을 실행 전에 커밋
+- task 완료 즉시 git commit (index.json 상태 갱신 포함)
+- 각 phase 프롬프트는 **자기완결적** (이전 대화 없이 독립 실행 가능)
+- **docs 최신화는 task 생성 전 필수** — task phase 내에서 docs 변경 금지
+
 ## Git & PR Workflow
 
 - **1 이슈 = 1 PR = 1 브랜치**: 여러 이슈를 하나의 PR로 묶지 않는다.
@@ -221,3 +272,11 @@ class SomeServiceTest extends TestFixturesSupport {
   git checkout -b fix/issue-description
   ```
 - 병렬 에이전트로 여러 이슈를 처리할 때도 각 에이전트는 정확히 하나의 이슈 + 하나의 PR만 담당한다.
+- **PR 제목 형식**: 반드시 `type(scope): description` 형식 준수.
+  ```
+  feat(expense): add recurring expense scheduler
+  fix(auth): resolve JWT refresh token expiry
+  docs(adr): add ADR-B17 for event-driven notifications
+  chore(skills): adopt 5-skill harness
+  ```
+  이 형식에서 절대 벗어나지 않는다.
