@@ -206,20 +206,21 @@
 
 **핵심 결정 사항**:
 
-| 항목 | 결정 | 이유 |
-|------|------|------|
-| 트리거 | `opened` + `/review` 수동 | `synchronize` 제거 — 매 push마다 토큰 소비 방지 |
-| Review Event | 🔴 → `REQUEST_CHANGES`, 없으면 `APPROVE` | PR 머지 안전망 역할 |
-| 일반 코멘트 | 제거 — Review body로 통합 | Review API의 body 필드가 요약 역할. 별도 코멘트는 중복 |
-| 코멘트 정리 | minimize (OUTDATED) | delete보다 이력 보존에 유리. 인라인 리뷰 코멘트도 포함 |
-| 모델 | orchestrator=sonnet, specialist=haiku | 토큰 비용 최적화. haiku로 충분한 단일 관점 분석 |
-| allowed_bots | 필요한 봇만 명시 | `"*"` 와일드카드 보안 위험. 봇 추가 시 명시적 업데이트 |
-| diff 필터 | `gradle/`, `gradlew*`, `*.lock` 제외. SQL은 포함 | 빌드 도구 노이즈 제거, SQL 마이그레이션은 리뷰 대상 |
-| Job timeout | 15분 | agent hang 시 불필요한 비용 방지 |
-| 프롬프트 관리 | yml 인라인 유지 | 4개 agent 규모에서 파일 분리는 오버엔지니어링. 단일 파일에서 전체 흐름 파악 가능 |
-| 소규모 PR 스킵 | 안 함 | 추후 재논의. 현재는 모든 PR 동일 리뷰 |
+| 항목           | 결정                                             | 이유                                                                             |
+| -------------- | ------------------------------------------------ | -------------------------------------------------------------------------------- |
+| 트리거         | `opened` + `/review` 수동                        | `synchronize` 제거 — 매 push마다 토큰 소비 방지                                  |
+| Review Event   | 🔴 → `REQUEST_CHANGES`, 없으면 `APPROVE`         | PR 머지 안전망 역할                                                              |
+| 일반 코멘트    | 제거 — Review body로 통합                        | Review API의 body 필드가 요약 역할. 별도 코멘트는 중복                           |
+| 코멘트 정리    | minimize (OUTDATED)                              | delete보다 이력 보존에 유리. 인라인 리뷰 코멘트도 포함                           |
+| 모델           | orchestrator=sonnet, specialist=haiku            | 토큰 비용 최적화. haiku로 충분한 단일 관점 분석                                  |
+| allowed_bots   | 필요한 봇만 명시                                 | `"*"` 와일드카드 보안 위험. 봇 추가 시 명시적 업데이트                           |
+| diff 필터      | `gradle/`, `gradlew*`, `*.lock` 제외. SQL은 포함 | 빌드 도구 노이즈 제거, SQL 마이그레이션은 리뷰 대상                              |
+| Job timeout    | 15분                                             | agent hang 시 불필요한 비용 방지                                                 |
+| 프롬프트 관리  | yml 인라인 유지                                  | 4개 agent 규모에서 파일 분리는 오버엔지니어링. 단일 파일에서 전체 흐름 파악 가능 |
+| 소규모 PR 스킵 | 안 함                                            | 추후 재논의. 현재는 모든 PR 동일 리뷰                                            |
 
 **트레이드오프**:
+
 - `/review` 수동 트리거는 리뷰를 잊을 수 있음 → `opened` 시 자동 1회 실행으로 보완
 - `REQUEST_CHANGES`는 머지를 차단할 수 있음 → 의도적 안전망으로 수용
 - minimize된 코멘트가 쌓이면 PR 스레드가 길어질 수 있음 → OUTDATED 라벨로 접힌 상태이므로 가독성 영향 최소
@@ -244,3 +245,57 @@
 
 - **Flyway SQL**: V15부터 적용. 이미 적용된 마이그레이션(V1~V14)은 체크섬 불일치 방지를 위해 수정하지 않음
 - **JPA `@Column`**: 예약어 가능성이 있는 컬럼명은 `@Column(name = "`column_name`")`으로 작성. Hibernate가 dialect에 맞게 자동 이스케이프
+
+---
+
+## ADR-B16: 도메인 기반 패키지 리팩토링 (2026-04-05)
+
+**결정**: 레이어 중심 패키지 구조(`presentation/application/domain/infra`)를 도메인 중심 구조(`expense/`, `category/` 등)로 전환한다. 각 도메인 패키지 내에 레이어 구조를 유지한다.
+
+**이유**:
+
+- 도메인이 10개로 증가하면서 하나의 기능을 수정하려면 4개 레이어 패키지를 넘나들어야 함 → 코드 탐색 비용 증가
+- 도메인별 응집도를 높여 "이 패키지만 보면 전체 흐름을 파악할 수 있는" 구조 지향
+- 향후 MSA 전환 시 도메인 패키지를 그대로 독립 모듈로 추출 가능한 구조적 기반 마련
+
+**구조**:
+
+```
+com.bifos.accountbook
+├── shared/       공통 (CustomUuid, ErrorCode, Auth, AOP, 공통 DTO)
+├── expense/      지출 (presentation/application/domain/infra)
+├── income/       수입
+├── category/     카테고리
+├── family/       가족, 멤버십
+├── recurring/    반복 지출, 스케줄러
+├── invitation/   초대
+├── notification/ 알림, 예산 알림
+├── dashboard/    대시보드 (read model)
+├── user/         사용자, 인증, 프로필
+└── config/       Spring 설정 (최상위 유지)
+```
+
+**핵심 배치 규칙**:
+
+| 구성 요소               | 배치                        |
+| ----------------------- | --------------------------- |
+| Status enum + Converter | 해당 도메인의 `domain/`     |
+| 이벤트 클래스           | 발행자 도메인               |
+| 이벤트 리스너           | 구독자 도메인               |
+| CategoryInfo DTO        | `category/application/dto/` |
+| FamilyValidationService | `shared/aop/`               |
+| CodeEnum, CustomUuid    | `shared/value/`             |
+
+**전략**: Big Bang (1 PR). import 경로만 변경, 로직 변경 없음. 테스트도 동일 구조로 이동.
+
+**범위 제한 (Option A)**:
+
+- ✅ 패키지 구조 변경
+- ❌ JPA 연관관계 제거 (Expense↔Family 등) — 향후 별도 이니셔티브
+- ❌ 동기 호출 → 이벤트 전환 — 향후 별도 이니셔티브
+- ❌ Gradle 멀티모듈 분리
+
+**트레이드오프**:
+
+- JPA `@ManyToOne` 관계가 유지되므로 진정한 MSA 독립 배포는 불가 → 이 단계에서는 코드 응집도 개선에 집중
+- Big Bang PR은 diff가 크지만 로직 변경 없이 import만 바뀌므로 과도기 상태(old/new 혼재)보다 안전

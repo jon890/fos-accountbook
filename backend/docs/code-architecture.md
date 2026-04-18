@@ -4,19 +4,98 @@
 
 ---
 
-## 패키지 구조
+## 패키지 구조 (도메인 기반, ADR-B16)
 
 ```
 com.bifos.accountbook
-├── presentation/    Controller, Request/Response DTO, Annotation, Resolver
-├── application/     Service, 애플리케이션 DTO, AOP, Event, Scheduler
-├── domain/          Entity, Repository 인터페이스, Value Object
-├── infra/           Repository 구현체 (JPA/QueryDSL), Filter
-└── config/          Spring 설정 (캐시, 보안, CORS), Security (JWT 인증)
+├── shared/                  도메인 공통 — 아래 상세
+├── expense/                 지출
+│   ├── presentation/        Controller, Request/Response DTO
+│   ├── application/         Service, DTO, Event
+│   ├── domain/              Entity, Repository 인터페이스, Value Object, Converter
+│   └── infra/               Repository 구현체 (JPA/QueryDSL)
+├── income/                  수입 (동일 레이어 구조)
+├── category/                카테고리
+├── family/                  가족, 멤버십
+├── recurring/               반복 지출, 스케줄러
+├── invitation/              초대
+├── notification/            알림, 예산 알림
+├── dashboard/               대시보드 (read model)
+├── user/                    사용자, 인증, 프로필
+└── config/                  Spring 설정 (캐시, 보안, CORS, QueryDSL, OpenAPI)
 ```
+
+### shared/ 내부 구조
+
+```
+shared/
+├── auth/           LoginUser, LoginUserDto, LoginUserArgumentResolver
+├── aop/            FamilyAccessAspect, @ValidateFamilyAccess, FamilyValidationService
+├── dto/            ApiSuccessResponse, ApiErrorResponse, PaginationResponse
+├── exception/      BusinessException, ErrorCode, GlobalExceptionHandler
+├── value/          CustomUuid, CodeEnum
+├── converter/      UuidConverter (CustomUuid 전용)
+├── filter/         RequestResponseLoggingFilter
+└── utils/          TimeUtils
+```
+
+### 도메인별 소유 원칙
+
+| 구성 요소                      | 배치 규칙                                                   |
+| ------------------------------ | ----------------------------------------------------------- |
+| Status enum (ExpenseStatus 등) | 해당 도메인의 `domain/value/`                               |
+| Status converter               | 해당 도메인의 `domain/converter/`                           |
+| 이벤트 클래스                  | **발행자** 도메인의 `application/event/`                    |
+| 이벤트 리스너                  | **구독자** 도메인의 `application/event/`                    |
+| Projection (read model DTO)    | **사용하는** 도메인의 `domain/repository/projection/`       |
+| CategoryInfo DTO               | `category/application/dto/` (다른 도메인이 category를 참조) |
 
 **의존성 방향**: `presentation → application → domain ← infra`
 상위 레이어는 하위를 직접 참조하지 않는다. Controller는 Repository를 직접 주입받지 않는다.
+
+---
+
+## 도메인 의존성 맵
+
+```
+user ◄── family ──► category
+  ▲        ▲           ▲
+  │        │           │
+  │     invitation     ├── expense ──► notification
+  │                    │       (event)
+  │                    ├── income
+  │                    │
+  │                    └── recurring ──► notification
+  │                              (event)
+  └── dashboard (read model, 여러 도메인 조회)
+```
+
+### 서비스 간 의존성 상세
+
+| 서비스                  | 의존 대상 (서비스)                                                        | 비고                                 |
+| ----------------------- | ------------------------------------------------------------------------- | ------------------------------------ |
+| ExpenseService          | CategoryService, UserService, FamilyValidationService                     |                                      |
+| IncomeService           | CategoryService, UserService, FamilyValidationService                     |                                      |
+| CategoryService         | ExpenseService, RecurringExpenseService (ObjectProvider)                  | 카테고리 삭제 시 이관                |
+| FamilyService           | UserService, CategoryService, UserProfileService, FamilyValidationService | 가족 생성 시 카테고리/프로필         |
+| RecurringExpenseService | CategoryService                                                           |                                      |
+| InvitationService       | UserService                                                               | FamilyRepository 직접 참조           |
+| NotificationService     | FamilyValidationService                                                   |                                      |
+| BudgetAlertService      | —                                                                         | Repository 직접 참조 (이벤트 구독자) |
+| DashboardService        | —                                                                         | Repository 직접 참조 (read model)    |
+| AuthService             | UserService                                                               |                                      |
+
+### 결합 포인트 (향후 MSA 전환 시 해소 대상)
+
+1. **JPA `@ManyToOne` 관계**: Expense↔Family, Income↔Family, FamilyMember↔Family/User, Invitation↔Family/User
+2. **동기 호출**: FamilyService→CategoryService, CategoryService→ExpenseService (ObjectProvider)
+3. **FamilyValidationService**: 6개 서비스가 공유하는 AOP 관심사
+
+이미 잘 분리된 부분:
+
+- `RecurringExpense`: String UUID 참조 (JPA 관계 없음) — MSA-ready 패턴
+- `Category`, `Notification`: CustomUuid 참조 (JPA 관계 없음)
+- `Expense→Notification`: 이벤트 기반 통신
 
 ---
 
@@ -60,8 +139,9 @@ public Response doSomething(@UserUuid CustomUuid userUuid, @FamilyUuid CustomUui
 ### Repository 패턴
 
 ```
-domain/repository/       인터페이스 선언만
-infra/persistence/.../impl/  JPA + QueryDSL 구현체
+{domain}/domain/repository/          인터페이스 선언만
+{domain}/infra/repository/impl/      JPA + QueryDSL 구현체
+{domain}/infra/repository/jpa/       Spring Data JPA 인터페이스
 ```
 
 ### 이벤트 기반 사이드이펙트
@@ -69,15 +149,15 @@ infra/persistence/.../impl/  JPA + QueryDSL 구현체
 지출 생성/수정 등의 사이드이펙트(알림)는 트랜잭션 분리를 위해 Spring ApplicationEvent 사용:
 
 ```java
-// Service: 이벤트 발행
+// expense/application/event/: 이벤트 발행
 applicationEventPublisher.publishEvent(new ExpenseCreatedEvent(familyUuid, date));
 
-// Listener: 트랜잭션 커밋 후 처리, 예외는 삼킴 (알림 실패가 지출 생성을 막으면 안 됨)
+// notification/application/event/: 트랜잭션 커밋 후 처리, 예외는 삼킴
 @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 public void handle(ExpenseCreatedEvent event) { ... }
 ```
 
-### 스케줄러 패턴 (v2 — 반복 지출)
+### 스케줄러 패턴 (반복 지출)
 
 ```java
 @Component
@@ -147,6 +227,7 @@ static class TestClockConfig {
 | ADR-B10 | QueryDSL 동적 쿼리                     |
 | ADR-B12 | Spring @Scheduled 스케줄러             |
 | ADR-B13 | 반복 지출 수정 즉시 전체 반영          |
+| ADR-B16 | 도메인 기반 패키지 리팩토링            |
 
 전체 결정 이력: `docs/adr.md`
 
@@ -154,9 +235,11 @@ static class TestClockConfig {
 
 ## 새 도메인 추가 체크리스트
 
-1. `domain/` — Entity (`@Entity` + `@Builder`), Repository 인터페이스
-2. `infra/persistence/` — Repository 구현체 (JPA + QueryDSL)
-3. `application/` — Service (`@Transactional(readOnly=true)` 기본) + DTO
-4. `presentation/` — Controller + Request/Response DTO
+1. `{domain}/domain/` — Entity (`@Entity` + `@Builder`), Repository 인터페이스, Value Object
+2. `{domain}/infra/` — Repository 구현체 (JPA + QueryDSL)
+3. `{domain}/application/` — Service (`@Transactional(readOnly=true)` 기본) + DTO
+4. `{domain}/presentation/` — Controller + Request/Response DTO
 5. `db/migration/` — Flyway SQL (`V{N}__{description}.sql`)
 6. `docs/data-schema.md` — 스키마 + API 엔드포인트 업데이트
+7. 기존 삭제/이관 로직에 새 도메인 반영 (예: 카테고리 삭제 시 새 도메인 데이터도 기본 카테고리로 이동)
+8. `docs/flow.md` — 사용자 흐름에 새 도메인 시나리오 추가

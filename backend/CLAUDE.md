@@ -23,17 +23,20 @@ docker compose -f docker/compose.yml up -d
 
 ## Architecture
 
-`presentation → application → domain → infra` 단방향 의존성 구조. 패키지 경로: `com.bifos.accountbook`.
+도메인 기반 패키지 구조 (ADR-B16). 패키지 경로: `com.bifos.accountbook`.
 
 ```
-presentation/    # Controller, Request/Response DTO, Annotation, Resolver
-application/     # Service, application-level DTO, AOP, Event, Scheduler
-domain/          # Entity, Repository 인터페이스, Value Object
-infra/           # Repository 구현체(JPA/QueryDSL), Filter
-config/          # Spring 설정 (캐시, 보안, CORS), Security (JWT 인증)
+com.bifos.accountbook/
+├── shared/                 공통 (auth, aop, dto, exception, filter, utils, value)
+├── user/ family/ category/ expense/ income/ recurring/
+├── invitation/ notification/ dashboard/
+│                           각 도메인 내부 presentation/ application/ domain/ infra/
+└── config/                 Spring 설정 (캐시, 보안, CORS, Security)
 ```
 
-**레이어 의존성 규칙**: 상위 레이어는 하위 레이어를 직접 참조하지 않는다. Controller는 Repository를 직접 주입받지 않는다.
+각 도메인 내부는 `presentation → application → domain → infra` 단방향 의존성. 상위 레이어는 하위 레이어를 직접 참조하지 않으며, Controller는 Repository를 직접 주입받지 않는다.
+
+상세 구조·레이어 책임은 `docs/code-architecture.md` 참조.
 
 ## Key Patterns
 
@@ -200,12 +203,14 @@ class SomeServiceTest extends TestFixturesSupport {
 
 > **원칙**: 기술적 의사결정과 전략적 가이드라인은 `docs/`가 source of truth. CLAUDE.md와 docs 내용이 다르면 **docs가 우선**한다.
 
-| 문서 | 역할 |
-|------|------|
-| `docs/adr.md` | 기술 의사결정 기록 (ADR-B01~B14) |
-| `docs/code-architecture.md` | 계층 구조, 핵심 패턴, 인증 흐름, 새 도메인 체크리스트 |
-| `docs/data-schema.md` | DB 스키마 canonical 소스 (프론트엔드와 공유) |
-| `docs/testing-strategy.md` | 테스트 피라미드, 필수 시나리오, OpenAPI 계약 검증, Spring Profiles 스펙 |
+| 문서                        | 역할                                                                    |
+| --------------------------- | ----------------------------------------------------------------------- |
+| `docs/prd.md`               | 제품 요구사항, 도메인 구조, 기능/비기능 요구사항                        |
+| `docs/flow.md`              | 핵심 사용자 시나리오별 흐름, 도메인 간 이벤트 흐름                      |
+| `docs/adr.md`               | 기술 의사결정 기록 (ADR-B01~B16)                                        |
+| `docs/code-architecture.md` | 도메인 기반 패키지 구조, 의존성 맵, 핵심 패턴, 새 도메인 체크리스트     |
+| `docs/data-schema.md`       | DB 스키마 canonical 소스 (도메인별 그룹핑, 프론트엔드와 공유)           |
+| `docs/testing-strategy.md`  | 테스트 피라미드, 필수 시나리오, OpenAPI 계약 검증, Spring Profiles 스펙 |
 
 ## Git & PR Workflow
 
