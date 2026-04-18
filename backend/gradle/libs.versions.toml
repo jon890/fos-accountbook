@@ -14,7 +14,7 @@ jjwt = "0.13.0"
 p6spy = "2.0.0"
 
 # API Documentation
-springdoc-openapi = "3.0.2"
+springdoc-openapi = "3.0.3"
 
 # Utilities
 lombok = "1.18.44"
