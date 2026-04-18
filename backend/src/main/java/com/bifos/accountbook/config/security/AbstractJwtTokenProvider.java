@@ -1,6 +1,6 @@
 package com.bifos.accountbook.config.security;
 
-import com.bifos.accountbook.domain.entity.User;
+import com.bifos.accountbook.user.domain.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtParser;

@@ -1,6 +1,6 @@
 package com.bifos.accountbook.config.converter;
 
-import com.bifos.accountbook.domain.value.CustomUuid;
+import com.bifos.accountbook.shared.value.CustomUuid;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 

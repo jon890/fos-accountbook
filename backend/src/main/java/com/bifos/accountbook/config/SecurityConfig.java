@@ -1,6 +1,6 @@
 package com.bifos.accountbook.config;
 
-import com.bifos.accountbook.infra.filter.RequestResponseLoggingFilter;
+import com.bifos.accountbook.shared.filter.RequestResponseLoggingFilter;
 import com.bifos.accountbook.config.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

@@ -1,8 +1,8 @@
 package com.bifos.accountbook.config.security;
 
-import com.bifos.accountbook.domain.entity.User;
-import com.bifos.accountbook.domain.value.CustomUuid;
-import com.bifos.accountbook.utils.TimeUtils;
+import com.bifos.accountbook.user.domain.entity.User;
+import com.bifos.accountbook.shared.value.CustomUuid;
+import com.bifos.accountbook.shared.utils.TimeUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import java.time.LocalDateTime;
