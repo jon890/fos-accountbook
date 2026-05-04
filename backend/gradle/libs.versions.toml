@@ -21,7 +21,7 @@ lombok = "1.18.44"
 querydsl = "5.1.0"
 
 # Cache
-caffeine = "3.2.3"
+caffeine = "3.2.4"
 
 [libraries]
 # Spring Boot Starters
