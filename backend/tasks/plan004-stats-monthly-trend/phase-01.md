@@ -16,6 +16,7 @@
 1. **DTO 생성**
    - `MonthlyTrendPoint`: `year` (int), `month` (int), `totalExpense` (BigDecimal)
    - `MonthlyTrendResponse`: `points` (List<MonthlyTrendPoint>), `average` (BigDecimal)
+     - points가 비어있으면 `average`는 `BigDecimal.ZERO`로 설정 (0 나누기 방어)
    - 위치: `dashboard/application/dto/`
 
 2. **DashboardRepository에 메서드 추가**
@@ -34,8 +35,10 @@
    - `@ValidateFamilyAccess` 적용
 
 5. **DashboardController에 endpoint 추가**
-   - `@GetMapping("/stats/monthly-trend")`
+   - 전체 URL: `GET /api/v1/families/{familyUuid}/dashboard/stats/monthly-trend`
+   - Controller 클래스 레벨 `@RequestMapping("/api/v1/families/{familyUuid}/dashboard")` 에 `@GetMapping("/stats/monthly-trend")` 추가
    - `@RequestParam String from, @RequestParam String to` (YYYY-MM 형식)
+   - 입력 검증: `YearMonth.parse()` 파싱 실패 시 400 Bad Request, `from > to` 역순 시 400 반환
 
 ## 검증 기준
 

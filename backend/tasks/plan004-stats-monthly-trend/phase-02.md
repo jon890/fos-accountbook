@@ -29,13 +29,16 @@
 
 4. **DashboardService에 메서드 추가**
    - `getCategoryBreakdown(userUuid, familyUuid, year, month, compareWithPrev)`
-   - `compareWithPrev=true`이면 전월(year, month-1) 데이터도 조회하여 delta 계산
+   - `compareWithPrev=true`이면 전월 데이터도 조회하여 delta 계산
+     - 전월 계산: `YearMonth.of(year, month).minusMonths(1)` 사용 (month=1일 때 전년도 12월 자동 처리)
    - delta = ((현재월 금액 - 전월 금액) / 전월 금액) * 100
    - 전월 해당 카테고리 지출이 0이면 deltaPercent는 null
+   - `totalExpense=0`이면 모든 항목의 `percentage`를 0으로 설정 (0 나누기 방어)
    - `@ValidateFamilyAccess` 적용
 
 5. **DashboardController에 endpoint 추가**
-   - `@GetMapping("/stats/category-breakdown")`
+   - 전체 URL: `GET /api/v1/families/{familyUuid}/dashboard/stats/category-breakdown`
+   - Controller 클래스 레벨 `@RequestMapping("/api/v1/families/{familyUuid}/dashboard")` 에 `@GetMapping("/stats/category-breakdown")` 추가
    - `@RequestParam Integer year, @RequestParam Integer month, @RequestParam(defaultValue = "false") boolean compareWithPrev`
 
 ## 검증 기준
