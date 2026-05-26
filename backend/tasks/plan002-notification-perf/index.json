@@ -1,0 +1,23 @@
+{
+  "plan": "plan002",
+  "slug": "notification-perf",
+  "title": "NotificationService markAllAsRead — 읽지 않은 알림만 조회하도록 최적화",
+  "issue": "#86",
+  "status": "pending",
+  "phases": [
+    {
+      "id": "phase-01",
+      "title": "findUnreadByFamilyAndUser 쿼리 추가 + markAllAsRead 리팩토링 + 테스트 검증",
+      "file": "phase-01.md",
+      "model": "sonnet",
+      "status": "pending"
+    },
+    {
+      "id": "phase-02",
+      "title": "빌드 검증 + 커밋",
+      "file": "phase-02.md",
+      "model": "haiku",
+      "status": "pending"
+    }
+  ]
+}
