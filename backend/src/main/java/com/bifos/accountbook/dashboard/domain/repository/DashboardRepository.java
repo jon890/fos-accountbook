@@ -1,5 +1,6 @@
 package com.bifos.accountbook.dashboard.domain.repository;
 
+import com.bifos.accountbook.dashboard.domain.repository.projection.MonthlyTrendProjection;
 import com.bifos.accountbook.expense.domain.repository.projection.CategoryExpenseProjection;
 import com.bifos.accountbook.shared.value.CustomUuid;
 import java.math.BigDecimal;
@@ -88,5 +89,7 @@ public interface DashboardRepository {
   java.util.Map<Integer, BigDecimal> getDailyExpenseAmounts(CustomUuid familyUuid, int year, int month);
 
   java.util.Map<Integer, BigDecimal> getDailyIncomeAmounts(CustomUuid familyUuid, int year, int month);
+
+  List<MonthlyTrendProjection> getMonthlyExpenseTrend(CustomUuid familyUuid, LocalDateTime from, LocalDateTime to);
 }
 

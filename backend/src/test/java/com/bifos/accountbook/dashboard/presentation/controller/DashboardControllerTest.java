@@ -387,6 +387,138 @@ class DashboardControllerTest extends AbstractControllerTest {
            .andExpect(status().isForbidden());
   }
 
+  // ===== monthly-trend 통합 테스트 =====
+
+  @Test
+  @DisplayName("월별 트렌드 조회 - 3개월 지출 데이터 성공")
+  void getMonthlyTrend_Success() throws Exception {
+    User user = fixtures.getDefaultUser();
+    Family family = fixtures.getDefaultFamily();
+    Category category = fixtures.categories.category(family).name("식비").build();
+
+    LocalDateTime march = LocalDateTime.of(2025, 3, 15, 10, 0);
+    LocalDateTime april = LocalDateTime.of(2025, 4, 15, 10, 0);
+    LocalDateTime may = LocalDateTime.of(2025, 5, 15, 10, 0);
+
+    createExpense(family.getUuid(), user.getUuid(), category.getUuid(),
+                  BigDecimal.valueOf(30000), march);
+    createExpense(family.getUuid(), user.getUuid(), category.getUuid(),
+                  BigDecimal.valueOf(50000), april);
+    createExpense(family.getUuid(), user.getUuid(), category.getUuid(),
+                  BigDecimal.valueOf(40000), may);
+
+    mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly-trend",
+                        family.getUuid().getValue())
+                        .param("from", "2025-03")
+                        .param("to", "2025-05")
+                        .contentType(MediaType.APPLICATION_JSON))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.success").value(true))
+           .andExpect(jsonPath("$.data.points").isArray())
+           .andExpect(jsonPath("$.data.points.length()").value(3))
+           .andExpect(jsonPath("$.data.average").value(40000.00));
+  }
+
+  @Test
+  @DisplayName("월별 트렌드 조회 - 데이터 없으면 빈 points")
+  void getMonthlyTrend_Empty() throws Exception {
+    Family family = fixtures.getDefaultFamily();
+
+    mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly-trend",
+                        family.getUuid().getValue())
+                        .param("from", "2025-01")
+                        .param("to", "2025-01")
+                        .contentType(MediaType.APPLICATION_JSON))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.data.points").isEmpty())
+           .andExpect(jsonPath("$.data.average").value(0));
+  }
+
+  @Test
+  @DisplayName("월별 트렌드 조회 - from > to 이면 400")
+  void getMonthlyTrend_InvalidRange() throws Exception {
+    Family family = fixtures.getDefaultFamily();
+
+    mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly-trend",
+                        family.getUuid().getValue())
+                        .param("from", "2025-06")
+                        .param("to", "2025-01")
+                        .contentType(MediaType.APPLICATION_JSON))
+           .andExpect(status().isBadRequest());
+  }
+
+  // ===== category-breakdown 통합 테스트 =====
+
+  @Test
+  @DisplayName("카테고리 분류 통계 - compareWithPrev=false (delta null)")
+  void getCategoryBreakdown_WithoutPrev() throws Exception {
+    User user = fixtures.getDefaultUser();
+    Family family = fixtures.getDefaultFamily();
+    Category foodCategory = fixtures.categories.category(family).name("식비").color("#FF5733").icon("🍕").build();
+    Category transportCategory = fixtures.categories.category(family).name("교통비").color("#3498DB").icon("🚗").build();
+
+    LocalDateTime may = LocalDateTime.of(2025, 5, 15, 10, 0);
+
+    createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
+                  BigDecimal.valueOf(60000), may);
+    createExpense(family.getUuid(), user.getUuid(), transportCategory.getUuid(),
+                  BigDecimal.valueOf(40000), may);
+
+    mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/category-breakdown",
+                        family.getUuid().getValue())
+                        .param("year", "2025")
+                        .param("month", "5")
+                        .contentType(MediaType.APPLICATION_JSON))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.success").value(true))
+           .andExpect(jsonPath("$.data.year").value(2025))
+           .andExpect(jsonPath("$.data.month").value(5))
+           .andExpect(jsonPath("$.data.totalExpense").value(100000))
+           .andExpect(jsonPath("$.data.items").isArray())
+           .andExpect(jsonPath("$.data.items.length()").value(2))
+           .andExpect(jsonPath("$.data.items[0].deltaPercent").doesNotExist());
+  }
+
+  @Test
+  @DisplayName("카테고리 분류 통계 - compareWithPrev=true (delta 계산)")
+  void getCategoryBreakdown_WithPrev() throws Exception {
+    User user = fixtures.getDefaultUser();
+    Family family = fixtures.getDefaultFamily();
+    Category foodCategory = fixtures.categories.category(family).name("식비").color("#FF5733").icon("🍕").build();
+
+    LocalDateTime april = LocalDateTime.of(2025, 4, 15, 10, 0);
+    LocalDateTime may = LocalDateTime.of(2025, 5, 15, 10, 0);
+
+    createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
+                  BigDecimal.valueOf(50000), april);
+    createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
+                  BigDecimal.valueOf(75000), may);
+
+    mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/category-breakdown",
+                        family.getUuid().getValue())
+                        .param("year", "2025")
+                        .param("month", "5")
+                        .param("compareWithPrev", "true")
+                        .contentType(MediaType.APPLICATION_JSON))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.data.items[0].deltaPercent").value(50.0));
+  }
+
+  @Test
+  @DisplayName("카테고리 분류 통계 - 데이터 없으면 빈 items")
+  void getCategoryBreakdown_Empty() throws Exception {
+    Family family = fixtures.getDefaultFamily();
+
+    mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/category-breakdown",
+                        family.getUuid().getValue())
+                        .param("year", "2025")
+                        .param("month", "1")
+                        .contentType(MediaType.APPLICATION_JSON))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.data.totalExpense").value(0))
+           .andExpect(jsonPath("$.data.items").isEmpty());
+  }
+
   // ===== Helper Methods =====
 
   private Expense createExpense(CustomUuid familyUuid, CustomUuid userUuid, CustomUuid categoryUuid,

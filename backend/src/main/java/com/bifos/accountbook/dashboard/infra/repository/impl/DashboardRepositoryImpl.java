@@ -4,6 +4,8 @@ import com.bifos.accountbook.category.domain.entity.QCategory;
 import com.bifos.accountbook.expense.domain.entity.QExpense;
 import com.bifos.accountbook.income.domain.entity.QIncome;
 import com.bifos.accountbook.dashboard.domain.repository.DashboardRepository;
+import com.bifos.accountbook.dashboard.domain.repository.projection.MonthlyTrendProjection;
+import com.bifos.accountbook.dashboard.infra.repository.projection.MonthlyTrendProjectionImpl;
 import com.bifos.accountbook.expense.domain.repository.projection.CategoryExpenseProjection;
 import com.bifos.accountbook.category.domain.value.CategoryStatus;
 import com.bifos.accountbook.shared.value.CustomUuid;
@@ -256,6 +258,41 @@ public class DashboardRepositoryImpl implements DashboardRepository {
         .fetch();
 
     return toAmountByDayMap(tuples, income.date.dayOfMonth(), income.amount.sum());
+  }
+
+  @Override
+  public List<MonthlyTrendProjection> getMonthlyExpenseTrend(
+      CustomUuid familyUuid,
+      LocalDateTime from,
+      LocalDateTime to) {
+
+    QExpense expense = QExpense.expense;
+
+    List<Tuple> tuples = queryFactory
+        .select(expense.date.year(), expense.date.month(), expense.amount.sum())
+        .from(expense)
+        .where(
+            expense.family.uuid.eq(familyUuid),
+            expense.status.eq(ExpenseStatus.ACTIVE),
+            expense.date.goe(from),
+            expense.date.lt(to)
+        )
+        .groupBy(expense.date.year(), expense.date.month())
+        .orderBy(expense.date.year().asc(), expense.date.month().asc())
+        .fetch();
+
+    return tuples.stream()
+                 .<MonthlyTrendProjection>map(tuple -> {
+                   Integer year = tuple.get(expense.date.year());
+                   Integer month = tuple.get(expense.date.month());
+                   BigDecimal total = tuple.get(expense.amount.sum());
+                   return new MonthlyTrendProjectionImpl(
+                       year != null ? year : 0,
+                       month != null ? month : 0,
+                       total != null ? total : BigDecimal.ZERO
+                   );
+                 })
+                 .toList();
   }
 
   private <T> Map<Integer, BigDecimal> toAmountByDayMap(

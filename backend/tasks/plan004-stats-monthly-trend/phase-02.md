@@ -18,17 +18,11 @@
    - `CategoryBreakdownResponse`: `year`, `month` (int), `totalExpense` (BigDecimal), `items` (List<CategoryBreakdownItem>)
    - 위치: `dashboard/application/dto/`
 
-2. **DashboardRepository에 메서드 추가**
-   - `List<CategoryExpenseProjection> getCategoryExpenseStatsByMonth(CustomUuid familyUuid, int year, int month)`
-   - 기존 `getCategoryExpenseStats`와 동일 패턴이나 year/month 조건으로 변경
-   - 위치: `dashboard/domain/repository/DashboardRepository.java`
-
-3. **DashboardRepositoryImpl에 QueryDSL 구현**
-   - 기존 `getCategoryExpenseStats` 구현 참조하여 year/month 조건으로 변경
-   - LEFT JOIN Category + GROUP BY categoryUuid + 금액 내림차순
-
-4. **DashboardService에 메서드 추가**
+2. **DashboardService에 메서드 추가**
    - `getCategoryBreakdown(userUuid, familyUuid, year, month, compareWithPrev)`
+   - **기존 `getCategoryExpenseStats(familyUuid, null, startOfMonth, endOfMonth)` 재활용** — 별도 Repository 메서드 불필요
+     - `startOfMonth = YearMonth.of(year, month).atDay(1).atStartOfDay()`
+     - `endOfMonth = YearMonth.of(year, month).atEndOfMonth().atTime(23, 59, 59)`
    - `compareWithPrev=true`이면 전월 데이터도 조회하여 delta 계산
      - 전월 계산: `YearMonth.of(year, month).minusMonths(1)` 사용 (month=1일 때 전년도 12월 자동 처리)
    - delta = ((현재월 금액 - 전월 금액) / 전월 금액) * 100
@@ -36,7 +30,7 @@
    - `totalExpense=0`이면 모든 항목의 `percentage`를 0으로 설정 (0 나누기 방어)
    - `@ValidateFamilyAccess` 적용
 
-5. **DashboardController에 endpoint 추가**
+3. **DashboardController에 endpoint 추가**
    - 전체 URL: `GET /api/v1/families/{familyUuid}/dashboard/stats/category-breakdown`
    - Controller 클래스 레벨 `@RequestMapping("/api/v1/families/{familyUuid}/dashboard")` 에 `@GetMapping("/stats/category-breakdown")` 추가
    - `@RequestParam Integer year, @RequestParam Integer month, @RequestParam(defaultValue = "false") boolean compareWithPrev`
