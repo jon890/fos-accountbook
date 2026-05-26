@@ -15,20 +15,22 @@
 
 1. **InvitationResponse에 InviterInfo static class + memberCount 필드 추가**
    - 파일: `src/main/java/com/bifos/accountbook/invitation/application/dto/InvitationResponse.java`
-   - `InviterInfo` static class 추가: `uuid` (String), `name` (String), `avatarUrl` (String, nullable)
+   - `InviterInfo` static class 추가: `name` (String), `avatarUrl` (String, nullable)
+     - `uuid` 필드 제외 — skipAuth 엔드포인트에서 정보 최소화 원칙 적용 (name + avatar만 노출)
    - `InvitationResponse`에 `inviter` (InviterInfo) + `memberCount` (Integer) 필드 추가
    - `fromWithDetails(Invitation, String familyName, User inviterUser, int memberCount)` 팩토리 메서드 추가
-   - 기존 `from()`, `fromWithFamilyName()` 메서드는 하위호환을 위해 유지 (inviter/memberCount는 null)
+   - 기존 `from()`, `fromWithFamilyName()` 은 유지하되, `getInvitationByToken()` 에서만 `fromWithDetails()` 사용
 
 2. **InvitationService.getInvitationByToken() 수정**
    - 파일: `src/main/java/com/bifos/accountbook/invitation/application/service/InvitationService.java`
-   - inviter User 조회: `Invitation.getInviter()` (이미 `@ManyToOne`으로 매핑됨) 또는 `userService.getUser(invitation.getInviterUserUuid())`
+   - inviter User 조회: `userService.getUser(invitation.getInviterUserUuid())` 로 명시적 조회
+     - `Invitation.getInviter()` 사용 금지 — `@ManyToOne(LAZY)` 이므로 트랜잭션 밖에서 LazyInitializationException 위험
    - memberCount 조회: `familyMemberRepository.countByFamilyUuid(familyUuid)`
    - `InvitationResponse.fromWithDetails(invitation, family.getName(), inviterUser, memberCount)` 호출
 
-3. **FamilyMemberRepository 확인**
-   - `countByFamilyUuid()`가 ACTIVE 멤버만 세는지 확인
-   - ACTIVE만 세지 않으면 조건 추가 필요 (LEFT 상태 제외)
+3. **FamilyMemberRepository — ACTIVE 필터 추가 필요**
+   - 현재 `countByFamilyUuid()`는 ACTIVE 필터 없음 (LEFT 상태 멤버도 포함됨)
+   - `countActiveByFamilyUuid()` 메서드를 추가하거나, 기존 메서드에 `@Query`로 ACTIVE 조건 추가
 
 4. **기존 테스트 실행 + 신규 테스트 추가**
    - `./gradlew test --no-daemon --console=plain`
@@ -36,6 +38,6 @@
 
 ## 검증 기준
 
-- `GET /invitations/token/{token}` 응답에 `inviter.uuid`, `inviter.name`, `inviter.avatarUrl`, `memberCount` 포함
+- `GET /invitations/token/{token}` 응답에 `inviter.name`, `inviter.avatarUrl`, `memberCount` 포함
 - inviter 응답에 email/phone 등 민감 정보 비포함
 - 전체 테스트 통과
