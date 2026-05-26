@@ -70,6 +70,11 @@ public class NotificationRepositoryImpl implements NotificationRepository {
   }
 
   @Override
+  public List<Notification> findUnreadByFamilyAndUser(CustomUuid familyUuid, CustomUuid userUuid) {
+    return jpaRepository.findAllByFamilyUuidAndUserUuidAndIsReadFalse(familyUuid, userUuid);
+  }
+
+  @Override
   public long countUnreadByFamilyAndUser(CustomUuid familyUuid, CustomUuid userUuid) {
     return jpaRepository.countByFamilyUuidAndUserUuidAndIsReadFalse(familyUuid, userUuid);
   }

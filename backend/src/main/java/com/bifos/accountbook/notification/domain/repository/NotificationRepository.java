@@ -61,6 +61,11 @@ public interface NotificationRepository {
   List<Notification> findByFamilyAndUser(CustomUuid familyUuid, CustomUuid userUuid);
 
   /**
+   * 가족 내 특정 사용자의 읽지 않은 알림 조회
+   */
+  List<Notification> findUnreadByFamilyAndUser(CustomUuid familyUuid, CustomUuid userUuid);
+
+  /**
    * 가족 내 특정 사용자의 읽지 않은 알림 수
    */
   long countUnreadByFamilyAndUser(CustomUuid familyUuid, CustomUuid userUuid);
