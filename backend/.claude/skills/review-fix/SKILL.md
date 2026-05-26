@@ -15,9 +15,110 @@ description: |
 PR에 달린 코드 리뷰 댓글(주로 claude bot의 🔴/🟡 구조화 리뷰)을 분석하고,
 필수 수정 → 권장 수정 순으로 코드를 반영한 뒤 commit & push한다.
 
+## 프로젝트 컨벤션 (fos-accountbook-backend)
+
+- 빌드 도구: **Gradle** (`./gradlew`)
+- 빌드: `./gradlew build -x test -x checkstyleMain -x checkstyleTest --no-daemon`
+- 테스트: `./gradlew test --no-daemon`
+- 단일 테스트: `./gradlew test --tests "*NotificationControllerTest*" --no-daemon`
+- 코드 스타일: `./gradlew checkstyleMain --no-daemon` (필수 통과)
+- 패키지: `com.bifos.accountbook` (도메인 기반, ADR-B16)
+- 레이어: `presentation → application → domain → infra` 단방향
+- 커밋 메시지: `<type>(<scope>): <subject>` — Spring 컨벤션
+- ADR 식별자: `ADR-B<N>` 형식
+
 ---
 
-## 1단계: PR 및 댓글 수집
+## 1단계: PR 및 댓글 수집 + CI / Conflict 사전 점검
+
+### CI 상태 점검 (필수)
+
+리뷰 댓글 분석 전에 **CI 상태**를 먼저 확인. 봇 리뷰가 깨끗해도 CI 실패 (gradle build / test / checkstyle) 면 PR 머지 불가 — 가장 시급한 "🔴 필수 수정":
+
+```bash
+gh pr checks <N>
+gh pr view <N> --json statusCheckRollup \
+  --jq '.statusCheckRollup[] | select(.conclusion=="FAILURE" or .status=="IN_PROGRESS") | {name, conclusion, status, detailsUrl}'
+```
+
+판정:
+- 모든 체크 `pass / SUCCESS` → Merge conflict 점검으로
+- `FAILURE` 있음 → 아래 "CI 실패 로그 분석"
+- `IN_PROGRESS` 만 → 사용자에게 "CI 진행 중 — 끝나길 기다려 다시 실행할지" 확인
+
+CI 실패 로그:
+
+```bash
+RUN_ID=$(gh pr view <N> --json statusCheckRollup --jq '.statusCheckRollup[] | select(.conclusion=="FAILURE") | .detailsUrl' | head -1 | grep -oE '[0-9]+/job/[0-9]+' | cut -d/ -f1)
+gh run view $RUN_ID --log-failed 2>&1 | tail -80
+```
+
+fos-accountbook-backend CI 실패 흔한 원인:
+- `checkstyleMain` 실패 — 코드 스타일 위반. 로컬에서 `./gradlew checkstyleMain` 후 fix
+- `test` 실패 — 단위/통합 테스트 회귀. 실패 테스트 클래스 식별 후 fix
+- `compileJava` 실패 — Spring 의존성 / annotation processor 충돌. lockfile/buildscript 점검
+
+CI 픽스는 리뷰 댓글 처리와 동일한 단계로. 리뷰 픽스가 같이 있으면 **CI 픽스 먼저 commit** 한 후 리뷰 픽스 추가 commit (분리 revert 가능).
+
+### Merge conflict 점검 (필수)
+
+CI 와 함께 머지 차단 사유. 리뷰 픽스 push 후 발견하면 PR 한 번 더 왕복:
+
+```bash
+gh pr view <N> --json mergeable,mergeStateStatus
+# MERGEABLE / CLEAN → 댓글 수집으로
+# CONFLICTING / DIRTY → 아래 절차
+# UNKNOWN → 잠시 후 재조회
+```
+
+Conflict 해결 절차 (`mergeable=CONFLICTING` 일 때):
+
+```bash
+gh pr checkout <N>
+git fetch origin main
+git merge origin/main --no-commit --no-ff
+git status --short | grep "^UU"
+grep -nE "^(<<<<<<<|=======|>>>>>>>)" $(git diff --name-only --diff-filter=U)
+```
+
+Conflict resolution 분류:
+
+| 카테고리 | 예시 | 자동 처리 |
+|---|---|---|
+| **양쪽 추가** (서로 다른 항목) | `code-architecture.md` 에 양쪽이 다른 도메인 항목 추가 | ✅ 둘 다 보존 |
+| **수치/카운트 갱신** | ADR 인덱스 카운트 증가 | ✅ 더 큰 수치 + 본 PR 변경 의미 합성 |
+| **same-line different-content** | 같은 메서드 시그니처 양쪽 수정 | ⚠️ 사용자 confirm 필수 |
+| **delete vs modify** | 한쪽이 메서드 제거, 한쪽은 수정 | 🛑 사용자 confirm 필수 |
+| **회고 번호 충돌** (`pitfalls.md` 시드 번호) | 다른 PR 머지로 번호 선점 | ✅ 본 PR 항목을 다음 번호로 재할당 + 카운트 동기화 |
+| **import 누락** (한쪽 제거 + 한쪽 사용) | refactor 와 신규 동시 진행 | ⚠️ import 재추가 — silent NameError 회피 |
+
+처리 후 검증:
+
+```bash
+grep -rE "^(<<<<<<<|=======|>>>>>>>)" $(git diff --name-only --diff-filter=U) ; echo "exit=$?"  # exit 1 이면 OK
+./gradlew build -x test -x checkstyleMain -x checkstyleTest --no-daemon
+```
+
+Conflict resolution commit 은 review fix commit 과 **별도** — 회귀 시 분리 revert 가능:
+
+```bash
+git add <충돌 파일들>
+git commit -m "$(cat <<'EOF'
+Merge origin/main into <head>
+
+Conflicts:
+- <file1>: <한 줄 결정 요약>
+- <file2>: <한 줄 결정 요약>
+
+Build PASS.
+EOF
+)"
+git push origin HEAD
+```
+
+---
+
+## 1단계 (계속): PR 및 댓글 수집
 
 ### PR 번호 결정
 
@@ -244,6 +345,52 @@ gh api repos/<owner>/<repo>/pulls/<N>/comments/<comment_id>/replies \
 
 ${ISSUE_URL}"
 ```
+
+---
+
+## 6.5단계: 리뷰 학습 누적 (조건부)
+
+reply 까지 완료되면 이번 PR 의 리뷰에서 **재발 가능 패턴** 추출 → `.claude/skills/_shared/common-pitfalls.md` 또는 `docs/adr.md` 누적.
+
+### 추출 기준 (✅ 누적 / ❌ 누적 금지)
+
+- ✅ 누적: **재현 가능한 패턴** — 같은 실수가 다른 코드에서도 발생할 가능성
+  - 구체적 검출 명령 (grep / checkstyle 룰) 작성 가능
+  - 예: "도메인 레이어 위반 — Controller 가 Repository 직접 주입 (ADR-B16 단방향 의존성 위반)"
+- ❌ 누적 금지: 1회성 오타 / 특정 PR 컨텍스트만 / 칭찬 / 단순 확인 요청
+
+### 누적 위치 결정 (라우팅)
+
+| 종류 | 위치 |
+|---|---|
+| 라이브러리 / Spring 패턴 / 도메인 의사결정 | `docs/adr.md` (ADR-B<N>) |
+| 코드 작성 회피 (반복 봇 지적) | `.claude/skills/_shared/common-pitfalls.md` |
+| 프로젝트 전역 규칙 변경 | `CLAUDE.md` |
+| 1회성 (재발 가능성 낮음) | 누적 금지 — 보고만 |
+
+### 누적 commit — fix PR 에 흡수 (권장)
+
+학습 commit 은 **같은 fix PR 에 추가 commit** 으로 합친다 (1 호출 = 1 PR 원칙):
+
+```bash
+git add docs/adr.md  # 또는 .claude/skills/_shared/common-pitfalls.md
+git commit -m "docs(adr): PR #<N> 리뷰 학습 — ADR-B<N> 신설"
+git push origin HEAD
+```
+
+main 직접 commit 은 권장하지 않음 — 메인 디렉터리 다른 작업과 섞임 위험 (사고 사례 회피).
+
+### ADR 신설 — 사용자 confirm 강제
+
+review-fix 가 자의로 ADR 작성 금지. 후보 발견 시 `AskUserQuestion`:
+- (a) ADR-B<N> 신설 (권장 시 첫 옵션)
+- (b) 경량 — `CLAUDE.md` 한 줄 + `code-architecture.md` 패턴 한 줄
+- (c) skip
+
+ADR 판정 기준:
+- **ADR**: "왜" + "대안 기각" + 코드만 봐서 추론 어려운 의사결정. 적용 범위 광범위 (라이브러리/Spring/도메인 차원)
+- **common-pitfalls**: 코드 작성 시 한 줄 패턴 (Bad/Good 즉시 대비)
+- **skip**: 한 PR 의 1회성 fix, 일반화 어려움
 
 ---
 
