@@ -221,7 +221,50 @@ executor 완료 후 team-lead → docs-verifier에게 검증 요청.
    - `tasks/{task-name}/index.json`의 `status`를 `"completed"`, 각 phase `status`도 `"completed"`로 변경
    - `git add tasks/{task-name}/index.json && git commit -m "chore: {task-name} 완료 상태 업데이트"` + push
    - **이 단계를 빠뜨리면 같은 plan이 재실행되는 사고 발생**
-6. 팀 shutdown (SendMessage `shutdown_request`)
+6. **10단계 (프론트엔드 영향 분석)** 실행 후 팀 shutdown
+
+### 10. 프론트엔드 영향 분석 + 이슈 등록
+
+PR 생성 후, 이번 구현이 프론트엔드에 영향을 주는지 자동 분석한다.
+
+#### 감지 기준 (하나라도 해당하면 "영향 있음")
+
+- Controller 파일에 새 `@GetMapping` / `@PostMapping` / `@PutMapping` / `@DeleteMapping` 추가 → 신규 endpoint
+- Response DTO에 필드 추가/삭제/타입 변경 → 응답 스키마 변경
+- URL 경로 변경 또는 파라미터 변경 → breaking change
+- 인증 정책 변경 (`skipAuth` 추가/제거) → 프론트 호출 방식 변경
+
+#### 감지 방법
+
+```bash
+# 변경된 파일 목록에서 Controller/DTO 파일 추출
+git diff --name-only origin/main...HEAD | grep -E "(Controller|Response|Request|Dto)\.java$"
+
+# 신규 endpoint 감지
+git diff origin/main...HEAD -- "*/presentation/controller/*.java" | grep -E "^\+.*@(Get|Post|Put|Delete|Patch)Mapping"
+
+# DTO 필드 변경 감지
+git diff origin/main...HEAD -- "*/application/dto/*.java" | grep -E "^\+\s+private\s+"
+```
+
+#### 영향 있을 때
+
+1. 프론트엔드 이슈 초안을 생성한다:
+   - 변경된/추가된 endpoint 목록
+   - 응답 스키마 변경 사항 (필드 추가/삭제)
+   - 프론트엔드 작업 항목 (타입 정의 추가, API 호출 변경 등)
+   - 관련 백엔드 PR 링크
+2. `AskUserQuestion`으로 사용자에게 미리보기 + 등록 확인
+3. 승인 시 `gh issue create --repo jon890/fos-accountbook-frontend`로 등록
+4. 백엔드 PR에 프론트엔드 이슈 링크를 코멘트로 남김
+
+#### 영향 없을 때
+
+"프론트엔드 영향 없음 (내부 로직/성능/CI 변경만)" 보고 후 종료.
+
+#### 팀 shutdown
+
+프론트엔드 이슈 처리 완료 후 팀 shutdown (SendMessage `shutdown_request`)
 
 ## worktree 기반 격리 실행 (필수)
 
