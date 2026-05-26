@@ -1,0 +1,37 @@
+{
+  "plan": "plan004",
+  "slug": "stats-monthly-trend",
+  "title": "월별 지출 추이 + 카테고리 분포 stats endpoint 추가",
+  "issue": "#126",
+  "status": "pending",
+  "phases": [
+    {
+      "id": "phase-01",
+      "title": "monthly-trend endpoint (DTO + Repository GROUP BY 쿼리 + Service + Controller)",
+      "file": "phase-01.md",
+      "model": "sonnet",
+      "status": "pending"
+    },
+    {
+      "id": "phase-02",
+      "title": "category-breakdown endpoint (DTO + 전월 delta 로직 + Service + Controller)",
+      "file": "phase-02.md",
+      "model": "sonnet",
+      "status": "pending"
+    },
+    {
+      "id": "phase-03",
+      "title": "통합 테스트 작성",
+      "file": "phase-03.md",
+      "model": "sonnet",
+      "status": "pending"
+    },
+    {
+      "id": "phase-04",
+      "title": "빌드 검증 + 커밋",
+      "file": "phase-04.md",
+      "model": "haiku",
+      "status": "pending"
+    }
+  ]
+}
