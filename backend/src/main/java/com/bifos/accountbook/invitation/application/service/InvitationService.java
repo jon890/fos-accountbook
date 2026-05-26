@@ -102,7 +102,10 @@ public class InvitationService {
                                     .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
                                         .addParameter("familyUuid", invitation.getFamilyUuid().getValue()));
 
-    return InvitationResponse.fromWithFamilyName(invitation, family.getName());
+    User inviterUser = userService.getUser(invitation.getInviterUserUuid());
+    int memberCount = familyMemberRepository.countByFamilyUuid(invitation.getFamilyUuid());
+
+    return InvitationResponse.fromWithDetails(invitation, family.getName(), inviterUser, memberCount);
   }
 
   /**
