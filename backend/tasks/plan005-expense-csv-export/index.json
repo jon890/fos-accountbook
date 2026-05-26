@@ -1,0 +1,23 @@
+{
+  "plan": "plan005",
+  "slug": "expense-csv-export",
+  "title": "월별 지출내역 CSV 내보내기 endpoint 추가",
+  "issue": "#59",
+  "status": "pending",
+  "phases": [
+    {
+      "id": "phase-01",
+      "title": "CSV 생성 서비스 + 다운로드 endpoint + 테스트",
+      "file": "phase-01.md",
+      "model": "sonnet",
+      "status": "pending"
+    },
+    {
+      "id": "phase-02",
+      "title": "빌드 검증 + 커밋",
+      "file": "phase-02.md",
+      "model": "haiku",
+      "status": "pending"
+    }
+  ]
+}
