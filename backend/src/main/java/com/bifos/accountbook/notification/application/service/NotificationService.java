@@ -116,12 +116,8 @@ public class NotificationService {
   @ValidateFamilyAccess
   @Transactional
   public void markAllAsRead(@UserUuid CustomUuid userUuid, @FamilyUuid CustomUuid familyUuid) {
-    // 현재 사용자의 읽지 않은 알림만 조회
     List<Notification> notifications = notificationRepository
-        .findByFamilyAndUser(familyUuid, userUuid)
-        .stream()
-        .filter(n -> !n.getIsRead())
-        .collect(Collectors.toList());
+        .findUnreadByFamilyAndUser(familyUuid, userUuid);
 
     for (Notification notification : notifications) {
       notification.markAsRead();
