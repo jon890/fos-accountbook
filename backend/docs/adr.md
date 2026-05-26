@@ -3,6 +3,32 @@
 > 백엔드(Spring Boot) 전용 기술 결정 기록.
 > 프론트엔드 결정은 `fos-accountbook/docs/adr.md` 참고.
 
+## Index
+
+**기반 기술**
+- [ADR-B01](#adr-b01-java-21--spring-boot-3--mysql-84-lts) — Java 21 + Spring Boot + MySQL 8.4 LTS
+- [ADR-B02](#adr-b02-uuid-이중-키-전략) — UUID 이중 키 전략
+
+**도메인 정책**
+- [ADR-B03](#adr-b03-soft-delete-전략) — Soft Delete 전략
+- [ADR-B07](#adr-b07-bigdecimal-금액-처리) — BigDecimal 금액 처리
+- [ADR-B08](#adr-b08-이벤트-기반-예산-알림) — 이벤트 기반 예산 알림
+- [ADR-B09](#adr-b09-familymember-역할-기반-권한) — FamilyMember 역할 기반 권한
+- [ADR-B12](#adr-b12-반복-지출-스케줄러--spring-scheduled) — 반복 지출 스케줄러
+- [ADR-B13](#adr-b13-반복-지출-수정-전략--즉시-전체-반영) — 반복 지출 수정 전략
+
+**인프라 / 성능**
+- [ADR-B04](#adr-b04-jwt-인증-hs512-15분7일) — JWT 인증
+- [ADR-B05](#adr-b05-category-연관관계-없음-캐시-전략) — Category 캐시 전략
+- [ADR-B06](#adr-b06-caffeine-로컬-캐시) — Caffeine 로컬 캐시
+- [ADR-B10](#adr-b10-querydsl-동적-쿼리) — QueryDSL 동적 쿼리
+
+**아키텍처 / 운영**
+- [ADR-B11](#adr-b11-api-버전-관리-전략) — API 버전 관리 전략
+- [ADR-B14](#adr-b14-ci-코드-리뷰-워크플로-설계-2026-04-04) — CI 코드 리뷰 워크플로
+- [ADR-B15](#adr-b15-flyway-sql-백틱-컨벤션-2026-04-05) — Flyway SQL 백틱 컨벤션
+- [ADR-B16](#adr-b16-도메인-기반-패키지-리팩토링-2026-04-05) — 도메인 기반 패키지 리팩토링
+
 ---
 
 ## ADR-B01: Java 21 + Spring Boot 3 + MySQL 8.4 LTS

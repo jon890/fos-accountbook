@@ -122,7 +122,7 @@ grep -rn "{path}" src/main/java/
 
 ```bash
 # cwd: <backend repo root>
-python3 scripts/run-phases.py tasks/{task-name}
+python3 .claude/skills/plan-and-build/run-phases.py tasks/{task-name}
 ```
 
 ### 8. frontend 추적 PR/issue 생성
