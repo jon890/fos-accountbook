@@ -50,4 +50,9 @@ public interface FamilyMemberRepository {
    * 사용자 UUID로 가족 수 조회 (해당 사용자가 속한 가족 수)
    */
   int countByUserUuid(CustomUuid userUuid);
+
+  /**
+   * 가족의 모든 활성 구성원을 LEFT 상태로 벌크 변경
+   */
+  long leaveAllByFamilyUuid(CustomUuid familyUuid);
 }

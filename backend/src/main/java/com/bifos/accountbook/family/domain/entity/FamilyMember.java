@@ -74,4 +74,8 @@ public class FamilyMember {
       uuid = CustomUuid.generate();
     }
   }
+
+  public void leave() {
+    this.status = FamilyMemberStatus.LEFT;
+  }
 }

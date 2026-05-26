@@ -76,7 +76,7 @@ public class User {
   @Builder.Default
   private UserStatus status = UserStatus.ACTIVE;
 
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
   @Builder.Default
   private List<FamilyMember> familyMembers = new ArrayList<>();
 
