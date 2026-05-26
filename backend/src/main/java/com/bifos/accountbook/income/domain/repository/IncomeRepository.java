@@ -58,5 +58,10 @@ public interface IncomeRepository {
       LocalDateTime startDate,
       LocalDateTime endDate,
       Pageable pageable);
+
+  /**
+   * 가족의 모든 활성 수입을 DELETED 상태로 벌크 변경
+   */
+  long softDeleteAllByFamilyUuid(CustomUuid familyUuid);
 }
 
