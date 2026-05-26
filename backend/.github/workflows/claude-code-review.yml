@@ -427,7 +427,7 @@ jobs:
               shell 이 `\n` 을 literal 로 처리해 댓글 포매팅이 깨진다 (4단계의 CRITICAL 참조).
               3단계의 인라인 review JSON body 안의 `\n` 은 JSON parser 가 해석하므로 정상.
 
-          claude_args: '--model claude-sonnet-4-6 --allowedTools "Agent,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*),Bash(gh api:*)" --disallowedTools "Read,Write,Edit,Glob,Grep,LS"'
+          claude_args: '--model claude-sonnet-4-6 --allowedTools "Agent,Bash" --disallowedTools "Read,Write,Edit,Glob,Grep,LS"'
 
       # 게시된 댓글 본문에 literal `\n` 두 글자가 박힌 경우 자동 보정.
       # 사고 패턴: Claude action 이 prompt 의 `--body-file - <<'COMMENT_EOF'` HEREDOC
