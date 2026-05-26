@@ -102,6 +102,25 @@ DashboardService.getMonthlyStats()
     └─ 가족 멤버 수
 ```
 
+```
+GET /families/{familyUuid}/dashboard/stats/monthly-trend?from=2026-01&to=2026-06
+    │
+    ▼
+DashboardService.getMonthlyTrend()
+    ├─ GROUP BY YEAR, MONTH로 N개월 지출 합계 집계
+    └─ 평균 계산 (데이터 있는 월 기준)
+```
+
+```
+GET /families/{familyUuid}/dashboard/stats/category-breakdown?year=2026&month=5&compareWithPrev=true
+    │
+    ▼
+DashboardService.getCategoryBreakdown()
+    ├─ 기존 getCategoryExpenseStats 재활용 (월 범위 LocalDateTime 변환)
+    ├─ 카테고리별 금액·비율 계산
+    └─ compareWithPrev=true 시 전월 조회 → delta 계산
+```
+
 ## 6. 인증 갱신
 
 ```

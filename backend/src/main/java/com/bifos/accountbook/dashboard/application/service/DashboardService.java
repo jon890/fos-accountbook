@@ -3,6 +3,11 @@ package com.bifos.accountbook.dashboard.application.service;
 import com.bifos.accountbook.dashboard.application.dto.DailyStat;
 import com.bifos.accountbook.dashboard.application.dto.DailyStatsResponse;
 import com.bifos.accountbook.dashboard.application.dto.MonthlyStatsResponse;
+import com.bifos.accountbook.dashboard.application.dto.CategoryBreakdownItem;
+import com.bifos.accountbook.dashboard.application.dto.CategoryBreakdownResponse;
+import com.bifos.accountbook.dashboard.application.dto.MonthlyTrendPoint;
+import com.bifos.accountbook.dashboard.application.dto.MonthlyTrendResponse;
+import com.bifos.accountbook.dashboard.domain.repository.projection.MonthlyTrendProjection;
 import com.bifos.accountbook.expense.application.dto.CategoryExpenseStat;
 import com.bifos.accountbook.expense.application.dto.CategoryExpenseSummaryResponse;
 import com.bifos.accountbook.expense.application.dto.ExpenseSummarySearchRequest;
@@ -19,8 +24,11 @@ import com.bifos.accountbook.shared.aop.ValidateFamilyAccess;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -166,6 +174,103 @@ public class DashboardService {
                                .budget(budget)
                                .year(year)
                                .month(month)
+                               .build();
+  }
+
+  @ValidateFamilyAccess
+  public CategoryBreakdownResponse getCategoryBreakdown(@UserUuid CustomUuid userUuid,
+                                                        @FamilyUuid CustomUuid familyUuid,
+                                                        int year,
+                                                        int month,
+                                                        boolean compareWithPrev) {
+    YearMonth yearMonth = YearMonth.of(year, month);
+    LocalDateTime startOfMonth = yearMonth.atDay(1).atStartOfDay();
+    LocalDateTime endOfMonth = yearMonth.atEndOfMonth().atTime(23, 59, 59);
+
+    List<CategoryExpenseProjection> currentProjections =
+        dashboardRepository.getCategoryExpenseStats(familyUuid, null, startOfMonth, endOfMonth);
+
+    BigDecimal totalExpense = currentProjections.stream()
+                                                .map(CategoryExpenseProjection::totalAmount)
+                                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    Map<String, BigDecimal> prevAmountByCategory = new HashMap<>();
+    if (compareWithPrev) {
+      YearMonth prevYearMonth = yearMonth.minusMonths(1);
+      LocalDateTime prevStart = prevYearMonth.atDay(1).atStartOfDay();
+      LocalDateTime prevEnd = prevYearMonth.atEndOfMonth().atTime(23, 59, 59);
+
+      List<CategoryExpenseProjection> prevProjections =
+          dashboardRepository.getCategoryExpenseStats(familyUuid, null, prevStart, prevEnd);
+
+      for (CategoryExpenseProjection p : prevProjections) {
+        prevAmountByCategory.put(p.categoryUuid(), p.totalAmount());
+      }
+    }
+
+    List<CategoryBreakdownItem> items = currentProjections.stream()
+                                                          .map(p -> {
+                                                            Double percentage = calculatePercentage(p.totalAmount(), totalExpense);
+                                                            Double delta = null;
+                                                            if (compareWithPrev) {
+                                                              BigDecimal prevAmount = prevAmountByCategory.get(p.categoryUuid());
+                                                              if (prevAmount != null
+                                                                  && prevAmount.compareTo(BigDecimal.ZERO) != 0) {
+                                                                delta = p.totalAmount()
+                                                                         .subtract(prevAmount)
+                                                                         .multiply(BigDecimal.valueOf(100))
+                                                                         .divide(prevAmount, 2, RoundingMode.HALF_UP)
+                                                                         .doubleValue();
+                                                              }
+                                                            }
+                                                            return CategoryBreakdownItem.builder()
+                                                                                       .categoryUuid(p.categoryUuid())
+                                                                                       .name(p.categoryName())
+                                                                                       .icon(p.categoryIcon())
+                                                                                       .color(p.categoryColor())
+                                                                                       .totalAmount(p.totalAmount())
+                                                                                       .percentage(percentage)
+                                                                                       .deltaPercent(delta)
+                                                                                       .build();
+                                                          })
+                                                          .toList();
+
+    return CategoryBreakdownResponse.builder()
+                                    .year(year)
+                                    .month(month)
+                                    .totalExpense(totalExpense)
+                                    .items(items)
+                                    .build();
+  }
+
+  @ValidateFamilyAccess
+  public MonthlyTrendResponse getMonthlyTrend(@UserUuid CustomUuid userUuid,
+                                              @FamilyUuid CustomUuid familyUuid,
+                                              YearMonth fromYearMonth,
+                                              YearMonth toYearMonth) {
+    LocalDateTime from = fromYearMonth.atDay(1).atStartOfDay();
+    LocalDateTime to = toYearMonth.atEndOfMonth().atTime(23, 59, 59);
+
+    List<MonthlyTrendProjection> projections = dashboardRepository.getMonthlyExpenseTrend(familyUuid, from, to);
+
+    List<MonthlyTrendPoint> points = projections.stream()
+                                                .map(p -> MonthlyTrendPoint.builder()
+                                                                           .year(p.year())
+                                                                           .month(p.month())
+                                                                           .totalExpense(p.totalExpense())
+                                                                           .build())
+                                                .toList();
+
+    BigDecimal average = points.isEmpty()
+        ? BigDecimal.ZERO
+        : points.stream()
+                .map(MonthlyTrendPoint::getTotalExpense)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .divide(BigDecimal.valueOf(points.size()), 2, RoundingMode.HALF_UP);
+
+    return MonthlyTrendResponse.builder()
+                               .points(points)
+                               .average(average)
                                .build();
   }
 
