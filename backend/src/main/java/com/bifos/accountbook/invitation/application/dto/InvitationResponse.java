@@ -2,6 +2,7 @@ package com.bifos.accountbook.invitation.application.dto;
 
 import com.bifos.accountbook.invitation.domain.entity.Invitation;
 import com.bifos.accountbook.invitation.domain.value.InvitationStatus;
+import com.bifos.accountbook.user.domain.entity.User;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class InvitationResponse {
@@ -23,6 +24,24 @@ public class InvitationResponse {
   private LocalDateTime createdAt;
   private boolean isExpired;
   private boolean isUsed;
+  private InviterInfo inviter;
+  private Integer memberCount;
+
+  @Getter
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class InviterInfo {
+    private String name;
+    private String avatarUrl;
+
+    public static InviterInfo from(User user) {
+      return InviterInfo.builder()
+                        .name(user.getName())
+                        .avatarUrl(user.getImage())
+                        .build();
+    }
+  }
 
   public static InvitationResponse from(Invitation invitation) {
     boolean isExpired = invitation.getExpiresAt().isBefore(LocalDateTime.now());
@@ -41,17 +60,17 @@ public class InvitationResponse {
   }
 
   public static InvitationResponse fromWithFamilyName(Invitation invitation, String familyName) {
-    InvitationResponse response = from(invitation);
-    return InvitationResponse.builder()
-                             .uuid(response.getUuid())
-                             .familyUuid(response.getFamilyUuid())
-                             .familyName(familyName)
-                             .token(response.getToken())
-                             .status(response.getStatus())
-                             .expiresAt(response.getExpiresAt())
-                             .createdAt(response.getCreatedAt())
-                             .isExpired(response.isExpired())
-                             .isUsed(response.isUsed())
-                             .build();
+    return from(invitation).toBuilder()
+                           .familyName(familyName)
+                           .build();
+  }
+
+  public static InvitationResponse fromWithDetails(Invitation invitation, String familyName,
+      User inviterUser, int memberCount) {
+    return from(invitation).toBuilder()
+                           .familyName(familyName)
+                           .inviter(inviterUser != null ? InviterInfo.from(inviterUser) : null)
+                           .memberCount(memberCount)
+                           .build();
   }
 }

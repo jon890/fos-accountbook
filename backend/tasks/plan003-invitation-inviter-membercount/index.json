@@ -3,21 +3,21 @@
   "slug": "invitation-inviter-membercount",
   "title": "/invitations/token/{token} 응답에 inviter + memberCount 필드 추가",
   "issue": "#127",
-  "status": "pending",
+  "status": "completed",
   "phases": [
     {
       "id": "phase-01",
       "title": "InvitationResponse 확장 + Service 수정 + 테스트",
       "file": "phase-01.md",
       "model": "sonnet",
-      "status": "pending"
+      "status": "completed"
     },
     {
       "id": "phase-02",
       "title": "빌드 검증 + 커밋",
       "file": "phase-02.md",
       "model": "haiku",
-      "status": "pending"
+      "status": "completed"
     }
   ]
 }
