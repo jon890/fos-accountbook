@@ -92,7 +92,7 @@ CategoryService.deleteCategory()
 ## 5. 대시보드 조회
 
 ```
-GET /families/{familyUuid}/dashboard/stats/monthly?yearMonth=2026-04
+GET /families/{familyUuid}/dashboard/stats/monthly?year=2026&month=4
     │
     ▼
 DashboardService.getMonthlyStats()

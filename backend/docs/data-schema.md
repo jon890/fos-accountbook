@@ -302,7 +302,9 @@ PATCH  /families/{uuid}/notifications/{uuid}/read             읽음 처리
 POST   /families/{uuid}/notifications/mark-all-read           전체 읽음
 
 # [dashboard] 대시보드
-GET    /families/{uuid}/dashboard/stats/monthly          월별 통계
-GET    /families/{uuid}/dashboard/daily-stats            일별 통계
-GET    /families/{uuid}/dashboard/expenses/by-category   카테고리별 지출
+GET    /families/{uuid}/dashboard/stats/monthly               월별 통계
+GET    /families/{uuid}/dashboard/daily-stats                 일별 통계
+GET    /families/{uuid}/dashboard/expenses/by-category        카테고리별 지출
+GET    /families/{uuid}/dashboard/stats/monthly-trend         월별 지출 추이 (from/to)
+GET    /families/{uuid}/dashboard/stats/category-breakdown    카테고리 분포 + 전월 delta
 ```

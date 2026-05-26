@@ -31,7 +31,7 @@
 - **H2 in-memory DB** 사용 (`test` 프로파일)
 - **Mock 최소화**: 외부 API 호출만 mock. DB, 트랜잭션은 실제로 동작
 - **`AbstractControllerTest` 상속**: MockMvc + ObjectMapper + 트랜잭션 헬퍼 제공
-- **`TestFixtures` 활용**: 테스트 데이터 빌더 패턴
+- **`TestFixturesSupport` 상속**: 테스트 데이터 빌더 패턴 (Service 테스트)
 
 ### 2.2 필수 테스트 시나리오 (CRUD 엔드포인트)
 
