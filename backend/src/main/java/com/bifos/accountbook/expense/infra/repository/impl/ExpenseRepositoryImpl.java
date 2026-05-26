@@ -142,4 +142,14 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
   public void moveExpenses(CustomUuid oldCategoryUuid, CustomUuid newCategoryUuid) {
     jpaRepository.moveExpenses(oldCategoryUuid, newCategoryUuid);
   }
+
+  @Override
+  public long softDeleteAllByFamilyUuid(CustomUuid familyUuid) {
+    QExpense expense = QExpense.expense;
+    return queryFactory.update(expense)
+        .set(expense.status, ExpenseStatus.DELETED)
+        .where(expense.family.uuid.eq(familyUuid)
+            .and(expense.status.eq(ExpenseStatus.ACTIVE)))
+        .execute();
+  }
 }

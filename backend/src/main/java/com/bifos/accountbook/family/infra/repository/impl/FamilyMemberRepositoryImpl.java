@@ -1,9 +1,12 @@
 package com.bifos.accountbook.family.infra.repository.impl;
 
 import com.bifos.accountbook.family.domain.entity.FamilyMember;
+import com.bifos.accountbook.family.domain.entity.QFamilyMember;
 import com.bifos.accountbook.family.domain.repository.FamilyMemberRepository;
+import com.bifos.accountbook.family.domain.value.FamilyMemberStatus;
 import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.family.infra.repository.jpa.FamilyMemberJpaRepository;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Repository;
 public class FamilyMemberRepositoryImpl implements FamilyMemberRepository {
 
   private final FamilyMemberJpaRepository jpaRepository;
+  private final JPAQueryFactory queryFactory;
 
   @Override
   public FamilyMember save(FamilyMember familyMember) {
@@ -57,6 +61,16 @@ public class FamilyMemberRepositoryImpl implements FamilyMemberRepository {
   @Override
   public int countByUserUuid(CustomUuid userUuid) {
     return jpaRepository.countByUserUuid(userUuid);
+  }
+
+  @Override
+  public long leaveAllByFamilyUuid(CustomUuid familyUuid) {
+    QFamilyMember member = QFamilyMember.familyMember;
+    return queryFactory.update(member)
+        .set(member.status, FamilyMemberStatus.LEFT)
+        .where(member.family.uuid.eq(familyUuid)
+            .and(member.status.eq(FamilyMemberStatus.ACTIVE)))
+        .execute();
   }
 }
 

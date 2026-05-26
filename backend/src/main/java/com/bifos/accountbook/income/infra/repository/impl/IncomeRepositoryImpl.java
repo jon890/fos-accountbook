@@ -129,5 +129,15 @@ public class IncomeRepositoryImpl implements IncomeRepository {
   private BooleanExpression dateLoe(QIncome income, LocalDateTime endDate) {
     return endDate != null ? income.date.loe(endDate) : null;
   }
+
+  @Override
+  public long softDeleteAllByFamilyUuid(CustomUuid familyUuid) {
+    QIncome income = QIncome.income;
+    return queryFactory.update(income)
+        .set(income.status, IncomeStatus.DELETED)
+        .where(income.family.uuid.eq(familyUuid)
+            .and(income.status.eq(IncomeStatus.ACTIVE)))
+        .execute();
+  }
 }
 

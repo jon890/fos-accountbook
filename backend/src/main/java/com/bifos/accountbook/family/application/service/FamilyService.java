@@ -2,6 +2,7 @@ package com.bifos.accountbook.family.application.service;
 
 import com.bifos.accountbook.shared.aop.FamilyValidationService;
 
+import com.bifos.accountbook.expense.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.family.application.dto.CreateFamilyRequest;
 import com.bifos.accountbook.family.application.dto.FamilyResponse;
 import com.bifos.accountbook.family.application.dto.UpdateFamilyRequest;
@@ -17,6 +18,7 @@ import com.bifos.accountbook.user.application.service.UserProfileService;
 import com.bifos.accountbook.user.application.service.UserService;
 import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.family.domain.value.FamilyMemberRole;
+import com.bifos.accountbook.income.domain.repository.IncomeRepository;
 import com.bifos.accountbook.shared.aop.FamilyUuid;
 import com.bifos.accountbook.shared.aop.UserUuid;
 import com.bifos.accountbook.shared.aop.ValidateFamilyAccess;
@@ -35,7 +37,9 @@ public class FamilyService {
 
   private final FamilyRepository familyRepository;
   private final FamilyMemberRepository familyMemberRepository;
-  private final UserService userService; // 사용자 조회
+  private final ExpenseRepository expenseRepository;
+  private final IncomeRepository incomeRepository;
+  private final UserService userService;
   private final CategoryService categoryService;
   private final FamilyValidationService familyValidationService;
   private final UserProfileService userProfileService;
@@ -140,7 +144,9 @@ public class FamilyService {
                                         .addParameter("familyUuid", familyUuid.getValue()));
 
     family.delete();
-    // 더티 체킹으로 자동 업데이트
+    familyMemberRepository.leaveAllByFamilyUuid(familyUuid);
+    expenseRepository.softDeleteAllByFamilyUuid(familyUuid);
+    incomeRepository.softDeleteAllByFamilyUuid(familyUuid);
 
     log.info("Deleted family: {} by user: {}", familyUuid, userUuid);
   }

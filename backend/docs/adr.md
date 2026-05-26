@@ -42,6 +42,15 @@
 
 **적용 엔티티**: User, Family, FamilyMember, Category, Expense, Income, Invitation
 
+**cascade 정책**:
+
+- `@OneToMany` 관계에 `CascadeType.ALL` + `orphanRemoval = true` 사용 금지
+  - orphanRemoval은 컬렉션에서 제거된 자식을 물리 삭제하여 Soft Delete 정책과 충돌한다.
+- 허용 cascade: `{CascadeType.PERSIST, CascadeType.MERGE}`
+- 부모 삭제 시 자식은 Service 계층에서 명시적으로 soft delete 처리한다.
+  - FamilyMember: `status = LEFT`
+  - Expense/Income: `status = DELETED`
+
 ---
 
 ## ADR-B04: JWT 인증 (HS512, 15분/7일)
