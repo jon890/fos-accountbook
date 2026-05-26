@@ -12,6 +12,7 @@ import com.bifos.accountbook.family.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.family.domain.repository.FamilyRepository;
 import com.bifos.accountbook.invitation.domain.repository.InvitationRepository;
 import com.bifos.accountbook.user.application.service.UserService;
+import com.bifos.accountbook.user.domain.repository.UserRepository;
 import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.family.domain.value.FamilyMemberRole;
 import com.bifos.accountbook.shared.aop.FamilyUuid;
@@ -35,7 +36,8 @@ public class InvitationService {
   private final InvitationRepository invitationRepository;
   private final FamilyRepository familyRepository;
   private final FamilyMemberRepository familyMemberRepository;
-  private final UserService userService; // 사용자 조회
+  private final UserService userService;
+  private final UserRepository userRepository;
 
   private static final String TOKEN_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   private static final int TOKEN_LENGTH = 32;
@@ -102,7 +104,8 @@ public class InvitationService {
                                     .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
                                         .addParameter("familyUuid", invitation.getFamilyUuid().getValue()));
 
-    User inviterUser = userService.getUser(invitation.getInviterUserUuid());
+    User inviterUser = userRepository.findByUuid(invitation.getInviterUserUuid())
+                                     .orElse(null);
     int memberCount = familyMemberRepository.countByFamilyUuid(invitation.getFamilyUuid());
 
     return InvitationResponse.fromWithDetails(invitation, family.getName(), inviterUser, memberCount);

@@ -10,7 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class InvitationResponse {
@@ -60,35 +60,17 @@ public class InvitationResponse {
   }
 
   public static InvitationResponse fromWithFamilyName(Invitation invitation, String familyName) {
-    InvitationResponse response = from(invitation);
-    return InvitationResponse.builder()
-                             .uuid(response.getUuid())
-                             .familyUuid(response.getFamilyUuid())
-                             .familyName(familyName)
-                             .token(response.getToken())
-                             .status(response.getStatus())
-                             .expiresAt(response.getExpiresAt())
-                             .createdAt(response.getCreatedAt())
-                             .isExpired(response.isExpired())
-                             .isUsed(response.isUsed())
-                             .build();
+    return from(invitation).toBuilder()
+                           .familyName(familyName)
+                           .build();
   }
 
   public static InvitationResponse fromWithDetails(Invitation invitation, String familyName,
       User inviterUser, int memberCount) {
-    InvitationResponse response = from(invitation);
-    return InvitationResponse.builder()
-                             .uuid(response.getUuid())
-                             .familyUuid(response.getFamilyUuid())
-                             .familyName(familyName)
-                             .token(response.getToken())
-                             .status(response.getStatus())
-                             .expiresAt(response.getExpiresAt())
-                             .createdAt(response.getCreatedAt())
-                             .isExpired(response.isExpired())
-                             .isUsed(response.isUsed())
-                             .inviter(InviterInfo.from(inviterUser))
-                             .memberCount(memberCount)
-                             .build();
+    return from(invitation).toBuilder()
+                           .familyName(familyName)
+                           .inviter(inviterUser != null ? InviterInfo.from(inviterUser) : null)
+                           .memberCount(memberCount)
+                           .build();
   }
 }
