@@ -11,7 +11,7 @@ Spring Boot 4 + Java 21 기반 가족 가계부 백엔드 API 서버.
 - **ORM**: Spring Data JPA + QueryDSL 5.1
 - **Security**: Spring Security + JWT (jjwt 0.13)
 - **Migration**: Flyway
-- **Docs**: SpringDoc OpenAPI 2.8 (Swagger UI)
+- **Docs**: SpringDoc OpenAPI 3.0 (Swagger UI)
 
 ## 아키텍처
 

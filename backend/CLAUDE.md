@@ -70,7 +70,7 @@ Claude Code가 항상 따라야 할 규칙과 참조 문서 포인터.
 - **ORM**: Spring Data JPA + QueryDSL 5.1
 - **Security**: Spring Security + JWT (jjwt 0.13)
 - **Migration**: Flyway
-- **Docs**: SpringDoc OpenAPI 2.8.14 (Swagger UI)
+- **Docs**: SpringDoc OpenAPI 3.0.3 (Swagger UI)
 
 ---
 
