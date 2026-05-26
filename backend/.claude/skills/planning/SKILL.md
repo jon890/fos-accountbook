@@ -13,13 +13,14 @@ description: 새 기능/변경사항 구현 전 8단계 설계 워크플로우. 
 - **모호함 제로**: 각 단계에서 조금이라도 모호하면 반드시 사용자와 논의. 넘어가지 않는다
 - **AI 에이전트 관점**: 최종 문서는 AI 에이전트가 읽고 구현할 수 있을 정도로 명확해야 한다
 - **간결한 문서**: 컨텍스트 낭비 금지. 의사결정 의도는 보존하되 구현 상세는 코드에
-- **Critic 반복 지적 사전 소진**: task 파일 작성 시 `common-critic-patterns.md`의 패턴을 모두 self-check. critic이 매번 똑같은 지적을 반복하지 않도록 plan 단계에서 미리 해결
+- **Critic 반복 지적 사전 해소**: task 파일 작성 시 `common-pitfalls.md`의 패턴을 모두 self-check. critic이 매번 똑같은 지적을 반복하지 않도록 plan 단계에서 미리 해결
+- **선택지 제시는 AskUserQuestion 으로**: 옵션 중 하나를 고르게 할 때는 `AskUserQuestion` (deferred — `ToolSearch` 로 `select:AskUserQuestion` schema 로드 후 호출). 1~4개 질문, 옵션 2~4개, 추천안은 첫 번째 + label 끝 `(추천)`. 글로 늘어놓는 long-form 옵션 비교는 사용자가 답변 작성에 시간 들이게 됨 — 클릭 한 번으로 끝나도록 인터랙티브화. 단, 결정이 이미 명확하거나 자유 답변이 필요한 경우 (예: 카피 문구) 는 일반 질문 사용
 
-## Critic 패턴 사전 소진 (필수)
+## Critic 패턴 사전 해소 (필수)
 
-task 파일을 **사용자에게 제출하기 전**에 반드시 [`common-critic-patterns.md`](../_shared/common-critic-patterns.md)의 시드 7 패턴 + 레포별 +α를 모두 self-check한다. 이 체크리스트를 거치지 않으면 `/build-with-teams` 실행 시 critic이 REVISE를 내놓고 재평가 사이클이 돈다.
+task 파일을 **사용자에게 제출하기 전**에 반드시 [`common-pitfalls.md`](../_shared/common-pitfalls.md)의 시드 7 패턴 + 레포별 +α를 모두 self-check한다. 이 체크리스트를 거치지 않으면 `/build-with-teams` 실행 시 critic이 REVISE를 내놓고 재평가 사이클이 돈다.
 
-**축적 규칙**: critic이 **새로운 타입**의 지적을 하면 세션 종료 후 `common-critic-patterns.md`에 패턴을 추가한다. 이 파일은 시간이 지날수록 두꺼워지고, critic이 할 말은 줄어든다.
+**축적 규칙**: critic이 **새로운 타입**의 지적을 하면 세션 종료 후 `common-pitfalls.md`에 패턴을 추가한다. 이 파일은 시간이 지날수록 두꺼워지고, critic이 할 말은 줄어든다.
 
 ## 실행 절차
 
@@ -83,8 +84,51 @@ task 파일을 **사용자에게 제출하기 전**에 반드시 [`common-critic
 
 - 이번 기능에서 내린 기술적 결정 목록화
 - 각 결정의 "왜"를 명확히 기록
-- ADR 초안 작성 (필요한 경우)
-- **자명성 검사**: 코드/설정/git log로 같은 정보를 얻을 수 있으면 ADR로 기록하지 않는다
+- ADR 초안 작성 (필요한 경우 — **하단의 ADR 작성 전 자체 점검 절차 통과 후**)
+
+#### A. ADR 작성 전 자체 점검 절차 (필수 자문)
+
+아래 3개 질문에 **모두 NO** 여야 ADR 로 기록한다. 하나라도 YES 면 대안 채널 (CLAUDE.md 규칙 / 코드 주석 / 커밋 메시지 / 다른 docs) 로 내려보낸다.
+
+1. `package.json` · lockfile · `docker-compose.yml` · Drizzle 스키마 · 디렉터리 트리 · ESLint 설정 중 **어느 하나를 보면 같은 정보를 얻는가**?
+2. "왜 X 를 선택했다" 를 1~2 문장 이상으로 설명하기 어려운가? (결정 / 맥락 / 대안 중 하나라도 비면 ADR 적격 아님)
+3. 다른 프로젝트에서도 일반적으로 하는 선택인가?
+
+**유지 적격 유형** (위 3개가 모두 NO 일 때):
+- 라이브러리 고유 함정 (문서에 없거나 직관에 반하는 API 특성)
+- 실험 결과 (A/B 비교 / 수치 근거)
+- 대안 기각 근거 (미래 재논의 여지)
+- 정책 / 규칙 (팀 합의로 정한 규율)
+- 비용 / 성능 트레이드오프 (수치 있는 결정)
+
+#### B. ADR 구조 템플릿 (필수 포맷)
+
+```markdown
+## ADR-XXX: {제목 — 결정의 한 줄 요약}
+
+- **결정**: {무엇을 — 1~3 문장}
+- **맥락**: {왜 필요했는가 — 제약 / 데이터 / 관찰}
+- **대안 기각**: {다른 옵션 각각 1~2 줄, 왜 아닌가}
+- (선택) **트레이드오프**, **적용 범위**
+```
+
+**금지**:
+- 코드 블록 10 줄 이상 (1~3 줄 식별자 예시만 허용)
+- 파일 경로 3개 이상 나열
+- "변경 항목 1/2/3/4" 작업 내역 / "레거시 삭제 목록" (task 기록이지 ADR 아님)
+- CLAUDE.md 스택 규칙 반복
+
+#### C. 문서 책임 표 (중복 방지)
+
+신규 내용 작성 전 "이 정보의 단일 소스는 어디인가" 확인. 다른 문서에는 **링크 또는 한 줄 참조** 만.
+
+| 내용 유형 | 단일 소스 | 다른 문서 |
+|---|---|---|
+| 제품 목적 / MVP 범위 | `prd.md` | flow는 목표만 재언급 |
+| 사용자 흐름 / 화면 전환 | `flow.md` | prd 는 목표만, ADR 은 결정만 |
+| DB 테이블 / 관계 / 제약 | `data-schema.md` | ADR 은 결정 근거만 |
+| 디렉터리 / 레이어 / API 전략 | `code-architecture.md` | ADR 은 결정 근거만 |
+| 기술 결정 근거 (왜) | `adr.md` | 다른 docs 는 ADR 번호 링크 |
 
 ### 8단계: 최종 문서 생성
 
@@ -97,9 +141,9 @@ task 파일을 **사용자에게 제출하기 전**에 반드시 [`common-critic
 
 **문서 작성 원칙**:
 - AI 에이전트를 위한 문서 — 컨텍스트 낭비하지 않도록 간결하게
-- 같은 내용을 두 문서에 쓰지 않는다
-- 의사결정 의도("왜 이렇게 했는가")는 반드시 보존
-- 구현 세부사항은 코드에, docs에는 "무엇을·왜"만
+- 같은 내용을 두 문서에 쓰지 않는다 (책임 표 참조)
+- 의사결정 의도 ("왜 이렇게 했는가") 는 반드시 보존
+- 구현 세부사항은 코드에, docs 에는 "무엇을·왜" 만
 
 ---
 
@@ -107,11 +151,38 @@ task 파일을 **사용자에게 제출하기 전**에 반드시 [`common-critic
 
 각 단계에서 사용자와 의사결정이 완료되면, 8단계를 기다리지 않고 **즉시 docs에 반영**한다. 이는 논의가 길어질 때 결정 사항이 유실되는 것을 방지하고, 다음 대화에서도 결정 맥락을 참조할 수 있게 한다.
 
-## 완료 후
+## 완료 후 (필수 수행 절차)
 
-8단계가 끝나면 사용자에게 안내:
+8단계가 끝나면 **항상 아래 순서를 그대로 수행** — 사용자의 별도 지시를 기다리지 않는다.
 
-> 설계가 완료되었습니다. `/plan-and-build` 또는 `/build-with-teams`로 구현을 시작할까요?
+1. **docs 반영 완료 확인** — `docs/adr.md` / `docs/flow.md` / `docs/data-schema.md` / `docs/code-architecture.md` / `CLAUDE.md` 중 해당하는 문서에 이번 결정이 모두 기록됐는지 점검
+2. **task 파일 생성** — `tasks/plan{N}-{kebab-slug}/` 디렉터리 + `index.json` + phase 파일들 작성. 상세 규칙은 [`task-create.md`](./task-create.md) 참조 (index.json 스키마 / model 라우팅 / phase 작성 체크리스트 / 마지막 2 phase 표준). CLAUDE.md "Task 작업 규칙" 도 준수 — 원자적 단일 책임, phase 당 작업 5개 이하, 자기완결 프롬프트, **마지막 phase 에 index.json status="completed" 마킹 명시**
+3. **`common-pitfalls.md` 의 P1~P9 + 패턴 소진 체크리스트 사전 해소** — task 제출 전 self-check
+4. **plan 브랜치 생성** — `git switch -c plan/{N}-{kebab-slug} origin/main`. 매 plan 마다 origin/main 기준 신규 브랜치 (이전 plan 브랜치 위에 쌓지 않는다)
+5. **git commit** — docs 변경 + task 파일을 **한 커밋** 으로 묶어 생성. commit 메시지: `docs(plan{N}): {plan 한 줄 요약}`
+6. **git push -u origin plan/{N}-{kebab-slug}** — 원격에 push (`-u` 로 upstream 설정).
+7. **PR 생성** — `gh pr create --base main --head plan/{N}-{kebab-slug} --title "docs(plan{N}): {요약}" --body ...`. 본문은 변경 요약 (docs 변경 + task phase 목록) + Test plan (구현 PR 검증 항목) 포함. plan 브랜치가 main 에 머지되어야 향후 다른 세션에서 `tasks/plan{N}-*/` 를 참조할 수 있고, 머지 이력에 plan 의 존재가 남는다.
+8. **main 으로 복귀** — `git switch main`. 이후 사용자가 `/build-with-teams` 호출 시 origin/main 에서 새 `feat/plan{N}-*` 브랜치로 구현 시작.
+9. 사용자 보고 + 실행 안내:
+
+> plan{N} task 파일 생성 + PR #{번호} 생성 완료 (브랜치: `plan/{N}-{kebab-slug}`).
+> PR 머지 후 `/build-with-teams plan{N}` 로 구현을 시작하면 `feat/plan{N}-{kebab-slug}` 브랜치에서 phase 실행 후 별도 구현 PR 이 생성됩니다.
+
+**PR 정책 (2026-05-11 결정)**: plan 의 docs + task 변경은 별도 PR 로 머지. 구현 PR 과 분리. 이유: (a) 계획 단계 검토 + 구현 단계 검토 부담을 분산, (b) 머지 이력에서 "계획 / 구현" 식별 즉시 가능, (c) plan 머지 후 `tasks/plan{N}-*/` 가 main 에 존재해야 `/build-with-teams` 가 어디서든 시작 가능. CLAUDE.md "브랜치 명명" 표의 정책과 일치.
+
+### 중복 실행 방지
+
+`status="pending"` 인 task 가 main 에 머지된 상태에서 다른 세션이 `/build-with-teams plan{N}` 호출 시 사전 검증이 통과해 중복 실행 위험 — 다음 가드로 방지:
+
+- `/build-with-teams` 실행 시 origin/main 의 latest `index.json` 의 `status` 가 `"completed"` 면 즉시 종료
+- 구현 phase 의 마지막 단계가 항상 `status="completed"` 마킹 + commit 포함 (CLAUDE.md "Task 작업 규칙")
+- 동일 plan 을 두 세션이 동시에 잡으면 PR 생성 시 브랜치 충돌로 자연 감지
+
+### 예외
+
+- **docs 변경 없음 + task 없음** (논의만 한 케이스): branch 생성 / commit / push 생략, "task 생성할 규모 아니므로 기록 없이 종료" 고지
+- **force push 필요**: 금지 — 기존 커밋 수정 대신 새 커밋 생성. 단 사용자가 명시적으로 `/planning` 재호출로 task 수정을 요청한 경우에 한해 같은 브랜치에 추가 commit + push (force 아님)
+- **plan 브랜치가 이미 원격에 존재**: 다른 세션에서 만든 동일 plan. 사용자에게 알리고 (a) 그 브랜치 fetch 후 추가 commit (b) 새 plan 번호로 신규 결정 의뢰 (`AskUserQuestion`)
 
 ---
 
