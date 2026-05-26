@@ -140,7 +140,9 @@ public class FamilyService {
                                         .addParameter("familyUuid", familyUuid.getValue()));
 
     family.delete();
-    // 더티 체킹으로 자동 업데이트
+    family.getMembers().forEach(member -> member.leave());
+    family.getExpenses().forEach(expense -> expense.delete());
+    family.getIncomes().forEach(income -> income.delete());
 
     log.info("Deleted family: {} by user: {}", familyUuid, userUuid);
   }

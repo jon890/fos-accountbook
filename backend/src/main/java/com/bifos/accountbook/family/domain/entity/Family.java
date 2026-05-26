@@ -69,15 +69,15 @@ public class Family {
   @Builder.Default
   private FamilyStatus status = FamilyStatus.ACTIVE;
 
-  @OneToMany(mappedBy = "family", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(mappedBy = "family", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
   @Builder.Default
   private List<FamilyMember> members = new ArrayList<>();
 
-  @OneToMany(mappedBy = "family", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(mappedBy = "family", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
   @Builder.Default
   private List<Income> incomes = new ArrayList<>();
 
-  @OneToMany(mappedBy = "family", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(mappedBy = "family", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
   @Builder.Default
   private List<Expense> expenses = new ArrayList<>();
 

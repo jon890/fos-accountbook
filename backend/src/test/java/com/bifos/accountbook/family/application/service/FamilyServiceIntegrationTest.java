@@ -4,6 +4,17 @@ import com.bifos.accountbook.family.application.dto.CreateFamilyRequest;
 import com.bifos.accountbook.family.application.dto.FamilyResponse;
 import com.bifos.accountbook.shared.TestFixturesSupport;
 import com.bifos.accountbook.category.domain.entity.Category;
+import com.bifos.accountbook.expense.domain.entity.Expense;
+import com.bifos.accountbook.expense.domain.repository.ExpenseRepository;
+import com.bifos.accountbook.expense.domain.value.ExpenseStatus;
+import com.bifos.accountbook.family.domain.entity.Family;
+import com.bifos.accountbook.family.domain.entity.FamilyMember;
+import com.bifos.accountbook.family.domain.repository.FamilyMemberRepository;
+import com.bifos.accountbook.family.domain.repository.FamilyRepository;
+import com.bifos.accountbook.family.domain.value.FamilyMemberStatus;
+import com.bifos.accountbook.income.domain.entity.Income;
+import com.bifos.accountbook.income.domain.repository.IncomeRepository;
+import com.bifos.accountbook.income.domain.value.IncomeStatus;
 import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.category.domain.repository.CategoryRepository;
 import com.bifos.accountbook.category.domain.value.CategoryStatus;
@@ -27,6 +38,18 @@ class FamilyServiceIntegrationTest extends TestFixturesSupport {
 
   @Autowired
   private CategoryRepository categoryRepository;
+
+  @Autowired
+  private FamilyRepository familyRepository;
+
+  @Autowired
+  private FamilyMemberRepository familyMemberRepository;
+
+  @Autowired
+  private ExpenseRepository expenseRepository;
+
+  @Autowired
+  private IncomeRepository incomeRepository;
 
   @Test
   @DisplayName("가족 생성 시 기본 카테고리 10개가 자동으로 생성되어야 한다")
@@ -200,6 +223,43 @@ class FamilyServiceIntegrationTest extends TestFixturesSupport {
     assertThat(family).isNotNull();
     assertThat(family.getName()).isEqualTo("예산 설정 가족");
     assertThat(family.getMonthlyBudget()).isEqualByComparingTo(budget);
+  }
+
+  @Test
+  @DisplayName("가족 삭제 시 구성원·지출·수입이 물리 삭제 없이 상태만 변경되어야 한다")
+  void deleteFamily_ShouldSoftDeleteChildEntities() {
+    // Given: 서비스로 가족 생성 (OWNER 권한 부여)
+    User user = fixtures.getDefaultUser();
+    CreateFamilyRequest request = CreateFamilyRequest.builder()
+                                                     .name("삭제 테스트 가족")
+                                                     .build();
+    FamilyResponse familyResponse = familyService.createFamily(user.getUuid(), request);
+    CustomUuid familyUuid = CustomUuid.from(familyResponse.getUuid());
+    Family family = familyRepository.findActiveByUuid(familyUuid).orElseThrow();
+
+    // 기본 카테고리에 지출·수입 추가 후 UUID 즉시 저장
+    Category category = fixtures.findCategoryByName(family, "식비");
+    final CustomUuid expenseUuid = fixtures.expenses.expense(family, category).build().getUuid();
+    final CustomUuid incomeUuid = fixtures.incomes.income(family, category).build().getUuid();
+
+    // 삭제 전 구성원 UUID 확보
+    FamilyMember member = familyMemberRepository
+        .findByFamilyUuidAndUserUuid(familyUuid, user.getUuid())
+        .orElseThrow();
+    CustomUuid memberUuid = member.getUuid();
+
+    // When
+    familyService.deleteFamily(user.getUuid(), familyUuid);
+
+    // Then: 물리 삭제 없이 status만 변경됨
+    FamilyMember deletedMember = familyMemberRepository.findByUuid(memberUuid).orElseThrow();
+    assertThat(deletedMember.getStatus()).isEqualTo(FamilyMemberStatus.LEFT);
+
+    Expense deletedExpense = expenseRepository.findByUuid(expenseUuid).orElseThrow();
+    assertThat(deletedExpense.getStatus()).isEqualTo(ExpenseStatus.DELETED);
+
+    Income deletedIncome = incomeRepository.findByUuid(incomeUuid).orElseThrow();
+    assertThat(deletedIncome.getStatus()).isEqualTo(IncomeStatus.DELETED);
   }
 
   @Test
