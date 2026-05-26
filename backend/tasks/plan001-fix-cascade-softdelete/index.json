@@ -1,0 +1,23 @@
+{
+  "plan": "plan001",
+  "slug": "fix-cascade-softdelete",
+  "title": "Family/User CascadeType.ALL → PERSIST+MERGE 전환 (Soft Delete 충돌 해소)",
+  "issue": "#87",
+  "status": "pending",
+  "phases": [
+    {
+      "id": "phase-01",
+      "title": "cascade 수정 + 테스트 검증",
+      "file": "phase-01.md",
+      "model": "sonnet",
+      "status": "pending"
+    },
+    {
+      "id": "phase-02",
+      "title": "빌드 검증 + 커밋",
+      "file": "phase-02.md",
+      "model": "haiku",
+      "status": "pending"
+    }
+  ]
+}
