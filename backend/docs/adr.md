@@ -65,6 +65,9 @@
 
 **보안 고려**: Refresh Token 탈취 시 7일 유효 → 향후 Refresh Token Rotation 검토
 
+**참고**: `application-local.yml`에서 access token을 24시간으로 오버라이드함 (개발 편의).
+prod 프로파일은 15분 유지.
+
 ---
 
 ## ADR-B05: Category 연관관계 없음 (캐시 전략)
