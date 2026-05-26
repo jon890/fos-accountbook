@@ -185,10 +185,10 @@ public class DashboardService {
                                                         boolean compareWithPrev) {
     YearMonth yearMonth = YearMonth.of(year, month);
     LocalDateTime startOfMonth = yearMonth.atDay(1).atStartOfDay();
-    LocalDateTime endOfMonth = yearMonth.atEndOfMonth().atTime(23, 59, 59);
+    LocalDateTime startOfNextMonth = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
 
     List<CategoryExpenseProjection> currentProjections =
-        dashboardRepository.getCategoryExpenseStats(familyUuid, null, startOfMonth, endOfMonth);
+        dashboardRepository.getCategoryExpenseStats(familyUuid, null, startOfMonth, startOfNextMonth);
 
     BigDecimal totalExpense = currentProjections.stream()
                                                 .map(CategoryExpenseProjection::totalAmount)
@@ -198,10 +198,10 @@ public class DashboardService {
     if (compareWithPrev) {
       YearMonth prevYearMonth = yearMonth.minusMonths(1);
       LocalDateTime prevStart = prevYearMonth.atDay(1).atStartOfDay();
-      LocalDateTime prevEnd = prevYearMonth.atEndOfMonth().atTime(23, 59, 59);
+      LocalDateTime prevStartOfNext = yearMonth.atDay(1).atStartOfDay();
 
       List<CategoryExpenseProjection> prevProjections =
-          dashboardRepository.getCategoryExpenseStats(familyUuid, null, prevStart, prevEnd);
+          dashboardRepository.getCategoryExpenseStats(familyUuid, null, prevStart, prevStartOfNext);
 
       for (CategoryExpenseProjection p : prevProjections) {
         prevAmountByCategory.put(p.categoryUuid(), p.totalAmount());
@@ -249,7 +249,7 @@ public class DashboardService {
                                               YearMonth fromYearMonth,
                                               YearMonth toYearMonth) {
     LocalDateTime from = fromYearMonth.atDay(1).atStartOfDay();
-    LocalDateTime to = toYearMonth.atEndOfMonth().atTime(23, 59, 59);
+    LocalDateTime to = toYearMonth.plusMonths(1).atDay(1).atStartOfDay();
 
     List<MonthlyTrendProjection> projections = dashboardRepository.getMonthlyExpenseTrend(familyUuid, from, to);
 

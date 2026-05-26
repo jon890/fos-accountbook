@@ -396,30 +396,27 @@ class DashboardControllerTest extends AbstractControllerTest {
     Family family = fixtures.getDefaultFamily();
     Category category = fixtures.categories.category(family).name("식비").build();
 
-    LocalDateTime now = LocalDateTime.now();
-    LocalDateTime twoMonthsAgo = now.minusMonths(2);
-    LocalDateTime oneMonthAgo = now.minusMonths(1);
+    LocalDateTime march = LocalDateTime.of(2025, 3, 15, 10, 0);
+    LocalDateTime april = LocalDateTime.of(2025, 4, 15, 10, 0);
+    LocalDateTime may = LocalDateTime.of(2025, 5, 15, 10, 0);
 
     createExpense(family.getUuid(), user.getUuid(), category.getUuid(),
-                  BigDecimal.valueOf(30000), twoMonthsAgo);
+                  BigDecimal.valueOf(30000), march);
     createExpense(family.getUuid(), user.getUuid(), category.getUuid(),
-                  BigDecimal.valueOf(50000), oneMonthAgo);
+                  BigDecimal.valueOf(50000), april);
     createExpense(family.getUuid(), user.getUuid(), category.getUuid(),
-                  BigDecimal.valueOf(40000), now);
-
-    String from = twoMonthsAgo.getYear() + "-" + String.format("%02d", twoMonthsAgo.getMonthValue());
-    String to = now.getYear() + "-" + String.format("%02d", now.getMonthValue());
+                  BigDecimal.valueOf(40000), may);
 
     mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly-trend",
                         family.getUuid().getValue())
-                        .param("from", from)
-                        .param("to", to)
+                        .param("from", "2025-03")
+                        .param("to", "2025-05")
                         .contentType(MediaType.APPLICATION_JSON))
            .andExpect(status().isOk())
            .andExpect(jsonPath("$.success").value(true))
            .andExpect(jsonPath("$.data.points").isArray())
            .andExpect(jsonPath("$.data.points.length()").value(3))
-           .andExpect(jsonPath("$.data.average").exists());
+           .andExpect(jsonPath("$.data.average").value(40000.00));
   }
 
   @Test
@@ -427,14 +424,10 @@ class DashboardControllerTest extends AbstractControllerTest {
   void getMonthlyTrend_Empty() throws Exception {
     Family family = fixtures.getDefaultFamily();
 
-    LocalDateTime now = LocalDateTime.now();
-    String from = now.getYear() + "-" + String.format("%02d", now.getMonthValue());
-    String to = now.getYear() + "-" + String.format("%02d", now.getMonthValue());
-
     mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly-trend",
                         family.getUuid().getValue())
-                        .param("from", from)
-                        .param("to", to)
+                        .param("from", "2025-01")
+                        .param("to", "2025-01")
                         .contentType(MediaType.APPLICATION_JSON))
            .andExpect(status().isOk())
            .andExpect(jsonPath("$.data.points").isEmpty())
@@ -464,24 +457,22 @@ class DashboardControllerTest extends AbstractControllerTest {
     Category foodCategory = fixtures.categories.category(family).name("식비").color("#FF5733").icon("🍕").build();
     Category transportCategory = fixtures.categories.category(family).name("교통비").color("#3498DB").icon("🚗").build();
 
-    LocalDateTime now = LocalDateTime.now();
-    int year = now.getYear();
-    int month = now.getMonthValue();
+    LocalDateTime may = LocalDateTime.of(2025, 5, 15, 10, 0);
 
     createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
-                  BigDecimal.valueOf(60000), now);
+                  BigDecimal.valueOf(60000), may);
     createExpense(family.getUuid(), user.getUuid(), transportCategory.getUuid(),
-                  BigDecimal.valueOf(40000), now);
+                  BigDecimal.valueOf(40000), may);
 
     mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/category-breakdown",
                         family.getUuid().getValue())
-                        .param("year", String.valueOf(year))
-                        .param("month", String.valueOf(month))
+                        .param("year", "2025")
+                        .param("month", "5")
                         .contentType(MediaType.APPLICATION_JSON))
            .andExpect(status().isOk())
            .andExpect(jsonPath("$.success").value(true))
-           .andExpect(jsonPath("$.data.year").value(year))
-           .andExpect(jsonPath("$.data.month").value(month))
+           .andExpect(jsonPath("$.data.year").value(2025))
+           .andExpect(jsonPath("$.data.month").value(5))
            .andExpect(jsonPath("$.data.totalExpense").value(100000))
            .andExpect(jsonPath("$.data.items").isArray())
            .andExpect(jsonPath("$.data.items.length()").value(2))
@@ -495,21 +486,18 @@ class DashboardControllerTest extends AbstractControllerTest {
     Family family = fixtures.getDefaultFamily();
     Category foodCategory = fixtures.categories.category(family).name("식비").color("#FF5733").icon("🍕").build();
 
-    LocalDateTime now = LocalDateTime.now();
-    int year = now.getYear();
-    int month = now.getMonthValue();
+    LocalDateTime april = LocalDateTime.of(2025, 4, 15, 10, 0);
+    LocalDateTime may = LocalDateTime.of(2025, 5, 15, 10, 0);
 
-    // 전월 식비 50,000원
     createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
-                  BigDecimal.valueOf(50000), now.minusMonths(1));
-    // 이번 달 식비 75,000원 (+50% delta)
+                  BigDecimal.valueOf(50000), april);
     createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
-                  BigDecimal.valueOf(75000), now);
+                  BigDecimal.valueOf(75000), may);
 
     mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/category-breakdown",
                         family.getUuid().getValue())
-                        .param("year", String.valueOf(year))
-                        .param("month", String.valueOf(month))
+                        .param("year", "2025")
+                        .param("month", "5")
                         .param("compareWithPrev", "true")
                         .contentType(MediaType.APPLICATION_JSON))
            .andExpect(status().isOk())
@@ -521,14 +509,10 @@ class DashboardControllerTest extends AbstractControllerTest {
   void getCategoryBreakdown_Empty() throws Exception {
     Family family = fixtures.getDefaultFamily();
 
-    LocalDateTime now = LocalDateTime.now();
-    int year = now.getYear();
-    int month = now.getMonthValue();
-
     mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/category-breakdown",
                         family.getUuid().getValue())
-                        .param("year", String.valueOf(year))
-                        .param("month", String.valueOf(month))
+                        .param("year", "2025")
+                        .param("month", "1")
                         .contentType(MediaType.APPLICATION_JSON))
            .andExpect(status().isOk())
            .andExpect(jsonPath("$.data.totalExpense").value(0))

@@ -275,14 +275,14 @@ public class DashboardRepositoryImpl implements DashboardRepository {
             expense.family.uuid.eq(familyUuid),
             expense.status.eq(ExpenseStatus.ACTIVE),
             expense.date.goe(from),
-            expense.date.loe(to)
+            expense.date.lt(to)
         )
         .groupBy(expense.date.year(), expense.date.month())
         .orderBy(expense.date.year().asc(), expense.date.month().asc())
         .fetch();
 
     return tuples.stream()
-                 .map(tuple -> {
+                 .<MonthlyTrendProjection>map(tuple -> {
                    Integer year = tuple.get(expense.date.year());
                    Integer month = tuple.get(expense.date.month());
                    BigDecimal total = tuple.get(expense.amount.sum());
@@ -292,7 +292,6 @@ public class DashboardRepositoryImpl implements DashboardRepository {
                        total != null ? total : BigDecimal.ZERO
                    );
                  })
-                 .map(impl -> (MonthlyTrendProjection) impl)
                  .toList();
   }
 
