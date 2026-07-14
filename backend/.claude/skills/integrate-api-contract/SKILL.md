@@ -120,10 +120,7 @@ grep -rn "{path}" src/main/java/
 
 ### 7. task 실행 + 검증
 
-```bash
-# cwd: <backend repo root>
-python3 .claude/skills/plan-and-build/run-phases.py tasks/{task-name}
-```
+`build-with-teams` 스킬로 task를 실행한다 (Claude Agent Teams 파이프라인 — 계획/평가/실행/검증).
 
 ### 8. frontend 추적 PR/issue 생성
 

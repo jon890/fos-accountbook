@@ -119,7 +119,7 @@ team-lead가 `docs/` 하위 문서를 읽고 사용자와 논의.
 ### 4. task 파일 생성
 
 `tasks/{task-name}/` 디렉터리에 `index.json` + `phase-{N}.md` 생성.
-phase 프롬프트 규칙은 기존 `plan-and-build`와 동일:
+phase 프롬프트 규칙:
 
 - 원자적 단일 책임, 작업 항목 5개 이하
 - 자기완결적 (이전 대화 없이 독립 실행 가능)
@@ -363,13 +363,3 @@ executor가 phase 실패 보고 시:
     → [worktree 정리 + 팀 shutdown]
 ```
 
-## vs plan-and-build
-
-| | plan-and-build | build-with-teams |
-|---|---|---|
-| 실행 방식 | `run-phases.py` 백그라운드 | Claude Agent Teams 가시적 협업 |
-| 평가 단계 | 없음 | critic APPROVE 점검 |
-| docs 검증 | 없음 | docs-verifier 자동 검증 |
-| 진행 상황 | 로그 파일 확인 | 에이전트 메시지로 실시간 확인 |
-| 실패 복구 | `--from-phase` 재시작 | team-lead 판단 → executor 재지시 |
-| 적합 규모 | 소·중 | 중·대 |
