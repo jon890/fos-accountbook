@@ -21,7 +21,7 @@
 | 디렉터리 / 레이어 / API 전략 | `docs/code-architecture.md` | ADR 은 결정 근거만 |
 | 기술 결정 근거 (왜) | `docs/adr.md` (append, 개별 파일 신설 금지) | 다른 docs 는 `ADR-BNN` 번호 링크 |
 
-### ADR 자명성 게이트 (작성 전 필수 자문)
+### ADR 자명성 점검 (작성 전 필수 자문)
 
 아래 3개에 **모두 NO** 여야 ADR 로 기록. 하나라도 YES 면 대안 채널(CLAUDE.md 규칙/코드 주석/커밋 메시지/다른 docs)로 내려보낸다.
 
