@@ -229,7 +229,7 @@ jobs:
             - **이슈가 0개면** `comments` 를 빈 배열로 두고 🟢 섹션만 있는 짧은 요약을 게시한다
             - **테스트·더미·placeholder 본문 게시 금지**
 
-          claude_args: '--model claude-opus-4-7 --allowedTools "Bash" --disallowedTools "Agent,Read,Write,Edit,Glob,Grep,LS"'
+          claude_args: '--model opus --allowedTools "Bash" --disallowedTools "Agent,Read,Write,Edit,Glob,Grep,LS"'
 
       # 게시된 본문에 literal `\n` 두 글자가 박힌 경우 자동 보정.
       # 사고 패턴: Claude action 이 prompt 의 `mktemp` + `--input` 가이드를 무시하고
