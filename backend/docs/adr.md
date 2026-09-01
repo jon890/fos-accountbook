@@ -250,7 +250,7 @@ prod 프로파일은 15분 유지.
 | Review Event   | 항상 `COMMENT`                                   | 리뷰가 머지를 차단하지 않도록 함                                                 |
 | 요약 게시      | Review body 로 통합 — 인라인과 같은 리뷰 1회 등록 | 요약과 인라인이 PR 대화에서 흩어지지 않고 리뷰 단위로 접힘                       |
 | 코멘트 정리    | 일반·인라인 댓글은 delete, 리뷰 본문은 minimize   | 접힌 블록 누적 회피. 제출된 `COMMENT` 리뷰는 REST 로 삭제 불가라 리뷰만 예외    |
-| 모델           | 단일 Opus agent                                  | 4개 관점을 한 agent 가 함께 보며 교차 판단                                       |
+| 모델           | 단일 Opus agent. `--model opus` 별칭 지정          | 4개 관점을 한 agent 가 함께 보며 교차 판단. 고정 태그는 모델 교체마다 워크플로 수정이 필요하고, 미인식 태그면 리뷰가 통째로 실패 |
 | allowed_bots   | `"*"`                                            | 봇이 연 PR 도 리뷰 대상. 봇 추가 때마다 워크플로를 고치지 않기 위함              |
 | diff 필터      | `gradle/`, `gradlew*`, `*.lock` 제외. SQL은 포함 | 빌드 도구 노이즈 제거, SQL 마이그레이션은 리뷰 대상                              |
 | Job timeout    | 15분                                             | agent hang 시 불필요한 비용 방지                                                 |
