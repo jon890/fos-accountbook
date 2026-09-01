@@ -71,16 +71,51 @@ jobs:
           echo "CHECK_RUN_ID=$CHECK_RUN_ID" >> "$GITHUB_ENV"
           echo "Check Run 시작: id=$CHECK_RUN_ID head_sha=$HEAD_SHA"
 
-      # 이전 봇 댓글 minimize 가 아닌 DELETE — minimized 블록 누적으로 PR 스레드가 지저분해지는
+      # 댓글은 minimize 가 아닌 DELETE — minimized 블록 누적으로 PR 스레드가 지저분해지는
       # 사고 회피 (fos-blog 정착 패턴). 이력 보존은 GitHub event log 로 충분.
-      - name: 이전 Claude 봇 댓글 삭제
+      # 리뷰 본문만 예외로 접는다. 제출된 COMMENT 리뷰는 REST 로 지울 수 없고,
+      # 실행당 한 개만 생기므로 접힌 블록이 무더기로 쌓이지 않는다.
+      - name: 이전 Claude 리뷰 접기 + 봇 댓글 삭제
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           REPO="${{ github.repository }}"
           PR_NUMBER="${{ env.PR_NUMBER }}"
 
-          # 이전 일반 PR 코멘트 삭제 (claude[bot] 작성)
+          # 이전 Claude 리뷰 접기 (요약 body 보유) — 제출된 리뷰는 REST API 로 삭제할 수
+          # 없다 (DELETE reviews/{id} 는 PENDING 전용, DISMISS 는 승인·변경요청 전용).
+          # GraphQL minimizeComment 로 OUTDATED 처리해 접는다.
+          # GraphQL 의 Bot 로그인은 REST 와 달리 `[bot]` 접미사가 없어 두 표기를 모두 본다.
+          OWNER="${REPO%%/*}"
+          REPO_NAME="${REPO##*/}"
+
+          gh api graphql \
+            -f query='query($owner:String!,$name:String!,$pr:Int!){
+              repository(owner:$owner,name:$name){
+                pullRequest(number:$pr){
+                  reviews(last:100){ nodes{ id isMinimized author{ login } } }
+                }
+              }
+            }' \
+            -f owner="$OWNER" -f name="$REPO_NAME" -F pr="$PR_NUMBER" \
+            --jq '.data.repository.pullRequest.reviews.nodes[]
+                  | select(.author.login == "claude[bot]" or .author.login == "claude")
+                  | select(.isMinimized == false)
+                  | .id' \
+            | while read -r review_node_id; do
+              if [ -n "$review_node_id" ]; then
+                echo "오래된 Claude 리뷰 접는 중: $review_node_id"
+                gh api graphql \
+                  -f query='mutation($id:ID!){
+                    minimizeComment(input:{subjectId:$id,classifier:OUTDATED}){
+                      minimizedComment{ isMinimized }
+                    }
+                  }' \
+                  -f id="$review_node_id" >/dev/null || true
+              fi
+            done
+
+          # 과거 방식으로 올라간 일반 PR 코멘트 삭제 (claude[bot] 작성)
           gh api "repos/$REPO/issues/$PR_NUMBER/comments" \
             --jq '.[] | select(.user.login == "claude[bot]") | .id' \
             | while read -r comment_id; do
