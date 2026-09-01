@@ -86,6 +86,8 @@ jobs:
           # 없다 (DELETE reviews/{id} 는 PENDING 전용, DISMISS 는 승인·변경요청 전용).
           # GraphQL minimizeComment 로 OUTDATED 처리해 접는다.
           # GraphQL 의 Bot 로그인은 REST 와 달리 `[bot]` 접미사가 없어 두 표기를 모두 본다.
+          # reviews(last:100) 은 개수를 고정한다. 리뷰가 100 건을 넘으면 그보다 오래된 것은
+          # 접히지 않고 남는다. cursor 기반 페이지 처리는 넣지 않았다.
           OWNER="${REPO%%/*}"
           REPO_NAME="${REPO##*/}"
 
@@ -116,7 +118,7 @@ jobs:
             done
 
           # 과거 방식으로 올라간 일반 PR 코멘트 삭제 (claude[bot] 작성)
-          gh api "repos/$REPO/issues/$PR_NUMBER/comments" \
+          gh api --paginate "repos/$REPO/issues/$PR_NUMBER/comments?per_page=100" \
             --jq '.[] | select(.user.login == "claude[bot]") | .id' \
             | while read -r comment_id; do
               if [ -n "$comment_id" ]; then
@@ -126,7 +128,7 @@ jobs:
             done
 
           # 이전 인라인 리뷰 코멘트 삭제 (claude[bot] 작성)
-          gh api "repos/$REPO/pulls/$PR_NUMBER/comments" \
+          gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/comments?per_page=100" \
             --jq '.[] | select(.user.login == "claude[bot]") | .id' \
             | while read -r comment_id; do
               if [ -n "$comment_id" ]; then
@@ -260,21 +262,21 @@ jobs:
           }
 
           # 리뷰 body (요약) — PUT 으로 갱신
-          gh api "repos/$REPO/pulls/$PR_NUMBER/reviews" \
+          gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/reviews?per_page=100" \
             --jq '.[] | select(.user.login == "claude[bot]") | select(.body | contains("\\n")) | .id' \
             | while read -r id; do
               [ -n "$id" ] && fix_one "repos/$REPO/pulls/$PR_NUMBER/reviews/$id" "PUT"
             done
 
           # 과거 방식으로 올라간 일반 PR 댓글 (issue comments) — PATCH 로 갱신
-          gh api "repos/$REPO/issues/$PR_NUMBER/comments" \
+          gh api --paginate "repos/$REPO/issues/$PR_NUMBER/comments?per_page=100" \
             --jq '.[] | select(.user.login == "claude[bot]") | select(.body | contains("\\n")) | .id' \
             | while read -r id; do
               [ -n "$id" ] && fix_one "repos/$REPO/issues/comments/$id" "PATCH"
             done
 
           # 인라인 리뷰 댓글 (PR review comments) — PATCH 로 갱신
-          gh api "repos/$REPO/pulls/$PR_NUMBER/comments" \
+          gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/comments?per_page=100" \
             --jq '.[] | select(.user.login == "claude[bot]") | select(.body | contains("\\n")) | .id' \
             | while read -r id; do
               [ -n "$id" ] && fix_one "repos/$REPO/pulls/comments/$id" "PATCH"
@@ -293,7 +295,7 @@ jobs:
           PR_NUMBER="${{ env.PR_NUMBER }}"
 
           # claude[bot] 가 작성한 인라인 댓글만 검사
-          gh api "repos/$REPO/pulls/$PR_NUMBER/comments" \
+          gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/comments?per_page=100" \
             --jq '.[] | select(.user.login == "claude[bot]") | "\(.id)\t\(.body)"' \
             | while IFS=$'\t' read -r comment_id body; do
               [ -z "$comment_id" ] && continue
