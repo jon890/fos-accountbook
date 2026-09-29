@@ -1,0 +1,31 @@
+### 백엔드 지침에서 특히 볼 곳 (backend/)
+
+백엔드 점검 기준은 저장소의 지침이 소유한다. `backend/CLAUDE.md` 와 `backend/docs/` 이고, 기술 결정은 `backend/docs/adr.md` 의 ADR-B01 부터 이어지는 기록이다.
+diff 가 건드리는 영역의 지침을 먼저 읽는다. `backend/CLAUDE.md` 의 「상황별 ADR 필수 참조」 표가 작업별로 읽을 ADR 을 정한다.
+판정 기준을 이 프롬프트에 옮겨 적지 않는다. 아래는 그 지침 가운데 리뷰에서 특히 볼 곳을 가리킬 뿐이다.
+
+| 무엇 | 어디가 정하는가 |
+| --- | --- |
+| 가족 리소스 엔드포인트는 URL 에 `familyUuid` 를 두고, Service 는 `@ValidateFamilyAccess` 로 멤버십을 검증한다. 사용자는 `@LoginUser` 로만 식별한다 | `backend/CLAUDE.md` 「인증 & 소유권 검증」, ADR-B09 |
+| JWT 서명과 만료, 인증을 건너뛰는 경로에서 민감 데이터가 나가지 않는가. SQL Injection, 민감 정보 로깅 | ADR-B04, `backend/CLAUDE.md` 「금지사항」 |
+| 쓰기 메서드에 `@Transactional` 이 있는가. 같은 클래스 안에서 `@CacheEvict` 나 `@Transactional` 메서드를 자기 호출하지 않는가 | `backend/CLAUDE.md` 「Service 규칙」 「캐시 무효화」, ADR-B05, ADR-B06 |
+| 금액은 `BigDecimal` 이다. `double`, `float`, `==` 비교를 쓰지 않는다 | ADR-B07 |
+| AFTER_COMMIT 이벤트 리스너의 실패가 본 작업을 막지 않는다 | `backend/CLAUDE.md` 「이벤트 기반 사이드이펙트」, ADR-B08 |
+| 이미 적용된 Flyway 마이그레이션을 고치지 않는다. 새 파일은 타임스탬프 버전이다. 예약어 컬럼은 백틱으로 감싼다. 엔티티를 바꾸면 마이그레이션도 바꾼다 | `backend/CLAUDE.md` 「Database」, ADR-B15 |
+| Soft Delete 는 `status` Enum 이다. 새 테이블은 `id BIGINT` 와 `uuid VARCHAR(36)` 을 함께 둔다 | ADR-B02, ADR-B03 |
+| Controller 는 Repository 를 직접 주입받지 않는다. 레이어를 거꾸로 의존하지 않는다. Controller 가 `@Entity` 를 반환하지 않고 Response DTO 의 `static from(Entity)` 로 바꾼다 | `backend/CLAUDE.md` 「Architecture」, `backend/docs/code-architecture.md`, ADR-B16 |
+| Entity 에 `@Data` 를 쓰지 않는다. DTO 에 Setter 를 두지 않는다 | `backend/CLAUDE.md` 「Code Conventions」 |
+| `System.out.println` 대신 Slf4j. 와일드카드 import 와 한국어 발음 표기 식별자를 쓰지 않는다 | `backend/CLAUDE.md` 「금지사항」 |
+| QueryDSL 동적 쿼리와 N+1 쿼리 위험 | ADR-B10 |
+| 테스트에 `@Transactional` 을 쓰지 않는다. Service 와 Repository 를 모킹하지 않는다 | `backend/CLAUDE.md` 「Testing」, `backend/docs/testing-strategy.md` |
+| 새 엔드포인트 경로와 버전 | ADR-B11 |
+| 반복 지출 스케줄과 수정 반영 | ADR-B12, ADR-B13 |
+
+#### 위험 라벨별로 더 볼 것
+
+| 라벨 | 더 볼 것 |
+| --- | --- |
+| `위험:마이그레이션` | 엔티티와 마이그레이션이 같이 바뀌었는가, 이미 적용된 파일을 고치지 않았는가, 버전이 기존 적용분보다 사전식 정렬상 뒤인가, MySQL 예약어를 백틱으로 감쌌는가, 기존 행에 새 칸이 NOT NULL 로 들어가 기동이 실패하지 않는가. 테스트의 H2 는 이 가운데 여럿을 잡지 못한다 |
+| `위험:보안` | 다른 가족의 자료에 닿는 경로가 없는가, 요청 본문이 사용자나 가족을 정하지 못하는가, 토큰의 서명과 만료가 약해지지 않았는가, 인증을 건너뛰는 경로가 늘지 않았는가, 로그에 토큰이나 개인정보가 남지 않는가 |
+| `위험:이벤트캐시` | 리스너가 커밋 뒤에 돌고 예외를 삼키는가, 캐시를 비우는 호출이 프록시를 거치는가, 스케줄러가 두 번 돌거나 건너뛰어도 결과가 맞는가 |
+| `위험:배포설정` | 새 환경 변수와 설정에 기본값이 없어 기동이 멈추지 않는가, 공개 저장소에 적으면 안 되는 값이 들어가지 않았는가, 워크플로의 권한과 트리거가 넓어지지 않았는가 |

@@ -182,10 +182,11 @@ jobs:
           echo "labels=$(printf '%s' "$LABELS" | tr '\n' ',')" >> "$GITHUB_OUTPUT"
           echo "위험 라벨: ${LABELS:-없음}" >> "$GITHUB_STEP_SUMMARY"
 
-      # 리뷰 프롬프트는 .github/claude-review-prompt.txt 로 분리 관리한다.
+      # 리뷰 프롬프트는 .github/claude-review-prompt-*.txt 로 분리 관리한다.
+      # 공통 본문(common)의 ${CHECKLIST} 자리에 바뀐 경로에 맞는 점검 목록(frontend, backend)을 끼운다.
       # YAML 인라인 heredoc 180줄+ 가독성 + git diff 정밀도 확보 (brain ai-code-review-github-actions 패턴).
       # .md 가 아닌 .txt 로 둬 IDE markdown 포맷터가 glob(`*.lock`)·식별자를 깨뜨리는 사고 회피.
-      # 변수는 envsubst 로 $PR_NUMBER·$REPO·$RISK_LABELS 만 치환 (나머지 $·백틱·이모지는 그대로 보존).
+      # 변수는 envsubst 로 $PR_NUMBER·$REPO·$RISK_LABELS·$CHECKLIST 만 치환 (나머지 $·백틱·이모지는 그대로 보존).
       - name: 리뷰 프롬프트 렌더 (envsubst 변수 치환)
         id: render-prompt
         if: github.event_name != 'issue_comment' || steps.fork_guard.outputs.review == 'true'
@@ -193,10 +194,17 @@ jobs:
           PR_NUMBER: ${{ env.PR_NUMBER }}
           REPO: ${{ github.repository }}
           RISK_LABELS: ${{ steps.risk.outputs.labels || '없음' }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          NAMES=$(gh pr diff "$PR_NUMBER" --repo "$REPO" --name-only | bash scripts/review-checklist.sh)
+          CHECKLIST=""
+          for name in $NAMES; do
+            CHECKLIST+="$(cat ".github/claude-review-prompt-${name}.txt")"$'\n\n'
+          done
+          export CHECKLIST
           {
             echo 'prompt<<CLAUDE_PROMPT_EOF'
-            envsubst '$PR_NUMBER $REPO $RISK_LABELS' < .github/claude-review-prompt.txt
+            envsubst '$PR_NUMBER $REPO $RISK_LABELS $CHECKLIST' < .github/claude-review-prompt-common.txt
             echo 'CLAUDE_PROMPT_EOF'
           } >> "$GITHUB_OUTPUT"
 
