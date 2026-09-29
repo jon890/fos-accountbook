@@ -232,6 +232,7 @@
 | literal `\n` 자동 보정 | post-step bash 로 세 경로 검출 후 perl 교체 — 일반 댓글과 인라인은 comments PATCH, 리뷰 요약은 `reviews/{id}` PUT | Claude action 이 가이드 무시하고 `--field body="...\n..."` 호출 시 literal 두 글자 박힘 (PR #208 사고). 보정 후 정상 줄바꿈 |
 | 모델 | opus 리뷰어 (`--model opus` 별칭). 실제 모델 ID 는 실행 기록에서 읽어 Job Summary 에 남긴다 | haiku specialist 는 추론 능력이 떨어져 오탐(false positive) 많고 실제 버그 놓침. 리뷰 신뢰도 > 토큰 절약. `opus` 별칭은 버전업 무수정 추종 |
 | action 버전 | `anthropics/claude-code-action@v1` major 태그 | 릴리스마다 다시 고정하지 않는다. #1290 회귀로 걸었던 고정은 같은 설정의 다른 저장소가 `@v1` 로 정상 동작해 풀었다 |
+| 실패 원인 기록 | 실행이 `is_error` 로 끝나면 실행 파일의 결과 문구나 마지막 assistant 문구를 500자까지 `::error` 와 Job Summary 에 남긴다 | action 은 `is_error` 만 남겨 사용량 한도와 토큰 오류를 가를 수 없었다. 공개 저장소라 리뷰 본문 전체는 남기지 않는다 |
 | allowed_bots | `"*"` | 광범위 허용 — Dependabot/Claude 모두 차단되지 않음. 보안 검증은 리뷰어가 담당 |
 | diff 필터 | `frontend/pnpm-lock.yaml`, `*.lock`, `*.snap`, `backend/gradle/wrapper/gradle-wrapper.jar`, `backend/build/`, `*.class` 제외. Flyway SQL 은 제외하지 않는다 | 노이즈 감소. `*` 가 없는 pathspec 은 저장소 루트 기준이라 하위 프로젝트 경로를 붙인다 |
 | Job timeout | 15분 | agent hang 시 불필요한 비용 방지 |
