@@ -1,0 +1,78 @@
+# ============================================
+# 프로덕션 환경 설정
+# ============================================
+
+spring:
+  output:
+    ansi:
+      enabled: never
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1
+      leak-detection-threshold: 60000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate # Flyway가 스키마 관리 (변경 금지)
+    properties:
+      hibernate:
+        format_sql: false
+        show_sql: false
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+        jdbc.batch_versioned_data: true
+
+  flyway:
+    enabled: true
+    clean-disabled: true # 프로덕션에서 clean 금지 (데이터 보호)
+
+# OpenAPI: prod에서는 보안상 비활성화. 스냅샷은 CI의 test 프로파일에서 추출 (docs/testing-strategy.md 참고)
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+# Actuator 프로덕션 설정
+# management.server.port를 별도 포트로 분리하여 외부망 노출 차단
+# Docker 배포 시 8081 포트는 내부 네트워크에서만 접근 가능하도록 설정
+management:
+  server:
+    port: 8081
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: when-authorized
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+# CORS 설정 (프로덕션 환경) - allowed-origins만 오버라이드
+cors:
+  allowed-origins:
+    - https://fos-accountbook.vercel.app
+    - https://accountbook.fosworld.co.kr
+
+# P6Spy SQL 로깅 비활성화
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: false

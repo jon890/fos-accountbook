@@ -1,0 +1,38 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: fos-accountbook-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: accountbook
+      MYSQL_USER: accountbook_user
+      MYSQL_PASSWORD: accountbook_password
+      TZ: UTC
+    ports:
+      - "13306:3306"  # 호스트 포트 13306 → 컨테이너 포트 3306 (일반 MySQL 포트와 충돌 방지)
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/conf.d:/etc/mysql/conf.d
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      # MySQL 9.4는 기본적으로 caching_sha2_password 사용 (mysql_native_password 제거됨)
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - accountbook-network
+
+volumes:
+  mysql_data:
+    driver: local
+    name: fos-accountbook-mysql-data
+
+networks:
+  accountbook-network:
+    driver: bridge
+    name: fos-accountbook-network
+

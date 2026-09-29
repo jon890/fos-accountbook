@@ -1,0 +1,118 @@
+package com.bifos.accountbook.config.security;
+
+import com.bifos.accountbook.user.domain.entity.User;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtParser;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SecureDigestAlgorithm;
+import java.nio.charset.StandardCharsets;
+import java.util.function.Function;
+import javax.crypto.SecretKey;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * JWT 토큰 검증/추출을 위한 추상 클래스
+ * JwtTokenProvider와 NextAuthTokenProvider의 공통 로직을 제공합니다.
+ * 하위 클래스는 getSecretKey()를 구현하여 각자의 비밀키를 제공합니다.
+ */
+@Slf4j
+public abstract class AbstractJwtTokenProvider {
+
+  protected JwtParser getJwtParser() {
+    return Jwts.parser()
+               .verifyWith(getSigningKey())
+               .build();
+  }
+
+  /**
+   * JWT 서명에 사용할 비밀키를 반환합니다.
+   *
+   * @return SecretKey
+   */
+  protected abstract SecretKey getSigningKey();
+
+  protected abstract SecureDigestAlgorithm<SecretKey, SecretKey> getAlgorithm();
+
+  /**
+   * 문자열 비밀키를 SecretKey 객체로 변환합니다.
+   * 키가 짧으면 자동으로 패딩하여 안전한 길이로 만듭니다.
+   *
+   * @param secret 비밀키 문자열
+   * @return SecretKey
+   */
+  protected SecretKey createSigningKey(String secret) {
+    byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+
+    // HS512는 최소 64바이트 필요
+    if (keyBytes.length < 64) {
+      log.warn("JWT secret key is too short ({} bytes). Padding to 64 bytes for HS512 compatibility.",
+               keyBytes.length);
+
+      // 키를 64바이트로 패딩 (반복 + SHA-256 해시 조합)
+      byte[] paddedKey = new byte[64];
+      for (int i = 0; i < 64; i++) {
+        paddedKey[i] = keyBytes[i % keyBytes.length];
+      }
+      keyBytes = paddedKey;
+    }
+
+    return Keys.hmacShaKeyFor(keyBytes);
+  }
+
+  protected abstract Function<User, String> toSubjectConverter();
+
+  /**
+   * 토큰 검증
+   *
+   * @param token JWT 토큰
+   * @return 토큰이 유효하면 true, 그렇지 않으면 false
+   */
+  public boolean validateToken(String token) {
+    try {
+      getJwtParser().parseSignedClaims(token);
+      return true;
+    } catch (SecurityException e) {
+      log.debug("Invalid JWT signature: {}", e.getMessage());
+    } catch (MalformedJwtException e) {
+      log.debug("Invalid JWT token: {}", e.getMessage());
+    } catch (ExpiredJwtException e) {
+      log.debug("Expired JWT token: {}", e.getMessage());
+    } catch (UnsupportedJwtException e) {
+      log.debug("Unsupported JWT token: {}", e.getMessage());
+    } catch (IllegalArgumentException e) {
+      log.debug("JWT claims string is empty: {}", e.getMessage());
+    }
+    return false;
+  }
+
+  /**
+   * 토큰에서 Claims 추출
+   *
+   * @param token JWT 토큰
+   * @return Claims 객체, 추출 실패 시 null
+   */
+  protected Claims getClaimsFromToken(String token) {
+    try {
+      return getJwtParser().parseSignedClaims(token)
+                           .getPayload();
+    } catch (Exception e) {
+      log.debug("Failed to extract claims from token: {}", e.getMessage());
+      return null;
+    }
+  }
+
+  /**
+   * 토큰에서 사용자 ID (subject) 추출
+   *
+   * @param token JWT 토큰
+   * @return 사용자 ID, 추출 실패 시 null
+   */
+  public String getUserIdFromToken(String token) {
+    Claims claims = getClaimsFromToken(token);
+    return claims != null ? claims.getSubject() : null;
+  }
+}

@@ -1,4 +1,4 @@
-# Dependabot 설정 - Frontend
+# Dependabot 설정 - frontend/ 와 backend/
 # https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
 version: 2
@@ -6,7 +6,7 @@ updates:
   # npm 의존성 업데이트 (pnpm 사용)
   # Node.js 22 사용 중 (@types/node v22 범위 유지)
   - package-ecosystem: "npm"
-    directory: "/"
+    directory: "/frontend"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -22,17 +22,10 @@ updates:
       prefix: "chore(deps)"
       include: "scope"
     # Node.js 22 사용 중이므로 @types/node v23+ 무시
-    # Next.js 15 사용 중이므로 Next.js 16 버전 무시 (마이그레이션 가이드 참고)
     ignore:
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
         versions: [">=23.0.0"]
-      - dependency-name: "next"
-        update-types: ["version-update:semver-major"]
-        versions: [">=16.0.0"]
-      - dependency-name: "eslint-config-next"
-        update-types: ["version-update:semver-major"]
-        versions: [">=16.0.0"]
     groups:
       # Next.js 관련 의존성을 하나의 PR로 그룹화
       nextjs:
@@ -82,7 +75,64 @@ updates:
           - "postcss"
           - "autoprefixer"
 
-  # GitHub Actions 업데이트 (나중에 CI/CD 추가시 사용)
+  # Gradle 의존성 업데이트
+  - package-ecosystem: "gradle"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Seoul"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "nhn"
+    labels:
+      - "dependencies"
+      - "gradle"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    groups:
+      # Spring Boot 관련 의존성을 하나의 PR로 그룹화
+      spring-boot:
+        patterns:
+          - "org.springframework.boot*"
+          - "org.springframework*"
+      # 테스트 관련 의존성을 하나의 PR로 그룹화
+      test-dependencies:
+        patterns:
+          - "*junit*"
+          - "*mockito*"
+          - "*assertj*"
+      # 로깅 관련 의존성을 하나의 PR로 그룹화
+      logging:
+        patterns:
+          - "ch.qos.logback*"
+          - "org.slf4j*"
+
+  # Docker 이미지 업데이트
+  - package-ecosystem: "docker"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Seoul"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "nhn"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "chore(docker)"
+    # Java 21 버전 고정 (25 버전 업그레이드 무시)
+    ignore:
+      - dependency-name: "eclipse-temurin"
+        update-types: ["version-update:semver-major"]
+        versions: [">=22"]
+
+  # GitHub Actions 업데이트 (루트 .github/workflows)
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

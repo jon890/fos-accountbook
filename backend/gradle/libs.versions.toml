@@ -1,0 +1,98 @@
+[versions]
+# Spring Boot & Framework
+spring-boot = "4.0.6"
+spring-dependency-management = "1.1.7"
+
+# Database
+mysql-connector = "9.7.0"
+h2 = "2.4.240"
+
+# Security & JWT
+jjwt = "0.13.0"
+
+# Logging & Monitoring
+p6spy = "2.0.0"
+
+# API Documentation
+springdoc-openapi = "3.0.3"
+
+# Utilities
+lombok = "1.18.46"
+querydsl = "5.1.0"
+
+# Cache
+caffeine = "3.2.4"
+
+[libraries]
+# Spring Boot Starters
+spring-boot-starter-webmvc = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
+spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
+spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+spring-boot-starter-cache = { module = "org.springframework.boot:spring-boot-starter-cache" }
+spring-boot-starter-aspectj = { module = "org.springframework.boot:spring-boot-starter-aspectj" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-boot-starter-flyway = { module = "org.springframework.boot:spring-boot-starter-flyway" }
+
+# Database
+mysql-connector-j = { module = "com.mysql:mysql-connector-j", version.ref = "mysql-connector" }
+flyway-mysql = { module = "org.flywaydb:flyway-mysql" }
+
+# SQL Logging
+p6spy-spring-boot-starter = { module = "com.github.gavlyukovskiy:p6spy-spring-boot-starter", version.ref = "p6spy" }
+
+# JWT
+jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
+jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
+jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
+
+# OpenAPI (Swagger)
+springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi" }
+
+# Lombok
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+
+# QueryDSL
+querydsl-jpa = { module = "com.querydsl:querydsl-jpa", version.ref = "querydsl" }
+querydsl-apt = { module = "com.querydsl:querydsl-apt", version.ref = "querydsl" }
+
+# Cache
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
+
+# Testing
+spring-security-test = { module = "org.springframework.security:spring-security-test" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+h2-database = { module = "com.h2database:h2", version.ref = "h2" }
+
+# Jackson
+jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
+jackson-module-parameter-names = { module = "com.fasterxml.jackson.module:jackson-module-parameter-names" }
+
+[bundles]
+# JWT 관련 라이브러리 번들
+jwt = ["jjwt-api", "jjwt-impl", "jjwt-jackson"]
+
+# Spring Boot Starters 번들
+spring-boot-starters = [
+  "spring-boot-starter-webmvc",
+  "spring-boot-starter-data-jpa",
+  "spring-boot-starter-security",
+  "spring-boot-starter-validation",
+  "spring-boot-starter-actuator",
+  "spring-boot-starter-cache",
+  "spring-boot-starter-aspectj",
+  "spring-boot-starter-flyway"
+]
+
+# 테스트 관련 라이브러리 번들
+spring-test = [
+  "spring-boot-starter-test",
+  "spring-security-test"
+]
+
+[plugins]
+# Spring Boot & Framework
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
+

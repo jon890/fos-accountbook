@@ -1,0 +1,63 @@
+### 프론트엔드에서 특히 볼 것 (frontend/)
+
+프론트엔드 점검 기준은 `frontend/CLAUDE.md` 와 `frontend/docs/adr.md`, `frontend/docs/code-architecture.md`, `frontend/docs/data-schema.md` 가 소유한다.
+`frontend/CLAUDE.md` 의 「상황별 ADR 필수 참조」 표가 작업별로 읽을 ADR 을 가리킨다. 아래 목록에 한정하지 않는다.
+
+**TypeScript 와 타입 안전성**
+- `any` 타입 사용 (명시적 또는 암시적)
+- 런타임에 null/undefined 가능한 non-nullable 타입 (optional chaining 누락)
+- 안전성을 우회하는 타입 단언 (`as X`)
+- Server Action 또는 async 함수의 잘못된 반환 타입
+- 실제 API 응답 형태와 일치하지 않는 타입 정의 (`frontend/docs/data-schema.md`)
+
+**프로젝트 컨벤션**
+- JSX/TSX 의 하드코딩 색상 (`from-blue-500`, `#hexcolor`, `bg-white/20`)
+  → 시맨틱 클래스 사용: gradient-expense, gradient-income, gradient-budget, gradient-primary 등 (ADR-F07)
+- hex/rgb/hsl 직접 작성 (ADR-F13: OKLCH 토큰만)
+- 강조 배경 위 `text-white` / `text-black` (ADR-F23: 시맨틱 foreground 토큰)
+- `alert()`, `confirm()`, `prompt()` → sonner `toast` 사용 (ADR-F08)
+- 프로덕션 코드의 `console.log`
+- `.dark` 클래스 신규 추가 (ADR-F15: `[data-theme="dark"]` 만)
+- 클라이언트 컴포넌트의 `console.error` (사용자 피드백 state 없이 단독)
+- Tailwind 클래스로 표현 가능한 inline `style={{ }}` (단일 토큰은 `text-[var(--token)]` arbitrary class)
+- 상수로 추출해야 할 매직 넘버/문자열
+
+**보안과 권한**
+- Server Action 시작에 `requireAuth()` 또는 `requireAuthOrRedirect()` 누락
+- Server Action 권한 검증이 ADR-F25 의 세 패턴(single-family, multi-family, entity ownership) 중 어디에도 속하지 않는다. `formData.get("familyUuid")` 를 그대로 믿는다
+- ActionError 코드 혼용: 가족 미선택은 `familyNotSelected()`(F002), 가족 불일치는 `NOT_FAMILY_MEMBER`(F003), 인증 실패는 `unauthorized()`
+- 외부에서 받은 UUID 를 형식 검증 없이 API 경로에 넣는다 (`mark-notification-read-action.ts` 의 `UUID_REGEX` 패턴)
+- 클라이언트 컴포넌트에서 `NEXT_PUBLIC_` prefix 없는 환경변수 사용 (시크릿 노출)
+- 검증 안 된 외부 입력이 외부 API 에 직접 전달
+- 폼 제출과 Server Action 입력에서 Zod 검증 누락 (ADR-F06)
+- 401 을 기본값으로 숨긴다 (ADR-F26: `A002` 로 바꾸고 로그인으로 보낸다)
+- 민감 데이터 (토큰, 가족 uuid 등) 가 console 에 로깅됨
+
+**아키텍처와 Next.js 패턴**
+
+계층은 `Page → Action → Service → lib/server/api` 다. Action 은 인증, Zod 검증, revalidatePath 를, Service 는 API 호출을 맡는다.
+
+- Server Component 에서 React hooks (useState, useEffect, useRouter 등) 사용 ("use client" 누락)
+- Client Component 에 server-only 코드 (백엔드 토큰 사용, requireAuth 등)
+- "use client" 또는 "use server" directive 가 파일 첫 줄에 위치하지 않음
+- Action 레이어에 비즈니스 로직 (API 호출) 혼재 — Service 책임 위반 (ADR-F04)
+- Service 레이어에서 `revalidatePath` / `requireAuth` 호출 (ADR-F04)
+- Page (Server Component) 에서 `serverApiGet` 직접 호출 (ADR-F12: Action 경유 필수)
+- URL searchParams 기반 입력에서 useEffect 안 setState (ADR-F17)
+- DropdownMenu 안에서 `form` submit 으로 Server Action 호출 (ADR-F27)
+- hooks 와 이벤트 핸들러가 없는 컴포넌트의 불필요한 "use client" (Server Component 여야 함)
+- Server Component 로 처리 가능한데 Client Component 에서 데이터 fetch
+- 신규 라우트의 loading.tsx 또는 error.tsx 누락
+- 다이얼로그 재오픈 시 stale form state
+
+**문서와 테스트**
+- `frontend/docs/` 나 ADR 이 코드보다 앞서거나 뒤처진다. 결정을 바꾸고 ADR 을 고치지 않았다
+- Server Action 테스트가 MSW 를 쓴다 (ADR-F09: jest.mock 방식)
+
+#### 위험 라벨별로 더 볼 것
+
+| 라벨 | 더 볼 것 |
+| --- | --- |
+| `위험:인증` | 세션과 토큰 갱신이 만료 5분 전 규칙(ADR-F03)을 지키는가, 401 이 `A002` 로 바뀌어 로그인으로 가는가(ADR-F26), 토큰이 클라이언트 번들이나 로그로 새지 않는가, 인증 미들웨어의 matcher 가 보호할 경로를 빠뜨리지 않는가 |
+| `위험:권한` | 새 Action 과 바뀐 Action 이 ADR-F25 의 세 패턴 중 하나로 권한을 검증하는가, 클라이언트가 보낸 familyUuid 를 그대로 믿지 않는가, 에러 코드가 F002 와 F003 과 unauthorized 로 정확히 나뉘는가, 다른 가족의 자료에 닿는 경로가 없는가 |
+| `위험:배포설정` | 새 환경 변수가 env 스키마에 들어가 기동 때 검증되는가, 서버 전용 값이 `NEXT_PUBLIC_` 로 새지 않는가, 빌드 설정과 의존성 변경이 빌드나 Docker 이미지를 깨지 않는가, 워크플로가 secret 을 포크나 외부 댓글에 열지 않는가 |

@@ -1,0 +1,120 @@
+# ============================================
+# 공통 설정 (모든 프로파일에 적용)
+# ============================================
+# Profile별 설정 파일:
+#   - application-local.yml (로컬 개발)
+#   - application-prod.yml (프로덕션)
+#   - application-test.yml (테스트)
+
+server:
+  port: ${PORT:8080}
+
+spring:
+  output:
+    ansi:
+      enabled: always
+
+  application:
+    name: fos-accountbook-backend
+
+  # Virtual Threads (Project Loom) - Java 21+
+  # Tomcat의 모든 요청 처리 스레드를 가상 스레드로 실행
+  # 장점: blocking I/O 작업이 많을 때 처리량 대폭 향상
+  threads:
+    virtual:
+      enabled: true
+
+  # 데이터베이스 설정 (Profile별로 설정)
+  # - application-local.yml: 로컬 MySQL 직접 설정
+  # - application-prod.yml: 프로덕션 MySQL 환경변수 사용
+
+  # JPA 공통 설정
+  jpa:
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    open-in-view: false
+
+  # Flyway 공통 설정
+  flyway:
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+    validate-on-migrate: true
+
+  # Security 설정
+  security:
+    filter:
+      dispatcher-types: async, error, request
+
+jwt:
+  secret: ${AUTH_SECRET}
+  expiration: ${JWT_EXPIRATION}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION}
+
+# SpringDoc OpenAPI 공통 설정
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+    display-request-duration: true
+    disable-swagger-default-url: true
+
+# Spring Boot Actuator 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        # 노출할 엔드포인트 (프로파일별로 오버라이드 가능)
+        include: health,info,metrics,threaddump
+      base-path: /actuator
+  endpoint:
+    health:
+      # 헬스 체크 상세 정보 표시 (항상 표시)
+      show-details: always
+      # 컴포넌트별 헬스 체크 표시
+      show-components: always
+  # 메트릭 설정
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  # 가상 스레드 정보를 위한 threaddump 활성화
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+
+# CORS 공통 설정
+# allowed-origins는 각 프로파일(local, prod)에서 환경별로 설정
+cors:
+  allowed-origins: [ ] # 프로파일별로 오버라이드 필수
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  allowed-headers:
+    - Authorization
+    - Content-Type
+    - X-Requested-With
+    - Accept
+    - Origin
+  exposed-headers:
+    - Authorization
+  allow-credentials: true
+  max-age: 3600 # 1시간 (초)
+
+# P6Spy SQL 로깅 설정 (DataSource Proxy)
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: true
+      multiline: true
+      logging: slf4j
+# 로깅은 logback-spring.xml에서 Profile별로 관리
