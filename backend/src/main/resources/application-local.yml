@@ -1,0 +1,42 @@
+# ============================================
+# 로컬 개발 환경 설정
+# ============================================
+# 실행: ./gradlew bootRun --args='--spring.profiles.active=local'
+# 또는 IntelliJ: Active profiles에 'local' 입력
+
+spring:
+  # 로컬 MySQL 설정 (Docker Compose)
+  datasource:
+    url: jdbc:mysql://localhost:13306/accountbook?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+    username: accountbook_user
+    password: accountbook_password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # JPA 개발 환경 설정
+  jpa:
+    hibernate:
+      ddl-auto: validate # Flyway가 스키마 관리
+
+  # Flyway 로컬 설정
+  flyway:
+    enabled: true
+    clean-disabled: false # 로컬에서만 clean 허용
+
+# JWT 로컬 개발용 설정
+jwt:
+  secret: local-development-secret-key-for-testing-purposes-only-do-not-use-in-production-256bits
+  expiration: 86400000 # 24시간
+  refresh-expiration: 604800000 # 7일
+
+# Swagger 로컬에서 활성화
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    doc-expansion: none # API 목록 기본 접힌 상태
+
+# CORS 설정 (로컬 개발 환경) - allowed-origins만 오버라이드
+cors:
+  allowed-origins:
+    - http://localhost:3000

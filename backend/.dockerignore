@@ -1,0 +1,64 @@
+# Build artifacts
+build/
+target/
+.gradle/
+*.jar
+*.war
+*.ear
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Gradle wrapper (not needed with gradle image)
+# Note: gradle/ directory including libs.versions.toml is needed for Version Catalogs
+gradlew
+gradlew.bat
+gradle/wrapper/*.jar
+
+# Documentation
+README.md
+docs/
+*.md
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker/
+
+# Logs
+logs/
+*.log
+
+# Test files
+.gradle-test-kotlin-dsl/
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.swp
+*.swo
+*~
+
