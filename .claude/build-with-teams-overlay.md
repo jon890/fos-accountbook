@@ -40,7 +40,7 @@ cd .claude/worktrees/plan{N} && pnpm install
 
 ## index.json 스키마
 
-기존 `tasks/plan{N}-*/index.json` 을 실측한 형식이다. 코어 예시와 필드 이름이 다르다.
+이 저장소가 써 온 `tasks/plan{N}-*/index.json` 형식이다. 코어 예시와 필드 이름이 다르다.
 
 ```jsonc
 {
