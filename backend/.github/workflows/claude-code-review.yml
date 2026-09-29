@@ -8,13 +8,22 @@ on:
 
 jobs:
   claude-review:
+    # 공개 저장소다. 누구나 PR 과 댓글을 남길 수 있어 리뷰를 부를 수 있는 쪽을 좁힌다.
+    # - PR: 이 저장소의 브랜치에서 연 것만. 포크의 PR 은 secret 이 없어 실패만 한다
+    # - /review 댓글: 저장소 주인과 멤버와 협업자만. 포크 PR 은 첫 단계에서 제외한다
     if: |
       github.actor != 'dependabot[bot]' &&
       github.actor != 'claude[bot]' && (
-        github.event_name == 'pull_request' ||
+        (github.event_name == 'pull_request' &&
+         github.event.pull_request.head.repo.full_name == github.repository) ||
         (github.event_name == 'issue_comment' &&
          github.event.issue.pull_request != null &&
-         contains(github.event.comment.body, '/review'))
+         (github.event.comment.body == '/review' ||
+          startsWith(github.event.comment.body, '/review ') ||
+          startsWith(github.event.comment.body, format('/review{0}', fromJSON('"\t"'))) ||
+          startsWith(github.event.comment.body, format('/review{0}', fromJSON('"\n"'))) ||
+          startsWith(github.event.comment.body, format('/review{0}', fromJSON('"\r"')))) &&
+         contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
       )
     runs-on: ubuntu-latest
     # 정상 리뷰는 5~10분 내 완료. claude-code-action 이 hang 하는 경우
@@ -35,14 +44,53 @@ jobs:
       checks: write
 
     steps:
+      - name: 포크 PR 검사 (issue_comment 트리거 전용)
+        id: fork_guard
+        if: github.event_name == 'issue_comment'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_INFO=$(gh pr view "${{ env.PR_NUMBER }}" --repo "${{ github.repository }}" \
+            --json isCrossRepository,headRepositoryOwner)
+          case "$(jq -r '.isCrossRepository' <<< "$PR_INFO")" in
+            false) echo "review=true" >> "$GITHUB_OUTPUT" ;;
+            true)
+              echo "review=false" >> "$GITHUB_OUTPUT"
+              echo "포크 PR 은 리뷰하지 않는다" >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            *) echo "::error::PR 출처를 판정하지 못했습니다"; exit 1 ;;
+          esac
+
       - name: 저장소 체크아웃
+        if: github.event_name != 'issue_comment' || steps.fork_guard.outputs.review == 'true'
         uses: actions/checkout@v6
         with:
+          ref: refs/pull/${{ env.PR_NUMBER }}/head
           fetch-depth: 1
+
+      # /review 댓글 트리거는 PR Checks 탭에 자동 등록되지 않으므로
+      # PR head SHA 에 Check Run 을 수동 생성하여 PR 과 workflow 연동
+      - name: PR 에 Check Run 등록 (issue_comment 트리거 전용)
+        id: check-create
+        if: github.event_name == 'issue_comment' && steps.fork_guard.outputs.review == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          HEAD_SHA=$(gh pr view "${{ env.PR_NUMBER }}" --repo "${{ github.repository }}" \
+            --json headRefOid -q .headRefOid)
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          CHECK_ID=$(gh api "repos/${{ github.repository }}/check-runs" -X POST \
+            -f name="Claude 코드 리뷰" \
+            -f head_sha="$HEAD_SHA" \
+            -f status="in_progress" \
+            -f details_url="$RUN_URL" \
+            -q .id)
+          echo "check_id=$CHECK_ID" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
 
       # /review 트리거 댓글에 👀 이모지로 즉시 작업 시작 시그널
       - name: /review 댓글에 시작 reaction 추가
-        if: github.event_name == 'issue_comment'
+        if: github.event_name == 'issue_comment' && steps.fork_guard.outputs.review == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -50,74 +98,21 @@ jobs:
             --method POST \
             --field content=eyes || true
 
-      # issue_comment 트리거된 workflow run 은 GitHub Actions 의 알려진 제약으로
-      # PR Checks 탭에 자동 등록 안 됨. PR head SHA 에 Check Run 을 수동 생성하여
-      # /review 진행 상태가 PR 페이지에서 가시화되도록 한다.
-      - name: PR head SHA 조회 + Check Run 시작 (Checks 탭 노출)
-        if: github.event_name == 'issue_comment'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          HEAD_SHA=$(gh pr view ${{ env.PR_NUMBER }} --repo ${{ github.repository }} --json headRefOid --jq .headRefOid)
-          echo "HEAD_SHA=$HEAD_SHA" >> "$GITHUB_ENV"
-
-          CHECK_RUN_ID=$(gh api "repos/${{ github.repository }}/check-runs" \
-            --method POST \
-            --field name="Claude Code Review" \
-            --field head_sha="$HEAD_SHA" \
-            --field status="in_progress" \
-            --field details_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-            --jq .id)
-          echo "CHECK_RUN_ID=$CHECK_RUN_ID" >> "$GITHUB_ENV"
-          echo "Check Run 시작: id=$CHECK_RUN_ID head_sha=$HEAD_SHA"
-
-      # 댓글은 minimize 가 아닌 DELETE — minimized 블록 누적으로 PR 스레드가 지저분해지는
-      # 사고 회피 (fos-blog 정착 패턴). 이력 보존은 GitHub event log 로 충분.
-      # 리뷰 본문만 예외로 접는다. 제출된 COMMENT 리뷰는 REST 로 지울 수 없고,
-      # 실행당 한 개만 생기므로 접힌 블록이 무더기로 쌓이지 않는다.
-      - name: 이전 Claude 리뷰 접기 + 봇 댓글 삭제
+      - name: 이전 Claude 봇 리뷰 정리
+        if: github.event_name != 'issue_comment' || steps.fork_guard.outputs.review == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           REPO="${{ github.repository }}"
           PR_NUMBER="${{ env.PR_NUMBER }}"
 
-          # 이전 Claude 리뷰 접기 (요약 body 보유) — 제출된 리뷰는 REST API 로 삭제할 수
-          # 없다 (DELETE reviews/{id} 는 PENDING 전용, DISMISS 는 승인·변경요청 전용).
-          # GraphQL minimizeComment 로 OUTDATED 처리해 접는다.
-          # GraphQL 의 Bot 로그인은 REST 와 달리 `[bot]` 접미사가 없어 두 표기를 모두 본다.
-          # reviews(last:100) 은 개수를 고정한다. 리뷰가 100 건을 넘으면 그보다 오래된 것은
-          # 접히지 않고 남는다. cursor 기반 페이지 처리는 넣지 않았다.
-          OWNER="${REPO%%/*}"
-          REPO_NAME="${REPO##*/}"
+          # 목록 조회는 모두 --paginate 와 per_page=100 을 함께 쓴다.
+          # REST 기본 페이지 크기가 30 이라 그대로 두면 30 건이 넘는 오래된
+          # 댓글과 리뷰가 정리되지 않고 남는다. per_page 를 빼면 --paginate 가
+          # 30 건씩 여러 번 호출해 느려진다.
 
-          gh api graphql \
-            -f query='query($owner:String!,$name:String!,$pr:Int!){
-              repository(owner:$owner,name:$name){
-                pullRequest(number:$pr){
-                  reviews(last:100){ nodes{ id isMinimized author{ login } } }
-                }
-              }
-            }' \
-            -f owner="$OWNER" -f name="$REPO_NAME" -F pr="$PR_NUMBER" \
-            --jq '.data.repository.pullRequest.reviews.nodes[]
-                  | select(.author.login == "claude[bot]" or .author.login == "claude")
-                  | select(.isMinimized == false)
-                  | .id' \
-            | while read -r review_node_id; do
-              if [ -n "$review_node_id" ]; then
-                echo "오래된 Claude 리뷰 접는 중: $review_node_id"
-                gh api graphql \
-                  -f query='mutation($id:ID!){
-                    minimizeComment(input:{subjectId:$id,classifier:OUTDATED}){
-                      minimizedComment{ isMinimized }
-                    }
-                  }' \
-                  -f id="$review_node_id" >/dev/null || true
-              fi
-            done
-
-          # 과거 방식으로 올라간 일반 PR 코멘트 삭제 (claude[bot] 작성)
+          # 이전 일반 PR 코멘트 삭제 (claude[bot] 작성)
+          # — 요약이 리뷰 body 로 옮겨가기 전 방식으로 올라간 댓글도 계속 걷어낸다.
           gh api --paginate "repos/$REPO/issues/$PR_NUMBER/comments?per_page=100" \
             --jq '.[] | select(.user.login == "claude[bot]") | .id' \
             | while read -r comment_id; do
@@ -137,99 +132,99 @@ jobs:
               fi
             done
 
-      - name: Claude 코드 리뷰 실행 (단일 Opus agent)
-        uses: anthropics/claude-code-action@v1.0.133
+          # 이전 리뷰 본문을 OUTDATED 로 접기 (claude[bot] 작성)
+          # — 요약이 리뷰 body 에 실리므로 reviews 도 정리 대상이다. 제출된 COMMENT
+          # 리뷰는 REST 로 삭제할 수 없고 (reviews DELETE 는 PENDING 전용) dismiss 도
+          # APPROVED / CHANGES_REQUESTED 에만 되므로, GraphQL minimizeComment 로 접는다.
+          # 인라인·일반 댓글은 위에서 그대로 삭제한다 — 실행당 접히는 블록은 리뷰 본문 1 개다.
+          # 이미 접힌 리뷰를 다시 접어도 안전하므로 isMinimized 필터는 두지 않는다.
+          gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/reviews?per_page=100" \
+            --jq '.[] | select(.user.login == "claude[bot]") | .node_id' \
+            | while read -r review_node_id; do
+              if [ -n "$review_node_id" ]; then
+                echo "오래된 Claude 리뷰 본문 접는 중: $review_node_id"
+                gh api graphql -f query='
+                  mutation($id: ID!) {
+                    minimizeComment(input: {subjectId: $id, classifier: OUTDATED}) {
+                      minimizedComment { isMinimized }
+                    }
+                  }' -f id="$review_node_id" </dev/null || true
+              fi
+            done
+
+      # 바뀐 경로로 위험 라벨을 단다. 판정은 main 의 scripts/pr-risk-labels.sh 가 갖는다.
+      # 처음 2주는 라벨만 단다. 머지 규칙은 바꾸지 않고, 리뷰가 그 관점을 더 보게만 한다.
+      - name: 경로로 위험 라벨 달기
+        id: risk
+        if: github.event_name != 'issue_comment' || steps.fork_guard.outputs.review == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch --no-tags --depth=1 origin +refs/heads/main:refs/remotes/origin/main
+          RISK_SCRIPT=$(mktemp "$RUNNER_TEMP/pr-risk-labels.XXXXXX")
+          trap 'rm -f "$RISK_SCRIPT"' EXIT
+          # 스크립트를 더하는 PR 처럼 main 에 아직 없으면 라벨 없이 리뷰를 이어 간다.
+          LABELS=""
+          if git show origin/main:scripts/pr-risk-labels.sh > "$RISK_SCRIPT" 2>/dev/null; then
+            LABELS=$(gh pr diff "${{ env.PR_NUMBER }}" --repo "${{ github.repository }}" --name-only \
+              | bash "$RISK_SCRIPT")
+          else
+            echo "::notice title=위험 라벨::main 에 scripts/pr-risk-labels.sh 가 없어 라벨을 건너뛴다"
+          fi
+          for label in $LABELS; do
+            gh label create "$label" --repo "${{ github.repository }}" --color d93f0b \
+              --description "경로 규칙이 단 위험 라벨" 2>/dev/null || true
+            gh pr edit "${{ env.PR_NUMBER }}" --repo "${{ github.repository }}" --add-label "$label" || true
+          done
+          echo "labels=$(echo $LABELS | tr ' ' ',')" >> "$GITHUB_OUTPUT"
+          echo "위험 라벨: ${LABELS:-없음}" >> "$GITHUB_STEP_SUMMARY"
+
+      # 프롬프트는 외부 .txt 로 분리 — YAML heredoc 가독성 + markdown 포맷터의
+      # glob/식별자 손상 회피. 변수 치환은 envsubst 로 필요한 것만.
+      - name: 리뷰 프롬프트 준비 (외부 .txt → 변수 치환)
+        id: prompt
+        if: github.event_name != 'issue_comment' || steps.fork_guard.outputs.review == 'true'
+        env:
+          PR_NUMBER: ${{ env.PR_NUMBER }}
+          REPO: ${{ github.repository }}
+          RISK_LABELS: ${{ steps.risk.outputs.labels || '없음' }}
+        run: |
+          {
+            echo 'text<<PROMPT_EOF'
+            envsubst '$PR_NUMBER $REPO $RISK_LABELS' < .github/workflows/code-review-prompt.txt
+            echo 'PROMPT_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      # @v1 은 v1 의 최신 릴리스를 따라간다. 버전마다 다시 고정하지 않으려고 major 태그를 쓴다.
+      # --model opus 는 별칭이라 실제 모델은 action 에 든 Claude Code 가 정한다. 아래 단계가 그 값을 남긴다.
+      - name: Claude 코드 리뷰 실행
+        id: review
+        if: github.event_name != 'issue_comment' || steps.fork_guard.outputs.review == 'true'
+        uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           allowed_bots: "*"
-          prompt: |
-            당신은 fos-accountbook-backend 프로젝트의 코드 리뷰어입니다.
+          prompt: ${{ steps.prompt.outputs.text }}
+          # Agent 는 프롬프트의 「거르기는 검토한 쪽이 하지 않는다」가 쓴다 (Task 는 그 레거시 별칭).
+          # allowedTools 는 허용 목록이라 여기 없으면 위임 절이 조용히 자가검토로 떨어진다.
+          # 서브 에이전트는 부모 권한을 상속하므로 disallowedTools 의 read-only 도 함께 적용된다.
+          claude_args: '--model opus --allowedTools "Bash,Read,Grep,Glob,Agent,Task" --disallowedTools "Write,Edit"'
 
-            ## 프로젝트 정보
-
-            - Spring Boot 4, Java 21, JPA + QueryDSL, JWT 인증, Flyway 마이그레이션
-            - 도메인 기반 패키지: presentation(Controller) → application(Service) → domain(Entity/Repository) → infra(JPA 구현)
-            - Google Java Style + Naver Convention (Checkstyle 자동 검사)
-
-            ## PR 데이터 수집
-
-            ```
-            gh pr diff ${{ env.PR_NUMBER }} --repo ${{ github.repository }} -- ':!gradle/wrapper/gradle-wrapper.jar' ':!*.lock' ':!build/' ':!*.class'
-            gh pr view ${{ env.PR_NUMBER }} --repo ${{ github.repository }} --json title,body,additions,deletions
-            ```
-
-            diff 가 비어 있으면 짧은 긍정 요약만 담은 리뷰를 게시하고 종료한다.
-
-            ## 리뷰 관점 (4가지 축)
-
-            ### 1. Java & JPA 정확성
-            🔴 Entity @Data 사용, 쓰기 메서드 @Transactional 누락, AOP 자기 호출(@CacheEvict/@Transactional 같은 클래스 내 호출), BigDecimal == 비교, N+1 쿼리 위험
-            🟡 Optional.get() 직접 호출, 와일드카드 import
-
-            ### 2. 프로젝트 컨벤션
-            🔴 System.out.println (Slf4j 필수), Controller 에서 Entity 직접 반환 (DTO 필수), 한국어 발음 식별자
-            🟡 매직 넘버, DTO 에 Setter
-
-            ### 3. 보안 & 권한
-            🔴 가족 리소스에 familyUuid URL 누락, @ValidateFamilyAccess 누락, SQL Injection, 민감 정보 로깅
-            🟡 @LoginUser 없이 사용자 식별, skipAuth endpoint 에서 민감 데이터 노출
-
-            ### 4. 아키텍처 & Spring 패턴
-            🔴 Controller→Repository 직접 주입, 레이어 역방향 의존성, 기존 Flyway 마이그레이션 수정
-            🟡 Service 과다 의존, 테스트 @Transactional 사용, Service/Repository 모킹
-
-            ## 출력
-
-            요약과 인라인 발견사항을 **한 번의 리뷰 등록으로 함께 게시한다.**
-            요약은 리뷰의 `body` 에 담고, 인라인 발견사항은 같은 리뷰의 `comments` 배열에 담는다.
-
-            요청 본문은 `mktemp` 로 만든 임시 파일에 담아 `--input` 으로 넘긴다.
-            인자로 직접 쓰면 줄바꿈이 깨진다.
-            체크아웃 디렉터리 안에 만들지 않고, 고정 파일명도 쓰지 않는다.
-
-            ```bash
-            REVIEW_JSON=$(mktemp)
-            cat > "$REVIEW_JSON" <<'REVIEW_EOF'
-            {
-              "event": "COMMENT",
-              "body": "## 코드 리뷰 [PR 제목 요약]\n\n[한 줄 전체 평가]\n\n---\n\n### 🔴 머지 전 필수 수정 (있는 경우만)\n\n**파일명 라인번호**\n문제: ...\n수정: ...\n\n### 🟡 개선 권장 (있는 경우만)\n\n**파일명 라인번호**\n문제: ...\n수정: ...\n\n### 🟢 잘 된 점\n\n- ...\n\n---\n🤖 Reviewed with [Claude Code](https://claude.com/claude-code) (Opus)\n💬 인라인 코멘트는 **Files changed** 탭에서 확인하세요",
-              "comments": [
-                {
-                  "path": "src/main/java/.../SomeFile.java",
-                  "line": 42,
-                  "side": "RIGHT",
-                  "body": "🔴 **문제**: ...\n\n**수정**: ..."
-                }
-              ]
-            }
-            REVIEW_EOF
-
-            gh api repos/${{ github.repository }}/pulls/${{ env.PR_NUMBER }}/reviews \
-              --method POST \
-              --header "Content-Type: application/json" \
-              --input "$REVIEW_JSON"
-
-            rm -f "$REVIEW_JSON"
-            ```
-
-            규칙:
-
-            - `event` 는 항상 `"COMMENT"` 로 둔다 (머지 차단 방지)
-            - `body` 와 인라인 `body` 의 줄바꿈은 JSON 문자열 이스케이프(`\n`)로 쓴다
-            - `path` 는 diff 와 정확히 맞는 상대 경로로 쓴다
-            - `line` 이 불확실하면 인라인으로 달지 말고 요약에만 넣는다
-            - 인라인 발견사항이 없으면 `comments` 를 빈 배열(`[]`)로 두고 `body` 만 게시한다
-            - 비어 있는 🔴/🟡 섹션은 완전히 생략한다
-
-            ## 핵심 규칙
-
-            - **PR 브랜치에 파일 생성·수정·커밋 금지** — read-only + GitHub API 호출만 한다
-            - **`gh pr comment` 는 쓰지 않는다** — 일반 댓글로 올리면 요약이 리뷰와 분리된다
-            - **리뷰 등록은 정확히 1회** — `pulls/{번호}/reviews` POST 를 두 번 이상 호출하지 않는다
-            - **이슈가 0개면** `comments` 를 빈 배열로 두고 🟢 섹션만 있는 짧은 요약을 게시한다
-            - **테스트·더미·placeholder 본문 게시 금지**
-
-          claude_args: '--model opus --allowedTools "Bash" --disallowedTools "Agent,Read,Write,Edit,Glob,Grep,LS"'
+      # 실행 기록의 init 메시지에서 실제 모델 ID 를 읽어 notice 와 Job Summary 에 남긴다.
+      # 리뷰가 실패해도 어떤 모델이었는지 남도록 always 로 돈다. 읽지 못해도 워크플로를 실패시키지 않는다.
+      - name: 리뷰에 쓰인 모델 기록
+        if: always() && (github.event_name != 'issue_comment' || steps.fork_guard.outputs.review == 'true')
+        env:
+          EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+        run: |
+          MODEL=""
+          if [ -n "$EXECUTION_FILE" ] && [ -f "$EXECUTION_FILE" ]; then
+            MODEL=$(jq -r '(if type == "array" then .[] else . end)
+              | select(.type == "system" and .subtype == "init") | .model // empty' "$EXECUTION_FILE" 2>/dev/null | head -n 1)
+          fi
+          MODEL=${MODEL:-읽지 못함}
+          echo "::notice title=리뷰 모델::$MODEL"
+          echo "리뷰 모델: \`$MODEL\`" >> "$GITHUB_STEP_SUMMARY"
 
       # 게시된 본문에 literal `\n` 두 글자가 박힌 경우 자동 보정.
       # 사고 패턴: Claude action 이 prompt 의 `mktemp` + `--input` 가이드를 무시하고
@@ -238,8 +233,9 @@ jobs:
       # 실측 사고: PR #208 (id 4412740228). jq contains("\\n") 으로 검출 후
       # perl 로 실제 newline 으로 교체, 갱신 API 로 본문 덮어쓰기.
       # 요약이 리뷰 body 로 옮겨갔으므로 리뷰 body 도 보정 대상 (PUT reviews/{id}).
+      # 프롬프트가 jq --rawfile 로 본문을 만들게 바뀌었지만, 안내를 무시하는 경우를 대비해 남겨 둔다.
       - name: 게시된 본문의 literal \n 두 글자 자동 보정
-        if: always()
+        if: always() && (github.event_name != 'issue_comment' || steps.fork_guard.outputs.review == 'true')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -287,43 +283,39 @@ jobs:
       # 같은 placeholder 를 게시하는 사고 (fos-blog PR #114 관측) 를 강제 차단.
       # always 실행해도 안전: 정상 댓글은 패턴에 매치 안 됨.
       - name: 게시된 인라인 댓글의 dummy / 미달 entry 자동 삭제
-        if: always()
+        if: always() && (github.event_name != 'issue_comment' || steps.fork_guard.outputs.review == 'true')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           REPO="${{ github.repository }}"
           PR_NUMBER="${{ env.PR_NUMBER }}"
 
-          # claude[bot] 가 작성한 인라인 댓글만 검사
-          gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/comments?per_page=100" \
-            --jq '.[] | select(.user.login == "claude[bot]") | "\(.id)\t\(.body)"' \
-            | while IFS=$'\t' read -r comment_id body; do
-              [ -z "$comment_id" ] && continue
+          # 필터링은 jq 안에서 수행하고 ID 만 출력 — multi-line body 가 bash
+          # `while read` 를 깨뜨리는 사고 방지 (이전 구현은 body 의 개행이 새
+          # entry 로 오인되어 garbage id 로 DELETE 폭주, run 시간 9분+ 폭증).
+          # 정리 조건 (하나라도 만족하면 삭제):
+          #   1) 본문 길이 12자 미만
+          #   2) /^test\s*\d*$/i 같은 단순 placeholder (test, test1, sample, foo 등)
+          #   3) 등급 표시(색 원과 P1~P5) 부재 (정상 review 형식 미준수)
+          ids=$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/comments?per_page=100" --jq '
+            .[]
+            | select(.user.login == "claude[bot]")
+            | select(
+                (.body | length < 12) or
+                (.body | test("^(test|sample|placeholder|foo|bar|example)\\s*[0-9]*$"; "i")) or
+                ((.body | test("(🔴|🟠|🟡|🔵|⚪) \\*\\*P[1-5]")) | not)
+              )
+            | .id
+          ')
 
-              # 정리 조건 (하나라도 만족하면 삭제):
-              # 1) 본문 길이 12자 미만
-              # 2) /^test\s*\d*$/i 같은 단순 placeholder (test, test1, test 2, sample, foo 등)
-              # 3) 🔴 / 🟡 severity 마커 부재 (정상 review 형식 미준수)
-              len=${#body}
-              should_delete=0
-
-              if [ "$len" -lt 12 ]; then
-                should_delete=1
-              elif printf '%s' "$body" | grep -qiE '^(test|sample|placeholder|foo|bar|example)[[:space:]]*[0-9]*$'; then
-                should_delete=1
-              elif ! printf '%s' "$body" | grep -qE '🔴|🟡'; then
-                should_delete=1
-              fi
-
-              if [ "$should_delete" = "1" ]; then
-                echo "dummy 인라인 댓글 자동 삭제: id=$comment_id body=\"$body\""
-                gh api "repos/$REPO/pulls/comments/$comment_id" --method DELETE || true
-              fi
-            done
+          for id in $ids; do
+            echo "dummy 인라인 댓글 자동 삭제: id=$id"
+            gh api "repos/$REPO/pulls/comments/$id" --method DELETE || true
+          done
 
       # 작업 결과를 /review 댓글에 ✅/❌ reaction 으로 표시 (success/failure 분기, always 실행)
       - name: /review 댓글에 종료 reaction 추가
-        if: github.event_name == 'issue_comment' && always()
+        if: github.event_name == 'issue_comment' && always() && steps.fork_guard.outputs.review == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OUTCOME: ${{ job.status }}
@@ -338,22 +330,19 @@ jobs:
             --method POST \
             --field content="$CONTENT" || true
 
-      # Check Run 완료 처리 — job.status 를 conclusion 으로 매핑 (PR Checks 탭에서 즉시 결과 가시화)
-      - name: Check Run 완료 처리 (success/failure/cancelled)
-        if: github.event_name == 'issue_comment' && always() && env.CHECK_RUN_ID != ''
+      # PR Checks 탭에서 결과 확인 가능하도록 Check Run 완료 마킹
+      # job.status (success/failure/cancelled) → check-run conclusion 매핑
+      - name: Check Run 완료 마킹
+        if: github.event_name == 'issue_comment' && always() && steps.fork_guard.outputs.review == 'true' && steps.check-create.outputs.check_id != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OUTCOME: ${{ job.status }}
         run: |
           case "$OUTCOME" in
             success)   CONCLUSION="success" ;;
-            failure)   CONCLUSION="failure" ;;
             cancelled) CONCLUSION="cancelled" ;;
             *)         CONCLUSION="failure" ;;
           esac
-
-          gh api "repos/${{ github.repository }}/check-runs/${{ env.CHECK_RUN_ID }}" \
-            --method PATCH \
-            --field status="completed" \
-            --field conclusion="$CONCLUSION" || true
-          echo "Check Run 완료: conclusion=$CONCLUSION"
+          gh api "repos/${{ github.repository }}/check-runs/${{ steps.check-create.outputs.check_id }}" -X PATCH \
+            -f status="completed" \
+            -f conclusion="$CONCLUSION" || true
