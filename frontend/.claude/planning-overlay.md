@@ -3,9 +3,17 @@
 공용 코어(`~/.claude/skills/planning`)에 fos-accountbook 특화를 주입한다.
 코어의 8단계 skeleton 을 이 레포의 도메인(Next.js 프론트엔드)·docs 컨벤션·검증에 맞춰 채운다.
 
+## 저장소 배치
+
+| 값 | 값 |
+| --- | --- |
+| docs 경로 | `frontend/docs/` |
+| tasks 경로 | `tasks/` |
+| plan 접두사 | `fe-` |
+
 ## 도메인: 프론트엔드 (Next.js App Router / React / TypeScript)
 
-가계부 서비스의 프론트엔드. 백엔드(`fos-accountbook-backend`, Spring Boot)와는 별도 레포·별도 PR 로 분리되어 있다.
+가계부 서비스의 프론트엔드. 백엔드(Spring Boot)는 같은 저장소의 `backend/` 에 있다. API 를 함께 바꾸는 변경은 PR 하나로 낸다(루트 `docs/adr.md` 의 ADR-M01).
 
 - **3단계 (호출/사용자 흐름)**: 시니어 UX 리서처 관점.
     - 화면 전환·사용자 액션·시스템 반응을 구체화한다.
@@ -20,7 +28,7 @@
 
 ### phase 의 domain 태그
 
-phase 프런트매터의 `**Domain**:` 태그는 `.claude/skills/_shared/common-pitfalls.md` 의 「통제 어휘」 표에서 하나를 고른다.
+phase 프런트매터의 `**Domain**:` 태그는 `frontend/.claude/skills/_shared/common-pitfalls.md` 의 「통제 어휘」 표에서 하나를 고른다.
 
 ## docs 컨벤션
 
@@ -59,7 +67,7 @@ phase 프런트매터의 `**Domain**:` 태그는 `.claude/skills/_shared/common-
 여기에는 이 레포가 실제로 다르게 쓰는 것만 둔다.
 
 - **번호 접두어**: 프론트 ADR 은 `ADR-FNN` 을 쓴다.
-    - 백엔드 결정은 `fos-accountbook-backend/docs/adr.md` 가 소유하므로 이 레포에는 쓰지 않는다.
+    - 백엔드 결정은 `backend/docs/adr.md` 의 ADR-B, 저장소 전체 결정은 루트 `docs/adr.md` 의 ADR-M 이 소유한다. 여기에는 쓰지 않는다.
 - **앵커**: 다른 문서가 번호로 링크하므로 제목 바로 위에 `<a id="adr-fnn"></a>` 를 둔다.
 - **제목 날짜**: 제목 끝에 `(YYYY-MM-DD)` 를 붙인다.
     - ADR-F24 이후로 굳은 관행이다.
@@ -82,7 +90,7 @@ ADR-F01 부터 ADR-F12 는 코어 뼈대가 정착하기 전에 작성됐다.
 
 ## 검증
 
-- 반복 함정 목록은 `.claude/skills/_shared/common-pitfalls.md` 다.
+- 반복 함정 목록은 `frontend/.claude/skills/_shared/common-pitfalls.md` 다.
     - 전체를 읽지 않고 「작업종류→함정 인덱스」 에서 해당 행만 참조한다.
 - `Server Action 작성` 은 ADR-F25(권한 3패턴)와 ADR-F06(Zod 검증)을 phase 작성 시 직접 확인한다.
 - markdown 과 task 문서는 `pnpm lint:md` 가 Tailwind arbitrary class 위험 패턴을 검출한다.
@@ -92,18 +100,9 @@ ADR-F01 부터 ADR-F12 는 코어 뼈대가 정착하기 전에 작성됐다.
 ```bash
 # cwd: <repo root>
 # 완료된 계획서는 지우므로 사용한 번호는 git 이력에서 찾는다
-git log --all --name-only --format= -- 'tasks/*/index.json' | grep -oE '^tasks/plan[0-9]+' | sort -u | tail -1
-grep "^## ADR-F{후보번호}" docs/adr.md
+bash ~/.claude/skills/planning/scripts/plan_number.sh --prefix fe- | tail -1
+grep "^## ADR-F{후보번호}" frontend/docs/adr.md
 gh pr list --state open --json number,headRefName,title --jq '.[] | "\(.headRefName) \(.title)"'
 ```
 
 서브넘버 규칙(동일 도메인 후속 작업)은 코어 기본값 그대로 (`plan{N}` → `plan{N}-2`).
-
-## 커밋과 핸드오프
-
-브랜치 이름, main push 차단, 단일 PR 원칙은 `CLAUDE.md` 의 「Git & PR Conventions」 를 따른다.
-
-- **브랜치**: origin/main 기준으로 새로 만든다. 이전 plan 브랜치 위에 쌓지 않는다.
-- **커밋**: docs 변경과 task 파일을 **한 커밋**으로 묶는다. 메시지: `docs(plan{N}): {plan 한 줄 요약}`.
-- **push**: `git push -u origin plan/{N}-{slug}` 까지만 하고 PR 은 만들지 않는다. 이후 `git switch main` 으로 복귀한다.
-- **핸드오프**: `/build-with-teams plan{N}` 로 구현 시작을 안내한다.

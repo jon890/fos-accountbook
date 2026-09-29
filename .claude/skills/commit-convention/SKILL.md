@@ -11,9 +11,11 @@ description: |
 
 ```bash
 # cwd: <repo root>
-pnpm lint && pnpm test
+cd frontend && pnpm lint && pnpm test
+cd backend && ./gradlew checkstyleMain checkstyleTest test
 ```
 
+- 바뀐 하위 프로젝트의 명령만 돌린다. 둘 다 바뀌었으면 둘 다 돌린다.
 - 실패하면 고친 뒤 커밋한다.
 - `--no-verify` 는 쓰지 않는다.
 - `&` 로 병렬 실행한 뒤 `wait` 로 기다리지 않는다. `wait` 는 인자가 없으면 앞 명령이 실패해도 0 으로 끝난다.

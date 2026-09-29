@@ -2,17 +2,24 @@
 
 공용 코어(`~/.claude/skills/docs-check`)에 fos-accountbook 특화를 주입한다.
 
+## 저장소 배치
+
+| 값 | 값 |
+| --- | --- |
+| docs 경로 | `frontend/docs/` |
+| tasks 경로 | `tasks/` |
+| plan 접두사 | `fe-` |
+
 ## 감사 대상
 
-`CLAUDE.md` 「컨텍스트 문서」 표의 문서와 백엔드 요청 문서다.
+`frontend/CLAUDE.md` 「컨텍스트 문서」 표의 문서와 백엔드 요청 문서다.
 
 ```bash
-# cwd: <repo root>
+# cwd: frontend
 ls docs/*.md
 ```
 
-- 하네스 지침(`CLAUDE.md`, `.claude/`)은 `harness-cleanup` 이 맡는다. 이 감사에서 제외한다.
-- 백엔드 ADR 은 `fos-accountbook-backend/docs/adr.md` 소관이라 범위가 아니다.
+- 백엔드 ADR(`backend/docs/adr.md`)과 루트 ADR(`docs/adr.md`)은 이 오버레이의 감사 범위가 아니다.
 - 문서 간 책임 분리 표와 ADR 자명성 점검은 `planning-overlay.md` 의 「docs 컨벤션」 이 소유한다.
 
 ## ADR 구조
@@ -25,7 +32,7 @@ ls docs/*.md
 ## ADR Index 동기화 검증
 
 ```bash
-# cwd: <repo root>
+# cwd: frontend
 BODY=$(grep -oE '^## ADR-F[0-9]+' docs/adr.md | grep -oE 'ADR-F[0-9]+' | sort -u)
 INDEX=$(grep -oE '\[ADR-F[0-9]+\]' docs/adr.md | grep -oE 'ADR-F[0-9]+' | sort -u)
 diff <(echo "$BODY") <(echo "$INDEX") && echo "OK: ADR Index synced"
@@ -34,7 +41,7 @@ diff <(echo "$BODY") <(echo "$INDEX") && echo "OK: ADR Index synced"
 ## 코드 대조 grep
 
 ```bash
-# cwd: <repo root>
+# cwd: frontend
 # data-schema.md 가 언급하는 Action 이 실제 코드에 존재하는지
 grep -oE '`[a-zA-Z][a-zA-Z0-9]*Action`' docs/data-schema.md | sort -u | while read -r fn; do
   name=$(echo "$fn" | tr -d '`')

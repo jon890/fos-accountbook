@@ -1,22 +1,7 @@
 # CLAUDE.md — fos-accountbook
 
-Claude Code가 항상 따라야 할 규칙과 참조 문서 포인터.
-
-## 핵심 워크플로우 스킬
-
-| 시점 | 스킬 | 트리거 |
-|---|---|---|
-| 새 기능/변경 설계 | `/planning` | "/planning", "계획 세워보자", "설계해보자" |
-| plan 실행 (Agent Teams) | `/build-with-teams` | "plan{N} 실행", "구현해줘" — 코드 구현은 항상 이 스킬, 가시적 협업, 4~5명 에이전트 파이프라인 |
-| docs 정리 | `/docs-check` | docs/ 5축 검증, plan 완료 후 주기적 |
-| UI 리뷰 | `/web-design-guidelines` | "review my UI", 접근성/UX 감사 |
-| PR 리뷰 반영 | `/review-fix` | "리뷰 댓글 반영" |
-| 커밋 | `/commit-convention` | "커밋해줘" |
-
-`/planning` → docs 갱신 → task 생성 → `/build-with-teams` 실행 흐름이 표준.
-`/planning` 은 공용 코어(`~/.claude/skills/planning`) + `.claude/planning-overlay.md` 조합으로 동작한다.
-
----
+프론트엔드에서 Claude Code가 항상 따라야 할 규칙과 참조 문서 포인터.
+저장소 공통 규칙(워크플로우 스킬, Task, 문서 작성, Git & PR)은 루트 `CLAUDE.md` 가 소유한다.
 
 ## 컨텍스트 문서
 
@@ -53,15 +38,6 @@ Claude Code가 항상 따라야 할 규칙과 참조 문서 포인터.
 | Jest 테스트 추가 | ADR-F09 — MSW 아닌 jest.mock 방식 |
 | 실시간 업데이트 vs revalidate | ADR-F10 — Server Action + `revalidatePath` 유지 |
 | CI 코드 리뷰 워크플로 수정 | ADR-F11 — 트리거/모델/봇 허용 정책 |
-
----
-
-## 팀 소통
-
-- **프론트엔드 ↔ 백엔드 협의는 GitHub Issues** — Slack/Dooray/구두 합의 금지. 추적 가능성 + 컨텍스트 보존 목적.
-- **프론트엔드 레포**: `jon890/fos-accountbook-frontend`
-- **백엔드 레포**: `jon890/fos-accountbook-backend`
-- **백엔드 이슈 작성**: `/backend-issue` 스킬 사용 (`~/.claude/skills/backend-issue/`)
 
 ---
 
@@ -142,60 +118,12 @@ Page (app/) → Action (actions/) → Service (services/) → lib/server/api
 
 ---
 
-## Task 작업 규칙
-
-- phase 하나의 작업 항목은 **5개 이하**로 둔다. 넘으면 phase 를 나눈다.
-- 나머지 task 규칙은 공용 코어 `planning` 의 `task-create.md` 를 따른다.
-- 구현이 끝난 계획서(`tasks/` 의 plan 디렉터리)는 지운다.
-    - 현재 사실은 docs 와 코드가 소유한다.
-    - 계획서는 구현 뒤 곧 낡는다. 에이전트나 사람이 다시 참조하면 틀린 근거가 된다.
-    - 지난 계획이 필요하면 git 이력에서 찾는다.
-
----
-
-## 문서 작성 원칙
-
-- **AI 에이전트 컨텍스트 효율** — docs는 AI 에이전트를 위한 것. 컨텍스트를 낭비하지 않도록 간결하게
-- **반복·중복 제거** — 같은 내용을 두 문서에 쓰지 않는다
-- **의사결정 의도 보존** — "왜 이렇게 했는가" 반드시 기록
-- **구현 세부사항은 코드에, docs에는 "무엇을·왜"만** — ADR에 코드 스니펫/파일 경로 나열 금지
-
-한국어 표현과 markdown 가독성은 전역 `korean-check` 스킬이 판정한다.
-편집 hook 이 검사기를 돌리므로 걸리면 그 자리에서 고친다.
-
----
-
 ## 테스트
 
 - 위치: `src/__tests__/`
 - 실행: `pnpm test` / `pnpm test:ci`
 - Service 함수는 단위 테스트 권장
 - Server Action 테스트: jest.mock 방식 (MSW 아님 — ADR-F09 참고)
-
----
-
-## Git & PR Conventions
-
-- **main 직접 push 차단** — branch protection 으로 거부됨. 모든 변경은 작업 브랜치 + PR (task 파일/docs 도 동일).
-- **PR 제목**: `type(scope): description` — 절대 벗어나지 않는다.
-- **commit 전 로컬 검증 필수** — `pnpm lint && pnpm test` 를 로컬에서 통과시킨 후에만 commit/push. CI 왕복 (push → 실패 → 진단 → 재푸시) 비용 회피 목적. ESLint unused-variable 같은 자명한 실패는 로컬에서 잡힌다.
-
-### 브랜치 명명
-
-| 단계 | 브랜치 | 내용 |
-|---|---|---|
-| 계획+구현 | `plan/{N}-{slug}` | `/planning` 이 task+docs commit + push (**PR 생성 안 함**) → `/build-with-teams` 가 **같은 브랜치**에서 구현 → `plan/{N}`→main **단일 PR** |
-| 기타 | `chore/...` · `fix/...` · `refactor/...` · `docs/...` | 일반 작업 |
-
-계획과 구현을 **단일 PR** 로 묶는다 (2026-06-02 갱신).
-계획 PR 을 따로 머지하면 그 사이 main 변경과 구현 브랜치가 충돌하기 때문 (plan026 사례: #308 계획 PR 머지 → #311 구현 PR conflict).
-`/planning` 은 `plan/{N}` 브랜치 push 까지만, PR 은 `/build-with-teams` 가 계획+구현 완료 후 1개만 생성한다.
-
-### 예시
-
-- `feat(backend): add Prometheus config`
-- `fix(database): resolve Redis connection timeout`
-- `docs(task): add NSC slot engine abstraction`
 
 ---
 
