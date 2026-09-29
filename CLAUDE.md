@@ -146,6 +146,10 @@ Page (app/) → Action (actions/) → Service (services/) → lib/server/api
 
 - phase 하나의 작업 항목은 **5개 이하**로 둔다. 넘으면 phase 를 나눈다.
 - 나머지 task 규칙은 공용 코어 `planning` 의 `task-create.md` 를 따른다.
+- 구현이 끝난 계획서(`tasks/` 의 plan 디렉터리)는 지운다.
+    - 현재 사실은 docs 와 코드가 소유한다.
+    - 계획서는 구현 뒤 곧 낡는다. 에이전트나 사람이 다시 참조하면 틀린 근거가 된다.
+    - 지난 계획이 필요하면 git 이력에서 찾는다.
 
 ---
 
