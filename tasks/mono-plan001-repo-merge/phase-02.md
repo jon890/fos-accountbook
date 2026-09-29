@@ -11,7 +11,7 @@
 
 ## 컨텍스트
 
-- 백엔드는 Spring Boot 4, Java 21, Gradle Kotlin DSL 이다. 원격은 `git@github.com:jon890/fos-accountbook-backend.git`, 로컬 사본은 `/Users/nhn/personal/fos-accountbook-backend` 다.
+- 백엔드는 Spring Boot 4, Java 21, Gradle Kotlin DSL 이다. 원격은 `jon890/fos-accountbook-backend`, 로컬 사본은 `/Users/nhn/personal/fos-accountbook-backend` 다.
 - `git filter-repo` 는 새로 clone 한 저장소에서만 돈다. 로컬 사본에서 돌리지 않는다.
 - phase 01 이 루트를 비워 두어 `backend/` 경로와 부딪히는 파일이 없다.
 
@@ -35,7 +35,8 @@
 ```bash
 # cwd: 아무 곳
 BE_TMP=$(mktemp -d)
-git clone --no-local --single-branch --branch main git@github.com:jon890/fos-accountbook-backend.git "$BE_TMP/be"
+BE_URL=$(git -C /Users/nhn/personal/fos-accountbook-backend remote get-url origin)   # 이 머신은 SSH 별칭 github-personal 을 쓴다
+git clone --no-local --single-branch --branch main "$BE_URL" "$BE_TMP/be"
 git -C "$BE_TMP/be" filter-repo --to-subdirectory-filter backend --force
 git -C "$BE_TMP/be" rev-list --count HEAD      # 원래 main 의 커밋 수와 같아야 한다
 ```
