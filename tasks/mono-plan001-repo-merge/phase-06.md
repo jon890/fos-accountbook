@@ -41,14 +41,24 @@ ADR-B14 를 대체하는 결정은 `frontend/docs/adr.md` 의 ADR-F11 「적용 
 
 - 「핵심 워크플로우 스킬」 표에서 `/integrate-api-contract` 행을, 「팀 소통」 절 전체를 지운다.
 - 컨텍스트에 적은 다섯 절을 지운다.
-- 「Task 작업 규칙」, 「Git & PR Conventions」 절 중 루트 `CLAUDE.md` 와 같은 내용은 지우고 「루트 `CLAUDE.md` 를 따른다」 한 줄로 둔다. 백엔드에만 있는 Commit & Push 절차는 남긴다.
+- 「Task 작업 규칙」 절 전체와, 「Git & PR Conventions」 절 가운데 「### Commit & Push 절차」 를 뺀 나머지(머리 목록과 「### 브랜치 명명」)를 지운다.
+    - 두 절은 루트와 충돌하는 규칙을 담고 있다. `feat/plan{N}` 구현 브랜치 분리, task 완료마다 index.json 갱신 커밋, phase 안 docs 변경 금지가 그 예다.
+    - 지운 자리에 「Task 작업 규칙과 브랜치, PR 규칙은 루트 `CLAUDE.md` 를 따른다.」 한 줄을 둔다. 「### Commit & Push 절차」 는 그 아래에 그대로 남긴다.
 
 ### 3. 백엔드 오버레이 세 개
 
 - 각 파일 앞에 `## 저장소 배치` 표를 둔다: docs `backend/docs/`, tasks `tasks/`, 접두사 `be-`.
 - 명령의 `# cwd:` 를 `backend` 로, 반복 함정 경로를 `backend/.claude/skills/_shared/common-critic-patterns.md` 로 고친다.
-- `planning-overlay.md` 의 코어 `task-create.md` 사본 언급을 코어 원본 참조로 바꾼다.
-- 브랜치와 PR 절은 루트 오버레이를 따른다고 적고 지운다.
+- `planning-overlay.md`
+    - 「검증」 절의 코어 `verify-task.sh` 언급을 코어 `verify_task.py` 로 바꾼다. 코어 스크립트 이름이 바뀌었다.
+    - 「plan / ADR 네이밍」 절의 `ls tasks/ | grep "plan{후보번호}"` 를 `bash ~/.claude/skills/planning/scripts/plan_number.sh --prefix be-` 로 바꾼다.
+    - 「index.json 스키마」 의 `"model"` 필드를 `"execution_profile": "standard"   // fast | standard | deep` 으로 바꾼다.
+    - 「branch / 커밋 / 핸드오프」 절을 지우고 「브랜치, 커밋, 핸드오프는 루트 `.claude/planning-overlay.md` 를 따른다.」 한 줄을 둔다.
+- `build-with-teams-overlay.md`
+    - 「task 스키마 세부」 예시의 `"model": "sonnet"` 을 `"execution_profile": "standard"` 로 바꾼다.
+    - 「브랜치 규칙」 절을 지우고 「브랜치와 PR 은 루트 `.claude/build-with-teams-overlay.md` 를 따른다.」 한 줄을 둔다.
+    - 「완료 후 추가 단계 — 프론트엔드 영향 분석」 절 전체를 지운다. 프론트엔드 저장소에 이슈를 만드는 절차라 ADR-M01 협의 행과 모순된다.
+    - 「worktree 직후 환경 setup」 의 `./gradlew dependencies` 앞에 `mise exec gradle@9.5.0 -- gradle wrapper --gradle-version 9.5.0` 을 둔다. 백엔드는 `gradle-wrapper.jar` 를 추적하지 않는다.
 
 ### 4. ADR-B14 를 대체됨으로 표시한다
 
@@ -61,6 +71,8 @@ Index 줄 끝에도 `(대체됨)` 을 붙인다.
 
 ### 5. 대상 판정과 백엔드 검증
 
+아래 「검증」 절을 그대로 돌린다. `backend/gradle/wrapper/gradle-wrapper.jar` 가 없으면 첫 명령으로 만든다. 만든 jar 는 `.gitignore` 에 걸려 커밋되지 않는다.
+
 ## 검증
 
 ```bash
@@ -70,12 +82,15 @@ python3 $OP --skill planning backend/src/main/java/com/bifos/accountbook/Account
 python3 $OP --skill planning frontend/src/proxy.ts backend/build.gradle.kts | python3 -c "import json,sys; d=json.load(sys.stdin); assert sorted(d['targets'])==['backend','frontend'], d"
 bash ~/.claude/skills/planning/scripts/plan_number.sh --prefix be- | tail -1      # 다음 번호: 1
 test ! -e backend/tasks && test ! -e backend/.claude/skills/planning && test ! -e backend/.claude/skills/integrate-api-contract
-grep -c "integrate-api-contract\|GitHub Issues\|backend-issue" backend/CLAUDE.md backend/.claude/*.md   # 모두 0
+! grep -q "integrate-api-contract\|GitHub Issues\|backend-issue\|fos-accountbook-frontend" backend/CLAUDE.md backend/.claude/*.md
+! grep -q '"model"' backend/.claude/planning-overlay.md backend/.claude/build-with-teams-overlay.md
 grep -n "superseded" backend/docs/adr.md
-cd backend && ./gradlew checkstyleMain checkstyleTest test --no-daemon
+test -f backend/gradle/wrapper/gradle-wrapper.jar || (cd backend && mise exec gradle@9.5.0 -- gradle wrapper --gradle-version 9.5.0 && git checkout -- gradlew gradlew.bat gradle/wrapper/gradle-wrapper.properties)
+test -z "$(git ls-files backend/gradle/wrapper/gradle-wrapper.jar)"
+(cd backend && ./gradlew checkstyleMain checkstyleTest test --no-daemon)
 ```
 
-모두 종료 코드 0 이고 grep 개수가 0 이어야 한다.
+모두 종료 코드 0 이어야 한다.
 
 ## 변경 파일
 

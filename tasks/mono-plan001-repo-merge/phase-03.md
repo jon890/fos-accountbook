@@ -1,6 +1,6 @@
 # Phase 03. CI 와 이미지 워크플로를 경로별로 나눈다
 
-**Execution profile**: standard
+**Execution profile**: deep
 
 ## 목표
 
@@ -47,8 +47,12 @@
 - `.github/workflows/docker-publish.yml` 을 `frontend-image.yml` 로 `git mv` 한다.
     - paths 에 `frontend/` 를 붙이고 워크플로 경로를 새 이름으로 바꾼다.
     - `IMAGE_NAME: jon890/fos-accountbook-frontend`, build `context: ./frontend` 로 둔다.
+    - 워크플로 `name:` 을 `Frontend Image` 로, `cache-from` 과 `cache-to` 를 `type=gha,scope=frontend` 와 `type=gha,scope=frontend,mode=max` 로 둔다.
 - `backend/.github/workflows/docker-publish.yml` 을 `.github/workflows/backend-image.yml` 로 `git mv` 한다.
-    - paths 에 `backend/` 를 붙이고 `IMAGE_NAME: jon890/fos-accountbook-backend`, build `context: ./backend` 로 둔다.
+    - paths 항목마다 `backend/` 를 붙이고, 워크플로 자기 경로 항목 `.github/workflows/docker-publish.yml` 은 `.github/workflows/backend-image.yml` 로 바꾼다. `backend/` 를 붙이지 않는다.
+    - `IMAGE_NAME: jon890/fos-accountbook-backend`, build `context: ./backend` 로 둔다.
+    - 워크플로 `name:` 을 `Backend Image` 로, `cache-from` 과 `cache-to` 를 `type=gha,scope=backend` 와 `type=gha,scope=backend,mode=max` 로 둔다.
+- 두 워크플로는 원래 이름이 같고 gha 캐시 scope 가 기본값이라, 한 저장소에서 캐시를 서로 덮어쓴다. 이름과 scope 를 나누는 이유다.
 
 ### 4. `.github/dependabot.yml`
 
@@ -68,16 +72,19 @@
 ```bash
 # cwd: <worktree root>
 actionlint .github/workflows/frontend-ci.yml .github/workflows/backend-ci.yml .github/workflows/frontend-image.yml .github/workflows/backend-image.yml
-ls backend/.github/workflows/                 # code-review-prompt.txt 하나
+test "$(ls backend/.github/workflows/)" = code-review-prompt.txt
 test ! -e backend/.github/dependabot.yml && test ! -e .github/workflows/docker-publish.yml
 grep -n "IMAGE_NAME: jon890/fos-accountbook-frontend" .github/workflows/frontend-image.yml
 grep -n "IMAGE_NAME: jon890/fos-accountbook-backend" .github/workflows/backend-image.yml
-python3 -c "import yaml; d=yaml.safe_load(open('.github/dependabot.yml')); print(sorted((u['package-ecosystem'], u['directory']) for u in d['updates']))"
+python3 -c "import yaml; d=yaml.safe_load(open('.github/dependabot.yml')); got=sorted((u['package-ecosystem'], u['directory']) for u in d['updates']); assert got==[('docker','/backend'),('github-actions','/'),('gradle','/backend'),('npm','/frontend')], got"
+grep -n "context: ./frontend" .github/workflows/frontend-image.yml && grep -n "context: ./backend" .github/workflows/backend-image.yml
+grep -q "scope=frontend" .github/workflows/frontend-image.yml && grep -q "scope=backend" .github/workflows/backend-image.yml
+! grep -n "backend/.github" .github/workflows/backend-image.yml .github/workflows/backend-ci.yml
 cd frontend && pnpm lint && pnpm test
 ```
 
 - `actionlint` 는 info 수준(SC2016, SC2086, SC2028) 외의 오류가 없어야 한다.
-- dependabot 출력은 `[('docker', '/backend'), ('github-actions', '/'), ('gradle', '/backend'), ('npm', '/frontend')]` 이어야 한다.
+- 나머지 명령은 모두 종료 코드 0 이어야 한다.
 
 ## 변경 파일
 

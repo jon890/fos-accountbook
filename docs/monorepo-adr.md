@@ -16,6 +16,7 @@
 - **status**: `accepted`
 - **결정**: `jon890/fos-accountbook-frontend` 를 `fos-accountbook` 으로 이름을 바꿔 남기고, 그 아래 `frontend/` 와 `backend/` 를 둔다.
     - 백엔드 이력은 `git filter-repo --to-subdirectory-filter backend` 로 옮겨 merge commit 으로 합친다.
+    - 이 이관 PR 은 merge commit 으로만 머지한다. squash 나 rebase 로 머지하면 합친 백엔드 이력이 사라지거나 평탄해진다.
     - `jon890/fos-accountbook-backend` 는 아카이브만 하고 지우지 않는다.
 - **맥락**: 두 저장소는 하네스와 CI 를 한 벌씩 따로 가졌다.
     - 2026-07 ~ 09 의 사람 PR 16건 중 12건이 같은 하네스와 CI 변경을 두 저장소에 한 번씩 낸 6쌍이었다.

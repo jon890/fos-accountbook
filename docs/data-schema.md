@@ -1,7 +1,7 @@
 # Data Schema — fos-accountbook (프론트엔드 타입)
 
 > **소유권**: DB 스키마·API 스펙의 canonical 소스는 백엔드 레포.
-> → `fos-accountbook-backend/docs/data-schema.md` 참고
+> → [`backend/docs/data-schema.md`](../../backend/docs/data-schema.md) 참고
 >
 > 이 문서는 **프론트엔드가 사용하는 TypeScript 타입**과 **API 컨트랙트 요약**만 기록한다.
 > 백엔드가 스키마를 변경하면 이 파일도 함께 업데이트해야 한다.
@@ -314,4 +314,4 @@ RecurringExpense:  POST /families/{uuid}/recurring-expenses
                    DELETE /families/{uuid}/recurring-expenses/{uuid}
 ```
 
-> Breaking Change 시 `/api/v2/` 신설. 자세한 버전 정책은 `fos-accountbook-backend/docs/adr.md` ADR-B11 참고.
+> Breaking Change 시 `/api/v2/` 신설. 자세한 버전 정책은 [`backend/docs/adr.md`](../../backend/docs/adr.md) 의 ADR-B11 참고.

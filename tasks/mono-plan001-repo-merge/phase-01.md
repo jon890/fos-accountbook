@@ -24,7 +24,10 @@
 - `.github/`, `tasks/`, `scripts/pr-risk-labels.sh` 는 저장소 전체 것이라 루트에 남긴다. 워크플로와 위험 라벨 내용은 phase 03, 04 가 고친다.
     - 리뷰 워크플로가 main 의 `scripts/pr-risk-labels.sh` 를 읽으므로 경로를 바꾸지 않는다.
 - `.gitignore` 는 두 개가 된다. 프론트엔드 규칙은 `frontend/.gitignore` 로 옮기고, 루트에는 저장소 전체 규칙만 새로 둔다.
-- `.tool-versions` 는 루트에 남긴다. phase 02 가 백엔드 파일로 바꾼다.
+- `.tool-versions` 는 루트에 남긴다. phase 05 가 백엔드 파일로 바꾼다.
+- 루트 `docs/adr.md` 자리에 프론트 ADR 이 있다가 저장소 ADR 로 바뀐다. 알려진 부작용이 둘 있고 받아들인다.
+    - `git log --follow docs/adr.md` 에 프론트 ADR 이력이 붙어 나온다. 프론트 ADR 이력은 `git log --follow frontend/docs/adr.md` 로 본다.
+    - PR diff 에서 루트 `docs/adr.md` 가 대량 수정으로 보인다.
 
 ## 작업 항목
 
@@ -65,8 +68,9 @@ worktrees/
 # cwd: <worktree root>
 test ! -e src && test ! -e package.json && test -f frontend/package.json && test -f docs/adr.md
 test -f scripts/pr-risk-labels.sh && test -f frontend/scripts/check-tailwind-md.mjs
-ls docs/                                   # adr.md 하나
-git log --follow --oneline -- frontend/src/proxy.ts | tail -1   # 이관 전 커밋이 나온다
+test "$(ls docs/)" = adr.md                # 루트 docs 에는 adr.md 하나
+test "$(git log --follow --oneline -- frontend/src/proxy.ts | wc -l)" -gt 1   # 이관 전 커밋까지 이어진다
+test "$(git log --follow --oneline -- frontend/docs/adr.md | wc -l)" -gt 1
 readlink frontend/.claude/skills/next-best-practices && test -f frontend/.claude/skills/next-best-practices/SKILL.md
 cd frontend && pnpm install --frozen-lockfile && pnpm lint && pnpm lint:md && pnpm test && pnpm exec tsc --noEmit
 ```

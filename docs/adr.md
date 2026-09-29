@@ -1,7 +1,7 @@
 # ADR — fos-accountbook (프론트엔드)
 
 > 프론트엔드(Next.js) 전용 기술 결정 기록.
-> 백엔드 결정은 `fos-accountbook-backend/docs/adr.md` 참고.
+> 백엔드 결정은 [`backend/docs/adr.md`](../../backend/docs/adr.md), 저장소 전체 결정은 [루트 `docs/adr.md`](../../docs/adr.md) 가 소유한다.
 
 ---
 
@@ -233,7 +233,7 @@
 | 모델 | opus 리뷰어 (`--model opus` 별칭). 실제 모델 ID 는 실행 기록에서 읽어 Job Summary 에 남긴다 | haiku specialist 는 추론 능력이 떨어져 오탐(false positive) 많고 실제 버그 놓침. 리뷰 신뢰도 > 토큰 절약. `opus` 별칭은 버전업 무수정 추종 |
 | action 버전 | `anthropics/claude-code-action@v1` major 태그 | 릴리스마다 다시 고정하지 않는다. #1290 회귀로 걸었던 고정은 같은 설정의 다른 저장소가 `@v1` 로 정상 동작해 풀었다 |
 | allowed_bots | `"*"` | 광범위 허용 — Dependabot/Claude 모두 차단되지 않음. 보안 검증은 리뷰어가 담당 |
-| diff 필터 | `pnpm-lock.yaml`, `*.lock`, `*.snap` 제외 | 노이즈 감소 |
+| diff 필터 | `frontend/pnpm-lock.yaml`, `*.lock`, `*.snap`, `backend/gradle/wrapper/gradle-wrapper.jar`, `backend/build/`, `*.class` 제외. Flyway SQL 은 제외하지 않는다 | 노이즈 감소. `*` 가 없는 pathspec 은 저장소 루트 기준이라 하위 프로젝트 경로를 붙인다 |
 | Job timeout | 15분 | agent hang 시 불필요한 비용 방지 |
 | Check Run 수동 등록 | `issue_comment` 트리거 시 수동 생성 | issue_comment workflow run 이 PR Checks 탭에 자동 노출 안 됨 — 수동 Check Run 으로 진행 상태 가시화 |
 | 프롬프트 관리 | 공통 본문 `.github/claude-review-prompt-common.txt` 와 점검 목록 `-frontend.txt`, `-backend.txt` 로 외부 분리. 바뀐 경로로 점검 목록을 고르고 둘 다 바뀌면 이어 붙인다. `envsubst` 로 `$PR_NUMBER`·`$REPO`·`$RISK_LABELS`·`$CHECKLIST` 치환 | ~180줄 인라인 heredoc 가독성·diff 정밀도 확보. `.md` 아닌 `.txt` 로 IDE 포맷터의 glob·식별자 깨짐 회피 |

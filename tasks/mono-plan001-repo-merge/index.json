@@ -25,7 +25,7 @@
       "file": "phase-03.md",
       "title": "CI 와 이미지 워크플로를 경로별로 나눈다",
       "status": "pending",
-      "execution_profile": "standard"
+      "execution_profile": "deep"
     },
     {
       "number": 4,
