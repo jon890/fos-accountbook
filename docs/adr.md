@@ -210,6 +210,8 @@
 
 **결정**: Claude Code Action 기반 자동 코드 리뷰 워크플로를 아래 방침으로 운영. fos-blog 정착 패턴과 동일화 (2026-05-09 개정, 2026-06-02 단일 opus 리뷰어로 모델 전환, 2026-09-01 요약을 리뷰 body 로 통합, 2026-09-29 fos-assistant 판에 맞춰 호출 경계와 등급과 위험 라벨 추가).
 
+**적용 범위**: 모노레포의 리뷰 워크플로 하나가 프론트엔드와 백엔드를 함께 리뷰한다([ADR-M01](../../docs/adr.md#adr-m01)). 백엔드의 ADR-B14 는 이 ADR 로 대체된다.
+
 **핵심 결정 사항**:
 
 | 항목 | 결정 | 이유 |
@@ -220,7 +222,7 @@
 | 도구 허용 | Read / Grep / Glob / Agent / Task 와 게시용 Bash(`gh`, `jq`, `mktemp`, `cat`, `rm`)만. Write / Edit 금지 | Agent 가 없으면 거르기 위임이 드러나지 않게 자가검토로 바뀐다. Bash 를 열어 두면 체크아웃한 PR 코드를 실행할 길이 생긴다 |
 | 등급 | 🔴 P1 치명 ~ ⚪ P5 참고 다섯 단계. P4 와 P5 는 리뷰당 세 개까지 | 두 단계로는 꼭 고칠 것과 참고할 것 사이가 비었다. 등급은 반영하지 않았을 때 깨지는 것으로 정한다 |
 | 거르기 | 수집한 지적의 통과 여부를 서브 에이전트가 판정. 맡기지 못하면 리뷰 본문 끝에 그 사실을 남긴다 | 지적을 만든 쪽이 판정하면 통과시키는 쪽으로 기운다 |
-| 위험 라벨 | main 의 `scripts/pr-risk-labels.sh` 가 경로로 `위험:인증` / `위험:권한` / `위험:배포설정` 을 달고 프롬프트에 넘긴다. 머지 규칙은 바꾸지 않는다 | LLM 위험 점수는 실행마다 달라 기준이 못 된다. PR head 의 스크립트를 쓰면 PR 이 자기 규칙을 바꿔 피할 수 있다 |
+| 위험 라벨 | main 의 `scripts/pr-risk-labels.sh` 하나가 프론트와 백엔드 경로 규칙을 함께 보고 라벨을 달아 프롬프트에 넘긴다. 머지 규칙은 바꾸지 않는다 | LLM 위험 점수는 실행마다 달라 기준이 못 된다. PR head 의 스크립트를 쓰면 PR 이 자기 규칙을 바꿔 피할 수 있다 |
 | Review Event | 항상 `COMMENT` (🔴 있어도 차단 안 함) | 리뷰는 권고. 머지 차단은 인간 reviewer 책임. `REQUEST_CHANGES` 사고 회피 |
 | 요약 게시 | 인라인과 같은 리뷰의 `body` 로 통합 — `reviews` POST 1회 | 요약과 인라인이 리뷰 단위로 접힘. 일반 댓글로 분리하면 Conversation 탭에서 흩어짐 |
 | 리뷰 요청 본문 전달 | `mktemp` 임시 파일 + `--input` | 인자로 직접 쓰면 shell 이 `\n` 을 literal 두 글자로 전달. 체크아웃 밖에 만들어 wrapper 의 `git add -A` 회피 |
@@ -234,7 +236,7 @@
 | diff 필터 | `pnpm-lock.yaml`, `*.lock`, `*.snap` 제외 | 노이즈 감소 |
 | Job timeout | 15분 | agent hang 시 불필요한 비용 방지 |
 | Check Run 수동 등록 | `issue_comment` 트리거 시 수동 생성 | issue_comment workflow run 이 PR Checks 탭에 자동 노출 안 됨 — 수동 Check Run 으로 진행 상태 가시화 |
-| 프롬프트 관리 | `.github/claude-review-prompt.txt` 외부 분리 + `envsubst` 로 `$PR_NUMBER`·`$REPO`·`$RISK_LABELS` 치환 | ~180줄 인라인 heredoc 가독성·diff 정밀도 확보. `.md` 아닌 `.txt` 로 IDE 포맷터의 glob·식별자 깨짐 회피 |
+| 프롬프트 관리 | 공통 본문 `.github/claude-review-prompt-common.txt` 와 점검 목록 `-frontend.txt`, `-backend.txt` 로 외부 분리. 바뀐 경로로 점검 목록을 고르고 둘 다 바뀌면 이어 붙인다. `envsubst` 로 `$PR_NUMBER`·`$REPO`·`$RISK_LABELS`·`$CHECKLIST` 치환 | ~180줄 인라인 heredoc 가독성·diff 정밀도 확보. `.md` 아닌 `.txt` 로 IDE 포맷터의 glob·식별자 깨짐 회피 |
 | 소규모 PR 스킵 | 안 함 | 모든 PR 동일 리뷰 |
 
 **대안 기각**:
