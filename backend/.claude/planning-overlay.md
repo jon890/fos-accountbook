@@ -3,6 +3,14 @@
 공용 코어(`~/.claude/skills/planning`)에 fos-accountbook-backend 특화를 주입한다.
 코어의 8단계 skeleton 을 이 레포의 도메인(Spring Boot 백엔드)·docs 컨벤션·검증에 맞춰 채운다.
 
+## 저장소 배치
+
+| 값 | 값 |
+| --- | --- |
+| docs 경로 | `backend/docs/` |
+| tasks 경로 | `tasks/` |
+| plan 접두사 | `be-` |
+
 ## 도메인: 백엔드 (Java 21 / Spring Boot / Gradle)
 
 - **3단계 (호출 흐름)**: 주요 API 호출 시퀀스를 구체화. 요청 → Service → Repository → 응답 흐름과 인증/권한 체크 지점, 에러 흐름(4xx/5xx)·빈 상태·동시성 충돌을 점검.
@@ -52,15 +60,15 @@
 
 ## 검증
 
-- **critic 패턴 경로**: `.claude/skills/_shared/common-critic-patterns.md` — 이 레포는 파일명이 `common-pitfalls.md` 가 아니라 `common-critic-patterns.md` 이니 혼동 금지.
-- 시드 P1~P7 은 코어 `verify-task.sh` 5 패턴과 겹치는 항목이 자동 검출된다. 나머지는 self-check.
+- **critic 패턴 경로**: `backend/.claude/skills/_shared/common-critic-patterns.md` — 이 레포는 파일명이 `common-pitfalls.md` 가 아니라 `common-critic-patterns.md` 이니 혼동 금지.
+- 시드 P1~P7 은 코어 `verify_task.py` 5 패턴과 겹치는 항목이 자동 검출된다. 나머지는 self-check.
 - **backend-fos 전용 +α** (같은 파일 "backend-fos" 절): `@Transactional` 경계 누락(BE1), Entity-DTO 노출(BE2), AOP 자기호출 우회(BE3). 엔드포인트·서비스 phase 마다 self-check.
 
 ## plan / ADR 네이밍
 
 ```bash
-# cwd: <repo root>
-ls tasks/ | grep "plan{후보번호}"
+# cwd: backend
+bash ~/.claude/skills/planning/scripts/plan_number.sh --prefix be-
 grep "^## ADR-B{후보번호}" docs/adr.md
 gh pr list --state open --json number,headRefName,title --jq '.[] | "\(.headRefName) \(.title)"'
 ```
@@ -81,7 +89,7 @@ ADR 번호는 `ADR-B` 접두어(backend 전용, 프론트엔드 `fos-accountbook
       "id": "phase-01",
       "title": "phase 제목",
       "file": "phase-01.md",
-      "model": "sonnet",           // haiku | sonnet | opus
+      "execution_profile": "standard",   // fast | standard | deep
       "status": "pending"
     }
   ]
@@ -90,11 +98,6 @@ ADR 번호는 `ADR-B` 접두어(backend 전용, 프론트엔드 `fos-accountbook
 
 `total_phases`/`created_at`/`current_phase`/`depends_on`/`related_docs` 필드는 이 레포에서 쓰지 않는다.
 
-## branch / 커밋 / 핸드오프
+## 브랜치, 커밋, 핸드오프
 
-- **branch**: `plan/{N}-{slug}` (origin/main 기준 신규 브랜치, 이전 plan 브랜치 위에 쌓지 않는다).
-- **커밋**: docs 변경 + task 파일을 **한 커밋**으로 묶는다. 메시지: `docs(plan{N}): {plan 한 줄 요약}`.
-- **push + PR 필수** — `main` 직접 push 가 branch protection 으로 차단되므로 `git push -u origin plan/{N}-{slug}` 후 `gh pr create --base main --head plan/{N}-{slug}`. PR 본문: docs 변경 + task phase 목록 요약 + Test plan(구현 PR 검증 항목).
-- **main 복귀**: PR 생성 후 `git switch main`.
-- **핸드오프**: `/build-with-teams plan{N}` 로 구현 시작 안내 (PR 머지 후 실행 가능 — task 파일이 origin/main 에 있어야 어디서든 시작 가능).
-- **중복 실행 방지**: origin/main 의 최신 `index.json.status` 가 `"completed"` 면 `/build-with-teams plan{N}` 재실행 금지. 동일 plan 을 두 세션이 동시에 잡으면 PR 브랜치 충돌로 자연 감지.
+브랜치, 커밋, 핸드오프는 루트 `.claude/planning-overlay.md` 를 따른다.

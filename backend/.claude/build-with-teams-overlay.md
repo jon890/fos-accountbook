@@ -3,13 +3,21 @@
 공용 코어(`~/.claude/skills/build-with-teams`)에 fos-accountbook-backend 특화를 주입한다.
 코어에 없는 항목만 채운다 — 코어와 겹치는 일반 원칙(재시도 한도·worktree 격리·자발적 실행 방지 등)은 반복하지 않는다.
 
+## 저장소 배치
+
+| 값 | 값 |
+| --- | --- |
+| docs 경로 | `backend/docs/` |
+| tasks 경로 | `tasks/` |
+| plan 접두사 | `be-` |
+
 ## 통합 검증 명령
 
 `CLAUDE.md` "Commands" 섹션이 단일 소스. 통합 검증은 `./gradlew checkstyleMain checkstyleTest test build -x integrationTest --no-daemon`.
 
 ## 브랜치 규칙
 
-`CLAUDE.md` "Git & PR Conventions" 섹션이 단일 소스. 구현 브랜치는 `feat/plan{N}-{slug}` (계획 브랜치 `plan/{N}-{slug}` 와 분리), 모두 `main` 에서 분기.
+브랜치와 PR 은 루트 `.claude/build-with-teams-overlay.md` 를 따른다.
 
 ## 에이전트 이름
 
@@ -35,7 +43,7 @@
   "issue": "#{GitHub 이슈 번호}",   // 없으면 생략
   "status": "pending",              // pending | in_progress | completed | failed
   "phases": [
-    { "id": "phase-01", "title": "...", "file": "phase-01.md", "model": "sonnet", "status": "pending" }
+    { "id": "phase-01", "title": "...", "file": "phase-01.md", "execution_profile": "standard", "status": "pending" }
   ]
 }
 ```
@@ -44,7 +52,7 @@ phase 파일 경로: `tasks/{plan}-{slug}/phase-{N}.md`. planning 이 이미 `pl
 
 ## common-pitfalls 경로
 
-`.claude/skills/_shared/common-critic-patterns.md` — **파일명이 `common-pitfalls.md` 가 아니다** (다른 레포와 다름, 혼동 주의).
+`backend/.claude/skills/_shared/common-critic-patterns.md` — **파일명이 `common-pitfalls.md` 가 아니다** (다른 레포와 다름, 혼동 주의).
 
 critic·code-reviewer 는 P1~P7(공통) + "backend-fos" 절의 아래 3개를 사전 해소 점검 대상으로 쓴다:
 
@@ -68,30 +76,8 @@ critic·code-reviewer 는 P1~P7(공통) + "backend-fos" 절의 아래 3개를 �
 ## worktree 직후 환경 setup
 
 ```bash
-# cwd: .claude/worktrees/{plan}
+# cwd: backend
+mise exec gradle@9.5.0 -- gradle wrapper --gradle-version 9.5.0
 ./gradlew dependencies --no-daemon
 docker compose -f docker/compose.yml up -d   # 로컬 MySQL — 테스트는 H2 in-memory 사용이라 선택
 ```
-
-## 완료 후 추가 단계 — 프론트엔드 영향 분석 (코어에 없는 레포 특화 단계)
-
-PR 생성 후, 팀 shutdown 전에 프론트엔드 영향을 분석한다.
-
-**감지 기준** (하나라도 해당하면 "영향 있음"):
-- Controller 에 새 `@GetMapping`/`@PostMapping`/`@PutMapping`/`@DeleteMapping` 추가
-- Response DTO 필드 추가·삭제·타입 변경
-- URL 경로·파라미터 변경 (breaking change)
-- 인증 정책 변경 (`skipAuth` 추가·제거)
-
-```bash
-# cwd: <repo root>
-git diff --name-only origin/main...HEAD | grep -E "(Controller|Response|Request|Dto)\.java$"
-git diff origin/main...HEAD -- "*/presentation/controller/*.java" | grep -E "^\+.*@(Get|Post|Put|Delete|Patch)Mapping"
-git diff origin/main...HEAD -- "*/application/dto/*.java" | grep -E "^\+\s+private\s+"
-```
-
-**영향 있을 때**: endpoint·스키마 변경 목록 + 프론트엔드 작업 항목 + 백엔드 PR 링크를 담은 이슈 초안을 만들고, `AskUserQuestion` 으로 미리보기·등록 확인 후 `gh issue create --repo jon890/fos-accountbook-frontend` 로 등록. 백엔드 PR 에 이슈 링크 코멘트.
-
-**영향 없을 때**: "프론트엔드 영향 없음" 보고 후 종료.
-
-이 단계 완료 후 팀 shutdown.

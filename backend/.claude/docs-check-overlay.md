@@ -3,6 +3,14 @@
 공용 코어(`~/.claude/skills/docs-check`)에 fos-accountbook-backend 특화를 주입한다.
 코어에 없는 항목만 채운다 — 6축 정의·Hybrid 실행 모델 등 코어와 겹치는 내용은 반복하지 않는다.
 
+## 저장소 배치
+
+| 값 | 값 |
+| --- | --- |
+| docs 경로 | `backend/docs/` |
+| tasks 경로 | `tasks/` |
+| plan 접두사 | `be-` |
+
 ## docs-verifier 전용 에이전트 없음
 
 이 레포에는 `.claude/agents/` 가 없다 — docs-check 전용 검증 에이전트를 억지로 만들지 않는다.
@@ -24,8 +32,8 @@
 대상 파일 수집 명령:
 
 ```bash
-# cwd: <repo root>
-ls docs/*.md CLAUDE.md .claude/skills/*/SKILL.md .claude/build-with-teams-overlay.md .claude/docs-check-overlay.md .claude/planning-overlay.md
+# cwd: backend
+ls docs/*.md CLAUDE.md .claude/build-with-teams-overlay.md .claude/docs-check-overlay.md .claude/planning-overlay.md
 ```
 
 ## ADR Index 동기화 — 단일 파일 변형
@@ -33,7 +41,7 @@ ls docs/*.md CLAUDE.md .claude/skills/*/SKILL.md .claude/build-with-teams-overla
 코어의 `<ADR_DIR>/*.md` 순회 명령은 이 레포에 안 맞는다 (ADR 이 여러 파일이 아니라 `docs/adr.md` 한 파일 안 heading). 앵커도 `<a id="adr-XXX">` 커스텀이 아니라 GitHub 자동 slug 다.
 
 ```bash
-# cwd: <repo root>
+# cwd: backend
 BODY=$(grep -oE '^## ADR-B[0-9]+' docs/adr.md | grep -oE 'ADR-B[0-9]+' | sort -u)
 INDEX=$(grep -oE '\[ADR-B[0-9]+\]' docs/adr.md | grep -oE 'ADR-B[0-9]+' | sort -u)
 diff <(echo "$BODY") <(echo "$INDEX") && echo "OK: ADR Index synced"
@@ -46,14 +54,14 @@ diff <(echo "$BODY") <(echo "$INDEX") && echo "OK: ADR Index synced"
 - **삭제된 식별자 잔존 검사**:
 
 ```bash
-# cwd: <repo root>
+# cwd: backend
 # ADR 이 "제거"라고 명시한 클래스/필드명이 src/ 에 실제로 없는지 역검증 (수동 대조 — 자동 grep 은 이름 뽑아서 실행)
 grep -n "제거" docs/adr.md
 ```
 
 ## common-pitfalls 경로
 
-`.claude/skills/_shared/common-critic-patterns.md` (파일명이 `common-pitfalls.md` 아님 — 다른 레포와 혼동 주의).
+`backend/.claude/skills/_shared/common-critic-patterns.md` (파일명이 `common-pitfalls.md` 아님 — 다른 레포와 혼동 주의).
 
 ## 실행 주기·핸드오프
 

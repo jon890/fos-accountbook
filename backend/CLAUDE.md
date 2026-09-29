@@ -9,19 +9,9 @@ Claude Code가 항상 따라야 할 규칙과 참조 문서 포인터.
 | 새 기능/변경 설계 | `/planning` | "/planning", "계획 세워보자", "설계해보자" |
 | plan 실행 (Agent Teams) | `/build-with-teams` | "plan{N} 실행", "구현해줘" — 코드 구현은 항상 이 스킬, 가시적 협업, 4~5명 에이전트 파이프라인 |
 | docs 정리 | `/docs-check` | docs/ 검증, plan 완료 후 주기적 |
-| 프론트 API 계약 통합 | `/integrate-api-contract` | 프론트엔드 PR/브랜치와 API 계약 정합성 검토 |
 | PR 리뷰 반영 | `/review-fix` | "리뷰 댓글 반영" |
 
 `/planning` → docs 갱신 → task 생성 → `/build-with-teams` 실행 흐름이 표준.
-
----
-
-## 팀 소통
-
-- **백엔드 ↔ 프론트엔드 협의는 GitHub Issues** — Slack/Dooray/구두 합의 금지. 추적 가능성 + 컨텍스트 보존 목적.
-- **백엔드 레포**: `jon890/fos-accountbook-backend`
-- **프론트엔드 레포**: `jon890/fos-accountbook-frontend`
-- **API 계약 변경 시**: `/integrate-api-contract` 스킬로 프론트 영향 사전 검토 → GitHub Issue 로 협의 → 머지
 
 ---
 
@@ -304,137 +294,18 @@ class SomeServiceTest extends TestFixturesSupport {
 
 ---
 
-## 토큰 효율 (Opus/Sonnet 라우팅)
-
-- **논의·계획·docs 작성**: main 세션 (opus 허용)
-- **task phase 실행**: sonnet 기본 — rename, 리팩토링, 다중 파일 수정도 sonnet
-- **task phase에서 opus 사용 금지 예외**:
-  - 새 아키텍처 설계가 phase 안에 있는 경우
-  - 복잡 알고리즘 설계 (도메인 핵심 신규 설계)
-- **기계적 작업은 opus 금지** — rename/이동/경로 수정 등은 파일 수가 많아도 sonnet 으로 충분
-- 빌드 검증·커밋 phase 는 haiku
-
----
-
-## 파일 읽기 효율
-
-- **전체 파일 읽기 금지** (200줄 초과 시) — offset+limit 로 필요한 섹션만
-- **같은 파일 반복 읽기 금지** — 같은 세션 내에서는 기억해서 재사용
-- **대형 docs 파일** (`docs/adr.md` 등) 은 grep 으로 필요 섹션만 찾아 offset 지정
-
----
-
-## 조사/탐색 접근 방식
-
-- **직접 질문에는 직접 답변부터** — 사용자가 특정 파일/영역/패턴을 명시했다면 해당 위치부터 확인. 광범위한 codebase 탐색 금지
-- **사용자가 조사 경로를 제시했으면 그 경로부터** — 지시받은 영역에서 codebase 전체를 먼저 뒤지지 않는다
-- **Explore agent 는 최후 수단** — Grep/Glob/Read 로 3번 이상 시도한 후에도 못 찾을 때만 사용
-- **가정 없이 주장하지 않기** — "dead code", "미사용" 같은 판단은 실제로 참조를 grep 한 후에만 제기
-
----
-
-## Task 작업 규칙
-
-- 각 phase 는 **원자적 단일 책임** — 다른 관심사면 별도 phase 로 분리. **작업 항목 5개 이하** 엄수
-- **task 파일 생성 즉시 git commit** — index.json + phase 파일을 실행 전에 커밋
-- task 완료 즉시 git commit (index.json 상태 갱신 포함)
-- 각 phase 프롬프트는 **자기완결적** (이전 대화 없이 독립 실행 가능)
-- **docs 최신화는 task 생성 전 필수** — task phase 내에서 docs 변경 금지
-
-"5개 이하" 근거: 작업 항목이 많으면 AI 에이전트가 뒤쪽을 누락하는 경향.
-
----
-
 ## 문서 작성 원칙
 
 - **AI 에이전트 컨텍스트 효율** — docs 는 AI 에이전트를 위한 것. 컨텍스트를 낭비하지 않도록 간결하게
 - **반복·중복 제거** — 같은 내용을 두 문서에 쓰지 않는다
 - **의사결정 의도 보존** — "왜 이렇게 했는가" 반드시 기록
 - **구현 세부사항은 코드에, docs 에는 "무엇을·왜" 만** — ADR 에 코드 스니펫/파일 경로 나열 금지
-- **가독성 + 토큰 효율 6가지 패턴**: 아래 "docs / ADR 작성 형식" 섹션 참조
-
-## 한국어 표현 정책
-
-docs / skill / task 파일을 한국어로 작성할 때 **한국인이 자연스럽게 읽히는 표현을 우선** 한다. 영어 단어를 한자/한글 음차한 표현은 사용 금지.
-
-| 금지 | 권장 대체 |
-| --- | --- |
-| 매트릭스 (matrix) | **표** / **영향 표** / **분류 표** / **변경-docs 매핑 표** |
-| 트리아지 (triage) | **분류** / **우선순위 분류** |
-| 베이스라인 (baseline) | **기준선** / **기준값** |
-| 스파이크 (spike) | **사전 조사** / **API 검증** |
-| 게이트 (gate) | **점검** / **사전 점검** / **통과 조건** |
-| 사전 소진 | **사전 해소** ("소진" 은 자원 고갈 비유 — 직관 어려움) |
-| 단일 진실원 | **단일 소스** ("진실원" 은 truth-source 직역, 한국어 자연어 아님) |
-| 변질 의심 | **변질 우려** ("의심" 보다 "우려" 가 더 자연) |
-| 패턴 답습 | **동일 패턴 적용** / **그대로 적용** ("답습" 은 부정 뉘앙스) |
-
-기술 용어 그대로 쓰는 게 표준인 경우 (`rebase`, `merge`, `commit`, `endpoint`, `payload`, `@Transactional`, `JPA` 등) 는 그대로 유지.
-
-## docs / ADR 작성 형식 (가독성 + 토큰 효율)
-
-대상: `docs/*.md` / `CLAUDE.md` / `tasks/**/*.md` / `README.md` / `.claude/skills/*/SKILL.md`.
-
-목표: 작성자가 읽기 쉬울 것 (가독성) + LLM 컨텍스트 비용을 늘리지 않을 것. 충돌 시 가독성 우선.
-
-### 1. semantic line break (문장당 1줄)
-
-한 단락 안의 문장은 줄바꿈으로 분리. markdown 렌더링 결과는 동일하지만 소스 가독성 ↑ + git diff 정밀 + 토큰 동일.
-
-**금지**: 한 단락에 2 문장 이상 같은 줄에 이어쓰기.
-
-### 2. enumerated inline 금지
-
-`① ... ② ... ③ ...` / `1) ... 2) ... 3) ...` / 슬래시 나열 (`A / B / C` 3개 이상) 형식은 markdown bullet list 로 변환한다.
-
-### 3. 괄호 중첩 2겹 이상 금지
-
-`(... (...) ...)` 같은 중첩이 발생하면 단락 분리 또는 bullet 분리로 평탄화한다.
-
-### 4. `=` / `→` 동치·인과 압축은 한 단락 1회만
-
-여러 동치 / 인과 관계를 한 문장에 압축하지 않는다. 각 관계마다 별 문장 + 줄바꿈으로 분리.
-
-### 5. 한 문장이 길면 의미 단위 분할
-
-한 문장이 약 80자 초과 + 백틱 3개 이상 또는 괄호 다수면 의미 단위로 나눈다. "한국어 문장 + 영어 약어 + 코드 inline" 혼재는 가독성 손실의 주범.
-
-### 6. 한 bullet 에 다중 속성 압축 금지 — sub-bullet 으로 분리
-
-한 bullet 안에 **무엇 / 어떻게 / 예외 / 조건 / 근거** 중 2개 이상의 독립 속성을 다음 연결로 이어 압축하지 않는다. 각 속성은 sub-bullet 으로 분리.
-
-- 마침표 (`. ... .`) — 여러 문장
-- 콤마 (`A, B, C`) — 병렬 항목
-- 더하기 (`A + B + C`) — 변경 사항·구성 요소 나열
-- 슬래시 (`A / B / C` 3개 이상) — 패턴 2 와 중첩
 
 ---
 
 ## Git & PR Conventions
 
-- **main 직접 push 차단** — branch protection. 모든 변경은 작업 브랜치 + PR (task 파일/docs 도 동일)
-- **1 이슈 = 1 PR = 1 브랜치** — 여러 이슈를 하나의 PR 로 묶지 않는다
-- **모든 브랜치는 `main` 에서 분기** — 다른 feature/fix 브랜치에서 새 브랜치를 파생하지 않는다
-  ```bash
-  git checkout main && git pull
-  git checkout -b fix/issue-description
-  ```
-- **commit 전 로컬 검증 필수** — `./gradlew checkstyleMain checkstyleTest test build -x integrationTest --no-daemon` 통과 후에만 commit/push. CI 왕복 비용 회피 목적
-- **PR 제목**: 반드시 `type(scope): description` 형식
-  - `feat(expense): add recurring expense scheduler`
-  - `fix(auth): resolve JWT refresh token expiry`
-  - `docs(adr): add ADR-B17 for event-driven notifications`
-  - `chore(skills): adopt 5-skill harness`
-
-### 브랜치 명명
-
-| 단계 | 브랜치 | 내용 |
-|---|---|---|
-| 계획 | `plan/{N}-{slug}` | `tasks/plan{N}-{slug}/` task 파일 + docs 갱신 (→ main 머지) |
-| 구현 | `feat/plan{N}-{slug}` | task 의 phase 별 코드 commit (→ main 머지) |
-| 기타 | `chore/...` · `fix/...` · `refactor/...` · `docs/...` | 일반 작업 |
-
-plan 의 계획/구현 분리는 머지 이력에서 즉시 식별 + 검토 부담 분산이 목적.
+Task 작업 규칙과 브랜치, PR 규칙은 루트 `CLAUDE.md` 를 따른다.
 
 ### Commit & Push 절차
 
