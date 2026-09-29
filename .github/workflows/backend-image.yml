@@ -26,6 +26,8 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    # 빌드가 멈춰도 기본 제한 6시간을 기다리지 않도록 짧게 끊는다
+    timeout-minutes: 30
 
     permissions:
       contents: read
@@ -72,7 +74,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=backend
           cache-to: type=gha,scope=backend,mode=max
-          platforms: linux/amd64,linux/arm64
+          # 홈 서버가 x86_64 라 amd64 만 만든다. arm64 는 QEMU 에뮬레이션이라 수십 분 걸리거나 멈췄다
+          platforms: linux/amd64
 
       - name: Output image info
         run: |
