@@ -18,17 +18,9 @@
 - **6단계**: `src/actions → src/services → src/lib/server` 레이어 일관성 확인.
     - 권한 검증은 ADR-F25 의 3 패턴(Single-family / Multi-family / Entity ownership) 중 하나로 명시한다.
 
-### domain 태그 통제 어휘 (phase 작성 시 필수)
+### phase 의 domain 태그
 
-phase 프런트매터 `**Domain**:` 태그와 `common-pitfalls.md` 의 작업종류→함정 인덱스가 참조하는 어휘다.
-아래 표의 domain 키 중 하나를 선택한다.
-
-| domain 키 | 대상 작업 |
-|---|---|
-| `markdown-write` | markdown / task 문서 작성 |
-| `color-token` | 색 토큰 / Tailwind 스타일 작성 |
-| `app-router` | App Router 경계 / 컴포넌트 / revalidatePath |
-| `server-action` | Server Action 작성 |
+phase 프런트매터의 `**Domain**:` 태그는 `.claude/skills/_shared/common-pitfalls.md` 의 「통제 어휘」 표에서 하나를 고른다.
 
 ## docs 컨벤션
 
@@ -90,10 +82,10 @@ ADR-F01 부터 ADR-F12 는 코어 뼈대가 정착하기 전에 작성됐다.
 
 ## 검증
 
-- **common-pitfalls 경로**: `.claude/skills/_shared/common-pitfalls.md` (fos-accountbook 전용으로 이미 분리됨 — plan026). 코어 `verify-task.sh` 5 패턴은 이 파일의 자동 검출형과 겹친다.
-- **작업종류→함정 인덱스**를 이 파일에서 먼저 확인 — 전체 통독 대신 해당 작업 종류 행만 참조.
-- `Server Action 작성` 행은 상세 규칙이 CLAUDE.md ADR 참조로 위임되어 있다 — ADR-F25(권한 3-패턴)·ADR-F06(Zod 검증) 를 phase 작성 시 직접 확인.
-- `markdown/task 문서 작성` 은 `scripts/check-tailwind-md.mjs` (CI `pnpm lint:md`) 로 자동 점검 — Tailwind arbitrary class 위험 패턴(대괄호 안 와일드카드·중괄호) 검출.
+- 반복 함정 목록은 `.claude/skills/_shared/common-pitfalls.md` 다.
+    - 전체를 읽지 않고 「작업종류→함정 인덱스」 에서 해당 행만 참조한다.
+- `Server Action 작성` 은 ADR-F25(권한 3패턴)와 ADR-F06(Zod 검증)을 phase 작성 시 직접 확인한다.
+- markdown 과 task 문서는 `pnpm lint:md` 가 Tailwind arbitrary class 위험 패턴을 검출한다.
 
 ## plan / ADR 네이밍
 
@@ -106,13 +98,11 @@ gh pr list --state open --json number,headRefName,title --jq '.[] | "\(.headRefN
 
 서브넘버 규칙(동일 도메인 후속 작업)은 코어 기본값 그대로 (`plan{N}` → `plan{N}-2`).
 
-## branch / 커밋 / 핸드오프
+## 커밋과 핸드오프
 
-- **branch**: `plan/{N}-{slug}` (origin/main 기준 신규 브랜치, 이전 plan 브랜치 위에 쌓지 않는다).
-- **main 직접 push 차단** — branch protection. `/planning` 은 `plan/{N}` 브랜치에 push 만 하고 **PR 은 생성하지 않는다**.
+브랜치 이름, main push 차단, 단일 PR 원칙은 `CLAUDE.md` 의 「Git & PR Conventions」 를 따른다.
+
+- **브랜치**: origin/main 기준으로 새로 만든다. 이전 plan 브랜치 위에 쌓지 않는다.
 - **커밋**: docs 변경과 task 파일을 **한 커밋**으로 묶는다. 메시지: `docs(plan{N}): {plan 한 줄 요약}`.
-- **push**: `git push -u origin plan/{N}-{slug}`. 이후 `git switch main` 으로 복귀.
-- **단일 PR 원칙**: 계획 PR 을 따로 만들면 이후 main 변경과 구현 브랜치가 충돌한다. PR 은 구현 완료 후 `plan/{N}`→main **1개만** 생성.
-    - 실사례: plan026 이전에 #308 계획 PR 을 먼저 머지했더니 #311 구현 PR 이 충돌했다.
-- **핸드오프**: `/build-with-teams plan{N}` 로 구현 시작 안내 — 같은 `plan/{N}` 브랜치에서 이어 붙는다.
-- **중복 실행 방지**: `plan/{N}` 브랜치의 `index.json.status` 가 `"completed"` 면 재실행 금지.
+- **push**: `git push -u origin plan/{N}-{slug}` 까지만 하고 PR 은 만들지 않는다. 이후 `git switch main` 으로 복귀한다.
+- **핸드오프**: `/build-with-teams plan{N}` 로 구현 시작을 안내한다.

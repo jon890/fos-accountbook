@@ -1,27 +1,46 @@
-# build-with-teams 오버레이 — fos-accountbook
+# fos-accountbook build-with-teams 오버레이
 
 공용 코어(`~/.claude/skills/build-with-teams`)에 fos-accountbook 특화를 주입한다.
 
 ## 통합 검증 명령
-
-`CLAUDE.md` 는 `pnpm lint && pnpm test` 까지만 명시한다. 코어의 통합 검증 단계가 요구하는 **전체** 통합 검증은 다음을 실행한다.
 
 ```bash
 # cwd: <worktree root>
 pnpm lint && pnpm lint:md && pnpm test:ci && pnpm build
 ```
 
-- `pnpm build`(`next build`)가 타입 검사를 겸한다 — 별도 `tsc --noEmit` 스크립트 없음.
-- `lint:md`는 `scripts/check-tailwind-md.mjs` — Tailwind arbitrary class 위험 패턴을 markdown 안에서 검출.
-- **worktree 직후 setup**: `pnpm install`.
+- `pnpm build`(`next build`)가 타입 검사를 겸한다.
+    - 별도 `tsc --noEmit` 스크립트는 없다.
+- `lint:md` 는 markdown 안의 Tailwind arbitrary class 위험 패턴을 검출한다(CODE-3).
+
+## 작업 공간 준비
+
+기준 브랜치는 `main` 이다.
+
+```bash
+# cwd: <repo root>
+git fetch origin
+git worktree add .claude/worktrees/plan{N} plan/{N}-{slug}
+cd .claude/worktrees/plan{N} && pnpm install
+```
+
+- `.claude/worktrees/` 는 `.gitignore` 에 있다.
+- 끝나면 `git worktree remove .claude/worktrees/plan{N}` 로 정리한다.
 
 ## 에이전트 이름
 
-전용 executor·docs-verifier 에이전트 없음 — 코어 기본값 그대로 `oh-my-claudecode:executor` / `oh-my-claudecode:architect`(docs-verifier 용도)를 스폰한다.
+이 저장소에는 전용 에이전트가 없다. 아래를 스폰한다.
+
+| 역할 | 에이전트 |
+| --- | --- |
+| critic | `oh-my-claudecode:critic` |
+| executor | `oh-my-claudecode:executor` |
+| code-reviewer | `oh-my-claudecode:code-reviewer` |
+| docs-verifier | `oh-my-claudecode:architect` |
 
 ## index.json 스키마
 
-기존 `tasks/plan{N}-*/index.json` 실측 기준 (코어 예시와 필드 이름이 다르다):
+기존 `tasks/plan{N}-*/index.json` 을 실측한 형식이다. 코어 예시와 필드 이름이 다르다.
 
 ```jsonc
 {
@@ -43,22 +62,12 @@ pnpm lint && pnpm lint:md && pnpm test:ci && pnpm build
 }
 ```
 
-검증 체크리스트:
+## 반복 함정 목록
 
-- `total_phases` == `phases` 배열 길이
-- 각 phase에 `number`/`file`/`title`/`model`/`status` 존재
-- `number`가 1부터 순차 증가, 각 `file`이 실제 존재
+`.claude/skills/_shared/common-pitfalls.md` 를 쓴다.
+critic 과 code-reviewer 는 phase 의 `domain` 태그에 해당하는 `CODE-N` 만 골라 점검한다.
 
-## common-pitfalls 경로
+## 브랜치와 PR
 
-`.claude/skills/_shared/common-pitfalls.md` — critic·code-reviewer는 phase의 `domain` 태그로 해당 `CODE-N` 함정만 골라 점검한다 (통제 어휘 표는 파일 상단 참조). 전체 통독 금지.
-
-## 브랜치 / 커밋 컨벤션
-
-`CLAUDE.md` "Git & PR Conventions"가 단일 소스 — 요약만 여기 남긴다.
-
-- **branch**: `plan/{N}-{slug}` (코어 기본값과 동일). `/planning`이 이미 push했으면 **새 브랜치를 만들지 않고 이어 쓴다**.
-- **단일 PR 원칙**: 계획+구현을 한 PR로 묶는다. `plan/{N}` → main PR은 `/build-with-teams`가 구현 완료 후 1개만 생성 (계획 단계 PR 별도 생성 금지 — plan026 계획 PR 선(先)머지가 구현 PR과 충돌한 사례).
-- **main 직접 push 차단** — branch protection. 완료 마킹도 반드시 `plan/{N}` 브랜치 안에서.
-- **PR 제목**: `type(scope): description` 형식 엄수.
-- **중복 실행 방지**: `index.json.status == "completed"`면 재실행 금지 (코어 사전 검증의 완료 상태 점검과 동일 축).
+`CLAUDE.md` 의 「Git & PR Conventions」 를 따른다.
+`/planning` 이 이미 push 한 `plan/{N}-{slug}` 브랜치를 그대로 이어 쓰고, 완료 마킹도 그 브랜치에서 커밋한다.
