@@ -5,28 +5,31 @@ on:
     branches:
       - main
     paths:
-      - "src/**"
-      - "build.gradle.kts"
-      - "settings.gradle.kts"
-      - "gradle/**"
-      - "config/**"
-      - ".editorconfig"
+      - "backend/src/**"
+      - "backend/build.gradle.kts"
+      - "backend/settings.gradle.kts"
+      - "backend/gradle/**"
+      - "backend/config/**"
+      - "backend/.editorconfig"
       - ".github/workflows/backend-ci.yml"
   pull_request:
     branches:
       - main
     paths:
-      - "src/**"
-      - "build.gradle.kts"
-      - "settings.gradle.kts"
-      - "gradle/**"
-      - "config/**"
-      - ".editorconfig"
+      - "backend/src/**"
+      - "backend/build.gradle.kts"
+      - "backend/settings.gradle.kts"
+      - "backend/gradle/**"
+      - "backend/config/**"
+      - "backend/.editorconfig"
       - ".github/workflows/backend-ci.yml"
 
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
 
     steps:
       - name: Checkout code
@@ -61,18 +64,18 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: checkstyle-report
-          path: build/reports/checkstyle/**/*
+          path: backend/build/reports/checkstyle/**/*
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: test-results
-          path: build/test-results/test/**/*.xml
+          path: backend/build/test-results/test/**/*.xml
 
       - name: Upload test report
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: test-report
-          path: build/reports/tests/test/**/*
+          path: backend/build/reports/tests/test/**/*

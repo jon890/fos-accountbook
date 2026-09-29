@@ -1,16 +1,17 @@
-name: Build and Publish Docker Image
+name: Frontend Image
 
 on:
   push:
     branches:
       - main
     paths:
-      - "src/**"
-      - "build.gradle.kts"
-      - "settings.gradle.kts"
-      - "gradle/**"
-      - "Dockerfile"
-      - ".github/workflows/docker-publish.yml"
+      - "frontend/src/**"
+      - "frontend/public/**"
+      - "frontend/package.json"
+      - "frontend/pnpm-lock.yaml"
+      - "frontend/next.config.ts"
+      - "frontend/Dockerfile"
+      - ".github/workflows/frontend-image.yml"
   # 수동 실행 지원
   workflow_dispatch:
     inputs:
@@ -21,7 +22,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: jon890/fos-accountbook-frontend
 
 jobs:
   build-and-push:
@@ -66,12 +67,17 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v7
         with:
-          context: .
+          context: ./frontend
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # NEXT_PUBLIC_ 변수는 빌드 시 클라이언트 번들에 포함
+          # GitHub Settings > Variables > Actions에서 NEXT_PUBLIC_API_BASE_URL 등록 필요
+          # TODO: 추후 Next.js API Route 프록시로 전환하면 런타임 주입 가능
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,scope=frontend,mode=max
           platforms: linux/amd64,linux/arm64
 
       - name: Output image info
