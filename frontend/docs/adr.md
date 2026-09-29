@@ -324,7 +324,7 @@
   - backend 신규 endpoint (`GET /families/{u}/stats/category-breakdown`): 가장 깔끔하나 frontend 가 backend 일정 의존. 추후 row 수 임계 초과 시 plan 분리해 재검토.
   - 기존 `getDashboardStats` 응답에 카테고리 합계 끼워넣기: stats DTO 비대해지고 다른 호출처가 불필요 데이터 수신.
 - **임계 트리거** (재논의 조건): 가구당 월 평균 거래수 500건 초과 또는 dashboard 진입 TTI 700ms 초과 측정 시 backend endpoint 분리 검토.
-- **적용 범위**: `services/dashboard/dashboard-service.ts`, `actions/dashboard/get-monthly-category-breakdown-action.ts`, `services/analytics/analytics-service.ts` (plan006 — `getMonthlyCategoryBreakdown` 을 service→service 재사용해 월별 추이/전월 delta 클라 집계. backend issue [#126](https://github.com/jon890/fos-accountbook-backend/issues/126) 로 endpoint 분리 트랙 병행).
+- **적용 범위**: `services/dashboard/dashboard-service.ts`, `actions/dashboard/get-monthly-category-breakdown-action.ts`, `services/analytics/analytics-service.ts` (plan006 — `getMonthlyCategoryBreakdown` 을 service→service 재사용해 월별 추이/전월 delta 클라 집계. endpoint 분리 트랙은 옛 백엔드 저장소의 issue #126 에서 다뤘다. 닫힌 이슈였고 저장소를 지워 링크는 없다).
 
 <a id="adr-f17"></a>
 
