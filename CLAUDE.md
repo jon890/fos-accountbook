@@ -10,7 +10,6 @@ Claude Code가 항상 따라야 할 규칙과 참조 문서 포인터.
 | plan 실행 (Agent Teams) | `/build-with-teams` | "plan{N} 실행", "구현해줘" — 코드 구현은 항상 이 스킬, 가시적 협업, 4~5명 에이전트 파이프라인 |
 | docs 정리 | `/docs-check` | docs/ 5축 검증, plan 완료 후 주기적 |
 | UI 리뷰 | `/web-design-guidelines` | "review my UI", 접근성/UX 감사 |
-| UX PR 통합 | `/integrate-ux` | 디자이너 PR 리뷰·머지 |
 | PR 리뷰 반영 | `/review-fix` | "리뷰 댓글 반영" |
 | 커밋 | `/commit-convention` | "커밋해줘" |
 
