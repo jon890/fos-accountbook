@@ -91,7 +91,8 @@ ADR-F01 부터 ADR-F12 는 코어 뼈대가 정착하기 전에 작성됐다.
 
 ```bash
 # cwd: <repo root>
-ls tasks/ | grep "plan{후보번호}"
+# 완료된 계획서는 지우므로 사용한 번호는 git 이력에서 찾는다
+git log --all --name-only --format= -- 'tasks/*/index.json' | grep -oE '^tasks/plan[0-9]+' | sort -u | tail -1
 grep "^## ADR-F{후보번호}" docs/adr.md
 gh pr list --state open --json number,headRefName,title --jq '.[] | "\(.headRefName) \(.title)"'
 ```
