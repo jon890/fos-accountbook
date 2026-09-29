@@ -1,6 +1,6 @@
 # Data Schema — fos-accountbook (프론트엔드 타입)
 
-> **소유권**: DB 스키마·API 스펙의 canonical 소스는 백엔드 레포.
+> **소유권**: DB 스키마·API 스펙의 canonical 소스는 `backend/`.
 > → [`backend/docs/data-schema.md`](../../backend/docs/data-schema.md) 참고
 >
 > 이 문서는 **프론트엔드가 사용하는 TypeScript 타입**과 **API 컨트랙트 요약**만 기록한다.

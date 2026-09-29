@@ -57,4 +57,4 @@ docker compose -f docker/compose.yml up -d
 
 ## 관련 프로젝트
 
-- **프론트엔드**: [fos-accountbook-frontend](https://github.com/jon890/fos-accountbook-frontend)
+- **프론트엔드**: 같은 저장소의 [`frontend/`](../frontend/)

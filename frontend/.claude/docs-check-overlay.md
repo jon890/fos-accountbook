@@ -12,7 +12,7 @@
 
 ## 감사 대상
 
-`frontend/CLAUDE.md` 「컨텍스트 문서」 표의 문서와 백엔드 요청 문서다.
+`frontend/CLAUDE.md` 「컨텍스트 문서」 표의 문서다.
 
 ```bash
 # cwd: frontend

@@ -18,11 +18,11 @@
 - **3단계 (호출/사용자 흐름)**: 시니어 UX 리서처 관점.
     - 화면 전환·사용자 액션·시스템 반응을 구체화한다.
     - 엣지 케이스(에러/빈 상태/권한 충돌)를 점검한다.
-    - 백엔드 API 가 아직 없으면 `docs/calendar-api.md` 처럼 요청 명세를 남기고 사용자와 일정을 논의한다.
+    - 백엔드 API 가 아직 없으면 같은 저장소의 `backend/` 변경을 함께 계획한다(ADR-M01).
 - **4단계 (인터페이스)**: 각 화면의 정보·기능 체크리스트, 컴포넌트 구조 초안(Server/Client 경계), 상태 관리 방식.
 - **5단계 (API/함수)**: Server Action 우선 (ADR-F04 — `actions/`와 `services/` 분리).
     - 신규 백엔드 엔드포인트가 필요하면 5단계에서 계약(요청/응답 스키마)을 먼저 확정한다.
-    - 백엔드 팀 요청 문서(`docs/calendar-api.md` 패턴)로 남긴다.
+    - 백엔드 변경을 함께 하면 plan 접두사를 `mono-` 로 두고 프론트와 백엔드 변경을 PR 하나에 담는다.
 - **6단계**: `src/actions → src/services → src/lib/server` 레이어 일관성 확인.
     - 권한 검증은 ADR-F25 의 3 패턴(Single-family / Multi-family / Entity ownership) 중 하나로 명시한다.
 
@@ -42,7 +42,6 @@ phase 프런트매터의 `**Domain**:` 태그는 `frontend/.claude/skills/_share
 | 디렉터리 / 레이어 분리 / API 전략 | `docs/code-architecture.md` | ADR 은 결정 근거만 |
 | 테스트 범위·전략·우선순위 | `docs/testing-strategy.md` | — |
 | 기술 결정 근거 (왜) | `docs/adr.md` (단일 파일, append) | 다른 docs 는 `ADR-FNN` 번호 링크 |
-| 백엔드에 신규 API 요청 | `docs/calendar-api.md` 같은 개별 요청 문서 | prd/flow 는 "백엔드 의존" 만 언급 |
 
 ### ADR 자명성 점검 (작성 전 필수 자문)
 
@@ -93,7 +92,7 @@ ADR-F01 부터 ADR-F12 는 코어 뼈대가 정착하기 전에 작성됐다.
 - 반복 함정 목록은 `frontend/.claude/skills/_shared/common-pitfalls.md` 다.
     - 전체를 읽지 않고 「작업종류→함정 인덱스」 에서 해당 행만 참조한다.
 - `Server Action 작성` 은 ADR-F25(권한 3패턴)와 ADR-F06(Zod 검증)을 phase 작성 시 직접 확인한다.
-- markdown 과 task 문서는 `pnpm lint:md` 가 Tailwind arbitrary class 위험 패턴을 검출한다.
+- `frontend/` 아래 markdown(`docs/`, `.claude/skills/`)은 `pnpm lint:md` 가 Tailwind arbitrary class 위험 패턴을 검출한다. 루트 `tasks/` 는 Tailwind 스캔 범위 밖이다(ADR-F29).
 
 ## plan / ADR 네이밍
 

@@ -113,7 +113,6 @@ jobs:
         with:
           name: openapi-snapshot
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          repository: jon890/fos-accountbook-backend
           run-id: ${{ github.event.workflow_run.id }}
       - run: npx openapi-typescript openapi-snapshot.json -o src/types/generated-api.d.ts
       - run: npx tsc --noEmit

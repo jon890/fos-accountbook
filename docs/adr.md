@@ -37,7 +37,7 @@
   | 하네스 | 공통 규칙은 루트 `CLAUDE.md` 와 `.claude/`. 하위 프로젝트 규칙과 오버레이는 `frontend/`, `backend/` 아래 |
   | 스킬 | 둘이 함께 쓰는 스킬은 루트 `.claude/skills/`, 한쪽 전용 스킬은 그 하위 프로젝트의 `.claude/skills/` |
   | plan 번호 | 접두사마다 001 부터 센다. 저장소 전체 `mono-`, 프론트 `fe-`, 백엔드 `be-` |
-  | CI | `frontend-ci` 는 `frontend/**`, `backend-ci` 는 `backend/**` 가 바뀔 때만 돈다. 루트 문서와 하네스만 바뀐 PR 에서는 둘 다 돌지 않는다 |
+  | CI | `frontend-ci` 는 `frontend/**`, `backend-ci` 는 백엔드 소스와 빌드 설정(`backend/src/**`, Gradle 파일, `backend/config/**`)이 바뀔 때만 돈다. 백엔드 CI 는 이관 전 경로 필터에 `backend/` 만 붙여 옮겼다. 루트 문서와 하네스만 바뀐 PR 에서는 둘 다 돌지 않는다 |
   | 이미지 | `frontend-image`, `backend-image` 워크플로가 기존 이름 `ghcr.io/jon890/fos-accountbook-frontend`, `ghcr.io/jon890/fos-accountbook-backend` 로 push 한다. 홈 서버 compose 는 바꾸지 않는다 |
   | 운영 배포 | 홈 서버의 GHCR 이미지만 운영이다. Vercel 은 Git 연결을 끊는다 |
   | 코드 리뷰 | 리뷰 워크플로는 하나다. 바뀐 경로로 프론트와 백엔드 점검 목록을 고르고, 둘 다 바뀐 PR 은 두 목록을 합친 리뷰 하나를 받는다. 정책은 [ADR-F11](../frontend/docs/adr.md#adr-f11) 이 소유한다 |

@@ -236,7 +236,7 @@
 | diff 필터 | `frontend/pnpm-lock.yaml`, `*.lock`, `*.snap`, `backend/gradle/wrapper/gradle-wrapper.jar`, `backend/build/`, `*.class` 제외. Flyway SQL 은 제외하지 않는다 | 노이즈 감소. `*` 가 없는 pathspec 은 저장소 루트 기준이라 하위 프로젝트 경로를 붙인다 |
 | Job timeout | 15분 | agent hang 시 불필요한 비용 방지 |
 | Check Run 수동 등록 | `issue_comment` 트리거 시 수동 생성 | issue_comment workflow run 이 PR Checks 탭에 자동 노출 안 됨 — 수동 Check Run 으로 진행 상태 가시화 |
-| 프롬프트 관리 | 공통 본문 `.github/claude-review-prompt-common.txt` 와 점검 목록 `-frontend.txt`, `-backend.txt` 로 외부 분리. 바뀐 경로로 점검 목록을 고르고 둘 다 바뀌면 이어 붙인다. `envsubst` 로 `$PR_NUMBER`·`$REPO`·`$RISK_LABELS`·`$CHECKLIST` 치환 | ~180줄 인라인 heredoc 가독성·diff 정밀도 확보. `.md` 아닌 `.txt` 로 IDE 포맷터의 glob·식별자 깨짐 회피 |
+| 프롬프트 관리 | 공통 본문 `.github/claude-review-prompt-common.txt` 와 점검 목록 `-frontend.txt`, `-backend.txt` 로 외부 분리. 바뀐 경로로 점검 목록을 고르고 둘 다 바뀌면 이어 붙인다. `frontend/`, `backend/` 어느 쪽도 바뀌지 않으면 두 목록을 모두 붙인다. 선택 스크립트 `scripts/review-checklist.sh` 는 보안 경계가 아니라 PR head 의 것을 쓴다. `envsubst` 로 `$PR_NUMBER`·`$REPO`·`$RISK_LABELS`·`$CHECKLIST` 치환 | ~180줄 인라인 heredoc 가독성·diff 정밀도 확보. `.md` 아닌 `.txt` 로 IDE 포맷터의 glob·식별자 깨짐 회피 |
 | 소규모 PR 스킵 | 안 함 | 모든 PR 동일 리뷰 |
 
 **대안 기각**:
@@ -527,6 +527,8 @@
 - **대안 기각**:
   - `@source not` 1차 방어: Turbopack 미작동(위 실측)으로 무효.
   - `next build` CI 게이트: 위 이유로 부적합.
+- **모노레포 이관 뒤 (2026-09-29 실측)**: Tailwind 스캔 기준 디렉터리는 `frontend/` 다. `frontend/docs/` 의 `.md` 는 스캔되고 루트 `tasks/` 의 `.md` 는 스캔되지 않는다.
+  그래서 검사 대상은 `frontend/` 아래 `docs/`, `.claude/skills/` 다. 루트 `tasks/` 계획서는 이 위험 밖에 있다.
 - **적용 범위**: `scripts/check-tailwind-md.mjs`, `package.json`, `.github/workflows/frontend-ci.yml`.
   함정 코드: `common-pitfalls.md` CODE-3(`auto-gate: md-lint`).
 

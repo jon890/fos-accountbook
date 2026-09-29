@@ -334,7 +334,7 @@ PR이 생성되면 Claude가 자동으로 코드 리뷰를 수행합니다 (`.gi
 
 ## 🔗 관련 프로젝트
 
-- **백엔드**: [fos-accountbook-backend](https://github.com/jon890/fos-accountbook-backend) (Spring Boot)
+- **백엔드**: 같은 저장소의 [`backend/`](../backend/) (Spring Boot)
 
 ## 📄 라이센스
 

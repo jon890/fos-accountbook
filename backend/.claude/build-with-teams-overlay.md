@@ -37,7 +37,7 @@
 
 ```jsonc
 {
-  "plan": "plan{N}",
+  "plan": "be-plan{N}",
   "slug": "{kebab-slug}",
   "title": "한 줄 제목",
   "issue": "#{GitHub 이슈 번호}",   // 없으면 생략
@@ -48,7 +48,7 @@
 }
 ```
 
-phase 파일 경로: `tasks/{plan}-{slug}/phase-{N}.md`. planning 이 이미 `plan/{N}-{slug}` 브랜치에 task 를 만들어 두므로, 이 스킬은 보통 별도 생성 없이 검토 후 실행만 한다.
+phase 파일 경로: `tasks/{plan}-{slug}/phase-{N}.md`. planning 이 이미 `plan/be-{N}-{slug}` 브랜치에 task 를 만들어 두므로, 이 스킬은 보통 별도 생성 없이 검토 후 실행만 한다.
 
 ## common-pitfalls 경로
 
