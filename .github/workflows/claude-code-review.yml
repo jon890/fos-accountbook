@@ -68,7 +68,7 @@ jobs:
       # issue_comment 의 기본 체크아웃은 main 이라 PR 에서 바뀐 파일을 읽지 못한다.
       - name: 저장소 체크아웃
         if: github.event_name != 'issue_comment' || steps.fork_guard.outputs.review == 'true'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: refs/pull/${{ env.PR_NUMBER }}/head
           fetch-depth: 1
