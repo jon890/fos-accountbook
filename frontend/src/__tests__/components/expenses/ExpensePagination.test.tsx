@@ -37,6 +37,7 @@ describe("ExpensePagination", () => {
       back: jest.fn(),
       forward: jest.fn(),
       prefetch: jest.fn(),
+      bfcacheId: "test-bfcache-id",
     } as ReturnType<typeof useRouter>);
 
     // 기본 searchParams 모킹 (빈 쿼리스트링)
