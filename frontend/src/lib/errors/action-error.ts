@@ -3,7 +3,7 @@
  * 백엔드의 BusinessException과 유사한 구조
  */
 
-import { ERROR_MESSAGES, type ErrorCode } from "./error-code";
+import { ERROR_MESSAGES, ErrorCode } from "./error-code";
 import { ServerApiError } from "@/lib/server/api/types";
 
 /**
@@ -226,6 +226,23 @@ function isNetworkError(error: unknown): boolean {
 }
 
 /**
+ * 백엔드 오류 응답의 errors[0] 에서 문구와 필드를 꺼낸다.
+ * 형태가 다르거나 문구가 비어 있으면 null.
+ */
+function firstFieldError(
+  errorData: unknown
+): { message: string; field: unknown } | null {
+  if (typeof errorData !== "object" || errorData === null) return null;
+  const { errors } = errorData as { errors?: unknown };
+  if (!Array.isArray(errors) || errors.length === 0) return null;
+  const first: unknown = errors[0];
+  if (typeof first !== "object" || first === null) return null;
+  const { message, field } = first as { message?: unknown; field?: unknown };
+  if (typeof message !== "string" || message.trim() === "") return null;
+  return { message, field };
+}
+
+/**
  * 에러 처리 헬퍼
  * try-catch에서 발생한 에러를 ActionError로 변환
  */
@@ -241,6 +258,16 @@ export function handleActionError(
   // 백엔드 401 = 인증 만료 (ADR-F26)
   if (error instanceof ServerApiError && error.status === 401) {
     return ActionError.sessionExpired().toFailureResult();
+  }
+
+  // 백엔드 400 = 필드 검증 실패. 백엔드가 만든 사용자용 문구를 그대로 전달
+  if (error instanceof ServerApiError && error.status === 400) {
+    const first = firstFieldError(error.errorData);
+    if (first) {
+      return new ActionError(ErrorCode.INVALID_INPUT, first.message)
+        .addParameter("fieldName", first.field)
+        .toFailureResult();
+    }
   }
 
   // Error 객체인 경우
