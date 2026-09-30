@@ -256,9 +256,11 @@ export async function serverApiGet<T>(endpoint: string): Promise<T> {
  */
 export async function serverApiPost<T>(
   endpoint: string,
-  body?: unknown
+  body?: unknown,
+  options: ServerApiOptions = {}
 ): Promise<T> {
   const response = await serverApiClient<ApiResponse<T>>(endpoint, {
+    ...options,
     method: "POST",
     body: body ? JSON.stringify(body) : undefined,
   });
