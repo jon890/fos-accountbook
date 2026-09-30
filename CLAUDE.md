@@ -24,7 +24,6 @@ API 를 함께 바꾸는 변경은 PR 하나로 낸다.
 | docs 정리 | `/docs-check` | docs/ 5축 검증, plan 완료 후 주기적 |
 | UI 리뷰 | `/web-design-guidelines` | "review my UI", 접근성/UX 감사 |
 | PR 리뷰 반영 | `/review-fix` | "리뷰 댓글 반영" |
-| 커밋 | `/commit-convention` | "커밋해줘" |
 
 `/planning` → docs 갱신 → task 생성 → `/build-with-teams` 실행 흐름이 표준.
 `/planning` 은 공용 코어(`~/.claude/skills/planning`) + `.claude/planning-overlay.md` 조합으로 동작한다.
@@ -58,6 +57,7 @@ API 를 함께 바꾸는 변경은 PR 하나로 낸다.
 
 - **main 직접 push 차단** — branch protection 으로 거부됨. 모든 변경은 작업 브랜치 + PR (task 파일/docs 도 동일).
 - **PR 제목**: `type(scope): description` — 절대 벗어나지 않는다.
+- **커밋 메시지**: 제목과 본문은 한국어로 쓴다. 형식은 PR 제목과 같은 `type(scope): 설명` 이다.
 - **commit 전 로컬 검증 필수** — 바뀐 하위 프로젝트의 검증 명령을 로컬에서 통과시킨 후에만 commit/push. CI 왕복 (push → 실패 → 진단 → 재푸시) 비용 회피 목적. ESLint unused-variable 같은 자명한 실패는 로컬에서 잡힌다.
 
 ```bash
