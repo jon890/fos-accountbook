@@ -11,7 +11,7 @@ import {
 } from "@/lib/server/auth/auth-helpers";
 import { createExpense } from "@/services/expense/expense-service";
 import type { CreateExpenseFormState } from "@/types/expense";
-import { revalidatePath } from "next/cache";
+import { revalidateTransactionPaths } from "@/lib/server/revalidate-transaction-paths";
 import { z } from "zod";
 
 // 지출 생성 스키마
@@ -52,9 +52,7 @@ export async function createExpenseAction(
 
     await createExpense(familyUuid, validatedFields.data);
 
-    revalidatePath("/transactions");
-    revalidatePath("/");
-    revalidatePath("/analytics");
+    revalidateTransactionPaths();
 
     return {
       message: "지출이 성공적으로 추가되었습니다.",

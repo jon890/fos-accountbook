@@ -18,6 +18,8 @@ jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }));
 jest.mock("@/actions/category/get-categories-action");
 jest.mock("@/actions/expense/update-expense-action");
 jest.mock("@/actions/income/update-income-action");
+jest.mock("@/actions/expense/delete-expense-action");
+jest.mock("@/actions/income/delete-income-action");
 jest.mock("@/actions/recurring-expense");
 
 jest.mock("sonner", () => ({
@@ -38,7 +40,12 @@ import { updateExpenseAction } from "@/actions/expense/update-expense-action";
 import { updateIncomeAction } from "@/actions/income/update-income-action";
 import { updateRecurringExpenseAction } from "@/actions/recurring-expense";
 import { EditTransactionDialog } from "@/components/transactions/dialogs/EditTransactionDialog";
-import { render, screen, waitFor } from "@testing-library/react";
+import { deleteExpenseAction } from "@/actions/expense/delete-expense-action";
+import { deleteIncomeAction } from "@/actions/income/delete-income-action";
+import { toast } from "sonner";
+import { ActionError } from "@/lib/errors";
+import userEvent from "@testing-library/user-event";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import type { Expense } from "@/types/expense";
 import type { Income } from "@/types/income";
 import type { RecurringExpense } from "@/types/recurring-expense";
@@ -114,6 +121,76 @@ describe("EditTransactionDialog", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetCategories.mockResolvedValue({ success: true, data: mockCategories });
+  });
+
+  it.each(["expense", "income"] as const)("%s 삭제 성공 시 가족과 거래를 전달하고 수정 창을 닫는다", async (type) => {
+    const user = userEvent.setup();
+    const transaction = type === "expense" ? mockExpense : mockIncome;
+    const action = type === "expense" ? deleteExpenseAction : deleteIncomeAction;
+    jest.mocked(action).mockResolvedValue({ success: true, data: undefined });
+    render(
+      <EditTransactionDialog
+        open
+        onOpenChange={onOpenChange}
+        type={type}
+        transaction={transaction}
+        familyUuid="chosen-family"
+      />,
+    );
+    await user.click(await screen.findByRole("button", { name: "삭제" }));
+    await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "삭제" }));
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(action).toHaveBeenCalledWith("chosen-family", transaction.uuid);
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  it("삭제 확인을 취소하면 거래와 수정 창을 유지한다", async () => {
+    const user = userEvent.setup();
+    render(
+      <EditTransactionDialog open onOpenChange={onOpenChange} type="expense" transaction={mockExpense} />,
+    );
+    await user.click(await screen.findByRole("button", { name: "삭제" }));
+    await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "취소" }));
+    expect(deleteExpenseAction).not.toHaveBeenCalled();
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "지출 수정" })).toBeInTheDocument();
+  });
+
+  it.each(["expense", "income"] as const)("%s 삭제 실패 시 거래 가족을 사용하고 수정 창을 유지한다", async (type) => {
+    const user = userEvent.setup();
+    const transaction = type === "expense" ? mockExpense : mockIncome;
+    const action = type === "expense" ? deleteExpenseAction : deleteIncomeAction;
+    jest.mocked(action).mockResolvedValue(
+      ActionError.unauthorized("삭제 권한 없음").toFailureResult(),
+    );
+    render(
+      <EditTransactionDialog open onOpenChange={onOpenChange} type={type} transaction={transaction} />,
+    );
+    await user.click(await screen.findByRole("button", { name: "삭제" }));
+    await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "삭제" }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("삭제 권한 없음"));
+    expect(action).toHaveBeenCalledWith(transaction.familyUuid, transaction.uuid);
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("삭제 요청 예외에도 수정 창을 유지한다", async () => {
+    const user = userEvent.setup();
+    jest.mocked(deleteExpenseAction).mockRejectedValue(new Error("network"));
+    render(
+      <EditTransactionDialog open onOpenChange={onOpenChange} type="expense" transaction={mockExpense} />,
+    );
+    await user.click(await screen.findByRole("button", { name: "삭제" }));
+    await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "삭제" }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("지출 삭제에 실패했습니다"));
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("고정지출에는 삭제 버튼을 표시하지 않는다", async () => {
+    render(
+      <EditTransactionDialog open onOpenChange={onOpenChange} type="recurring" transaction={mockRecurring} />,
+    );
+    await screen.findByRole("button", { name: "고정지출 수정" });
+    expect(screen.queryByRole("button", { name: "삭제" })).not.toBeInTheDocument();
   });
 
   describe("type 잠금 — 비활성 토글 disabled", () => {

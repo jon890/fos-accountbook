@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,12 +25,9 @@ export function ExpenseTabContent({
   familyUuid,
 }: ExpenseTabContentProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const router = useRouter();
 
   const handleExpenseAdded = () => {
     setIsAddDialogOpen(false);
-    // 페이지 새로고침으로 서버 컴포넌트 리렌더링
-    router.refresh();
   };
 
   return (

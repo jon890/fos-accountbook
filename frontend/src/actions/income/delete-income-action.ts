@@ -11,7 +11,7 @@ import {
   getSelectedFamilyUuid,
 } from "@/lib/server/auth/auth-helpers";
 import { deleteIncome } from "@/services/income/income-service";
-import { revalidatePath } from "next/cache";
+import { revalidateTransactionPaths } from "@/lib/server/revalidate-transaction-paths";
 
 export async function deleteIncomeAction(
   familyUuid: string,
@@ -34,9 +34,7 @@ export async function deleteIncomeAction(
 
     await deleteIncome(familyUuid, incomeUuid);
 
-    revalidatePath("/transactions");
-    revalidatePath("/");
-    revalidatePath("/analytics");
+    revalidateTransactionPaths();
 
     return successResult(undefined);
   } catch (error) {

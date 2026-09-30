@@ -38,7 +38,8 @@ import { createExpenseAction } from "@/actions/expense/create-expense-action";
 import { createIncomeAction } from "@/actions/income/create-income-action";
 import { createRecurringExpenseAction } from "@/actions/recurring-expense";
 import { AddTransactionDialog } from "@/components/transactions/dialogs/AddTransactionDialog";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import userEvent from "@testing-library/user-event";
 
 const mockGetCategories = getFamilyCategoriesAction as jest.MockedFunction<
@@ -75,7 +76,44 @@ describe("AddTransactionDialog", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.mocked(useMediaQuery).mockReturnValue(true);
     setupCategoryMock();
+  });
+
+  it("모바일 입력에 포커스하면 화면 가운데로 스크롤하고 footer를 본문 밖에 둔다", async () => {
+    jest.mocked(useMediaQuery).mockReturnValue(false);
+    render(<AddTransactionDialog open onOpenChange={onOpenChange} />);
+    const dateInput = await screen.findByLabelText(/날짜/);
+    const scrollIntoView = jest.fn();
+    dateInput.scrollIntoView = scrollIntoView;
+    fireEvent.focus(dateInput);
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "center" });
+    const submit = screen.getByRole("button", { name: "지출 추가" });
+    const footer = submit.closest(".sticky");
+    expect(footer).toHaveClass("bottom-0", "pb-[env(safe-area-inset-bottom)]");
+    expect(footer?.previousElementSibling).toHaveClass("overflow-y-auto", "min-h-0");
+    expect(document.querySelector('[data-slot="sheet-content"]')).toHaveClass("h-[100dvh]");
+  });
+
+  it("선택 날짜와 사용자가 고친 날짜를 종류 전환 뒤에도 유지하고 다른 날짜로 다시 연다", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <AddTransactionDialog open onOpenChange={onOpenChange} defaultDate="2026-09-14" />,
+    );
+    const dateInput = await screen.findByLabelText(/날짜/);
+    expect(dateInput).toHaveValue("2026-09-14");
+    await user.clear(dateInput);
+    await user.type(dateInput, "2026-09-13");
+    await user.click(screen.getByRole("button", { name: /^수입$/ }));
+    expect(screen.getByLabelText(/날짜/)).toHaveValue("2026-09-13");
+    await user.click(screen.getByRole("button", { name: /^고정지출$/ }));
+    await user.click(screen.getByRole("button", { name: /^지출$/ }));
+    expect(screen.getByLabelText(/날짜/)).toHaveValue("2026-09-13");
+    rerender(
+      <AddTransactionDialog open={false} onOpenChange={onOpenChange} defaultDate="2026-09-15" />,
+    );
+    rerender(<AddTransactionDialog open onOpenChange={onOpenChange} defaultDate="2026-09-15" />);
+    expect(await screen.findByLabelText(/날짜/)).toHaveValue("2026-09-15");
   });
 
   it("기본 type=expense 로 열리면 지출 추가 버튼이 렌더링된다", async () => {

@@ -68,7 +68,9 @@ describe("deleteExpenseAction", () => {
       "/families/family-1/expenses/expense-1"
     );
     expect(mockRevalidatePath).toHaveBeenCalledWith("/transactions");
-    expect(mockRevalidatePath).toHaveBeenCalledWith("/");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/calendar");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/budget");
+    expect(mockRevalidatePath).not.toHaveBeenCalledWith("/");
   });
 
   it("familyUuid가 세션과 다르면 권한 에러를 반환한다", async () => {
@@ -147,9 +149,11 @@ describe("deleteExpenseAction", () => {
     await deleteExpenseAction("family-1", "expense-1");
 
     // Then
-    expect(mockRevalidatePath).toHaveBeenCalledTimes(3);
+    expect(mockRevalidatePath).toHaveBeenCalledTimes(4);
     expect(mockRevalidatePath).toHaveBeenCalledWith("/transactions");
-    expect(mockRevalidatePath).toHaveBeenCalledWith("/");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/calendar");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/budget");
+    expect(mockRevalidatePath).not.toHaveBeenCalledWith("/");
     expect(mockRevalidatePath).toHaveBeenCalledWith("/analytics");
   });
 });

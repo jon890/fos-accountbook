@@ -6,6 +6,8 @@ import { AmountInput } from "@/components/expenses/forms/AmountInput";
 import { CategoryGrid } from "@/components/expenses/forms/CategoryGrid";
 import type { CategoryResponse } from "@/types/category";
 import type { TransactionType } from "@/types/transaction";
+import type { FocusEvent } from "react";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 interface TransactionFormFieldsProps {
   type: TransactionType;
@@ -49,9 +51,16 @@ export function TransactionFormFields({
   errors,
 }: TransactionFormFieldsProps) {
   const isRecurring = type === "recurring";
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+
+  function handleFocus(event: FocusEvent<HTMLDivElement>) {
+    if (!isDesktop && event.target instanceof HTMLInputElement) {
+      event.target.scrollIntoView({ block: "center" });
+    }
+  }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" onFocus={handleFocus}>
       {/* 금액 (공용) */}
       <div className="space-y-2">
         <Label htmlFor="amount">금액 *</Label>
