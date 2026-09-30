@@ -1,4 +1,5 @@
-import { getMonthlyCategoryBreakdown } from "@/services/dashboard/dashboard-service";
+import { serverApiGet } from "@/lib/server/api/client";
+import { ServerApiError } from "@/lib/server/api/types";
 import type {
   AnalyticsPeriod,
   CategoryBreakdownWithDelta,
@@ -14,13 +15,53 @@ const PERIOD_TO_MONTHS: Record<AnalyticsPeriod, number> = {
   y1: 12,
 };
 
-function getPreviousMonth(year: number, month: number): { year: number; month: number } {
-  if (month === 1) return { year: year - 1, month: 12 };
+interface TrendResponse {
+  points: MonthlyTrendPoint[];
+  average: number;
+}
+
+interface BreakdownResponse {
+  year: number;
+  month: number;
+  totalExpense: number;
+  items: Array<
+    Omit<CategoryWithDelta, "name" | "icon"> & {
+      name: string | null;
+      icon: string | null;
+    }
+  >;
+}
+
+function monthKey(year: number, month: number): string {
+  return `${year}-${String(month).padStart(2, "0")}`;
+}
+
+function emptyOnFailure<T>(fallback: T): (error: unknown) => T {
+  return (error) => {
+    if (error instanceof ServerApiError && error.status === 401) {
+      throw error;
+    }
+
+    return fallback;
+  };
+}
+
+function getPreviousMonth(
+  year: number,
+  month: number,
+): { year: number; month: number } {
+  if (month === 1) {
+    return { year: year - 1, month: 12 };
+  }
+
   return { year, month: month - 1 };
 }
 
 function computeDelta(current: number, previous: number): number | null {
-  if (previous <= 0) return null;
+  if (previous <= 0) {
+    return null;
+  }
+
   return Math.round(((current - previous) / previous) * 100);
 }
 
@@ -38,14 +79,20 @@ export async function getMonthlyTrend(
     cur = getPreviousMonth(cur.year, cur.month);
   }
 
-  const breakdowns = await Promise.all(
-    targets.map((t) => getMonthlyCategoryBreakdown(familyUuid, t.year, t.month)),
+  const first = targets[0];
+  const response = await serverApiGet<TrendResponse>(
+    `/families/${familyUuid}/dashboard/stats/monthly-trend?from=${monthKey(first.year, first.month)}&to=${monthKey(refYear, refMonth)}`,
+  ).catch(emptyOnFailure<TrendResponse>({ points: [], average: 0 }));
+  const amounts = new Map(
+    response.points.map((point) => [
+      monthKey(point.year, point.month),
+      point.totalExpense,
+    ]),
   );
 
-  const points: MonthlyTrendPoint[] = breakdowns.map((b) => ({
-    year: b.year,
-    month: b.month,
-    totalExpense: b.totalExpense,
+  const points: MonthlyTrendPoint[] = targets.map((target) => ({
+    ...target,
+    totalExpense: amounts.get(monthKey(target.year, target.month)) ?? 0,
   }));
 
   const total = points.reduce((sum, p) => sum + p.totalExpense, 0);
@@ -60,22 +107,40 @@ export async function getCategoryBreakdownWithDelta(
   month: number,
 ): Promise<CategoryBreakdownWithDelta> {
   const prev = getPreviousMonth(year, month);
-  const [current, previous] = await Promise.all([
-    getMonthlyCategoryBreakdown(familyUuid, year, month),
-    getMonthlyCategoryBreakdown(familyUuid, prev.year, prev.month),
+  const [current, trend] = await Promise.all([
+    serverApiGet<BreakdownResponse>(
+      `/families/${familyUuid}/dashboard/stats/category-breakdown?year=${year}&month=${month}&compareWithPrev=true`,
+    ).catch(
+      emptyOnFailure<BreakdownResponse>({
+        year,
+        month,
+        totalExpense: 0,
+        items: [],
+      }),
+    ),
+    serverApiGet<TrendResponse>(
+      `/families/${familyUuid}/dashboard/stats/monthly-trend?from=${monthKey(prev.year, prev.month)}&to=${monthKey(year, month)}`,
+    ).catch(emptyOnFailure<TrendResponse>({ points: [], average: 0 })),
   ]);
 
-  const prevByUuid = new Map(previous.items.map((i) => [i.categoryUuid, i.totalAmount]));
+  const amounts = new Map(
+    trend.points.map((point) => [
+      monthKey(point.year, point.month),
+      point.totalExpense,
+    ]),
+  );
+  const currentTotal = amounts.get(monthKey(year, month)) ?? 0;
+  const previousTotal = amounts.get(monthKey(prev.year, prev.month)) ?? 0;
 
   const items: CategoryWithDelta[] = current.items.map((item) => {
-    const previousAmount = prevByUuid.get(item.categoryUuid) ?? 0;
     return {
       categoryUuid: item.categoryUuid,
-      name: item.name,
-      icon: item.icon,
+      name: item.name ?? "Unknown",
+      icon: item.icon ?? "💰",
       totalAmount: item.totalAmount,
-      percentage: item.percentage,
-      deltaPercent: computeDelta(item.totalAmount, previousAmount),
+      percentage: Math.round(item.percentage),
+      deltaPercent:
+        item.deltaPercent === null ? null : Math.round(item.deltaPercent),
     };
   });
 
@@ -83,7 +148,7 @@ export async function getCategoryBreakdownWithDelta(
     year: current.year,
     month: current.month,
     totalExpense: current.totalExpense,
-    totalDelta: computeDelta(current.totalExpense, previous.totalExpense),
+    totalDelta: computeDelta(currentTotal, previousTotal),
     items,
   };
 }
