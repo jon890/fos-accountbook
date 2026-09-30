@@ -5,9 +5,13 @@ import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.shared.utils.TimeUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -48,5 +52,30 @@ class JwtTokenProviderTest {
     log.debug("issuedAt from return : {}", issuedAtLocalDateTime);
 
     assertEquals(issuedAtLocalDateTime, TimeUtils.toLocalDateTime(issuedAtDate));
+  }
+
+  @Test
+  @DisplayName("다른 키로 서명한 토큰은 예외 없이 false 를 돌려준다")
+  void validateToken_ReturnsFalse_WhenSignedWithOtherKey() {
+    String token = Jwts.builder()
+                       .subject("someone")
+                       .expiration(new Date(System.currentTimeMillis() + 60_000))
+                       .signWith(Keys.hmacShaKeyFor("other-secret-key-that-is-long-enough-for-hs512-signing-0123456789".getBytes(StandardCharsets.UTF_8)))
+                       .compact();
+
+    assertThat(sut.validateToken(token)).isFalse();
+  }
+
+  @Test
+  @DisplayName("수신자가 지정된 토큰은 access token 으로 받지 않는다")
+  void validateToken_ReturnsFalse_WhenAudiencePresent() {
+    String token = Jwts.builder()
+                       .subject("google:123")
+                       .audience().add(SocialLoginAssertionVerifier.AUDIENCE).and()
+                       .expiration(new Date(System.currentTimeMillis() + 60_000))
+                       .signWith(sut.getSigningKey(), sut.getAlgorithm())
+                       .compact();
+
+    assertThat(sut.validateToken(token)).isFalse();
   }
 }

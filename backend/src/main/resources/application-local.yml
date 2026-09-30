@@ -24,7 +24,8 @@ spring:
 
 # JWT 로컬 개발용 설정
 jwt:
-  secret: local-development-secret-key-for-testing-purposes-only-do-not-use-in-production-256bits
+  # 프론트엔드 AUTH_SECRET 과 같아야 로그인 서명을 검증한다
+  secret: ${AUTH_SECRET:local-development-secret-key-for-testing-purposes-only-do-not-use-in-production-256bits}
   expiration: 86400000 # 24시간
   refresh-expiration: 604800000 # 7일
 

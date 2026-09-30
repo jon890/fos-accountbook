@@ -8,6 +8,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SecurityException;
 import io.jsonwebtoken.security.SecureDigestAlgorithm;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
@@ -73,7 +74,12 @@ public abstract class AbstractJwtTokenProvider {
    */
   public boolean validateToken(String token) {
     try {
-      getJwtParser().parseSignedClaims(token);
+      Claims claims = getJwtParser().parseSignedClaims(token).getPayload();
+      // 수신자가 지정된 토큰(소셜 로그인 서명 등)은 access/refresh token 으로 받지 않는다
+      if (claims.getAudience() != null && !claims.getAudience().isEmpty()) {
+        log.debug("JWT with audience is not an access token: {}", claims.getAudience());
+        return false;
+      }
       return true;
     } catch (SecurityException e) {
       log.debug("Invalid JWT signature: {}", e.getMessage());

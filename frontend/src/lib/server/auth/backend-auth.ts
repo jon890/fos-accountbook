@@ -2,6 +2,10 @@ import { serverEnv } from "@/lib/env/server.env";
 import { AuthResponse, RefreshTokenRequest } from "@/types";
 import { cookies } from "next/headers";
 import { serverApiPost } from "../api";
+import {
+  SOCIAL_LOGIN_ASSERTION_HEADER,
+  signSocialLoginAssertion,
+} from "./social-login-assertion";
 
 type SocialLoginRequest = {
   provider: string;
@@ -16,7 +20,15 @@ export async function requestSocialLogin(
 ): Promise<AuthResponse> {
   const socialLoginResponse = await serverApiPost<AuthResponse>(
     "/auth/social-login",
-    data
+    data,
+    {
+      headers: {
+        [SOCIAL_LOGIN_ASSERTION_HEADER]: signSocialLoginAssertion(
+          data,
+          serverEnv.AUTH_SECRET
+        ),
+      },
+    }
   );
 
   await savedTokensToCookies(

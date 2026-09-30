@@ -246,7 +246,7 @@ CREATE TABLE recurring_expenses (
 
 ```
 # [user] 인증
-POST   /auth/social-login          소셜 로그인 (공개)
+POST   /auth/social-login          소셜 로그인 (프론트엔드 서버 서명 필요, ADR-B17)
 POST   /auth/refresh               토큰 갱신 (공개)
 
 # [user] 사용자 프로필

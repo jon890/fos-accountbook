@@ -20,8 +20,8 @@ spring:
 # JWT 설정 (테스트용)
 jwt:
   secret: test-secret-key-for-jwt-token-generation-must-be-at-least-256-bits
-  access-token-validity: 3600000 # 1시간
-  refresh-token-validity: 604800000 # 7일
+  expiration: 3600000 # 1시간
+  refresh-expiration: 604800000 # 7일
 
 nextauth:
   secret: test-secret-key-for-jwt-token-generation-must-be-at-least-256-bits
