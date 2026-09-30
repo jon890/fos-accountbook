@@ -105,6 +105,20 @@ describe("내역 페이지", () => {
     expect(page.props.recurringListContent).toBeNull();
   });
 
+  it.each(["unknown", "", "INCOMES", ["incomes", "recurring"]])(
+    "잘못된 탭 %j는 지출 탭으로 정규화한다",
+    async (tab) => {
+      const page = await TransactionsPage({
+        searchParams: Promise.resolve({ tab }),
+      });
+
+      expect(page.props.activeTab).toBe("expenses");
+      expect(page.props.expenseListContent).not.toBeNull();
+      expect(page.props.incomeListContent).toBeNull();
+      expect(page.props.recurringListContent).toBeNull();
+    },
+  );
+
   it("수입 탭은 지출과 프로필을 조회하지 않고 세션 시간대를 사용한다", async () => {
     const page = await TransactionsPage({
       searchParams: Promise.resolve({ tab: "incomes" }),

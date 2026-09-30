@@ -23,7 +23,7 @@ import { getCachedSession } from "@/lib/server/cache";
 export const dynamic = "force-dynamic";
 
 interface SearchParams {
-  tab?: "expenses" | "incomes" | "recurring";
+  tab?: string | string[];
   categoryId?: string;
   startDate?: string;
   endDate?: string;
@@ -43,8 +43,13 @@ export default async function TransactionsPage({
 }: TransactionsPageProps) {
   const resolvedSearchParams = await searchParams;
 
-  // 기본 탭은 지출
-  const activeTab = resolvedSearchParams.tab || "expenses";
+  // URL에서 받은 탭은 허용한 값만 사용하고 나머지는 지출로 처리한다.
+  const requestedTab = resolvedSearchParams.tab;
+  const isSupportedTab =
+    requestedTab === "expenses" ||
+    requestedTab === "incomes" ||
+    requestedTab === "recurring";
+  const activeTab = isSupportedTab ? requestedTab : "expenses";
 
   // 로그인 때 세션에 저장한 시간대 사용
   const session = await getCachedSession();

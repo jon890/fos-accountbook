@@ -39,6 +39,7 @@
 
 - `getUserProfileAction` import 와 호출을 지운다. `const session = await getCachedSession(); const timezone = session?.user?.profile?.timezone ?? "Asia/Seoul";`
 - 세 slot 중 `activeTab` 에 해당하는 것만 만들고 나머지는 `null` 로 넘긴다.
+- URL 의 `tab` 은 서버에서 세 허용값으로 정규화한다. 생략하거나 허용되지 않은 값이면 기본 탭 `expenses` 로 정한다. 같은 값을 클라이언트와 slot 선택에 사용한다.
 - `TransactionsPageClient` 의 prop 타입(`expenseListContent` 등)을 `ReactNode` 그대로 둔다. `null` 은 `ReactNode` 에 포함된다.
 - 카테고리 조회(`getFamilyCategoriesAction`)는 지출 탭과 필터가 쓰므로 그대로 둔다.
 
@@ -59,6 +60,7 @@
 
 - HTTP 검증 책임: `frontend/src/__tests__/lib/server-api-client.test.ts` 에서 `ky.create` 의 `retry.methods` 가 `["get"]`, `timeout` 이 5000 인지 확인한다. 502 는 재시도 대상이고 최대 횟수 2 는 유지한다. 기존 ky mock 에는 재시도 구현이 없으므로 mock 호출 횟수를 실제 재시도 증거로 사용하지 않는다.
 - 탭 검증 책임: `frontend/src/__tests__/app/transactions/page.test.tsx` (없으면 신규) 에서 async page 를 직접 호출하고 반환 element 의 세 slot props 를 검사한다. expenses, incomes, recurring 각각 활성 slot 만 non-null 이어야 한다. 기본 탭은 expenses 다. `tab=incomes` 를 렌더링할 때 지출 조회와 `getUserProfileAction` 이 불리지 않는지, 세션 timezone 과 누락 시 `"Asia/Seoul"` 이 `getMonthRange` 에 전달되는지도 확인한다.
+- `tab=unknown` 처럼 잘못된 URL 값도 `expenses` 와 지출 slot 만 선택하는지 확인한다.
 - 차트 검증 책임: `frontend/src/__tests__/components/lazy-charts.test.tsx` 를 추가한다. `next/dynamic` 을 mock 해 세 차트의 `ssr: false`, 외부 props 전달과 원래 높이를 유지하는 loading 을 확인한다. 기존 차트 테스트가 있으면 같은 mock 으로 검증한다.
 - 세 작업은 각각 위 검증을 통과해야 완료다. 한 작업의 검증 실패를 다른 작업의 완료로 대체하지 않는다.
 
