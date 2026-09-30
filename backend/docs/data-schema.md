@@ -227,7 +227,7 @@ CREATE TABLE api_tokens (
     uuid         VARCHAR(36)  NOT NULL UNIQUE,
     user_uuid    VARCHAR(36)  NOT NULL,   -- 토큰 주인. users(uuid) FK
     name         VARCHAR(50)  NOT NULL,   -- 사용자가 붙인 이름 (예: fos-assistant)
-    token_hash   CHAR(64)     NOT NULL UNIQUE,  -- 원문의 SHA-256 hex. 원문은 저장하지 않는다
+    token_hash   VARCHAR(64)  NOT NULL UNIQUE,  -- 원문의 SHA-256 hex. 원문은 저장하지 않는다
     token_prefix VARCHAR(12)  NOT NULL,   -- 목록 표시용 앞부분 (fab_ + 8자)
     status       VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',  -- ACTIVE | REVOKED
     last_used_at DATETIME(3),             -- 인증에 쓰인 마지막 시각. 5분 단위로 갱신

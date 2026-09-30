@@ -12,7 +12,7 @@
 ## 컨텍스트
 
 - 서버 페이지 `frontend/src/app/(authenticated)/settings/page.tsx` 가 프로필과 가족을 조회해 `SettingsPageClient` 에 넘긴다.
-- `frontend/src/app/(authenticated)/settings/_components/SettingsPageClient.tsx` 는 `SettingsCard`(같은 파일 안의 컴포넌트, `icon`, `title`, `subtitle`, `className` props)로 카드를 그리고 `grid gap-4 md:grid-cols-2` 안에 둔다. 마지막 카드가 「내 가족 목록」 이다.
+- `frontend/src/app/(authenticated)/settings/_components/SettingsPageClient.tsx` 는 `frontend/src/components/layout/SettingsCard.tsx` 의 `SettingsCard`(`icon`, `title`, `subtitle?`, `children`, `className?`)로 카드를 그리고 `grid gap-4 md:grid-cols-2` 안에 둔다. 마지막 카드가 「내 가족 목록」 이다.
 - phase 03 이 만든 것: `frontend/src/types/api-token.ts` 의 `ApiToken`, `CreatedApiToken`, `frontend/src/actions/user/` 의 `getApiTokensAction`, `createApiTokenAction`, `revokeApiTokenAction`.
 - UI 부품: `frontend/src/components/ui/` 의 `dialog.tsx`, `alert-dialog.tsx`, `input.tsx`, `label.tsx`, `button.tsx`. native 태그를 쓰지 않는다 (common-pitfalls CODE-5).
 - 기존 Dialog 컴포넌트 선례: `frontend/src/components/settings/BudgetEditDialog.tsx`, 토스트는 `sonner` 의 `toast`.
@@ -45,7 +45,7 @@ props: `initialTokens: ApiToken[] | null`.
 
 ### 3. `frontend/src/app/(authenticated)/settings/_components/SettingsPageClient.tsx`
 
-props 에 `apiTokens: ApiToken[] | null` 을 더하고, 「내 가족 목록」 카드 다음에 `SettingsCard`(`icon={KeyRound}`, `title="외부 연동"`, `subtitle` 은 위 부제, `className="md:col-span-2"`) 안에 `<ApiTokenSettingsCard initialTokens={apiTokens} />` 를 둔다. 이때 작업 항목 2 의 컴포넌트는 제목과 부제를 다시 그리지 않고 본문만 그린다.
+props 에 `apiTokens: ApiToken[] | null` 을 더하고, 「내 가족 목록」 카드 다음에 `SettingsCard` 를 두고 그 안에 `<ApiTokenSettingsCard initialTokens={apiTokens} />` 를 둔다. `SettingsCard` 의 props 는 `icon={KeyRound}`, `title="외부 연동"`, `subtitle="fos-assistant 같은 에이전트가 가계부를 기록할 때 쓰는 토큰이에요"`, `className="md:col-span-2"` 다. `KeyRound` 는 `lucide-react` 에서 가져온다. 작업 항목 2 의 컴포넌트는 제목과 부제를 다시 그리지 않고 본문만 그린다.
 
 ### 4. 테스트 `frontend/src/__tests__/components/settings/ApiTokenSettingsCard.test.tsx` (신규)
 
@@ -63,7 +63,7 @@ props 에 `apiTokens: ApiToken[] | null` 을 더하고, 「내 가족 목록」 
 ## 검증
 
 ```bash
-cd frontend
+# cwd: frontend
 pnpm exec jest src/__tests__/components/settings/ApiTokenSettingsCard.test.tsx src/__tests__/components/settings/SettingsPageClient.test.tsx
 pnpm lint && pnpm lint:md && pnpm exec tsc --noEmit && pnpm test
 # server.env 는 import 때 필수 환경값을 검증한다. Dockerfile 과 같이 검증을 건너뛰고 빌드한다

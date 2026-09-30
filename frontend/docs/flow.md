@@ -500,7 +500,7 @@ Teal 리디자인 + 인라인 style 제거 + Empty state 일관화.
 [/settings (server)]
     ├─ getUserProfileAction() → { defaultFamilyUuid, name, email }
     ├─ getFamiliesAction() → Family[]
-    └─ getApiTokensAction() → ApiToken[] (실패하면 빈 목록으로 보이고 카드에 안내 문구)
+    └─ getApiTokensAction() → ApiToken[] (실패하면 null 을 넘기고 카드에 「연동 토큰을 불러오지 못했어요」, 다른 카드는 그대로)
         │
         └─ SettingsPageClient (use client)
                 │
@@ -524,7 +524,7 @@ Teal 리디자인 + 인라인 style 제거 + Empty state 일관화.
                 │
                 └─ [외부 연동 카드] ApiTokenSettingsCard — 외부 에이전트가 가계부를 기록할 때 쓰는 토큰 (backend ADR-B18)
                         ├─ 목록: 이름, 앞부분(fab_xxxxxxxx), 발급일, 마지막 사용(없으면 「사용 기록 없음」)
-                        ├─ "토큰 발급" → 이름 입력 Dialog → createApiTokenAction({ name })
+                        ├─ "토큰 발급" → 이름 입력 Dialog → createApiTokenAction(name)
                         │       └─ 성공: 같은 Dialog 에 원문 + 복사 버튼 + 「이 창을 닫으면 다시 볼 수 없어요」
                         │       └─ 5개를 넘으면 백엔드 400 메시지를 toast 로
                         └─ "폐기" → AlertDialog 확인 → revokeApiTokenAction(uuid) → 목록에서 사라짐

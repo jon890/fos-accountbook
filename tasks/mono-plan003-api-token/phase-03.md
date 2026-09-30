@@ -15,6 +15,7 @@
 - 서버 API 클라이언트: `frontend/src/lib/server/api/client.ts` 의 `serverApiGet<T>(endpoint)`, `serverApiPost<T>(endpoint, body)`, `serverApiDelete<T>(endpoint)` 는 `ApiResponse<T>` 의 `data` 를 돌려준다. 엔드포인트는 `/api/v1` 를 뺀 `/users/me/api-tokens` 로 적는다(`frontend/src/services/user/user-service.ts` 선례).
 - Server Action 선례: `frontend/src/actions/family/get-families-action.ts` (`requireAuth` → service → `successResult`, 실패는 `handleActionError`), Zod 스키마 선례: `frontend/src/actions/invitation/_schemas.ts`.
 - 토큰은 가족 식별자를 다루지 않고 로그인 사용자 자신의 것만 다룬다. 백엔드가 소유를 확인하므로 ADR-F25 의 가족 패턴은 해당하지 않는다. 입력 검증은 ADR-F06 을 따른다.
+- 오류 변환: `frontend/src/lib/errors/action-error.ts` 의 `handleActionError` 는 백엔드 400 응답의 `errorData.errors[0].message` 가 있을 때만 서버 문구를 넘긴다. 업무 오류(`ApiErrorResponse.of(BusinessException, ...)`)는 `errors` 없이 `code` 와 `message` 만 담아, 한도 초과(AT002) 문구가 기본 문구로 바뀐다.
 - 테스트 선례: `frontend/src/__tests__/actions/family/update-family-action.test.ts` (`jest.mock("@/lib/server/auth/auth-helpers")`, service automock, `next/cache` mock).
 
 **근거 문서**: `frontend/docs/data-schema.md` 의 「ApiToken」, `frontend/docs/flow.md` 의 「15. /settings 페이지 구조」, `frontend/docs/adr.md` 의 ADR-F04, ADR-F06
@@ -25,6 +26,11 @@
 - `createApiTokenAction`, `revokeApiTokenAction` 은 끝에 `revalidatePath("/settings")` 를 부른다 (common-pitfalls CODE-6).
 
 ## 작업 항목
+
+### 0. `frontend/src/lib/errors/action-error.ts` 의 400 업무 오류 문구 전달
+
+`handleActionError` 의 400 분기에서 `firstFieldError` 가 null 이면, `error.errorData` 가 객체이고 `message` 가 비어 있지 않은 문자열일 때 `new ActionError(ErrorCode.INVALID_INPUT, message).toFailureResult()` 를 돌려준다. `code` 가 문자열이면 `.addParameter("backendCode", code)` 를 붙인다. 필드 오류 분기와 다른 상태 코드 처리는 바꾸지 않는다.
+테스트는 `frontend/src/__tests__/lib/action-error.test.ts` 에 더한다: `new ServerApiError("x", 400, { code: "AT002", message: "연동 토큰은 5개까지 만들 수 있습니다" })` 를 넘기면 `success: false` 이고 `error.message` 가 그 문구다. `errors[0]` 이 있는 기존 케이스는 그대로 통과한다.
 
 ### 1. `frontend/src/types/api-token.ts` (신규)
 
@@ -52,13 +58,14 @@
 - `createApiTokenAction("   ")` 와 51자 이름: `success: false`, service 를 부르지 않는다
 - `revokeApiTokenAction("550e8400-e29b-41d4-a716-446655440000")`: service 를 그 uuid 로 부르고 `success: true`
 - `revokeApiTokenAction("not-a-uuid")`: `success: false`, service 를 부르지 않는다
-- `getApiTokensAction()`: service 가 throw 하면 `success: false` 이고 message 가 「연동 토큰 목록을 불러오지 못했습니다」 또는 서버 메시지다
+- `getApiTokensAction()`: service 가 `new Error("boom")` 을 throw 하면 `success: false` 이고 `error.message` 가 「연동 토큰 목록을 불러오지 못했습니다」 다
+- `createApiTokenAction("x")`: service 가 `new ServerApiError("x", 400, { code: "AT002", message: "연동 토큰은 5개까지 만들 수 있습니다" })` 를 throw 하면 `error.message` 가 「연동 토큰은 5개까지 만들 수 있습니다」 다
 
 ## 검증
 
 ```bash
-cd frontend
-pnpm exec jest src/__tests__/actions/user/api-token-actions.test.ts
+# cwd: frontend
+pnpm exec jest src/__tests__/actions/user/api-token-actions.test.ts src/__tests__/lib/action-error.test.ts
 pnpm lint && pnpm exec tsc --noEmit && pnpm test
 ```
 
@@ -68,6 +75,8 @@ pnpm lint && pnpm exec tsc --noEmit && pnpm test
 
 | 파일 | 변경 |
 |---|---|
+| `frontend/src/lib/errors/action-error.ts` | 수정 |
+| `frontend/src/__tests__/lib/action-error.test.ts` | 수정 |
 | `frontend/src/types/api-token.ts` | 신규 |
 | `frontend/src/services/user/api-token-service.ts` | 신규 |
 | `frontend/src/actions/user/_schemas.ts` | 신규 |
