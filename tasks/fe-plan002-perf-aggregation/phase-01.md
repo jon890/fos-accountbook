@@ -33,21 +33,23 @@
 - `getMonthlyCategoryBreakdown` 의 `percentage` 는 기존처럼 정수(`Math.round`)로 돌려준다. 기존 테스트와 화면이 정수를 가정한다.
 - 이전 코드는 금액이 0 이하인 지출을 건너뛰었다. 백엔드 합계는 건너뛰지 않는다. 금액이 0 이하인 지출은 등록 검증에서 막히므로 결과는 같다.
 - 실패 처리: 기존 함수는 목록 조회 실패를 `.catch(() => ({ items: [] }))` 로 빈 결과로 바꿨다. 집계 호출 실패도 빈 결과(합계 0, 항목 없음)로 바꾼다. 인증 오류는 빈 결과로 바꾸지 않고 다시 던진다. 판별은 `lib/server/api/types.ts` 의 `ServerApiError` 이고 `status === 401` 인 경우다. Action 계층이 이를 `A002` 로 바꿔 로그인으로 보낸다(ADR-F26).
+- 실패 반환: `getMonthlyDailyStats` 는 `[]`, `getMonthlyCategoryBreakdown` 은 요청한 연월과 합계 0, 빈 항목을 반환한다. `getMonthlyTrend` 는 요청한 기간의 점을 유지하고 모든 금액과 평균을 0 으로 반환한다.
+- 전월 대비의 두 API 는 호출별로 오류를 처리한다. 일반 오류가 난 호출만 빈 응답으로 대체하고 성공한 호출의 결과는 유지한다. 한 호출이 500 이고 다른 호출이 401 이어도 401 은 반드시 다시 던진다.
 
 ## 작업 항목
 
-### 1. `frontend/src/services/dashboard/dashboard-service.ts` — 일별 합계
+### 1. `frontend/src/services/dashboard/dashboard-service.ts` 일별 합계
 
 - `getMonthlyDailyStats(familyUuid, year, month): Promise<DailyTransactionSummary[]>` 가 `daily-stats?year=${year}&month=${month}` 를 부르고 `dailyStats` 를 `{ date, income, expense }` 배열로 돌려준다.
 - `MONTHLY_FETCH_PAGE_SIZE`, `RawIncomeResponse` 와 날짜 파싱 코드는 더 쓰이지 않으면 지운다.
 
-### 2. `frontend/src/services/dashboard/dashboard-service.ts` — 카테고리 월 분포
+### 2. `frontend/src/services/dashboard/dashboard-service.ts` 카테고리 월 분포
 
 - `getMonthlyCategoryBreakdown(familyUuid, year, month): Promise<MonthlyCategoryBreakdown>` 가 `stats/category-breakdown?year&month&compareWithPrev=false` 를 부른다.
 - 항목 변환: `name ?? "Unknown"`, `icon ?? "💰"`, `color ?? undefined`, `percentage: Math.round(percentage)`.
 - `getCachedFamilyCategories` 조회는 이 함수에서 필요 없으므로 뺀다. `getRecentExpenses` 는 계속 쓴다.
 
-### 3. `frontend/src/services/analytics/analytics-service.ts` — 추이와 전월 대비
+### 3. `frontend/src/services/analytics/analytics-service.ts` 추이와 전월 대비
 
 - `getMonthlyTrend(familyUuid, period, refYear, refMonth)`:
   - 기존처럼 `targets` 배열(오름차순, 개월 수 = `PERIOD_TO_MONTHS[period]`)을 만든다.
@@ -56,17 +58,20 @@
 - `getCategoryBreakdownWithDelta(familyUuid, year, month)`:
   - `stats/category-breakdown?year&month&compareWithPrev=true` 와 `monthly-trend?from=<직전 달>&to=<이번 달>` 을 `Promise.all` 로 부른다.
   - 항목의 `deltaPercent` 는 백엔드 값을 `Math.round` 한다. null 은 그대로 둔다.
+  - 항목의 `name ?? "Unknown"`, `icon ?? "💰"`, `percentage: Math.round(percentage)` 변환도 적용한다.
   - `totalDelta` 는 `monthly-trend` 의 두 달 합계로 기존 `computeDelta(current, previous)` 를 쓴다. 응답에 없는 달은 0 이다.
   - `getMonthlyCategoryBreakdown` 을 더는 import 하지 않는다.
 
-### 4. `frontend/src/__tests__/services/dashboard/getMonthlyCategoryBreakdown.test.ts`, `frontend/src/__tests__/services/analytics/analytics-service.test.ts` — 테스트 교체
+### 4. `frontend/src/__tests__/services/dashboard/getMonthlyCategoryBreakdown.test.ts`, `frontend/src/__tests__/services/analytics/analytics-service.test.ts` 테스트 교체
 
 - 기존 테스트는 목록 응답을 mock 하거나 `getMonthlyCategoryBreakdown` 을 mock 한다. `serverApiGet` 을 경로별로 mock 하는 방식으로 바꾼다(ADR-F09, jest.mock).
 - 확인할 것:
   - `getMonthlyCategoryBreakdown`: 호출 경로에 `compareWithPrev=false` 가 있고, 이름이 null 인 항목이 `"Unknown"` 으로, `percentage` 33.33 이 33 으로 바뀐다
   - `getMonthlyTrend`: `y1` 에서 호출이 한 번이고 `from` 이 11개월 전(연도 경계 포함)이며, 응답에 없는 달이 0 으로 채워져 점이 12개다
   - `getCategoryBreakdownWithDelta`: 직전 달이 응답에 없으면 `totalDelta` 가 null, 1월이면 직전 달이 전년 12월
+  - 정상 전월 금액이 있는 경우 양수와 음수 `deltaPercent` 반올림, `totalDelta` 계산을 확인한다. 추이 평균은 빈 달도 분모에 포함하고 백엔드 `average` 와 다른 기대값으로 검증한다.
   - 실패: 집계 호출이 `ServerApiError(status 500)` 면 빈 결과, `ServerApiError(status 401)` 이면 다시 던진다
+  - 전월 대비의 각 호출에 500 을 주어 성공한 응답이 유지되는지 확인한다. 500 과 401 이 함께 발생하는 경우도 두 순서로 검증한다.
 - `getMonthlyDailyStats` 테스트가 없으면 `frontend/src/__tests__/services/dashboard/getMonthlyDailyStats.test.ts` 를 새로 만들어 경로와 변환을 확인한다.
 
 ## 검증
@@ -74,8 +79,8 @@
 ```bash
 # cwd: <repo root>
 cd frontend && pnpm lint && pnpm test
-grep -n "size=\${MONTHLY_FETCH_PAGE_SIZE}\|MONTHLY_FETCH_PAGE_SIZE" src/services   # 결과 없음
-grep -rn "getMonthlyCategoryBreakdown" src/services/analytics                    # 결과 없음
+rg -n 'MONTHLY_FETCH_PAGE_SIZE' src/services                  # 결과 없음, 종료 코드 1
+rg -n 'getMonthlyCategoryBreakdown' src/services/analytics    # 결과 없음, 종료 코드 1
 ```
 
 ## Critical Files
