@@ -347,6 +347,10 @@ GET    /families/{uuid}/dashboard/stats/category-breakdown    카테고리 분�
 이름과 사진은 담지 않는다. 화면은 `GET /families/{uuid}/members` 로 받은 구성원 목록에서 `userUuid` 로 찾는다.
 가족을 떠난 구성원의 기록도 `userUuid` 는 남으므로, 화면은 목록에서 찾지 못한 경우를 따로 표시한다.
 
+구성원 목록 응답의 `data`는 `userUuid`, `name`, `email`, `image`, `role`, `joinedAt`을 담은 배열이다.
+`name`과 `image`는 null일 수 있고, `email`은 사용자에게 있으면 담는다.
+`ACTIVE` 구성원만 가입 시각 오름차순으로 반환하며 가족 구성원만 조회할 수 있다.
+
 `daily-stats` 는 날짜별 합계와 함께 등록자별 지출 합계를 준다.
 
 | 필드 | 타입 | 뜻 |
