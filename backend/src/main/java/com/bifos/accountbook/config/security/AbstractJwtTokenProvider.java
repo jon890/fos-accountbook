@@ -8,6 +8,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SecurityException;
 import io.jsonwebtoken.security.SecureDigestAlgorithm;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
