@@ -31,9 +31,11 @@ export function InvitePageClient({
 }: InvitePageClientProps) {
   const router = useRouter();
   const [isAccepting, setIsAccepting] = useState(false);
+  // 렌더마다 Date.now() 를 부르면 다시 그릴 때 값이 바뀐다. 화면을 연 시각으로 고정한다
+  const [openedAt] = useState(() => Date.now());
 
   const hoursUntilExpire =
-    (new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60);
+    (new Date(expiresAt).getTime() - openedAt) / (1000 * 60 * 60);
   const isAlreadyExpired = hoursUntilExpire <= 0;
   const isExpiringSoon = !isAlreadyExpired && hoursUntilExpire <= 24;
 
