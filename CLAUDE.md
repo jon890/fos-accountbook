@@ -69,7 +69,7 @@ cd backend && ./gradlew checkstyleMain checkstyleTest test
 - `--no-verify` 로 검증을 건너뛰지 않는다.
 
 백엔드 `gradle-wrapper.jar` 는 추적하지 않는다.
-jar 가 없으면 먼저 `cd backend && mise exec gradle@9.5.0 -- gradle wrapper --gradle-version 9.5.0` 으로 만든다. jar 는 커밋하지 않는다.
+jar 가 없으면 먼저 `cd backend && mise exec gradle@9.8.0 -- gradle wrapper --gradle-version 9.8.0` 으로 만든다. jar 는 커밋하지 않는다.
 백엔드 CI 가 매번 `gradle wrapper` 로 만드는 관례와 같다.
 
 ### 브랜치 명명

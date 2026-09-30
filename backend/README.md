@@ -5,13 +5,13 @@ Spring Boot 4 + Java 21 기반 가족 가계부 백엔드 API 서버.
 ## 기술 스택
 
 - **Language**: Java 21
-- **Framework**: Spring Boot 4.0.6
-- **Build**: Gradle 9.2 (Kotlin DSL + Version Catalog `libs.versions.toml`)
+- **Framework**: Spring Boot 4
+- **Build**: Gradle (Kotlin DSL + Version Catalog). 라이브러리 버전은 `gradle/libs.versions.toml`, Gradle 버전은 `gradle/wrapper/gradle-wrapper.properties` 가 정한다
 - **DB**: MySQL 8.4 (prod/local), H2 in-memory (test)
 - **ORM**: Spring Data JPA + QueryDSL 5.1
 - **Security**: Spring Security + JWT (jjwt 0.13)
 - **Migration**: Flyway
-- **Docs**: SpringDoc OpenAPI 3.0 (Swagger UI)
+- **Docs**: SpringDoc OpenAPI (Swagger UI)
 
 ## 아키텍처
 
