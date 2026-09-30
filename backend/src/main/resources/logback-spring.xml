@@ -2,8 +2,8 @@
 <configuration>
   <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
-  <!-- 로그 파일 경로 -->
-  <property name="LOG_FILE" value="logs/application"/>
+  <!-- 로그 파일 경로. 기본은 실행한 디렉터리의 logs/ 이고 LOG_PATH 로 바꾼다 -->
+  <property name="LOG_FILE" value="${LOG_PATH:-logs}/application"/>
 
   <!-- 콘솔용 색상 패턴 -->
   <property name="CONSOLE_LOG_PATTERN"
