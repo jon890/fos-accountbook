@@ -143,7 +143,7 @@ POST /auth/refresh  body: { refreshToken }
         └─ fab_ + 무작위 32바이트(base64url) 생성 → SHA-256 해시만 저장
         └─ 응답에 원문을 한 번 싣는다. 다시 조회할 수 없다
 
-[호출] fos-assistant Control Plane → 가계부 백엔드 (내부 네트워크)
+[호출] 외부 에이전트(fos-assistant 의 Hermes profile 에서 도는 fos-agents 가계부 스킬) → 가계부 백엔드 (외부 공인 경로)
     Authorization: Bearer fab_...
         │
         ▼

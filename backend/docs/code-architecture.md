@@ -22,6 +22,7 @@ com.bifos.accountbook
 ├── notification/            알림, 예산 알림
 ├── dashboard/               대시보드 (read model)
 ├── user/                    사용자, 인증, 프로필
+├── apitoken/                외부 에이전트 연동 토큰 발급, 조회, 폐기 (ADR-B18)
 └── config/                  Spring 설정 (캐시, 보안, CORS, QueryDSL, OpenAPI)
 ```
 
@@ -114,13 +115,14 @@ user ◄── family ──► category
     ▼
 이후 API 요청: Authorization: Bearer <AccessToken>
     │
+    ├── ApiTokenAuthenticationFilter: Bearer fab_ 이면 연동 토큰 주인으로 인증, 허용 목록 밖은 403 (JWT 필터보다 먼저. 상세는 flow.md 7절)
     ├── JwtAuthenticationFilter: 토큰 검증 → SecurityContext 설정
     ├── LoginUserArgumentResolver: @LoginUser → LoginUserDto 주입
     └── FamilyAccessAspect: @ValidateFamilyAccess → 가족 멤버십 AOP 검증
 ```
 
-- JWT 관련 클래스: `config/security/` (AbstractJwtTokenProvider, JwtTokenProvider, JwtAuthenticationFilter)
-- 프론트엔드 인증(NextAuth)은 프론트엔드가 관리. 백엔드는 자체 JWT만 검증
+- 인증 관련 클래스: `config/security/` (AbstractJwtTokenProvider, JwtTokenProvider, JwtAuthenticationFilter, SocialLoginAssertionVerifier, ApiTokenAuthenticationFilter, ApiTokenAccessPolicy)
+- 프론트엔드 인증(NextAuth)은 프론트엔드가 관리. 백엔드는 자체 JWT 와 연동 토큰(ADR-B18)만 검증
 
 ### 소유권 검증
 
