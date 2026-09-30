@@ -24,6 +24,7 @@
 ## 의도 메모
 
 - 날짜 선택은 서버를 부르지 않는다(ADR-F32). 선택 날짜는 클라이언트 상태로 두고, 새로고침해도 유지되도록 `window.history.replaceState` 로 `?date=` 만 바꾼다. 월 이동은 `router.push("/calendar?month=YYYY-MM")` 로 서버가 다시 그린다.
+- 처음 열 때 계산한 선택 날짜도 URL의 `date` 에 동기화한다. 날짜가 없는 과거 월이나 잘못된 날짜로 들어와도 하단 추가 버튼이 달력에서 선택된 날을 사용하게 한다. effect에서는 URL만 갱신하고 상태를 다시 설정하지 않는다. 초기 날짜가 없는 경우와 잘못된 경우를 테스트한다.
 - 칸 크기: 360px 폭에서 7열이면 칸이 약 48px 다. 구성원 두 줄(6px 점과 11px 글자)과 날짜가 들어가도록 칸 최소 높이 60px, 글자 11px 이상, `tabular-nums`. 구성원이 세 명 이상이면 칸에는 지출 많은 두 명만 보이고 나머지는 `+1` 로 줄인다.
 - 월 이동 버튼과 날짜 칸은 터치 영역 44px 이상.
 - 오늘은 날짜 숫자에 테두리, 선택 날짜는 배경색으로 구분한다. 토요일과 일요일 숫자 색은 기존 토큰을 쓴다.
@@ -95,3 +96,8 @@ grep -rn 'redirect("/dashboard")' src   # 결과 없음 (phase 05 가 바꿀 das
 | `frontend/src/__tests__/components/layout/Header.test.tsx` | 수정 |
 | `frontend/src/lib/utils/date-timezone.ts` | 수정 |
 | `frontend/src/__tests__/lib/date-timezone.test.ts` | 신규 |
+| `frontend/src/app/(authenticated)/families/create/page.tsx` | 수정 |
+| `frontend/src/components/families/FamilySelectorPage.tsx` | 수정 |
+| `frontend/src/app/(authenticated)/invite/[token]/_components/InvitePageClient.tsx` | 수정 |
+| `frontend/src/__tests__/components/invite/InvitePageClient.test.tsx` | 수정 |
+| `frontend/src/test-fixtures/calendar.ts` | 신규 |
