@@ -21,6 +21,9 @@
 - `backend/src/main/java/com/bifos/accountbook/shared/exception/GlobalExceptionHandler.java` 의 `handleValidationExceptions` 는 `error.getDefaultMessage()` 를 계산하고도 응답에 넣지 않는다.
     - 응답 항목은 `backend/src/main/java/com/bifos/accountbook/shared/dto/ApiErrorResponse.java` 의 `ErrorDetails` 이고 `code`, `field`, `rejectedValue` 만 가진다.
 - 컨트롤러 통합 테스트는 `AbstractControllerTest` 를 상속하고 `fixtures.getDefaultUser()` 로 사용자를 만든다. 패턴은 `backend/src/test/java/com/bifos/accountbook/family/presentation/controller/FamilyControllerTest.java` 를 따른다.
+    - 가족은 `fixtures.families.family().build()` 로 만든다. 기본 사용자를 멤버로 함께 저장한다.
+    - 기존 카테고리는 `fixtures.categories.category(family).build()` 로 만든다.
+    - 둘을 함께 쓰는 선례는 `backend/src/test/java/com/bifos/accountbook/notification/presentation/controller/NotificationControllerTest.java` 다.
 
 **근거 문서**: `backend/docs/data-schema.md` 의 `categories` 표 `color` 행, `frontend/docs/data-schema.md` 의 `ApiErrorResponse` 와 `ErrorDetails`
 
@@ -62,8 +65,8 @@
 | `#10b981` | 201 |
 | `red` | 400, `errors[0].field` 가 `color`, `errors[0].message` 가 `CategoryColor.MESSAGE` |
 
-`PUT /api/v1/categories/{categoryUuid}` 로 color 를 `oklch(0.520 0.120 152)` 로 바꾸면 200 이고 응답 `data.color` 가 같은 값이다.
-이 경로에는 가족 UUID 가 없다(`CategoryController` 의 `@PutMapping("/categories/{categoryUuid}")`).
+`PUT /api/v1/families/{familyUuid}/categories/{categoryUuid}` 로 color 를 `oklch(0.520 0.120 152)` 로 바꾸면 200 이고 응답 `data.color` 가 같은 값이다.
+프론트가 실제로 부르는 경로다. `PUT /api/v1/categories/{categoryUuid}` 는 deprecated 라 쓰지 않는다.
 
 ## 검증
 
