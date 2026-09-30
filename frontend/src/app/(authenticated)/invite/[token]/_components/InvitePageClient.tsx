@@ -10,7 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Users, Clock, UserPlus, Loader2 } from "lucide-react";
+import { Users, UserRound, Clock, UserPlus, Loader2 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { acceptInvitationAction } from "@/actions/invitation/accept-invitation-action";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -22,12 +23,18 @@ interface InvitePageClientProps {
   familyName: string;
   // RSC→Client 직렬화 경계에서 string 으로 도착할 수 있어 union 으로 받는다
   expiresAt: Date | string;
+  inviterName?: string;
+  inviterAvatarUrl?: string | null;
+  memberCount?: number;
 }
 
 export function InvitePageClient({
   token,
   familyName,
   expiresAt,
+  inviterName,
+  inviterAvatarUrl,
+  memberCount,
 }: InvitePageClientProps) {
   const router = useRouter();
   const [isAccepting, setIsAccepting] = useState(false);
@@ -67,14 +74,27 @@ export function InvitePageClient({
     <div className="min-h-screen flex items-center justify-center p-5 bg-bg">
       <Card className="max-w-md w-full bg-bg-elev border-border shadow-default">
         <CardHeader className="text-center pb-4 pt-8">
-          <div className="w-24 h-24 gradient-family rounded-full flex items-center justify-center mx-auto mb-4">
-            <Users className="w-12 h-12 text-brand-fg" />
-          </div>
+          {inviterName ? (
+            <Avatar className="size-24 mx-auto mb-4">
+              {inviterAvatarUrl && (
+                <AvatarImage src={inviterAvatarUrl} alt={inviterName} />
+              )}
+              <AvatarFallback className="bg-brand-500 text-brand-fg text-3xl font-semibold">
+                {inviterName.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+          ) : (
+            <div className="w-24 h-24 gradient-family rounded-full flex items-center justify-center mx-auto mb-4">
+              <Users className="w-12 h-12 text-brand-fg" />
+            </div>
+          )}
           <CardTitle className="text-2xl font-bold text-fg tracking-tight">
             가족 초대
           </CardTitle>
           <CardDescription className="text-base text-fg-muted">
-            가계부를 함께 관리하도록 초대받았어요
+            {inviterName
+              ? `${inviterName}님이 가계부를 함께 관리하자고 초대했어요`
+              : "가계부를 함께 관리하도록 초대받았어요"}
           </CardDescription>
         </CardHeader>
 
@@ -88,6 +108,18 @@ export function InvitePageClient({
                 <p className="text-lg font-semibold text-fg">{familyName}</p>
               </div>
             </div>
+
+            {typeof memberCount === "number" && (
+              <div className="flex items-center gap-3">
+                <UserRound className="w-5 h-5 text-brand-500" />
+                <div className="flex-1">
+                  <p className="text-xs text-fg-muted">멤버</p>
+                  <p className="text-lg font-semibold text-fg">
+                    현재 {memberCount}명
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="flex items-center gap-3">
               <Clock

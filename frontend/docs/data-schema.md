@@ -219,6 +219,9 @@ interface InvitationResponse {
   createdAt: string;
   isExpired: boolean;
   isUsed: boolean;
+  // GET /invitations/token/{token} 에서만 온다. 로그인 전 공개 경로라 이름과 아바타만 싣는다
+  inviter?: { name: string; avatarUrl: string | null } | null;
+  memberCount?: number | null; // ACTIVE 멤버 수
 }
 ```
 

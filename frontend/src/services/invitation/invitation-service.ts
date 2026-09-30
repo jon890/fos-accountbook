@@ -53,11 +53,24 @@ export async function getActiveInvitations(
   return invitations.map((inv) => toInvitationInfo(inv, now));
 }
 
+export async function assertInvitationOwnership(
+  familyUuid: string,
+  invitationUuid: string
+): Promise<void> {
+  const active = await getActiveInvitations(familyUuid);
+  if (!active.some((inv) => inv.uuid === invitationUuid)) {
+    throw ActionError.entityNotFound("초대 링크", invitationUuid);
+  }
+}
+
 export interface InvitationInfoData {
   valid: boolean;
   familyName?: string;
   expiresAt?: Date;
   message?: string;
+  inviterName?: string;
+  inviterAvatarUrl?: string | null;
+  memberCount?: number;
 }
 
 export async function getInvitationInfo(
@@ -99,10 +112,17 @@ export async function getInvitationInfo(
     return { valid: false, message: "만료된 초대장입니다" };
   }
 
+  const inviterName = invitation.inviter?.name;
+
   return {
     valid: true,
     familyName: invitation.familyName || "가족",
     expiresAt,
+    ...(inviterName ? { inviterName } : {}),
+    inviterAvatarUrl: invitation.inviter?.avatarUrl ?? null,
+    ...(typeof invitation.memberCount === "number"
+      ? { memberCount: invitation.memberCount }
+      : {}),
   };
 }
 

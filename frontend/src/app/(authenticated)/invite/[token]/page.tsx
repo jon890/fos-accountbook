@@ -39,6 +39,9 @@ export default async function InvitePage({ params }: InvitePageProps) {
       token={token}
       familyName={result.data.familyName || ""}
       expiresAt={result.data.expiresAt!}
+      inviterName={result.data.inviterName}
+      inviterAvatarUrl={result.data.inviterAvatarUrl ?? null}
+      memberCount={result.data.memberCount}
     />
   );
 }

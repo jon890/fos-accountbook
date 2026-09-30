@@ -15,10 +15,11 @@ import {
   requireAuth,
 } from "@/lib/server/auth/auth-helpers";
 import {
+  assertInvitationOwnership,
   deleteInvitation,
-  getActiveInvitations,
 } from "@/services/invitation/invitation-service";
 import { revalidatePath } from "next/cache";
+import { InvitationUuidSchema } from "./_schemas";
 
 export async function deleteInvitationAction(
   invitationUuid: string
@@ -26,18 +27,19 @@ export async function deleteInvitationAction(
   try {
     await requireAuth();
 
+    const { invitationUuid: validUuid } = InvitationUuidSchema.parse({
+      invitationUuid,
+    });
+
     const familyUuid = await getSelectedFamilyUuid();
     if (!familyUuid) {
       throw ActionError.familyNotSelected();
     }
 
     // Entity ownership: 본인 가족의 active invitation 목록에 포함되는지 확인 (ADR-F25 패턴 C)
-    const active = await getActiveInvitations(familyUuid);
-    if (!active.some((inv) => inv.uuid === invitationUuid)) {
-      throw ActionError.entityNotFound("초대 링크", invitationUuid);
-    }
+    await assertInvitationOwnership(familyUuid, validUuid);
 
-    await deleteInvitation(invitationUuid);
+    await deleteInvitation(validUuid);
     revalidatePath("/");
     return successResult(undefined);
   } catch (error) {
