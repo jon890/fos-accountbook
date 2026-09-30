@@ -15,6 +15,8 @@ export interface InvitationResponse {
   createdAt: string;
   isExpired: boolean;
   isUsed: boolean;
+  inviter?: { name: string; avatarUrl: string | null } | null;
+  memberCount?: number | null;
 }
 
 /**
