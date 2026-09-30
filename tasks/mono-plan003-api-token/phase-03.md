@@ -29,8 +29,8 @@
 
 ### 0. `frontend/src/lib/errors/action-error.ts` 의 400 업무 오류 문구 전달
 
-`handleActionError` 의 400 분기에서 `firstFieldError` 가 null 이면, `error.errorData` 가 객체이고 `message` 가 비어 있지 않은 문자열일 때 `new ActionError(ErrorCode.INVALID_INPUT, message).toFailureResult()` 를 돌려준다. `code` 가 문자열이면 `.addParameter("backendCode", code)` 를 붙인다. 필드 오류 분기와 다른 상태 코드 처리는 바꾸지 않는다.
-테스트는 `frontend/src/__tests__/lib/action-error.test.ts` 에 더한다: `new ServerApiError("x", 400, { code: "AT002", message: "연동 토큰은 5개까지 만들 수 있습니다" })` 를 넘기면 `success: false` 이고 `error.message` 가 그 문구다. `errors[0]` 이 있는 기존 케이스는 그대로 통과한다.
+`handleActionError` 의 400 분기에서 `firstFieldError` 가 null 이면, `error.errorData` 가 객체이고 최상위 `code` 와 `message` 가 모두 비어 있지 않은 문자열일 때만 `new ActionError(ErrorCode.INVALID_INPUT, message).addParameter("backendCode", code).toFailureResult()` 를 돌려준다. 최상위 `code` 는 업무 오류(`ApiErrorResponse.of(BusinessException, ...)`)만 채운다. `GlobalExceptionHandler` 가 `IllegalArgumentException` 을 400 으로 바꾼 응답은 `code` 없이 내부 예외 문구를 담으므로 이 조건에 걸리지 않고 기본 문구가 유지돼야 한다. 필드 오류 분기와 다른 상태 코드 처리는 바꾸지 않는다.
+테스트는 `frontend/src/__tests__/lib/action-error.test.ts` 에 더한다: `new ServerApiError("x", 400, { code: "AT002", message: "연동 토큰은 5개까지 만들 수 있습니다" })` 를 넘기면 `success: false` 이고 `error.message` 가 그 문구다. `{ message: "Invalid UUID string: x" }` 처럼 `code` 가 없는 400 이면 기본 문구(두 번째 인자)가 유지된다. `errors[0]` 이 있는 기존 케이스는 그대로 통과한다.
 
 ### 1. `frontend/src/types/api-token.ts` (신규)
 

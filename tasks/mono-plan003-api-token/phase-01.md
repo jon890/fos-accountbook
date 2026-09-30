@@ -67,7 +67,7 @@ CREATE TABLE `api_tokens` (
   - `revoke(LocalDateTime now)`: `status = REVOKED`, `revokedAt = now`
   - `boolean needsUsageUpdate(LocalDateTime now)`: `lastUsedAt` 이 null 이거나 `now` 보다 5분 넘게 앞서면 true
 - `repository/ApiTokenRepository.java`: `save`, `findActiveByTokenHash(String)`, `findActiveByUuidAndUserUuid(CustomUuid uuid, CustomUuid userUuid)`, `findAllActiveByUserUuid(CustomUuid)`(최근 발급 순), `countActiveByUserUuid(CustomUuid)`, `int updateLastUsedAt(Long id, LocalDateTime now)`
-- 구현: `infra/repository/impl/ApiTokenRepositoryImpl.java`, `infra/repository/jpa/ApiTokenJpaRepository.java`. `updateLastUsedAt` 은 JPA 쪽에 `@Modifying @Query("UPDATE ApiToken t SET t.lastUsedAt = :now WHERE t.id = :id AND t.status = com.bifos.accountbook.apitoken.domain.value.ApiTokenStatus.ACTIVE")` 로 둔다.
+- 구현: `infra/repository/impl/ApiTokenRepositoryImpl.java`, `infra/repository/jpa/ApiTokenJpaRepository.java`. `updateLastUsedAt` 은 JPA 쪽에 `@Modifying @Query("UPDATE ApiToken t SET t.lastUsedAt = :now WHERE t.id = :id AND t.status = com.bifos.accountbook.apitoken.domain.value.ApiTokenStatus.ACTIVE")` 로 둔다. enum 리터럴 비교가 `@Converter(autoApply = true)` 칸에서 실패하면 `AND t.status = :status` 로 바꾸고 `ApiTokenStatus.ACTIVE` 를 파라미터로 넘긴다. 이 동작은 `ApiTokenServiceTest` 가 확인한다.
 
 ### 3. 서비스와 오류 코드
 
@@ -101,12 +101,12 @@ CREATE TABLE `api_tokens` (
 - 남의 토큰 폐기: `fixtures.users.getOtherUser()` 로 만든 사용자(SecurityContext 를 바꾸지 않는다)의 토큰을 `ApiTokenService.issue` 로 직접 만들고, 기본 사용자로 그 uuid 를 DELETE 하면 404 `AT001` 이고 그 토큰은 ACTIVE 로 남는다
 - 한도: 5개 발급 뒤 6번째는 400 `AT002`
 - 이름 검증: 빈 이름과 51자 이름은 400
-- 로그: `@ExtendWith(org.springframework.boot.test.system.OutputCaptureExtension.class)` 로 발급 요청의 출력(`CapturedOutput`)에 응답의 `token` 원문이 없다
+- 로그: `@ExtendWith(org.springframework.boot.test.system.OutputCaptureExtension.class)` 로 출력(`CapturedOutput`)을 받는다. 발급 요청 뒤 출력에 `[RES] POST /api/v1/users/me/api-tokens` 줄이 있고 응답의 `token` 원문은 없다. 이어서 발급한 원문을 `Authorization: Bearer <원문>` 에 붙여 아무 요청을 보내면 출력에 원문의 끝 10자가 없다
 
 `backend/src/test/java/com/bifos/accountbook/apitoken/application/service/ApiTokenServiceTest.java`: `@FosSpringBootTest` 통합 테스트.
 
-- `recordUsage`: 처음 호출하면 `lastUsedAt` 이 채워지고, 4분 뒤 시각으로 다시 부르면 바뀌지 않고, 6분 뒤 시각이면 바뀐다
-- `recordUsage` 는 폐기를 되돌리지 않는다: `findActive` 로 받은 엔티티를 쥔 채 `revoke` 한 뒤 그 엔티티로 `recordUsage` 를 불러도 DB 상태는 `REVOKED` 다
+- `recordUsage`: 호출마다 `findActive(원문)` 로 다시 읽은 엔티티를 넘기고, 시각은 DB 에서 다시 읽어 단언한다. 처음 호출하면 `lastUsedAt` 이 채워지고, 4분 뒤 시각으로 다시 부르면 바뀌지 않고, 6분 뒤 시각이면 바뀐다
+- `recordUsage` 는 폐기를 되돌리지 않는다: 이 케이스만 `findActive` 로 받은 옛 엔티티를 쥔 채 `revoke` 한 뒤 그 엔티티로 `recordUsage` 를 부른다. DB 상태는 `REVOKED` 다
 
 ## Blocked 조건
 
@@ -124,12 +124,19 @@ CREATE TABLE `api_tokens` (
 
 ```bash
 # cwd: backend
+# 8080 을 이미 쓰는 프로세스가 있으면 PHASE_BLOCKED 로 보고한다. 사용자의 로컬 서버를 죽이지 않는다
+lsof -ti :8080 && echo "PHASE_BLOCKED: 8080 사용 중" && exit 1
 docker compose -f docker/compose.yml up -d --wait mysql
 ./gradlew bootRun --args='--spring.profiles.active=local' > /tmp/api-token-bootrun.log 2>&1 &
 BOOT_PID=$!
-until grep -qE "Started AccountBookApplication|APPLICATION FAILED|Error creating bean" /tmp/api-token-bootrun.log; do sleep 2; done
-grep -E "Migrating schema .* to version \"15|Started AccountBookApplication|APPLICATION FAILED" /tmp/api-token-bootrun.log
-kill $BOOT_PID; pkill -f AccountBookApplication || true
+for i in $(seq 1 90); do
+  grep -qE "Started AccountBookApplication|APPLICATION FAILED|Error creating bean|BUILD FAILED" /tmp/api-token-bootrun.log && break
+  kill -0 $BOOT_PID 2>/dev/null || break
+  sleep 2
+done
+grep -E "Migrating schema .* to version \"15|Started AccountBookApplication|APPLICATION FAILED|BUILD FAILED" /tmp/api-token-bootrun.log
+kill $BOOT_PID 2>/dev/null
+lsof -ti :8080 | xargs kill 2>/dev/null
 ```
 
 기대: 테스트가 모두 통과한다. 기동 로그에 V15 적용(또는 이미 적용됨)과 `Started AccountBookApplication` 이 있고 `APPLICATION FAILED` 가 없다.
