@@ -1,5 +1,6 @@
 package com.bifos.accountbook.user.presentation.controller;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -71,8 +72,8 @@ class AuthControllerTest extends AbstractControllerTest {
   @Test
   @DisplayName("로그인 서명을 access token 으로 쓰면 인증되지 않는다")
   void assertion_IsNotAcceptedAsAccessToken() throws Exception {
-    mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/families")
+    mockMvc.perform(get("/api/v1/families")
                         .header("Authorization", "Bearer " + assertionFor("google:google-123", "user@example.com")))
-           .andExpect(status().is4xxClientError());
+           .andExpect(status().isForbidden());
   }
 }
