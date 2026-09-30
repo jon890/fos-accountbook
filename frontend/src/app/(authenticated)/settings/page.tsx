@@ -1,4 +1,5 @@
 import { getFamiliesAction } from "@/actions/family/get-families-action";
+import { getApiTokensAction } from "@/actions/user/get-api-tokens-action";
 import { getUserProfileAction } from "@/actions/user/get-user-profile-action";
 import { auth } from "@/lib/server/auth";
 import { requireActionSuccess } from "@/lib/server/action-result-handler";
@@ -20,7 +21,10 @@ export default async function SettingsPage() {
     fallbackRedirect: "/families/create",
   });
 
-  // 3. 세션에서 사용자 이름/이메일 조회
+  // 3. 연동 토큰 목록 조회. 실패해도 설정 화면 전체를 막지 않는다
+  const tokensResult = await getApiTokensAction();
+
+  // 4. 세션에서 사용자 이름/이메일 조회
   const session = await auth();
 
   return (
@@ -29,6 +33,7 @@ export default async function SettingsPage() {
       defaultFamilyUuid={profile.defaultFamilyUuid}
       userName={session?.user?.name ?? null}
       userEmail={session?.user?.email ?? null}
+      apiTokens={tokensResult.success ? tokensResult.data : null}
     />
   );
 }
