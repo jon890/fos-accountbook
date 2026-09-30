@@ -36,7 +36,8 @@
 
 `frontend/src/lib/server/api/client.ts` 의 `beforeError` 훅에서 `response.json()` 을 `response.clone().json()` 으로 바꾼다.
 
-- 이 한 줄만 바꾼다. 기존 로깅과 401 처리 동작은 바꾸지 않는다.
+- 훅 본문을 이름 있는 함수로 빼서 export 하고, `beforeError` 배열에는 그 함수를 넣는다. 테스트가 이 함수를 직접 호출한다.
+- 그 밖에는 바꾸지 않는다. 기존 로깅과 `error.message` 설정은 그대로 둔다.
 - `catch` 의 두 번째 읽기가 원본 본문을 읽어 `ServerApiError.errorData` 에 백엔드 응답 JSON 이 담긴다.
 
 ### 2. `handleActionError` 의 400 분기
@@ -58,13 +59,17 @@
 | status 400, `errors` 없음 | 기본 문구(internalError) |
 | status 500 | 기본 문구(기존 동작 회귀 방지) |
 
-`frontend/src/__tests__/lib/server-api-client.test.ts` 를 새로 만든다. `global.fetch` 를 mock 해 `serverApiClient` 를 거친 오류에 본문이 남는지 확인한다.
+`frontend/src/__tests__/lib/server-api-client.test.ts` 를 새로 만든다. 작업 항목 1 에서 export 한 훅 함수를 직접 호출해 훅이 지나간 뒤에도 응답 본문이 남는지 확인한다.
 
-| fetch 응답 | 기대 |
+- `jest.config.js` 가 `ky` 를 `src/__mocks__/ky.ts` 로 바꾸고 그 mock 은 `fetch` 를 부르지 않는다. 그래서 `serverApiClient` 를 거쳐 400 을 재현할 수 없다.
+- 파일 첫 줄에 `/** @jest-environment node */` 를 둔다. Node 의 실제 `Response` 를 쓰기 위해서다.
+- `client.ts` 가 import 하는 `next/headers` 는 `jest.mock("next/headers", () => ({ cookies: async () => ({ get: () => undefined }) }))` 로 대신한다.
+
+| 훅에 넣는 응답 | 기대 |
 | --- | --- |
-| status 400, 본문 `{ errors: [{ field: "color", message: "색상은 #RRGGBB 또는 oklch(L C H) 형식이어야 합니다" }] }` | `ServerApiError` 를 던지고 `status` 가 400, `errorData.errors[0].message` 가 그 문구 |
+| `new Response(JSON.stringify({ errors: [{ field: "color", message: "색상은 #RRGGBB 또는 oklch(L C H) 형식이어야 합니다" }] }), { status: 400, headers: { "content-type": "application/json" } })` 를 담은 `{ response }` | 훅이 끝난 뒤 `await response.json()` 의 `errors[0].message` 가 그 문구 |
 
-`beforeError` 를 `response.json()` 으로 되돌리면 이 테스트가 실패해야 한다.
+훅을 `response.json()` 으로 되돌리면 이 테스트가 `Body is unusable` 로 실패해야 한다.
 
 ## 검증
 
