@@ -97,7 +97,7 @@ CREATE TABLE categories (
     uuid                VARCHAR(36) NOT NULL UNIQUE,
     family_uuid         VARCHAR(36) NOT NULL,
     name                VARCHAR(50) NOT NULL,
-    color               VARCHAR(7)  NOT NULL DEFAULT '#6366f1',  -- hex color
+    color               VARCHAR(50) DEFAULT '#6366f1',           -- #RRGGBB 또는 oklch(L C H)
     icon                VARCHAR(50),
     exclude_from_budget BOOLEAN     NOT NULL DEFAULT FALSE,
     is_default          BOOLEAN     NOT NULL DEFAULT FALSE,       -- TRUE = 삭제 불가
