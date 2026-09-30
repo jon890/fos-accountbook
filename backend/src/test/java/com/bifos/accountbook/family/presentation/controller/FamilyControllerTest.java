@@ -3,6 +3,15 @@ package com.bifos.accountbook.family.presentation.controller;
 import com.bifos.accountbook.shared.AbstractControllerTest;
 
 import com.bifos.accountbook.family.application.dto.CreateFamilyRequest;
+import com.bifos.accountbook.family.domain.entity.Family;
+import com.bifos.accountbook.family.domain.entity.FamilyMember;
+import com.bifos.accountbook.family.domain.repository.FamilyMemberRepository;
+import com.bifos.accountbook.family.domain.repository.FamilyRepository;
+import com.bifos.accountbook.family.domain.value.FamilyMemberRole;
+import com.bifos.accountbook.user.domain.repository.UserRepository;
+import java.time.LocalDateTime;
+import static org.hamcrest.Matchers.nullValue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.user.domain.entity.UserProfile;
 import com.bifos.accountbook.user.domain.repository.UserProfileRepository;
@@ -21,6 +30,15 @@ class FamilyControllerTest extends AbstractControllerTest {
 
   @Autowired
   private UserProfileRepository userProfileRepository;
+
+  @Autowired
+  private FamilyMemberRepository familyMemberRepository;
+
+  @Autowired
+  private FamilyRepository familyRepository;
+
+  @Autowired
+  private UserRepository userRepository;
 
   private static final String API_BASE_URL = "/api/v1/families";
 
@@ -110,5 +128,109 @@ class FamilyControllerTest extends AbstractControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
            .andDo(print())
            .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("가족 구성원 목록은 가입 순서로 전체 프로필과 역할을 반환하고 탈퇴 및 다른 가족은 제외한다")
+  void getFamilyMembers_OrderedActiveMembers() throws Exception {
+    User owner = fixtures.getDefaultUser();
+    Family family = familyRepository.save(Family.builder().name("우리 가족").build());
+    LocalDateTime ownerJoinedAt = LocalDateTime.of(2025, 5, 1, 9, 0);
+    LocalDateTime memberJoinedAt = LocalDateTime.of(2025, 5, 2, 9, 0);
+    User member = userRepository.save(User.builder()
+                                         .name("구성원")
+                                         .email("member@example.com")
+                                         .image("https://example.com/member.png")
+                                         .provider("google")
+                                         .providerId("member-provider")
+                                         .build());
+    saveMember(family, member, FamilyMemberRole.MEMBER, memberJoinedAt);
+    saveMember(family, owner, FamilyMemberRole.OWNER, ownerJoinedAt);
+
+    User formerUser = fixtures.users.user().email("former@example.com").build();
+    FamilyMember formerMember = saveMember(family, formerUser, FamilyMemberRole.MEMBER,
+                                          ownerJoinedAt.minusDays(1));
+    formerMember.leave();
+    familyMemberRepository.save(formerMember);
+    fixtures.families.family().name("다른 가족").owner(formerUser).build();
+
+    mockMvc.perform(get(API_BASE_URL + "/{familyUuid}/members", family.getUuid().getValue()))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.success").value(true))
+           .andExpect(jsonPath("$.data.length()").value(2))
+           .andExpect(jsonPath("$.data[0].userUuid").value(owner.getUuid().getValue()))
+           .andExpect(jsonPath("$.data[0].name").value(owner.getName()))
+           .andExpect(jsonPath("$.data[0].email").value(owner.getEmail()))
+           .andExpect(jsonPath("$.data[0].image").value(nullValue()))
+           .andExpect(jsonPath("$.data[0].role").value("OWNER"))
+           .andExpect(jsonPath("$.data[0].joinedAt").value("2025-05-01T09:00:00"))
+           .andExpect(jsonPath("$.data[1].userUuid").value(member.getUuid().getValue()))
+           .andExpect(jsonPath("$.data[1].name").value("구성원"))
+           .andExpect(jsonPath("$.data[1].email").value("member@example.com"))
+           .andExpect(jsonPath("$.data[1].image").value("https://example.com/member.png"))
+           .andExpect(jsonPath("$.data[1].role").value("MEMBER"))
+           .andExpect(jsonPath("$.data[1].joinedAt").value("2025-05-02T09:00:00"));
+  }
+
+  @Test
+  @DisplayName("가입 시각이 같은 구성원은 ID 순서이고 이름과 사진이 없어도 포함한다")
+  void getFamilyMembers_SameJoinedAtAndNullProfile() throws Exception {
+    User owner = fixtures.getDefaultUser();
+    Family family = familyRepository.save(Family.builder().name("우리 가족").build());
+    LocalDateTime joinedAt = LocalDateTime.of(2025, 5, 1, 9, 0);
+    saveMember(family, owner, FamilyMemberRole.OWNER, joinedAt);
+
+    User unnamedUser = fixtures.users.user().name(null).email("unnamed@example.com").build();
+    saveMember(family, unnamedUser, FamilyMemberRole.MEMBER, joinedAt);
+    fixtures.users.setSecurityContext(unnamedUser);
+
+    mockMvc.perform(get(API_BASE_URL + "/{familyUuid}/members", family.getUuid().getValue()))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.data.length()").value(2))
+           .andExpect(jsonPath("$.data[0].userUuid").value(owner.getUuid().getValue()))
+           .andExpect(jsonPath("$.data[1].userUuid").value(unnamedUser.getUuid().getValue()))
+           .andExpect(jsonPath("$.data[1].name").value(nullValue()))
+           .andExpect(jsonPath("$.data[1].image").value(nullValue()))
+           .andExpect(jsonPath("$.data[1].email").value("unnamed@example.com"))
+           .andExpect(jsonPath("$.data[1].role").value("MEMBER"))
+           .andExpect(jsonPath("$.data[1].joinedAt").value("2025-05-01T09:00:00"));
+  }
+
+  @Test
+  @DisplayName("가족 구성원이 아니면 기존 가족 접근 거부 오류를 반환한다")
+  void getFamilyMembers_NonMemberDenied() throws Exception {
+    Family family = fixtures.getDefaultFamily();
+    User outsider = fixtures.users.user().email("outsider@example.com").build();
+    fixtures.users.setSecurityContext(outsider);
+
+    mockMvc.perform(get(API_BASE_URL + "/{familyUuid}/members", family.getUuid().getValue()))
+           .andExpect(status().isForbidden())
+           .andExpect(jsonPath("$.success").value(false))
+           .andExpect(jsonPath("$.code").value("F003"));
+  }
+
+  @Test
+  @DisplayName("탈퇴한 구성원은 가족 구성원 목록을 조회할 수 없다")
+  void getFamilyMembers_FormerMemberDenied() throws Exception {
+    User owner = fixtures.getDefaultUser();
+    Family family = fixtures.getDefaultFamily();
+    FamilyMember member = familyMemberRepository.findByFamilyUuidAndUserUuid(family.getUuid(), owner.getUuid())
+                                               .orElseThrow();
+    member.leave();
+    familyMemberRepository.save(member);
+
+    mockMvc.perform(get(API_BASE_URL + "/{familyUuid}/members", family.getUuid().getValue()))
+           .andExpect(status().isForbidden())
+           .andExpect(jsonPath("$.success").value(false))
+           .andExpect(jsonPath("$.code").value("F003"));
+  }
+
+  private FamilyMember saveMember(Family family, User user, FamilyMemberRole role, LocalDateTime joinedAt) {
+    return familyMemberRepository.save(FamilyMember.builder()
+                                                  .familyUuid(family.getUuid())
+                                                  .userUuid(user.getUuid())
+                                                  .role(role)
+                                                  .joinedAt(joinedAt)
+                                                  .build());
   }
 }

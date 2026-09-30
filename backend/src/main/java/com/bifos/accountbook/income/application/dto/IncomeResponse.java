@@ -17,6 +17,7 @@ public class IncomeResponse {
 
   private String uuid;
   private String familyUuid;
+  private String userUuid;
   private String categoryUuid;
   private CategoryInfo category;
   private BigDecimal amount;
@@ -36,6 +37,7 @@ public class IncomeResponse {
     return IncomeResponse.builder()
                          .uuid(income.getUuid().getValue())
                          .familyUuid(income.getFamilyUuid().getValue())
+                         .userUuid(income.getUserUuid().getValue())
                          .categoryUuid(income.getCategoryUuid().getValue())
                          .category(category)
                          .amount(income.getAmount())
@@ -56,6 +58,7 @@ public class IncomeResponse {
     return IncomeResponse.builder()
                          .uuid(income.getUuid().getValue())
                          .familyUuid(income.getFamilyUuid().getValue())
+                         .userUuid(income.getUserUuid().getValue())
                          .categoryUuid(income.getCategoryUuid().getValue())
                          .amount(income.getAmount())
                          .description(income.getDescription())

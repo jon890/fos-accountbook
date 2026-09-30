@@ -32,6 +32,11 @@ public interface FamilyMemberRepository {
   List<FamilyMember> findAllByFamilyUuid(CustomUuid familyUuid);
 
   /**
+   * 활성 구성원과 사용자를 가입 시각, ID 오름차순으로 조회
+   */
+  List<FamilyMember> findAllActiveByFamilyUuid(CustomUuid familyUuid);
+
+  /**
    * 사용자 UUID로 모든 구성원 조회
    */
   List<FamilyMember> findAllByUserUuid(CustomUuid userUuid);

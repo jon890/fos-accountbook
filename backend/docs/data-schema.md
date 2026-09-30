@@ -288,6 +288,7 @@ DELETE /users/me/api-tokens/{uuid}     폐기
 POST   /families                   가족 생성
 GET    /families                   내 가족 목록
 GET    /families/{uuid}            가족 상세
+GET    /families/{uuid}/members    구성원 목록 (가입 순서)
 PUT    /families/{uuid}            가족 수정 (OWNER)
 DELETE /families/{uuid}            가족 삭제 (OWNER)
 
@@ -339,3 +340,26 @@ GET    /families/{uuid}/dashboard/expenses/by-category        카테고리별 �
 GET    /families/{uuid}/dashboard/stats/monthly-trend         월별 지출 추이 (from/to)
 GET    /families/{uuid}/dashboard/stats/category-breakdown    카테고리 분포 + 전월 delta
 ```
+
+### 응답에 담는 등록자
+
+지출과 수입의 응답(`ExpenseResponse`, `IncomeResponse`)은 등록한 사용자의 `userUuid` 를 담는다.
+이름과 사진은 담지 않는다. 화면은 `GET /families/{uuid}/members` 로 받은 구성원 목록에서 `userUuid` 로 찾는다.
+가족을 떠난 구성원의 기록도 `userUuid` 는 남으므로, 화면은 목록에서 찾지 못한 경우를 따로 표시한다.
+
+구성원 목록 응답의 `data`는 `userUuid`, `name`, `email`, `image`, `role`, `joinedAt`을 담은 배열이다.
+`name`과 `image`는 null일 수 있고, `email`은 사용자에게 있으면 담는다.
+`ACTIVE` 구성원만 가입 시각 오름차순으로 반환하며 가족 구성원만 조회할 수 있다.
+
+`daily-stats` 는 날짜별 합계와 함께 등록자별 지출 합계를 준다.
+
+| 필드 | 타입 | 뜻 |
+|---|---|---|
+| `dailyStats[].date` | `YYYY-MM-DD` | 거래가 있는 날만. 날짜 오름차순 |
+| `dailyStats[].income`, `dailyStats[].expense` | 숫자 | 그날 가족 전체 합계 |
+| `dailyStats[].memberExpenses[]` | `{ userUuid, amount }` | 그날 지출이 있는 등록자만. `userUuid` 오름차순 |
+| `totalIncome`, `totalExpense` | 숫자 | 그 달 가족 전체 합계 |
+| `memberExpenseTotals[]` | `{ userUuid, amount }` | 그 달 등록자별 지출 합계. 지출이 있는 등록자만. `userUuid` 오름차순 |
+
+합계는 삭제되지 않은(`ACTIVE`) 지출과 수입을 모두 더한다. 예산 제외 표시는 보지 않는다.
+등록자별 수입 합계는 담지 않는다. 달력은 등록자별로 지출만 비교하고, 수입은 날짜를 눌러 목록에서 본다.

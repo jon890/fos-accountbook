@@ -2,6 +2,7 @@ package com.bifos.accountbook.family.presentation.controller;
 
 import com.bifos.accountbook.family.application.dto.CreateFamilyRequest;
 import com.bifos.accountbook.family.application.dto.FamilyResponse;
+import com.bifos.accountbook.family.application.dto.FamilyMemberResponse;
 import com.bifos.accountbook.family.application.dto.UpdateFamilyRequest;
 import com.bifos.accountbook.family.application.service.FamilyService;
 import com.bifos.accountbook.shared.value.CustomUuid;
@@ -74,6 +75,18 @@ public class FamilyController {
     FamilyResponse family = familyService.getFamily(loginUser.userUuid(), familyUuid);
 
     return ResponseEntity.ok(ApiSuccessResponse.of(family));
+  }
+
+  @Operation(summary = "가족 구성원 목록 조회", description = "활성 구성원을 가입 순서대로 조회합니다.")
+  @ApiResponse(responseCode = "200", description = "조회 성공")
+  @ApiResponse(responseCode = "403", description = "가족 구성원이 아님")
+  @GetMapping("/{familyUuid}/members")
+  public ResponseEntity<ApiSuccessResponse<List<FamilyMemberResponse>>> getFamilyMembers(
+      @LoginUser LoginUserDto loginUser,
+      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid) {
+    List<FamilyMemberResponse> members = familyService.getFamilyMembers(loginUser.userUuid(), familyUuid);
+
+    return ResponseEntity.ok(ApiSuccessResponse.of(members));
   }
 
   @Operation(summary = "가족 정보 수정", description = "가족의 이름과 설명을 수정합니다. (owner 권한 필요)")

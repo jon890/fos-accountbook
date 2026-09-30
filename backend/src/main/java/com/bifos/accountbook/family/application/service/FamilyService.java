@@ -5,6 +5,7 @@ import com.bifos.accountbook.shared.aop.FamilyValidationService;
 import com.bifos.accountbook.expense.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.family.application.dto.CreateFamilyRequest;
 import com.bifos.accountbook.family.application.dto.FamilyResponse;
+import com.bifos.accountbook.family.application.dto.FamilyMemberResponse;
 import com.bifos.accountbook.family.application.dto.UpdateFamilyRequest;
 import com.bifos.accountbook.shared.exception.BusinessException;
 import com.bifos.accountbook.shared.exception.ErrorCode;
@@ -106,6 +107,15 @@ public class FamilyService {
 
     int memberCount = familyMemberRepository.countByFamilyUuid(familyUuid);
     return FamilyResponse.fromWithMemberCount(family, memberCount);
+  }
+
+  @ValidateFamilyAccess
+  public List<FamilyMemberResponse> getFamilyMembers(@UserUuid CustomUuid userUuid,
+                                                    @FamilyUuid CustomUuid familyUuid) {
+    return familyMemberRepository.findAllActiveByFamilyUuid(familyUuid)
+                                 .stream()
+                                 .map(FamilyMemberResponse::from)
+                                 .toList();
   }
 
   /**

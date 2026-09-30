@@ -17,6 +17,7 @@ public class ExpenseResponse {
 
   private String uuid;
   private String familyUuid;
+  private String userUuid;
   private String categoryUuid;
   private CategoryInfo category;
   private BigDecimal amount;
@@ -37,6 +38,7 @@ public class ExpenseResponse {
     return ExpenseResponse.builder()
                           .uuid(expense.getUuid().getValue())
                           .familyUuid(expense.getFamilyUuid().getValue())
+                          .userUuid(expense.getUserUuid().getValue())
                           .categoryUuid(expense.getCategoryUuid().getValue())
                           .category(category)
                           .amount(expense.getAmount())
@@ -58,6 +60,7 @@ public class ExpenseResponse {
     return ExpenseResponse.builder()
                           .uuid(expense.getUuid().getValue())
                           .familyUuid(expense.getFamilyUuid().getValue())
+                          .userUuid(expense.getUserUuid().getValue())
                           .categoryUuid(expense.getCategoryUuid().getValue())
                           .amount(expense.getAmount())
                           .description(expense.getDescription())
