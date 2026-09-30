@@ -288,6 +288,7 @@ DELETE /users/me/api-tokens/{uuid}     폐기
 POST   /families                   가족 생성
 GET    /families                   내 가족 목록
 GET    /families/{uuid}            가족 상세
+GET    /families/{uuid}/members    구성원 목록 (가입 순서)
 PUT    /families/{uuid}            가족 수정 (OWNER)
 DELETE /families/{uuid}            가족 삭제 (OWNER)
 
@@ -343,7 +344,7 @@ GET    /families/{uuid}/dashboard/stats/category-breakdown    카테고리 분�
 ### 응답에 담는 등록자
 
 지출과 수입의 응답(`ExpenseResponse`, `IncomeResponse`)은 등록한 사용자의 `userUuid` 를 담는다.
-이름과 사진은 담지 않는다. 화면은 이미 받는 가족 구성원 목록에서 `userUuid` 로 찾는다.
+이름과 사진은 담지 않는다. 화면은 `GET /families/{uuid}/members` 로 받은 구성원 목록에서 `userUuid` 로 찾는다.
 가족을 떠난 구성원의 기록도 `userUuid` 는 남으므로, 화면은 목록에서 찾지 못한 경우를 따로 표시한다.
 
 `daily-stats` 는 날짜별 합계와 함께 등록자별 지출 합계를 준다.

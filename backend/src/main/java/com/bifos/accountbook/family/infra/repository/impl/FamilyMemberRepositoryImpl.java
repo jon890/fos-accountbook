@@ -44,6 +44,18 @@ public class FamilyMemberRepositoryImpl implements FamilyMemberRepository {
   }
 
   @Override
+  public List<FamilyMember> findAllActiveByFamilyUuid(CustomUuid familyUuid) {
+    QFamilyMember member = QFamilyMember.familyMember;
+    return queryFactory.selectFrom(member)
+                       .join(member.user)
+                       .fetchJoin()
+                       .where(member.familyUuid.eq(familyUuid),
+                              member.status.eq(FamilyMemberStatus.ACTIVE))
+                       .orderBy(member.joinedAt.asc(), member.id.asc())
+                       .fetch();
+  }
+
+  @Override
   public List<FamilyMember> findAllByUserUuid(CustomUuid userUuid) {
     return jpaRepository.findAllByUserUuid(userUuid);
   }
