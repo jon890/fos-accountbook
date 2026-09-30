@@ -320,6 +320,115 @@ class DashboardControllerTest extends AbstractControllerTest {
   }
 
   @Test
+  @DisplayName("일별 통계는 날짜와 등록자 순서로 합계를 반환하고 삭제 및 다른 기간과 가족은 제외한다")
+  void getDailyStats_MemberExpenseTotals() throws Exception {
+    User firstUser = fixtures.getDefaultUser();
+    User secondUser = fixtures.users.user().email("second@example.com").build();
+    Family family = fixtures.getDefaultFamily();
+    Category category = fixtures.categories.category(family).build();
+    LocalDateTime firstDay = LocalDateTime.of(2025, 5, 1, 12, 0);
+
+    createExpense(family.getUuid(), firstUser.getUuid(), category.getUuid(),
+                  new BigDecimal("100.25"), firstDay);
+    createExpense(family.getUuid(), firstUser.getUuid(), category.getUuid(),
+                  new BigDecimal("20.75"), firstDay.plusHours(1));
+    Expense excluded = createExpense(family.getUuid(), secondUser.getUuid(), category.getUuid(),
+                                     new BigDecimal("200.50"), firstDay);
+    excluded.setExcludeFromBudget(true);
+    expenseRepository.save(excluded);
+    createExpense(family.getUuid(), firstUser.getUuid(), category.getUuid(),
+                  new BigDecimal("30.50"), firstDay.withDayOfMonth(5));
+    createIncome(family.getUuid(), firstUser.getUuid(), category.getUuid(),
+                 new BigDecimal("500.25"), firstDay.withDayOfMonth(3));
+    User deletedUser = fixtures.users.user().email("deleted@example.com").build();
+    Expense deleted = createExpense(family.getUuid(), deletedUser.getUuid(), category.getUuid(),
+                                    BigDecimal.valueOf(999), firstDay.withDayOfMonth(9));
+    deleted.delete();
+    expenseRepository.save(deleted);
+    createExpense(family.getUuid(), secondUser.getUuid(), category.getUuid(),
+                  BigDecimal.valueOf(888), firstDay.minusMonths(1));
+    createExpense(family.getUuid(), secondUser.getUuid(), category.getUuid(),
+                  BigDecimal.valueOf(777), firstDay.minusYears(1));
+    Family otherFamily = fixtures.families.family().name("다른 가족").build();
+    Category otherCategory = fixtures.categories.category(otherFamily).build();
+    createExpense(otherFamily.getUuid(), secondUser.getUuid(), otherCategory.getUuid(),
+                  BigDecimal.valueOf(666), firstDay);
+
+    boolean firstUserBeforeSecond = firstUser.getUuid().getValue()
+                                            .compareTo(secondUser.getUuid().getValue()) < 0;
+    String earlierUuid;
+    String laterUuid;
+    double earlierDailyAmount;
+    double laterDailyAmount;
+    double earlierMonthlyAmount;
+    double laterMonthlyAmount;
+    if (firstUserBeforeSecond) {
+      earlierUuid = firstUser.getUuid().getValue();
+      laterUuid = secondUser.getUuid().getValue();
+      earlierDailyAmount = 121;
+      laterDailyAmount = 200.5;
+      earlierMonthlyAmount = 151.5;
+      laterMonthlyAmount = 200.5;
+    } else {
+      earlierUuid = secondUser.getUuid().getValue();
+      laterUuid = firstUser.getUuid().getValue();
+      earlierDailyAmount = 200.5;
+      laterDailyAmount = 121;
+      earlierMonthlyAmount = 200.5;
+      laterMonthlyAmount = 151.5;
+    }
+
+    mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/daily-stats", family.getUuid().getValue())
+                        .param("year", "2025")
+                        .param("month", "5"))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.data.totalExpense").value(352))
+           .andExpect(jsonPath("$.data.totalIncome").value(500.25))
+           .andExpect(jsonPath("$.data.dailyStats.length()").value(3))
+           .andExpect(jsonPath("$.data.dailyStats[0].date").value("2025-05-01"))
+           .andExpect(jsonPath("$.data.dailyStats[0].expense").value(321.5))
+           .andExpect(jsonPath("$.data.dailyStats[0].memberExpenses.length()").value(2))
+           .andExpect(jsonPath("$.data.dailyStats[0].memberExpenses[0].userUuid").value(earlierUuid))
+           .andExpect(jsonPath("$.data.dailyStats[0].memberExpenses[0].amount").value(earlierDailyAmount))
+           .andExpect(jsonPath("$.data.dailyStats[0].memberExpenses[1].userUuid").value(laterUuid))
+           .andExpect(jsonPath("$.data.dailyStats[0].memberExpenses[1].amount").value(laterDailyAmount))
+           .andExpect(jsonPath("$.data.dailyStats[1].date").value("2025-05-03"))
+           .andExpect(jsonPath("$.data.dailyStats[1].income").value(500.25))
+           .andExpect(jsonPath("$.data.dailyStats[1].expense").value(0))
+           .andExpect(jsonPath("$.data.dailyStats[1].memberExpenses").isEmpty())
+           .andExpect(jsonPath("$.data.dailyStats[2].date").value("2025-05-05"))
+           .andExpect(jsonPath("$.data.dailyStats[2].expense").value(30.5))
+           .andExpect(jsonPath("$.data.dailyStats[2].memberExpenses.length()").value(1))
+           .andExpect(jsonPath("$.data.dailyStats[2].memberExpenses[0].userUuid").value(firstUser.getUuid().getValue()))
+           .andExpect(jsonPath("$.data.dailyStats[2].memberExpenses[0].amount").value(30.5))
+           .andExpect(jsonPath("$.data.memberExpenseTotals.length()").value(2))
+           .andExpect(jsonPath("$.data.memberExpenseTotals[0].userUuid").value(earlierUuid))
+           .andExpect(jsonPath("$.data.memberExpenseTotals[0].amount").value(earlierMonthlyAmount))
+           .andExpect(jsonPath("$.data.memberExpenseTotals[1].userUuid").value(laterUuid))
+           .andExpect(jsonPath("$.data.memberExpenseTotals[1].amount").value(laterMonthlyAmount));
+  }
+
+  @Test
+  @DisplayName("수입만 있는 달은 등록자별 지출 합계가 빈 배열이다")
+  void getDailyStats_IncomeOnly() throws Exception {
+    User user = fixtures.getDefaultUser();
+    Family family = fixtures.getDefaultFamily();
+    Category category = fixtures.categories.category(family).build();
+    createIncome(family.getUuid(), user.getUuid(), category.getUuid(),
+                 BigDecimal.valueOf(100), LocalDateTime.of(2025, 5, 3, 12, 0));
+
+    mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/daily-stats", family.getUuid().getValue())
+                        .param("year", "2025")
+                        .param("month", "5"))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.data.totalExpense").value(0))
+           .andExpect(jsonPath("$.data.totalIncome").value(100))
+           .andExpect(jsonPath("$.data.memberExpenseTotals").isEmpty())
+           .andExpect(jsonPath("$.data.dailyStats.length()").value(1))
+           .andExpect(jsonPath("$.data.dailyStats[0].memberExpenses").isEmpty());
+  }
+
+  @Test
   @DisplayName("일별 통계 조회 - 거래 없는 달")
   void getDailyStats_NoTransactions() throws Exception {
     // Given: 빈 가족
@@ -340,7 +449,8 @@ class DashboardControllerTest extends AbstractControllerTest {
            .andExpect(jsonPath("$.data.month").value(month))
            .andExpect(jsonPath("$.data.totalExpense").value(0))
            .andExpect(jsonPath("$.data.totalIncome").value(0))
-           .andExpect(jsonPath("$.data.dailyStats").isEmpty());
+           .andExpect(jsonPath("$.data.dailyStats").isEmpty())
+           .andExpect(jsonPath("$.data.memberExpenseTotals").isEmpty());
   }
 
   @Test

@@ -1,6 +1,7 @@
 package com.bifos.accountbook.dashboard.application.service;
 
 import com.bifos.accountbook.dashboard.application.dto.DailyStat;
+import com.bifos.accountbook.dashboard.application.dto.MemberAmount;
 import com.bifos.accountbook.dashboard.application.dto.DailyStatsResponse;
 import com.bifos.accountbook.dashboard.application.dto.MonthlyStatsResponse;
 import com.bifos.accountbook.dashboard.application.dto.CategoryBreakdownItem;
@@ -279,7 +280,8 @@ public class DashboardService {
                                           @FamilyUuid CustomUuid familyUuid,
                                           int year,
                                           int month) {
-    Map<Integer, BigDecimal> expenseByDay = dashboardRepository.getDailyExpenseAmounts(familyUuid, year, month);
+    Map<Integer, Map<String, BigDecimal>> expenseByDay =
+        dashboardRepository.getDailyExpenseAmountsByMember(familyUuid, year, month);
     Map<Integer, BigDecimal> incomeByDay = dashboardRepository.getDailyIncomeAmounts(familyUuid, year, month);
 
     Set<Integer> daysWithTransactions = new HashSet<>();
@@ -289,15 +291,20 @@ public class DashboardService {
     List<DailyStat> dailyStats = new ArrayList<>();
     BigDecimal totalIncome = BigDecimal.ZERO;
     BigDecimal totalExpense = BigDecimal.ZERO;
+    Map<String, BigDecimal> expenseByMember = new HashMap<>();
 
     for (Integer day : daysWithTransactions) {
       BigDecimal income = incomeByDay.getOrDefault(day, BigDecimal.ZERO);
-      BigDecimal expense = expenseByDay.getOrDefault(day, BigDecimal.ZERO);
+      Map<String, BigDecimal> memberExpenses = expenseByDay.getOrDefault(day, Map.of());
+      BigDecimal expense = memberExpenses.values().stream()
+                                         .reduce(BigDecimal.ZERO, BigDecimal::add);
+      memberExpenses.forEach((memberUuid, amount) -> expenseByMember.merge(memberUuid, amount, BigDecimal::add));
 
       dailyStats.add(DailyStat.builder()
                               .date(LocalDate.of(year, month, day))
                               .income(income)
                               .expense(expense)
+                              .memberExpenses(toMemberAmounts(memberExpenses))
                               .build());
 
       totalIncome = totalIncome.add(income);
@@ -312,7 +319,17 @@ public class DashboardService {
                              .dailyStats(dailyStats)
                              .totalIncome(totalIncome)
                              .totalExpense(totalExpense)
+                             .memberExpenseTotals(toMemberAmounts(expenseByMember))
                              .build();
   }
-}
 
+  private List<MemberAmount> toMemberAmounts(Map<String, BigDecimal> amounts) {
+    return amounts.entrySet().stream()
+                  .sorted(Map.Entry.comparingByKey())
+                  .map(entry -> MemberAmount.builder()
+                                            .userUuid(entry.getKey())
+                                            .amount(entry.getValue())
+                                            .build())
+                  .toList();
+  }
+}

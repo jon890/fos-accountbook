@@ -6,6 +6,7 @@ import com.bifos.accountbook.shared.value.CustomUuid;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 대시보드 통계 Repository 인터페이스
@@ -86,7 +87,7 @@ public interface DashboardRepository {
       int month
   );
 
-  java.util.Map<Integer, BigDecimal> getDailyExpenseAmounts(CustomUuid familyUuid, int year, int month);
+  Map<Integer, Map<String, BigDecimal>> getDailyExpenseAmountsByMember(CustomUuid familyUuid, int year, int month);
 
   java.util.Map<Integer, BigDecimal> getDailyIncomeAmounts(CustomUuid familyUuid, int year, int month);
 

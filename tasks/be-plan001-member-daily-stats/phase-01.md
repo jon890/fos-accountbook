@@ -13,6 +13,7 @@
 
 ## 컨텍스트
 
+- 최근 관련 커밋은 `a0ff2cf`(등록자 응답 계약 계획), `1b363c5`와 `34bb270`(연동 토큰 도입)이다. 기존 가족 접근 검증과 연동 토큰 경로 정책은 변경하지 않는다.
 - 엔티티는 이미 등록자를 저장한다. `expense/domain/entity/Expense.java` 와 `income/domain/entity/Income.java` 의 `CustomUuid userUuid` (컬럼 `user_uuid`, NOT NULL).
 - 응답 DTO: `expense/application/dto/ExpenseResponse.java`, `income/application/dto/IncomeResponse.java`. 각각 `from(entity, category)` 와 `fromWithoutCategory(entity)` 두 팩토리가 있다. 둘 다 고친다.
 - 일별 통계 흐름: `dashboard/presentation/controller/DashboardController.java` 의 `getDailyStats` → `dashboard/application/service/DashboardService.java` 의 `getDailyStats` → `dashboard/domain/repository/DashboardRepository.java` 의 `getDailyExpenseAmounts`, `getDailyIncomeAmounts` → 구현 `dashboard/infra/repository/impl/DashboardRepositoryImpl.java` (QueryDSL, `expense.date.dayOfMonth()` 로 그룹).
@@ -31,24 +32,24 @@
 
 ## 작업 항목
 
-### 1. `ExpenseResponse`, `IncomeResponse` — `userUuid` 추가
+### 1. `ExpenseResponse`, `IncomeResponse`: `userUuid` 추가
 
 - 필드 `private String userUuid;` 를 `familyUuid` 다음에 둔다.
 - 두 팩토리에서 `.userUuid(entity.getUserUuid().getValue())` 를 채운다.
 
-### 2. `dashboard/application/dto` — 등록자별 합계 DTO
+### 2. `dashboard/application/dto`: 등록자별 합계 DTO
 
 - 새 DTO `MemberAmount` (`String userUuid`, `BigDecimal amount`), 같은 패키지, 기존 DTO 와 같은 Lombok 구성.
 - `DailyStat` 에 `@Builder.Default private List<MemberAmount> memberExpenses = new ArrayList<>();`
 - `DailyStatsResponse` 에 `@Builder.Default private List<MemberAmount> memberExpenseTotals = new ArrayList<>();`
 
-### 3. `DashboardRepository`, `DashboardRepositoryImpl` — 날짜·등록자별 지출 조회
+### 3. `DashboardRepository`, `DashboardRepositoryImpl`: 날짜·등록자별 지출 조회
 
 - 새 메서드 `Map<Integer, Map<String, BigDecimal>> getDailyExpenseAmountsByMember(CustomUuid familyUuid, int year, int month)`.
 - 조건은 기존 `getDailyExpenseAmounts` 와 같다(가족, `ExpenseStatus.ACTIVE`, 연, 월). `groupBy(expense.date.dayOfMonth(), expense.userUuid)`.
 - `userUuid` 는 `CustomUuid` 라 `getValue()` 로 문자열 키를 만든다.
 
-### 4. `DashboardService.getDailyStats` — 조립
+### 4. `DashboardService.getDailyStats`: 조립
 
 - 새 메서드로 날짜별·등록자별 지출을 받아 날짜 합계(`expense`)를 더해 만든다. 수입은 기존 `getDailyIncomeAmounts` 그대로.
 - 날짜마다 `memberExpenses` 를 `userUuid` 오름차순으로 채운다. 월 `memberExpenseTotals` 는 등록자별로 모든 날을 더해 같은 순서로 채운다.
@@ -67,12 +68,13 @@
 
 ```bash
 # cwd: <repo root>
-cd backend && ./gradlew checkstyleMain checkstyleTest test
+cd backend && ./gradlew checkstyleMain checkstyleTest test build --no-daemon
 ```
 
 `gradle-wrapper.jar` 가 없으면 먼저 루트 `CLAUDE.md` 의 안내대로 만든다. jar 는 커밋하지 않는다.
 
-마지막으로 `tasks/be-plan001-member-daily-stats/index.json` 의 `status` 와 phase `status` 를 `completed` 로 바꾼다.
+마지막으로 `tasks/be-plan001-member-daily-stats/index.json` 의 phase 01 `status`만 `completed`로 바꾸고 plan `status`는 `in_progress`로 유지한다.
+모든 phase 구현과 검토가 끝나면 루트 `CLAUDE.md`에 따라 계획 디렉터리를 별도 커밋으로 삭제한다.
 
 ## Critical Files
 

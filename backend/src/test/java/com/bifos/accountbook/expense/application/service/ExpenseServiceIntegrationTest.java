@@ -111,6 +111,15 @@ class ExpenseServiceIntegrationTest extends TestFixturesSupport {
   }
 
   @Test
+  @DisplayName("카테고리 없는 지출 응답에도 등록자 UUID를 담는다")
+  void expenseResponseWithoutCategory_ContainsUserUuid() {
+    var expense = fixtures.expenses.expense(testFamily, foodCategory).build();
+
+    assertThat(ExpenseResponse.fromWithoutCategory(expense).getUserUuid())
+        .isEqualTo(testUser.getUuid().getValue());
+  }
+
+  @Test
   @DisplayName("지출 조회 시 날짜 내림차순으로 정렬되어야 한다")
   void getFamilyExpenses_ShouldBeSortedByDateDescending() {
     // Given
@@ -125,6 +134,8 @@ class ExpenseServiceIntegrationTest extends TestFixturesSupport {
 
     // Then
     assertThat(expenses.getContent()).hasSize(5);
+    assertThat(expenses.getContent()).extracting(ExpenseResponse::getUserUuid)
+                                    .containsOnly(testUser.getUuid().getValue());
 
     // 날짜가 내림차순으로 정렬되어 있는지 확인 (최신 날짜가 먼저)
     List<ExpenseResponse> expenseList = expenses.getContent();

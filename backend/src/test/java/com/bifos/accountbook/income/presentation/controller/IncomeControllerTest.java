@@ -1,6 +1,8 @@
 package com.bifos.accountbook.income.presentation.controller;
 
 import com.bifos.accountbook.shared.AbstractControllerTest;
+import com.bifos.accountbook.income.application.dto.IncomeResponse;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.bifos.accountbook.income.application.dto.CreateIncomeRequest;
 import com.bifos.accountbook.income.application.dto.UpdateIncomeRequest;
@@ -98,6 +100,7 @@ class IncomeControllerTest extends AbstractControllerTest {
            .andExpect(jsonPath("$.data.items").isArray())
            .andExpect(jsonPath("$.data.items", hasSize(2)))
            .andExpect(jsonPath("$.data.totalElements").value(2))
+           .andExpect(jsonPath("$.data.items[0].userUuid").value(fixtures.getDefaultUser().getUuid().getValue()))
            .andExpect(jsonPath("$.data.items[0].description").value("월급"))
            .andExpect(jsonPath("$.data.items[1].description").value("보너스"));
   }
@@ -142,6 +145,9 @@ class IncomeControllerTest extends AbstractControllerTest {
                             .date(LocalDateTime.now())
                             .build();
 
+    assertThat(IncomeResponse.fromWithoutCategory(income).getUserUuid())
+        .isEqualTo(income.getUserUuid().getValue());
+
     // When & Then
     mockMvc.perform(get("/api/v1/families/{familyUuid}/incomes/{incomeUuid}",
                         family.getUuid().getValue(),
@@ -149,6 +155,7 @@ class IncomeControllerTest extends AbstractControllerTest {
            .andExpect(status().isOk())
            .andExpect(jsonPath("$.success").value(true))
            .andExpect(jsonPath("$.data.uuid").value(income.getUuid().getValue()))
+           .andExpect(jsonPath("$.data.userUuid").value(income.getUserUuid().getValue()))
            .andExpect(jsonPath("$.data.amount").value(3000000))
            .andExpect(jsonPath("$.data.description").value("월급"));
   }

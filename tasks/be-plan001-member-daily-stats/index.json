@@ -1,15 +1,22 @@
 {
   "name": "be-plan001-member-daily-stats",
   "description": "지출·수입 응답에 등록자 userUuid 를 담고, 일별 통계에 등록자별 지출 합계를 더해 부부가 달력에서 서로의 지출을 비교할 수 있게 한다",
-  "status": "pending",
+  "status": "in_progress",
   "created_at": "2026-09-30",
-  "total_phases": 1,
-  "current_phase": 1,
+  "total_phases": 2,
+  "current_phase": 2,
   "phases": [
     {
       "number": 1,
       "file": "phase-01.md",
       "title": "등록자 응답 필드와 등록자별 일별 지출 합계",
+      "status": "completed",
+      "execution_profile": "standard"
+    },
+    {
+      "number": 2,
+      "file": "phase-02.md",
+      "title": "가족 구성원 목록 API",
       "status": "pending",
       "execution_profile": "standard"
     }

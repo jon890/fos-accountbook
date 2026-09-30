@@ -223,11 +223,11 @@ public class DashboardRepositoryImpl implements DashboardRepository {
   }
 
   @Override
-  public Map<Integer, BigDecimal> getDailyExpenseAmounts(CustomUuid familyUuid, int year, int month) {
+  public Map<Integer, Map<String, BigDecimal>> getDailyExpenseAmountsByMember(CustomUuid familyUuid, int year, int month) {
     QExpense expense = QExpense.expense;
 
     List<Tuple> tuples = queryFactory
-        .select(expense.date.dayOfMonth(), expense.amount.sum())
+        .select(expense.date.dayOfMonth(), expense.userUuid, expense.amount.sum())
         .from(expense)
         .where(
             expense.family.uuid.eq(familyUuid),
@@ -235,10 +235,20 @@ public class DashboardRepositoryImpl implements DashboardRepository {
             expense.date.year().eq(year),
             expense.date.month().eq(month)
         )
-        .groupBy(expense.date.dayOfMonth())
+        .groupBy(expense.date.dayOfMonth(), expense.userUuid)
         .fetch();
 
-    return toAmountByDayMap(tuples, expense.date.dayOfMonth(), expense.amount.sum());
+    Map<Integer, Map<String, BigDecimal>> amountsByDay = new HashMap<>();
+    for (Tuple tuple : tuples) {
+      Integer day = tuple.get(expense.date.dayOfMonth());
+      CustomUuid userUuid = tuple.get(expense.userUuid);
+      BigDecimal amount = tuple.get(expense.amount.sum());
+      if (day != null && userUuid != null) {
+        amountsByDay.computeIfAbsent(day, ignored -> new HashMap<>())
+                    .put(userUuid.getValue(), amount != null ? amount : BigDecimal.ZERO);
+      }
+    }
+    return amountsByDay;
   }
 
   @Override
