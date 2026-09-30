@@ -97,7 +97,7 @@ CREATE TABLE categories (
     uuid                VARCHAR(36) NOT NULL UNIQUE,
     family_uuid         VARCHAR(36) NOT NULL,
     name                VARCHAR(50) NOT NULL,
-    color               VARCHAR(50) DEFAULT '#6366f1',           -- #RRGGBB 또는 oklch(L C H)
+    color               VARCHAR(50),                             -- #RRGGBB 또는 oklch(L C H). 기본값 #6366f1 은 엔티티가 채운다
     icon                VARCHAR(50),
     exclude_from_budget BOOLEAN     NOT NULL DEFAULT FALSE,
     is_default          BOOLEAN     NOT NULL DEFAULT FALSE,       -- TRUE = 삭제 불가
