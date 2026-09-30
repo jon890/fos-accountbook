@@ -14,7 +14,7 @@
 - 데이터는 phase 01 의 `getCalendarMonthAction(year, month)` 와 `buildMemberColorMap`, `formatCompactAmount` 를 쓴다.
 - Page 에서 `serverApiGet` 을 직접 부르지 않고 Action 을 거친다(ADR-F12). URL searchParams 와 클라이언트 상태를 맞출 때는 ADR-F17 의 `draft ?? current` 패턴을 쓴다.
 - 사용자 시간대는 `(authenticated)/layout.tsx` 의 `TimeZoneProvider` 와 세션 `session.user.profile?.timezone` 에 있다. 이번 달과 오늘은 이 시간대로 정한다. 선례: `lib/utils/date-timezone.ts` 의 `getMonthRange(timezone)`.
-- 목록 행은 기존 `components/transactions/TransactionRow.tsx` 의 `variant="compact"` 를 쓴다. `createdBy` prop 이 이미 있다.
+- 목록 행은 기존 `components/transactions/TransactionRow.tsx` 의 `variant="compact"` 를 쓴다. 등록자는 `tx.createdBy` 필드로 전달한다.
 - 기존 `components/dashboard/CalendarView.tsx` 는 쓰지 않는다. phase 05 가 지운다.
 - 빈 상태 컴포넌트는 `components/empty/EmptyState.tsx`, 로딩 skeleton 은 `Skel` 패턴(`flow.md` 「14-2」)이다.
 
@@ -32,6 +32,7 @@
 ### 1. `frontend/src/app/(authenticated)/calendar/page.tsx`, `loading.tsx`
 
 - searchParams `month`(`YYYY-MM`), `date`(`YYYY-MM-DD`)를 읽는다. 형식이 틀리면 무시하고 기본값(flow.md 규칙)을 쓴다.
+- 연도는 2000~2100이고 날짜는 실제 존재해야 한다. 요청 월에 속하지 않는 날짜도 기본값으로 처리한다. 월 이동은 이전 선택 날짜를 넘기지 않고, 월 경계의 이동 버튼은 비활성화한다. 월이 바뀌면 초기 선택 날짜를 새로 적용하고 같은 월 데이터 갱신에서는 선택 날짜를 유지하며 최신 거래 props를 사용한다.
 - `getCalendarMonthAction` 실패 시 `throw` 해 `(authenticated)/error.tsx` 로 보낸다. 인증 오류는 기존 action-result-handler 규칙(ADR-F26)을 따른다.
 - `loading.tsx` 는 월 헤더, 7×5 칸, 목록 세 줄 skeleton.
 
@@ -40,8 +41,8 @@
 - `CalendarHome.tsx` (`"use client"`): 선택 날짜 상태, 하위 컴포넌트 조립, 「이 날짜에 추가」 다이얼로그 열기.
 - `MonthHeader.tsx`: 이전·다음 달 버튼(`aria-label` 「이전 달」, 「다음 달」), `2026년 9월` 제목.
 - `MemberTotals.tsx`: `memberExpenseTotals` 를 가입 순서로 색 점, 이름, 금액(`formatCurrency`). 끝에 가족 합계 지출과 수입.
-- `CalendarGrid.tsx`: 일요일 시작 7열. 칸마다 날짜와 `memberExpenses` 를 줄마다 색 점과 `formatCompactAmount` 금액. 칸은 `button` 이며 `aria-label` 에 날짜와 구성원별 금액을 문장으로 넣는다(예: 「9월 14일, 아내 32,000원, 남편 11,000원」). `aria-pressed` 로 선택 표시.
-- `DayTransactionList.tsx`: 선택 날짜 제목(「9월 14일 (월)」)과 그날 지출 합계. 그날 지출과 수입을 시간순으로 `TransactionRow` 에 넘기며 `createdBy` 에 구성원 이름과 색을 준다. 비었으면 EmptyState(「이 날 기록이 없어요」). 맨 아래 「이 날짜에 추가」 버튼은 `AddTransactionDialog` 를 `defaultDate`=선택 날짜로 연다. 항목을 누르면 `EditTransactionDialog` 를 연다.
+- `CalendarGrid.tsx`: 일요일 시작 7열. 칸마다 날짜와 `memberExpenses` 를 줄마다 색 점과 `formatCompactAmount` 금액. 칸은 공용 `Button` 이며 `aria-label` 에 날짜와 구성원별 금액을 문장으로 넣는다(예: 「9월 14일, 아내 32,000원, 남편 11,000원」). `aria-pressed` 로 선택 표시.
+- `DayTransactionList.tsx`: 선택 날짜 제목과 그날 지출 합계를 표시한다. 제목 예시는 「9월 14일 (월)」이다. 그날 지출과 수입을 시간순으로 `TransactionRow` 에 넘기며 `tx.createdBy` 에 구성원 이름과 색을 준다. 비었으면 EmptyState에 「이 날 기록이 없어요」를 표시한다. 맨 아래 「이 날짜에 추가」 버튼은 선택 날짜를 `defaultDate` 로 주어 `AddTransactionDialog` 를 연다. 항목을 누르면 `EditTransactionDialog` 를 연다.
 
 ### 3. 첫 화면 전환: `frontend/src/app/page.tsx`, `frontend/src/components/layout/Header.tsx`, 가족·초대 흐름
 
@@ -52,19 +53,22 @@
 ### 4. `TransactionRow.tsx`: 등록자 표시
 
 - `createdBy` 를 `{ uuid?: string; name: string; colorClass?: string }` 로 넓혀, 색이 오면 아바타 대신 색 점을 쓴다. 기존 호출부 동작은 그대로 둔다.
+- 색 점에는 등록자 이름을 화면 텍스트나 접근 가능한 이름으로 제공한다. 항목의 키보드 Enter·Space 동작도 클릭과 동일하게 한다.
 
 ### 5. 테스트
 
 - `frontend/src/__tests__/components/calendar/CalendarGrid.test.tsx`: 두 구성원의 같은 날 지출이 두 줄로 줄인 금액과 함께 보인다, 칸 `aria-label` 문장, 칸을 누르면 `onSelect` 가 그 날짜로 불린다.
 - `frontend/src/__tests__/components/calendar/DayTransactionList.test.tsx`: 선택 날짜의 지출과 수입만 보인다, 모르는 등록자는 「이전 구성원」, 빈 날은 EmptyState 와 추가 버튼.
-- `frontend/src/__tests__/components/calendar/CalendarHome.test.tsx`: 날짜를 누르면 서버 액션을 다시 부르지 않고 목록이 바뀐다(`getCalendarMonthAction` mock 호출 횟수 1), `history.replaceState` 가 `date` 로 불린다.
+- `frontend/src/__tests__/components/calendar/CalendarHome.test.tsx`: 날짜 선택 전후 서버 Action 호출이 늘지 않고 목록이 바뀐다. `history.replaceState`, 월 이동, 선택 날짜 등록·수정, 새 거래 props 반영을 확인한다.
+- 달력 Page 테스트에서 최초 조회, 잘못된 월·실제 날짜, 월 불일치, 일반 오류 throw와 인증 오류 로그인 이동을 확인한다. 기존 Header 테스트의 로고 기대 경로도 이 phase에서 바꾼다.
 
 ## 검증
 
 ```bash
 # cwd: <repo root>
-cd frontend && pnpm test -- src/__tests__/components/calendar/CalendarGrid.test.tsx src/__tests__/components/calendar/DayTransactionList.test.tsx src/__tests__/components/calendar/CalendarHome.test.tsx
+cd frontend && pnpm test src/__tests__/components/calendar/CalendarGrid.test.tsx src/__tests__/components/calendar/DayTransactionList.test.tsx src/__tests__/components/calendar/CalendarHome.test.tsx src/__tests__/app/calendar/page.test.tsx src/__tests__/components/layout/Header.test.tsx
 pnpm lint && pnpm test
+pnpm exec tsc --noEmit
 grep -rn 'redirect("/dashboard")' src   # 결과 없음 (phase 05 가 바꿀 dashboard/page.tsx 는 해당 없음)
 ```
 
@@ -85,3 +89,5 @@ grep -rn 'redirect("/dashboard")' src   # 결과 없음 (phase 05 가 바꿀 das
 | `frontend/src/__tests__/components/calendar/CalendarGrid.test.tsx` | 신규 |
 | `frontend/src/__tests__/components/calendar/DayTransactionList.test.tsx` | 신규 |
 | `frontend/src/__tests__/components/calendar/CalendarHome.test.tsx` | 신규 |
+| `frontend/src/__tests__/app/calendar/page.test.tsx` | 신규 |
+| `frontend/src/__tests__/components/layout/Header.test.tsx` | 수정 |

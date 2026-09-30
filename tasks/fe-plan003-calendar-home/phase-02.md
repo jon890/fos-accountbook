@@ -33,16 +33,19 @@
 ### 1. `AddTransactionDialog.tsx`: `defaultDate?: string`(`YYYY-MM-DD`)
 
 - `AddTransactionDialogBody` 의 날짜 초기값을 `defaultDate ?? toLocalDateInput()` 로. 다이얼로그를 다시 열 때 새 `defaultDate` 가 반영되도록 `key` 에 날짜를 넣는다.
+- 지출·수입·고정지출 종류를 바꿀 때 입력 날짜를 유지한다. 선택 날짜로 열기, 수입으로 전환, 다른 날짜로 재열기 모두 기존 테스트에서 확인한다.
 
 ### 2. `EditTransactionDialog.tsx`: 삭제 버튼
 
 - 지출과 수입일 때 하단 왼쪽에 「삭제」(`text-expense`) 버튼. 누르면 AlertDialog 확인 뒤 해당 delete action 을 부르고, 성공하면 토스트와 함께 다이얼로그를 닫는다. 실패하면 토스트로 알리고 다이얼로그는 연 채로 둔다.
 - 고정지출일 때는 삭제 버튼을 두지 않는다(기존 종료 흐름 유지).
+- 실제 삭제 Action 인자는 `(familyUuid, transactionUuid)` 다. 가족 prop이 없으면 `transaction.familyUuid` 를 쓴다. 지출·수입 삭제, 확인 취소와 실패 후 열린 상태를 검증한다.
 
 ### 3. 두 다이얼로그의 모바일 시트 하단
 
 - 저장, 취소, 삭제 버튼 영역을 sticky footer 로 만들고 안전 영역 여백을 준다. 안전 영역 CSS 유틸은 phase 04 가 `globals.css` 에 정의하므로 여기서는 Tailwind 임의 값 `pb-[env(safe-area-inset-bottom)]` 을 쓰고 phase 04 가 유틸로 바꾼다.
 - 폼 입력 `onFocus` 에서 모바일일 때 `scrollIntoView`.
+- viewport의 `viewportFit: "cover"` 설정을 이 phase에서 적용한다. 모바일 Sheet는 `visualViewport.height` 와 `offsetTop` 으로 가시 영역에 배치하며 키보드 resize·scroll 이벤트를 구독하고 닫거나 unmount하면 해제한다. 화면 안은 세로 flex이고 폼 본문만 스크롤하며 footer는 가시 영역 하단에 둔다. API가 없으면 기존 `100dvh` 를 사용한다. 테스트에서 가시 영역 resize에 따른 높이와 이벤트 정리를 확인한다. 실제 iOS 키보드 가시성은 PR의 기기 검증 목록에 남긴다.
 
 ### 4. `revalidatePath` 정리와 중복 새로고침 제거
 
@@ -53,16 +56,18 @@
 
 ### 5. 테스트
 
-- `frontend/src/__tests__/components/transactions/AddTransactionDialog.test.tsx`(같은 이름의 기존 테스트가 있으면 그 파일을 수정으로 바꾼다): `defaultDate="2026-09-14"` 로 열면 날짜 입력값이 그 날짜다.
-- `frontend/src/__tests__/components/transactions/EditTransactionDialog.test.tsx`: 지출에서 삭제 → 확인 → `deleteExpenseAction` 이 uuid 로 불리고 `onOpenChange(false)`. 실패하면 다이얼로그가 열린 채 토스트. 고정지출이면 삭제 버튼이 없다.
+- `frontend/src/__tests__/components/transactions/dialogs/AddTransactionDialog.test.tsx`: `defaultDate="2026-09-14"` 로 열면 날짜 입력값이 그 날짜다.
+- `frontend/src/__tests__/components/transactions/dialogs/EditTransactionDialog.test.tsx`: 지출에서 삭제 → 확인 → `deleteExpenseAction` 이 가족과 거래 uuid 로 불리고 `onOpenChange(false)`. 실패하면 다이얼로그가 열린 채 토스트. 고정지출이면 삭제 버튼이 없다.
 - `frontend/src/__tests__/lib/revalidate-transaction-paths.test.ts`: `next/cache` mock 으로 네 경로가 불린다.
+- 기존 지출·수입 Action 테스트의 경로 단언을 네 경로로 바꾼다. 인증·권한·입력·실패 검증은 유지한다.
 
 ## 검증
 
 ```bash
 # cwd: <repo root>
-cd frontend && pnpm test -- src/__tests__/components/transactions/AddTransactionDialog.test.tsx src/__tests__/components/transactions/EditTransactionDialog.test.tsx src/__tests__/lib/revalidate-transaction-paths.test.ts
+cd frontend && pnpm test src/__tests__/components/transactions/dialogs/AddTransactionDialog.test.tsx src/__tests__/components/transactions/dialogs/EditTransactionDialog.test.tsx src/__tests__/lib/revalidate-transaction-paths.test.ts
 pnpm lint && pnpm test
+pnpm exec tsc --noEmit
 grep -rn 'revalidatePath("/")' src/actions/expense src/actions/income   # 결과 없음
 grep -n "router.refresh" "src/app/(authenticated)/transactions/_components/ExpenseTabContent.tsx"   # 결과 없음
 ```
@@ -82,6 +87,12 @@ grep -n "router.refresh" "src/app/(authenticated)/transactions/_components/Expen
 | `frontend/src/actions/income/update-income-action.ts` | 수정 |
 | `frontend/src/actions/income/delete-income-action.ts` | 수정 |
 | `frontend/src/app/(authenticated)/transactions/_components/ExpenseTabContent.tsx` | 수정 |
-| `frontend/src/__tests__/components/transactions/AddTransactionDialog.test.tsx` | 신규 |
-| `frontend/src/__tests__/components/transactions/EditTransactionDialog.test.tsx` | 신규 |
+| `frontend/src/__tests__/components/transactions/dialogs/AddTransactionDialog.test.tsx` | 수정 |
+| `frontend/src/__tests__/components/transactions/dialogs/EditTransactionDialog.test.tsx` | 수정 |
 | `frontend/src/__tests__/lib/revalidate-transaction-paths.test.ts` | 신규 |
+| `frontend/src/app/layout.tsx` | 수정 |
+| `frontend/src/__tests__/actions/expense/create-expense-action.test.ts` | 수정 |
+| `frontend/src/__tests__/actions/expense/update-expense-action.test.ts` | 수정 |
+| `frontend/src/__tests__/actions/expense/delete-expense-action.test.ts` | 수정 |
+| `frontend/src/__tests__/actions/income/update-income-action.test.ts` | 수정 |
+| `frontend/src/__tests__/actions/income-actions.test.ts` | 수정 |

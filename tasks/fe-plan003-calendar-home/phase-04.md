@@ -31,7 +31,7 @@
 
 ### 1. 안전 영역: `frontend/src/app/layout.tsx`, `frontend/src/app/globals.css`, `(authenticated)/layout.tsx`
 
-- viewport 에 `viewportFit: "cover"`.
+- phase 02가 적용한 viewport의 `viewportFit: "cover"` 를 유지한다.
 - `globals.css` 에 `@utility safe-area-pb { padding-bottom: env(safe-area-inset-bottom); }` 를 정의한다(Tailwind v4 `@utility`).
 - `main` 의 `pb-20` 을 하단 탭 높이와 안전 영역을 더한 값(`calc(4rem + env(safe-area-inset-bottom))` 등)으로 바꾼다.
 - phase 02 가 다이얼로그에 쓴 `pb-[env(safe-area-inset-bottom)]` 을 `safe-area-pb` 로 바꾼다.
@@ -48,17 +48,19 @@
 
 - `flow.md` 「16」 의 네 묶음을 목록형으로 둔다. 각 행은 아이콘, 이름, 오른쪽 화살표이고 높이 52px 이상의 `Link`. 가족 전환과 구성원 초대는 기존 Sheet 와 `InviteFamilyDialog` 를 연다.
 - 맨 위에 현재 가족 이름과 사용자 이름.
+- 서버 Page는 인증과 선택 가족을 조회하고 `menu/_components/MenuPageClient.tsx` 에 이름과 선택 가족 UUID를 넘긴다. Client Component가 Sheet와 초대 다이얼로그를 연다. 메뉴 데이터 조회의 일반 실패와 인증 실패는 기존 Page 오류 규칙으로 처리한다.
 
 ### 4. Header 뒤로 가기와 설정의 가족 「관리」 버튼
 
-- `Header.tsx`: 경로가 `/categories`, `/budget`, `/notifications`, `/settings`, `/menu` 하위가 아닌 하위 화면(`/invite/*`)이면 로고 자리에 뒤로 가기 버튼(`aria-label` 「뒤로 가기」, 44px). 목록은 상수 하나로 둔다. `/menu` 자신은 탭이므로 뒤로 가기가 없다.
+- `Header.tsx`: `/categories`, `/budget`, `/notifications`, `/settings` 와 그 하위 경로 및 `/invite/*` 에서 로고 자리에 뒤로 가기 버튼(`aria-label` 「뒤로 가기」, 44px)을 둔다. 목록은 상수 하나로 둔다. `/menu` 와 `/calendar` 에는 로고를 둔다. `history.length` 방식은 기존 계획대로 유지하므로 외부 사이트 기록이 있으면 해당 기록으로 돌아갈 수 있다.
 - `SettingsPageClient.tsx`: 가족 「관리」 버튼을 지운다.
 
 ### 5. 테스트
 
-- `frontend/src/__tests__/components/layout/BottomNavigation.test.tsx`: 다섯 탭이 링크이고 현재 경로 탭에 `aria-current`, `/families/create` 에서 렌더링하지 않는다, `/calendar?date=2026-09-14` 에서 FAB 를 누르면 `AddTransactionDialog` 에 `defaultDate` 가 전달된다.
+- `frontend/src/__tests__/components/layout/BottomNavigation.test.tsx`: 네 탐색 링크와 추가 FAB 버튼이 있고 현재 경로 탭에 `aria-current`, `/families/create` 에서 렌더링하지 않는다, `/calendar?date=2026-09-14` 에서 FAB 를 누르면 `AddTransactionDialog` 에 `defaultDate` 가 전달된다.
 - `frontend/src/__tests__/components/layout/Header.test.tsx`(기존 파일에 추가): `/categories` 에서 뒤로 가기 버튼, 기록이 없으면 `/menu` 로 이동, `/calendar` 에서는 로고.
 - `frontend/src/__tests__/app/menu/page.test.tsx`: 카테고리, 예산, 고정지출, 알림, 설정 링크가 있다.
+- 메뉴 가족 전환과 초대 열기, 일반 조회 실패와 인증 오류 처리도 검증한다.
 
 ## 검증
 
@@ -66,6 +68,7 @@
 # cwd: <repo root>
 cd frontend && pnpm test -- src/__tests__/components/layout/BottomNavigation.test.tsx src/__tests__/components/layout/Header.test.tsx src/__tests__/app/menu/page.test.tsx
 pnpm lint && pnpm test
+pnpm exec tsc --noEmit
 grep -rn "safe-area-pb" src/app/globals.css   # 정의 1건 이상
 grep -n "router.push" src/components/layout/BottomNavigation.tsx   # 결과 없음
 ```
@@ -80,6 +83,7 @@ grep -n "router.push" src/components/layout/BottomNavigation.tsx   # 결과 없�
 | `frontend/src/components/layout/BottomNavigation.tsx` | 수정 |
 | `frontend/src/components/layout/Header.tsx` | 수정 |
 | `frontend/src/app/(authenticated)/menu/page.tsx` | 신규 |
+| `frontend/src/app/(authenticated)/menu/_components/MenuPageClient.tsx` | 신규 |
 | `frontend/src/app/(authenticated)/settings/_components/SettingsPageClient.tsx` | 수정 |
 | `frontend/src/components/transactions/dialogs/AddTransactionDialog.tsx` | 수정 |
 | `frontend/src/components/transactions/dialogs/EditTransactionDialog.tsx` | 수정 |

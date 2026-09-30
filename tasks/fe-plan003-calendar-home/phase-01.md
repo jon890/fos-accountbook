@@ -31,7 +31,7 @@ main 에 없으면 `PHASE_BLOCKED: be-plan001 미머지` 를 출력하고 멈춘
 ## 의도 메모
 
 - 한 달 목록을 한 번에 받는 이유와 1000건 한계는 ADR-F32 에 있다. 합계는 목록을 더하지 않고 `daily-stats` 값을 쓴다.
-- `Family.members` 는 백엔드가 보낸 적이 없는 필드라 지운다. 그것을 읽던 코드(`dashboard/page.tsx`, `SettingsPageClient.tsx`, `FamilySelector.tsx`)는 이 phase 에서 빈 배열 대신 구성원 API 를 쓰도록 바꾸지 않는다. 타입만 지우면 컴파일이 깨지므로, 그 세 곳은 `members` 를 읽는 줄을 지우고 phase 05 에서 대시보드가 사라질 때 함께 정리한다. 설정과 가족 선택기의 구성원 표시가 필요하면 `getFamilyMembersAction` 을 쓴다.
+- `Family.members` 는 백엔드가 보낸 적이 없는 필드라 지운다. 이를 읽던 대시보드, 설정, 가족 선택기의 잘못된 아바타 표시는 지운다. 인원수는 실제 응답의 `memberCount` 를 사용한다. 구성원 조회는 달력에서만 수행한다.
 
 ## 작업 항목
 
@@ -51,6 +51,7 @@ main 에 없으면 `PHASE_BLOCKED: be-plan001 미머지` 를 출력하고 멈춘
 ### 3. action: `frontend/src/actions/calendar/get-calendar-month-action.ts`, `frontend/src/actions/family/get-family-members-action.ts` (신규)
 
 - `"use server"`, Zod 로 `year`(2000~2100), `month`(1~12) 검증(ADR-F06), A 패턴 권한, `ActionResult<T>` 반환. 선례와 같은 오류 변환.
+- `getFamilyMembersAction(): Promise<ActionResult<FamilyMemberSummary[]>>` 는 인자 없이 선택 가족을 조회한다. 달력 Action 테스트에서 정상 응답, 잘못된 월, 가족 미선택, 백엔드 401 변환을 확인한다.
 
 ### 4. 표시 도구: `frontend/src/lib/utils/format.ts`, `frontend/src/lib/utils/member-color.ts` (신규), `frontend/src/app/globals.css`
 
@@ -63,13 +64,15 @@ main 에 없으면 `PHASE_BLOCKED: be-plan001 미머지` 를 출력하고 멈춘
 - `frontend/src/__tests__/services/calendar/calendar-service.test.ts`: 네 경로 호출, 금액 숫자 변환, 호출 하나가 실패하면 예외가 전파된다(페이지가 error.tsx 로 간다).
 - `frontend/src/__tests__/lib/format-compact-amount.test.ts`: 0, 800, 9800, 10000, 32400, 1234567, -5000.
 - `frontend/src/__tests__/lib/member-color.test.ts`: 가입 순서대로 색, 다섯 번째 구성원이 `member-1` 로 돌아온다, 모르는 uuid 는 「이전 구성원」.
+- 기존 수정 다이얼로그의 지출·수입 fixture에 `userUuid` 를 추가하고 설정 fixture의 `members` 를 제거한다. 서비스 금액 변환은 일별·구성원별·가족 합계와 거래 목록 모두를 확인한다.
 
 ## 검증
 
 ```bash
 # cwd: <repo root>
-cd frontend && pnpm test -- src/__tests__/services/calendar/calendar-service.test.ts src/__tests__/lib/format-compact-amount.test.ts src/__tests__/lib/member-color.test.ts
+cd frontend && pnpm test src/__tests__/services/calendar/calendar-service.test.ts src/__tests__/lib/format-compact-amount.test.ts src/__tests__/lib/member-color.test.ts src/__tests__/actions/calendar/get-calendar-month-action.test.ts
 pnpm lint && pnpm test
+pnpm exec tsc --noEmit
 ```
 
 ## 변경 파일
@@ -94,3 +97,6 @@ pnpm lint && pnpm test
 | `frontend/src/__tests__/services/calendar/calendar-service.test.ts` | 신규 |
 | `frontend/src/__tests__/lib/format-compact-amount.test.ts` | 신규 |
 | `frontend/src/__tests__/lib/member-color.test.ts` | 신규 |
+| `frontend/src/__tests__/actions/calendar/get-calendar-month-action.test.ts` | 신규 |
+| `frontend/src/__tests__/components/transactions/dialogs/EditTransactionDialog.test.tsx` | 수정 |
+| `frontend/src/__tests__/components/settings/SettingsPageClient.test.tsx` | 수정 |
