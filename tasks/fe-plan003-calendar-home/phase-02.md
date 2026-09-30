@@ -65,7 +65,7 @@
 
 ```bash
 # cwd: <repo root>
-cd frontend && pnpm test src/__tests__/components/transactions/dialogs/AddTransactionDialog.test.tsx src/__tests__/components/transactions/dialogs/EditTransactionDialog.test.tsx src/__tests__/lib/revalidate-transaction-paths.test.ts
+cd frontend && pnpm test src/__tests__/components/transactions/dialogs/AddTransactionDialog.test.tsx src/__tests__/components/transactions/dialogs/EditTransactionDialog.test.tsx src/__tests__/lib/revalidate-transaction-paths.test.ts src/__tests__/hooks/useTransactionSheetViewport.test.ts
 pnpm lint && pnpm test
 pnpm exec tsc --noEmit
 grep -rn 'revalidatePath("/")' src/actions/expense src/actions/income   # 결과 없음
@@ -91,6 +91,8 @@ grep -n "router.refresh" "src/app/(authenticated)/transactions/_components/Expen
 | `frontend/src/__tests__/components/transactions/dialogs/EditTransactionDialog.test.tsx` | 수정 |
 | `frontend/src/__tests__/lib/revalidate-transaction-paths.test.ts` | 신규 |
 | `frontend/src/app/layout.tsx` | 수정 |
+| `frontend/src/hooks/useTransactionSheetViewport.ts` | 신규 |
+| `frontend/src/__tests__/hooks/useTransactionSheetViewport.test.ts` | 신규 |
 | `frontend/src/__tests__/actions/expense/create-expense-action.test.ts` | 수정 |
 | `frontend/src/__tests__/actions/expense/update-expense-action.test.ts` | 수정 |
 | `frontend/src/__tests__/actions/expense/delete-expense-action.test.ts` | 수정 |

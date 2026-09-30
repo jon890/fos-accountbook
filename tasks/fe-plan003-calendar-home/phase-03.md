@@ -14,6 +14,7 @@
 - 데이터는 phase 01 의 `getCalendarMonthAction(year, month)` 와 `buildMemberColorMap`, `formatCompactAmount` 를 쓴다.
 - Page 에서 `serverApiGet` 을 직접 부르지 않고 Action 을 거친다(ADR-F12). URL searchParams 와 클라이언트 상태를 맞출 때는 ADR-F17 의 `draft ?? current` 패턴을 쓴다.
 - 사용자 시간대는 `(authenticated)/layout.tsx` 의 `TimeZoneProvider` 와 세션 `session.user.profile?.timezone` 에 있다. 이번 달과 오늘은 이 시간대로 정한다. 선례: `lib/utils/date-timezone.ts` 의 `getMonthRange(timezone)`.
+- 기존 날짜 유틸에 `getDatePartsInTimezone(timezone, now = new Date())` 를 추가한다. `Intl.DateTimeFormat.formatToParts` 로 `{ year, month, day, date }` 를 반환하고 `date` 는 `YYYY-MM-DD` 다. 누락·잘못된 시간대는 `Asia/Seoul` 로 처리한다. 달력의 현재 월과 오늘은 이 도구를 사용한다. 후속 통계·예산 화면도 이를 재사용한다.
 - 목록 행은 기존 `components/transactions/TransactionRow.tsx` 의 `variant="compact"` 를 쓴다. 등록자는 `tx.createdBy` 필드로 전달한다.
 - 기존 `components/dashboard/CalendarView.tsx` 는 쓰지 않는다. phase 05 가 지운다.
 - 빈 상태 컴포넌트는 `components/empty/EmptyState.tsx`, 로딩 skeleton 은 `Skel` 패턴(`flow.md` 「14-2」)이다.
@@ -61,12 +62,13 @@
 - `frontend/src/__tests__/components/calendar/DayTransactionList.test.tsx`: 선택 날짜의 지출과 수입만 보인다, 모르는 등록자는 「이전 구성원」, 빈 날은 EmptyState 와 추가 버튼.
 - `frontend/src/__tests__/components/calendar/CalendarHome.test.tsx`: 날짜 선택 전후 서버 Action 호출이 늘지 않고 목록이 바뀐다. `history.replaceState`, 월 이동, 선택 날짜 등록·수정, 새 거래 props 반영을 확인한다.
 - 달력 Page 테스트에서 최초 조회, 잘못된 월·실제 날짜, 월 불일치, 일반 오류 throw와 인증 오류 로그인 이동을 확인한다. 기존 Header 테스트의 로고 기대 경로도 이 phase에서 바꾼다.
+- 날짜 도구 테스트는 UTC `2026-09-30T16:00:00Z` 가 서울에서는 10월 1일, 뉴욕에서는 9월 30일임을 확인하고 잘못된 시간대의 서울 기본값도 검증한다.
 
 ## 검증
 
 ```bash
 # cwd: <repo root>
-cd frontend && pnpm test src/__tests__/components/calendar/CalendarGrid.test.tsx src/__tests__/components/calendar/DayTransactionList.test.tsx src/__tests__/components/calendar/CalendarHome.test.tsx src/__tests__/app/calendar/page.test.tsx src/__tests__/components/layout/Header.test.tsx
+cd frontend && pnpm test src/__tests__/components/calendar/CalendarGrid.test.tsx src/__tests__/components/calendar/DayTransactionList.test.tsx src/__tests__/components/calendar/CalendarHome.test.tsx src/__tests__/app/calendar/page.test.tsx src/__tests__/components/layout/Header.test.tsx src/__tests__/lib/date-timezone.test.ts
 pnpm lint && pnpm test
 pnpm exec tsc --noEmit
 grep -rn 'redirect("/dashboard")' src   # 결과 없음 (phase 05 가 바꿀 dashboard/page.tsx 는 해당 없음)
@@ -91,3 +93,5 @@ grep -rn 'redirect("/dashboard")' src   # 결과 없음 (phase 05 가 바꿀 das
 | `frontend/src/__tests__/components/calendar/CalendarHome.test.tsx` | 신규 |
 | `frontend/src/__tests__/app/calendar/page.test.tsx` | 신규 |
 | `frontend/src/__tests__/components/layout/Header.test.tsx` | 수정 |
+| `frontend/src/lib/utils/date-timezone.ts` | 수정 |
+| `frontend/src/__tests__/lib/date-timezone.test.ts` | 신규 |
