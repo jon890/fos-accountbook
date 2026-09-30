@@ -57,13 +57,16 @@ API 를 함께 바꾸는 변경은 PR 하나로 낸다.
 
 - **main 직접 push 차단** — branch protection 으로 거부됨. 모든 변경은 작업 브랜치 + PR (task 파일/docs 도 동일).
 - **PR 제목**: `type(scope): description` — 절대 벗어나지 않는다.
-- **커밋 메시지**: 제목과 본문은 한국어로 쓴다. 형식은 PR 제목과 같은 `type(scope): 설명` 이다.
+- **커밋 메시지**: 제목과 본문은 한국어로 쓴다. 형식은 PR 제목과 같은 `type(scope): 설명` 이다. 본문에는 무엇을 왜 바꿨는지 쓴다.
 - **commit 전 로컬 검증 필수** — 바뀐 하위 프로젝트의 검증 명령을 로컬에서 통과시킨 후에만 commit/push. CI 왕복 (push → 실패 → 진단 → 재푸시) 비용 회피 목적. ESLint unused-variable 같은 자명한 실패는 로컬에서 잡힌다.
 
 ```bash
 cd frontend && pnpm lint && pnpm test
 cd backend && ./gradlew checkstyleMain checkstyleTest test
 ```
+
+- 검증 명령을 `&` 로 병렬 실행한 뒤 인자 없는 `wait` 로 기다리지 않는다. 인자 없는 `wait` 는 앞 명령이 실패해도 0 으로 끝난다.
+- `--no-verify` 로 검증을 건너뛰지 않는다.
 
 백엔드 `gradle-wrapper.jar` 는 추적하지 않는다.
 jar 가 없으면 먼저 `cd backend && mise exec gradle@9.5.0 -- gradle wrapper --gradle-version 9.5.0` 으로 만든다. jar 는 커밋하지 않는다.
