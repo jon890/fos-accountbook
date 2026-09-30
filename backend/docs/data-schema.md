@@ -262,7 +262,7 @@ CREATE TABLE api_tokens (
 | V12  | categories에 is_default 추가                                                    |
 | V13  | expenses에 recurring_expense_uuid, year_month 추가 + UNIQUE constraint          |
 | V14  | recurring_expenses 테이블 생성                                                  |
-| V15  | api_tokens 테이블 생성                                                          |
+| V20260930_1400 | api_tokens 테이블 생성 (이후 타임스탬프 버전, backend CLAUDE.md 「Database」) |
 
 ---
 
