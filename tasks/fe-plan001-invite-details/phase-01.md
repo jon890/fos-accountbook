@@ -45,28 +45,41 @@
 - `export async function assertInvitationOwnership(familyUuid: string, invitationUuid: string): Promise<void>` 를 신설한다.
   `getActiveInvitations(familyUuid)` 결과에 `invitationUuid` 가 없으면 `ActionError.entityNotFound("초대 링크", invitationUuid)` 를 던진다.
 
-### 3. `frontend/src/actions/invitation/delete-invitation-action.ts`
+### 3. `frontend/src/actions/invitation/_schemas.ts`
 
-`getActiveInvitations` 호출과 `some()` 검사를 `await assertInvitationOwnership(familyUuid, invitationUuid);` 한 줄로 바꾼다.
-import 에서 `getActiveInvitations` 를 빼고 `assertInvitationOwnership` 을 더한다. ADR-F25 패턴 C 주석은 유지한다.
+`export const InvitationUuidSchema = z.object({ invitationUuid: z.string().uuid() });` 를 더한다.
+같은 파일의 `InvitationTokenSchema` 와 같은 모양이다. `frontend/CLAUDE.md` 의 「외부 UUID 입력 형식 검증 필수」 규칙을 따른다.
 
-### 4. 테스트 `frontend/src/__tests__/services/invitation/invitation-service.test.ts` (신규)
+### 4. `frontend/src/actions/invitation/delete-invitation-action.ts`
+
+- `requireAuth()` 다음에 `const { invitationUuid: validUuid } = InvitationUuidSchema.parse({ invitationUuid });` 로 검증하고 이후에는 `validUuid` 를 쓴다.
+  Zod 오류는 기존 `handleActionError` 가 `success: false` 로 바꾼다. `get-invitation-info-action.ts` 가 같은 방식을 쓴다.
+- `getActiveInvitations` 호출과 `some()` 검사를 `await assertInvitationOwnership(familyUuid, validUuid);` 한 줄로 바꾼다.
+- import 에서 `getActiveInvitations` 를 빼고 `assertInvitationOwnership`, `InvitationUuidSchema` 를 더한다. ADR-F25 패턴 C 주석은 유지한다.
+
+### 5. 테스트 `frontend/src/__tests__/services/invitation/invitation-service.test.ts` (신규)
 
 `@jest-environment node`. `frontend/src/__tests__/services/dashboard/` 의 mock 방식(`@/lib/env/server.env`, `@/lib/server/auth/auth`, `@/lib/server/api/client`)을 따른다.
 `serverEnv` mock 에는 `BACKEND_API_URL` 과 `AUTH_URL` 을 둔다.
 
-- `getInvitationInfo`: `serverApiClient` 가 `inviter: { name: "홍길동", avatarUrl: "https://img" }`, `memberCount: 2` 인 PENDING 초대를 돌려주면 `inviterName`, `inviterAvatarUrl`, `memberCount` 가 채워진다
-- `getInvitationInfo`: `inviter: null`, `memberCount` 없음이면 세 필드가 `undefined` 또는 `null` 이고 `valid: true` 다
+초대 fixture 의 `expiresAt` 은 테스트 실행 시각보다 뒤(예: `new Date(Date.now() + 86_400_000).toISOString()`)로 둔다. 과거 시각이면 `valid: false` 분기로 빠진다.
+`serverApiClient` 는 `{ data: <InvitationResponse> }` 봉투를 돌려주게 mock 한다.
+
+- `getInvitationInfo`: `inviter: { name: "홍길동", avatarUrl: "https://img" }`, `memberCount: 2` 인 PENDING 초대 → `valid: true`, `inviterName: "홍길동"`, `inviterAvatarUrl: "https://img"`, `memberCount: 2`
+- `getInvitationInfo`: `inviter: null`, `memberCount` 없음 → `valid: true`, `inviterName` 은 `undefined`, `inviterAvatarUrl` 은 `null`, `memberCount` 는 `undefined`
 - `assertInvitationOwnership`: `serverApiGet` 이 해당 uuid 를 담은 목록을 돌려주면 resolve 한다
 - `assertInvitationOwnership`: 목록에 없으면 `ActionError` (code `C002`) 로 reject 한다
 
-### 5. 테스트 `frontend/src/__tests__/actions/invitation/delete-invitation-action.test.ts` (신규)
+### 6. 테스트 `frontend/src/__tests__/actions/invitation/delete-invitation-action.test.ts` (신규)
 
 `frontend/src/__tests__/actions/invitation/accept-invitation-action.test.ts` 의 mock 방식을 따른다.
 
 - 소유 확인이 통과하면 `deleteInvitation` 과 `revalidatePath("/")` 를 부르고 `success: true` 다
 - `assertInvitationOwnership` 이 `ActionError.entityNotFound` 를 던지면 `success: false` 이고 `deleteInvitation` 을 부르지 않는다
 - 선택 가족이 없으면 `success: false` 이고 `assertInvitationOwnership` 을 부르지 않는다
+- `invitationUuid` 가 uuid 형식이 아니면(`"not-a-uuid"`) `success: false` 이고 `assertInvitationOwnership` 과 `deleteInvitation` 을 부르지 않는다
+
+정상 입력의 `invitationUuid` 는 uuid 형식(예: `"550e8400-e29b-41d4-a716-446655440000"`)을 쓴다.
 
 ## 검증
 
@@ -76,8 +89,12 @@ pnpm exec jest src/__tests__/services/invitation/invitation-service.test.ts src/
 pnpm lint && pnpm exec tsc --noEmit && pnpm test
 ```
 
-기대: 새 테스트 7건이 통과하고 전체 테스트가 통과한다.
-`grep -n "getActiveInvitations" frontend/src/actions/invitation/delete-invitation-action.ts` 가 아무것도 내지 않는다.
+```bash
+# cwd: frontend
+! grep -n "getActiveInvitations" src/actions/invitation/delete-invitation-action.ts
+```
+
+기대: 새 테스트 8건이 통과하고 전체 테스트가 통과한다. 마지막 명령이 종료 코드 0 으로 끝난다.
 
 ## 변경 파일
 
@@ -85,6 +102,7 @@ pnpm lint && pnpm exec tsc --noEmit && pnpm test
 |---|---|
 | `frontend/src/types/invitation.ts` | 수정 |
 | `frontend/src/services/invitation/invitation-service.ts` | 수정 |
+| `frontend/src/actions/invitation/_schemas.ts` | 수정 |
 | `frontend/src/actions/invitation/delete-invitation-action.ts` | 수정 |
 | `frontend/src/__tests__/services/invitation/invitation-service.test.ts` | 신규 |
 | `frontend/src/__tests__/actions/invitation/delete-invitation-action.test.ts` | 신규 |

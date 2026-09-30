@@ -23,7 +23,7 @@
 
 - 사용자와 정한 배치: 상단 설명을 초대자 이름으로 바꾸고, 정보 칸에 멤버 수 줄을 더한다. 초대자 줄은 정보 칸에 따로 두지 않는다.
 - 값이 없을 때 지금 화면을 그대로 보인다. 초대자가 없으면 기존 설명과 `Users` 아이콘, 멤버 수가 없으면 멤버 줄을 숨긴다.
-- 색은 기존 토큰(`text-fg`, `text-fg-muted`, `text-brand-500`, `bg-bg-muted`)만 쓴다. 새 색이나 arbitrary 값을 만들지 않는다.
+- 색은 기존 토큰(`text-fg`, `text-fg-muted`, `text-brand-500`, `bg-bg-muted`, `gradient-family`, `text-brand-fg`, `bg-brand-500`)만 쓴다. 새 색이나 arbitrary 값을 만들지 않는다.
 - native 태그 대신 `components/ui` 를 쓴다 (common-pitfalls CODE-5).
 
 ## 작업 항목
@@ -35,7 +35,7 @@
 ### 2. `frontend/src/app/(authenticated)/invite/[token]/_components/InvitePageClient.tsx`
 
 - props 에 `inviterName?: string`, `inviterAvatarUrl?: string | null`, `memberCount?: number` 를 더한다.
-- 상단 원: `inviterName` 이 있으면 같은 96px 크기의 `Avatar` 를 그린다. `AvatarImage` 의 `src` 는 `inviterAvatarUrl ?? ""`, `alt` 는 `inviterName`, `AvatarFallback` 은 이름 첫 글자다. `inviterName` 이 없으면 지금의 `gradient-family` 원과 `Users` 아이콘을 그대로 둔다.
+- 상단 원: `inviterName` 이 있으면 `<Avatar className="size-24 mx-auto mb-4">` 를 그린다. `AvatarImage` 는 `inviterAvatarUrl` 이 있을 때만 두고 `src={inviterAvatarUrl}`, `alt={inviterName}` 이다. `AvatarFallback` 은 `className="bg-brand-500 text-brand-fg text-3xl font-semibold"` 이고 내용은 `inviterName` 의 첫 글자다. 사진이 없거나 로드되지 않으면 fallback 이 보인다. `inviterName` 이 없으면 지금의 `gradient-family` 원과 `Users` 아이콘을 그대로 둔다.
 - 설명: `inviterName` 이 있으면 「{inviterName}님이 가계부를 함께 관리하자고 초대했어요」, 없으면 지금 문구 「가계부를 함께 관리하도록 초대받았어요」.
 - 정보 칸: 가족 이름 줄과 만료 일시 줄 사이에 멤버 줄을 더한다. `memberCount` 가 숫자일 때만 그린다. 아이콘은 `lucide-react` 의 `UserRound`, 라벨 「멤버」, 값 「현재 {memberCount}명」. 기존 가족 이름 줄과 같은 클래스 구조를 쓴다.
 
@@ -44,7 +44,7 @@
 `@jest-environment jsdom`. `frontend/src/__tests__/components/settings/SettingsPageClient.test.tsx` 의 mock 방식을 따른다.
 `next/navigation` 의 `useRouter`, `@/actions/invitation/accept-invitation-action`, `sonner` 를 mock 한다.
 
-- `inviterName="홍길동"`, `memberCount={2}` 이면 「홍길동님이 가계부를 함께 관리하자고 초대했어요」 와 「현재 2명」 이 보인다
+- `inviterName="홍길동"`, `memberCount={2}` 이면 「홍길동님이 가계부를 함께 관리하자고 초대했어요」, 「현재 2명」, 아바타 fallback 의 첫 글자 「홍」 이 보인다. jsdom 에서는 Radix `AvatarImage` 가 로드되지 않아 fallback 이 그려진다
 - 두 값이 없으면 「가계부를 함께 관리하도록 초대받았어요」 가 보이고 「멤버」 라벨이 없다
 - `memberCount={0}` 이면 「현재 0명」 이 보인다 (0 을 없는 값으로 다루지 않는다)
 
@@ -53,7 +53,9 @@
 ```bash
 cd frontend
 pnpm exec jest src/__tests__/components/invite/InvitePageClient.test.tsx
-pnpm lint && pnpm exec tsc --noEmit && pnpm test && pnpm build
+pnpm lint && pnpm lint:md && pnpm exec tsc --noEmit && pnpm test
+# server.env 는 import 때 필수 환경값을 검증한다. Dockerfile 과 같이 검증을 건너뛰고 빌드한다
+SKIP_ENV_VALIDATION=true pnpm build
 ```
 
 기대: 새 테스트 3건과 전체 테스트가 통과하고 빌드가 성공한다.
