@@ -5,3 +5,7 @@
 worktrees/
 .scratch/
 **/.claude/scheduled_tasks.lock
+
+# 비밀값을 담을 수 있는 로컬 환경 변수 파일. 하위 프로젝트 밖에 만들어도 커밋되지 않게 한다
+.env*
+!.env.example
