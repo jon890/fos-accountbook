@@ -67,7 +67,7 @@ export function Header({ session, selectedFamilyUuid }: HeaderProps) {
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14 md:h-16">
             <Link
-              href="/dashboard"
+              href="/calendar"
               className="flex items-center space-x-2 md:space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
             >
               <div className="w-8 h-8 md:w-10 md:h-10 bg-brand-500 rounded-xl flex items-center justify-center">

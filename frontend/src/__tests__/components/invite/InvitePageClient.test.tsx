@@ -21,6 +21,9 @@ jest.mock("sonner", () => ({
 
 import { InvitePageClient } from "@/app/(authenticated)/invite/[token]/_components/InvitePageClient";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { useRouter } from "next/navigation";
+import { acceptInvitationAction } from "@/actions/invitation/accept-invitation-action";
 
 const baseProps = {
   token: "token-1",
@@ -29,6 +32,16 @@ const baseProps = {
 };
 
 describe("InvitePageClient", () => {
+  it("초대를 수락하면 달력으로 이동한다", async () => {
+    const push = jest.fn();
+    jest.mocked(useRouter).mockReturnValue({ push, refresh: jest.fn() } as unknown as ReturnType<typeof useRouter>);
+    jest.mocked(acceptInvitationAction).mockResolvedValue({ success: true, data: undefined });
+    render(<InvitePageClient {...baseProps} />);
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "초대 수락하기" }));
+
+    expect(push).toHaveBeenCalledWith("/calendar");
+  });
   it("초대자와 멤버 수가 있으면 초대자 이름, 멤버 수, 아바타 첫 글자를 보인다", () => {
     render(
       <InvitePageClient {...baseProps} inviterName="홍길동" memberCount={2} />,

@@ -87,7 +87,7 @@ describe("Header", () => {
     });
   });
 
-  it("로고를 클릭하면 대시보드로 이동한다", async () => {
+  it("로고를 클릭하면 달력으로 이동한다", async () => {
     // Given
     const session = createMockSession();
     const user = userEvent.setup();
@@ -100,7 +100,7 @@ describe("Header", () => {
     }
 
     // Then
-    expect(logo).toHaveAttribute("href", "/dashboard");
+    expect(logo).toHaveAttribute("href", "/calendar");
   });
 
   it("사용자 아바타를 표시한다", () => {

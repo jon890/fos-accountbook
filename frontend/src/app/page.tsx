@@ -19,7 +19,7 @@ export default async function Page() {
     if (!defaultFamilyUuid) {
       redirect("/families/create");
     }
-    redirect("/dashboard");
+    redirect("/calendar");
   }
   return <LandingPage />;
 }
