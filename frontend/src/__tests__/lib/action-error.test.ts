@@ -46,6 +46,34 @@ describe("handleActionError 변환기", () => {
     });
   });
 
+  describe("ServerApiError 400 업무 오류", () => {
+    it("최상위 code 와 message 가 있으면 서버 문구를 전달한다", () => {
+      const error = new ServerApiError("x", 400, {
+        code: "AT002",
+        message: "연동 토큰은 5개까지 만들 수 있습니다",
+      });
+      const result = handleActionError(error, "기본 문구");
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.message).toBe("연동 토큰은 5개까지 만들 수 있습니다");
+        expect(result.error.parameters).toEqual({ backendCode: "AT002" });
+      }
+    });
+
+    it("code 가 없는 400 은 기본 문구를 유지한다", () => {
+      const error = new ServerApiError("x", 400, {
+        message: "Invalid UUID string: x",
+      });
+      const result = handleActionError(error, "기본 문구");
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.message).toBe("기본 문구");
+      }
+    });
+  });
+
   describe("ServerApiError 400 → 필드 문구", () => {
     const message = "색상은 #RRGGBB 또는 oklch(L C H) 형식이어야 합니다";
 
