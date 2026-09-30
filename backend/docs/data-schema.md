@@ -217,6 +217,31 @@ CREATE TABLE recurring_expenses (
 );
 ```
 
+### [apitoken] api_tokens
+
+외부 에이전트가 사용자 대신 가계부를 부를 때 쓰는 연동 토큰이다 (ADR-B18).
+
+```sql
+CREATE TABLE api_tokens (
+    id           BIGINT       PRIMARY KEY AUTO_INCREMENT,
+    uuid         VARCHAR(36)  NOT NULL UNIQUE,
+    user_uuid    VARCHAR(36)  NOT NULL,   -- 토큰 주인. users(uuid) FK
+    name         VARCHAR(50)  NOT NULL,   -- 사용자가 붙인 이름 (예: fos-assistant)
+    token_hash   VARCHAR(64)  NOT NULL UNIQUE,  -- 원문의 SHA-256 hex. 원문은 저장하지 않는다
+    token_prefix VARCHAR(12)  NOT NULL,   -- 목록 표시용 앞부분 (fab_ + 8자)
+    status       VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',  -- ACTIVE | REVOKED
+    last_used_at DATETIME(3),             -- 인증에 쓰인 마지막 시각. 5분 단위로 갱신
+    revoked_at   DATETIME(3),
+    created_at   DATETIME(3)  NOT NULL,
+    updated_at   DATETIME(3)  NOT NULL,
+    FOREIGN KEY (user_uuid) REFERENCES users(uuid),
+    INDEX idx_api_tokens_user_uuid (user_uuid)
+);
+```
+
+- 만료는 없다. 폐기하면 `status = REVOKED` 가 되고 다시 살릴 수 없다
+- 사용자 한 명이 가질 수 있는 ACTIVE 토큰은 5개까지다
+
 ---
 
 ## 마이그레이션 이력 (Flyway)
@@ -237,6 +262,7 @@ CREATE TABLE recurring_expenses (
 | V12  | categories에 is_default 추가                                                    |
 | V13  | expenses에 recurring_expense_uuid, year_month 추가 + UNIQUE constraint          |
 | V14  | recurring_expenses 테이블 생성                                                  |
+| V20260930_1400 | api_tokens 테이블 생성 (이후 타임스탬프 버전, backend CLAUDE.md 「Database」) |
 
 ---
 
@@ -252,6 +278,11 @@ POST   /auth/refresh               토큰 갱신 (공개)
 # [user] 사용자 프로필
 GET    /users/me/profile            프로필 조회
 PUT    /users/me/profile            프로필 수정
+
+# [apitoken] 연동 토큰 (JWT 로만 부른다. 연동 토큰으로는 부를 수 없다)
+POST   /users/me/api-tokens            발급. 응답에만 토큰 원문이 한 번 실린다
+GET    /users/me/api-tokens            내 ACTIVE 토큰 목록
+DELETE /users/me/api-tokens/{uuid}     폐기
 
 # [family] 가족
 POST   /families                   가족 생성

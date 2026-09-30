@@ -28,6 +28,7 @@
 | **invitation**   | 가족 초대 링크 생성/수락                     | Invitation           |
 | **notification** | 예산 알림, 반복 지출 알림                    | Notification         |
 | **dashboard**    | 월별/일별 통계, 카테고리별 집계 (read model) | —                    |
+| **apitoken**     | 외부 에이전트용 연동 토큰 발급/폐기, 토큰 인증 | ApiToken           |
 
 ---
 

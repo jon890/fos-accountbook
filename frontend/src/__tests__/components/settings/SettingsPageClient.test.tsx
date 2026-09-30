@@ -16,6 +16,12 @@ jest.mock("@/lib/server/api/client", () => ({
 jest.mock("@/actions/user/set-default-family-action", () => ({
   setDefaultFamilyAction: jest.fn(),
 }));
+jest.mock("@/actions/user/create-api-token-action", () => ({
+  createApiTokenAction: jest.fn(),
+}));
+jest.mock("@/actions/user/revoke-api-token-action", () => ({
+  revokeApiTokenAction: jest.fn(),
+}));
 jest.mock("@/actions/family/update-family-action", () => ({
   updateFamilyAction: jest.fn(),
 }));
@@ -124,6 +130,7 @@ describe("SettingsPageClient", () => {
           defaultFamilyUuid="family-2"
           userName={null}
           userEmail={null}
+          apiTokens={[]}
         />
       );
 
@@ -136,7 +143,7 @@ describe("SettingsPageClient", () => {
 
     it("defaultFamilyUuid가 null이면 아무것도 선택되지 않는다", () => {
       render(
-        <SettingsPageClient families={mockFamilies} defaultFamilyUuid={null} userName={null} userEmail={null} />
+        <SettingsPageClient families={mockFamilies} defaultFamilyUuid={null} userName={null} userEmail={null} apiTokens={[]} />
       );
 
       // 모든 라디오 버튼이 선택되지 않은 상태인지 확인
@@ -153,6 +160,7 @@ describe("SettingsPageClient", () => {
           defaultFamilyUuid="family-1"
           userName={null}
           userEmail={null}
+          apiTokens={[]}
         />
       );
 
@@ -167,6 +175,7 @@ describe("SettingsPageClient", () => {
           defaultFamilyUuid="family-1"
           userName={null}
           userEmail={null}
+          apiTokens={[]}
         />
       );
 
@@ -190,6 +199,7 @@ describe("SettingsPageClient", () => {
           defaultFamilyUuid="family-1"
           userName={null}
           userEmail={null}
+          apiTokens={[]}
         />
       );
 
@@ -218,6 +228,7 @@ describe("SettingsPageClient", () => {
           defaultFamilyUuid="family-1"
           userName={null}
           userEmail={null}
+          apiTokens={[]}
         />
       );
 
@@ -230,7 +241,7 @@ describe("SettingsPageClient", () => {
 
     it("가족을 선택하지 않으면 저장 버튼이 비활성화된다", () => {
       render(
-        <SettingsPageClient families={mockFamilies} defaultFamilyUuid={null} userName={null} userEmail={null} />
+        <SettingsPageClient families={mockFamilies} defaultFamilyUuid={null} userName={null} userEmail={null} apiTokens={[]} />
       );
 
       const saveButton = screen.getByRole("button", {
@@ -248,6 +259,7 @@ describe("SettingsPageClient", () => {
           defaultFamilyUuid="family-1"
           userName={null}
           userEmail={null}
+          apiTokens={[]}
         />
       );
 
@@ -265,6 +277,7 @@ describe("SettingsPageClient", () => {
           defaultFamilyUuid="family-1"
           userName={null}
           userEmail={null}
+          apiTokens={[]}
         />
       );
 
@@ -302,6 +315,7 @@ describe("SettingsPageClient", () => {
           defaultFamilyUuid="family-1"
           userName={null}
           userEmail={null}
+          apiTokens={[]}
         />
       );
 
@@ -336,6 +350,7 @@ describe("SettingsPageClient", () => {
           defaultFamilyUuid="family-1"
           userName={null}
           userEmail={null}
+          apiTokens={[]}
         />
       );
 
@@ -352,6 +367,7 @@ describe("SettingsPageClient", () => {
           defaultFamilyUuid="family-1"
           userName={null}
           userEmail={null}
+          apiTokens={[]}
         />
       );
 

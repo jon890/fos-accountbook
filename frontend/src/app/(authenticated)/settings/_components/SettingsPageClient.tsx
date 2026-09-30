@@ -2,6 +2,7 @@
 
 import { setDefaultFamilyAction } from "@/actions/user/set-default-family-action";
 import { SettingsCard } from "@/components/layout/SettingsCard";
+import { ApiTokenSettingsCard } from "@/components/settings/ApiTokenSettingsCard";
 import { BudgetEditDialog } from "@/components/settings/BudgetEditDialog";
 import { SettingsHero } from "@/components/settings/SettingsHero";
 import { Button } from "@/components/ui/button";
@@ -9,8 +10,9 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/client/utils";
 import { useSessionRefresh } from "@/lib/client/use-session-refresh";
+import type { ApiToken } from "@/types/api-token";
 import type { Family } from "@/types/family";
-import { Check, Edit2, Users, Wallet } from "lucide-react";
+import { Check, Edit2, KeyRound, Users, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -20,6 +22,7 @@ interface SettingsPageClientProps {
   defaultFamilyUuid: string | null;
   userName: string | null;
   userEmail: string | null;
+  apiTokens: ApiToken[] | null;
 }
 
 export function SettingsPageClient({
@@ -27,6 +30,7 @@ export function SettingsPageClient({
   defaultFamilyUuid,
   userName,
   userEmail,
+  apiTokens,
 }: SettingsPageClientProps) {
   const router = useRouter();
   const { refreshSession } = useSessionRefresh();
@@ -221,6 +225,16 @@ export function SettingsPageClient({
               </div>
             ))}
           </div>
+        </SettingsCard>
+
+        {/* 외부 연동 */}
+        <SettingsCard
+          icon={KeyRound}
+          title="외부 연동"
+          subtitle="fos-assistant 같은 에이전트가 가계부를 기록할 때 쓰는 토큰이에요"
+          className="md:col-span-2"
+        >
+          <ApiTokenSettingsCard initialTokens={apiTokens} />
         </SettingsCard>
       </div>
     </div>

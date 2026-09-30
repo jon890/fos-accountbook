@@ -135,6 +135,40 @@ POST /auth/refresh  body: { refreshToken }
 
 ---
 
+## 7. 연동 토큰으로 부르기 (외부 에이전트)
+
+```
+[발급] 사용자가 설정 화면에서 발급 (JWT)
+    POST /users/me/api-tokens { name }
+        └─ fab_ + 무작위 32바이트(base64url) 생성 → SHA-256 해시만 저장
+        └─ 응답에 원문을 한 번 싣는다. 다시 조회할 수 없다
+
+[호출] 외부 에이전트(fos-assistant 의 Hermes profile 에서 도는 fos-agents 가계부 스킬) → 가계부 백엔드 (외부 공인 경로)
+    Authorization: Bearer fab_...
+        │
+        ▼
+    ApiTokenAuthenticationFilter (JWT 필터보다 먼저)
+        ├─ fab_ 로 시작하지 않으면 → 다음 필터(JWT)로 넘긴다
+        ├─ 해시로 ACTIVE 토큰을 찾지 못하면 → 401 (A002)
+        ├─ 허용 목록 밖 경로면 → 403 (A005)
+        └─ 통과 → principal = 토큰 주인 userUuid, 권한 API_TOKEN
+                  last_used_at 이 5분 넘게 지났으면 갱신
+        │
+        ▼
+    기존 Controller → Service
+        └─ 가족 권한 검증은 로그인과 같은 경로 (validateAndGetFamily, validateFamilyAccess, @ValidateFamilyAccess)
+
+허용 목록 (ADR-B18)
+    GET    /families
+    GET    /families/{familyUuid}/categories
+    GET    POST            /families/{familyUuid}/expenses
+    GET    PUT    DELETE   /families/{familyUuid}/expenses/{expenseUuid}
+    GET    POST            /families/{familyUuid}/incomes
+    GET    PUT    DELETE   /families/{familyUuid}/incomes/{incomeUuid}
+```
+
+---
+
 ## 도메인 간 이벤트 흐름 요약
 
 | 이벤트                         | 발행자    | 구독자       | 트리거             |
