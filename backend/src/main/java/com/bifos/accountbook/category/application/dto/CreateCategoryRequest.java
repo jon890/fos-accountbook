@@ -17,6 +17,7 @@ public class CreateCategoryRequest {
   @Size(min = 1, max = 50, message = "카테고리 이름은 1-50자 사이여야 합니다")
   private String name;
 
+  @Size(max = 50, message = CategoryColor.MESSAGE)
   @Pattern(regexp = CategoryColor.PATTERN, message = CategoryColor.MESSAGE)
   private String color;
 

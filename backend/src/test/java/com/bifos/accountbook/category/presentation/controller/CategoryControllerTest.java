@@ -12,10 +12,12 @@ import com.bifos.accountbook.category.domain.value.CategoryColor;
 import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.shared.AbstractControllerTest;
 import com.bifos.accountbook.user.domain.entity.User;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.ResultActions;
 
 @DisplayName("카테고리 컨트롤러 통합 테스트")
 class CategoryControllerTest extends AbstractControllerTest {
@@ -33,7 +35,7 @@ class CategoryControllerTest extends AbstractControllerTest {
     });
   }
 
-  private org.springframework.test.web.servlet.ResultActions createWithColor(String color) throws Exception {
+  private ResultActions createWithColor(String color) throws Exception {
     CreateCategoryRequest request = new CreateCategoryRequest("식비", color, null, null);
     return mockMvc.perform(post("/api/v1/families/{familyUuid}/categories", testFamily.getUuid().getValue())
                                .contentType(MediaType.APPLICATION_JSON)
@@ -70,6 +72,18 @@ class CategoryControllerTest extends AbstractControllerTest {
   @DisplayName("OKLCH 값 사이에 공백이 둘이면 400 이다")
   void create_oklchDoubleSpace() throws Exception {
     createWithColor("oklch(0.560  0.140 35)")
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors[0].field").value("color"));
+  }
+
+  @Test
+  @DisplayName("색상이 50자를 넘으면 400 이다")
+  void create_colorTooLong() throws Exception {
+    String color = "oklch(0.560000000000 0.140000000000 35.00000000000)";
+    Assertions.assertEquals(51, color.length());
+    Assertions.assertTrue(CategoryColor.isValid(color));
+
+    createWithColor(color)
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.errors[0].field").value("color"));
   }

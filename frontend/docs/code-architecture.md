@@ -67,6 +67,7 @@ page.tsx          (Server) — 데이터 fetch, SEO
 
 - **Server Action**: `{ success: false, error }` 반환 → 클라이언트에서 `toast.error`
 - **HTTP 오류**: ky가 `HTTPError` 발생 → 서비스 레이어에서 catch 후 재throw 또는 null 반환
+- **필드 검증 실패(400)**: 백엔드 응답의 `errors[0].message` 가 있으면 그 문구를 `INVALID_INPUT` 실패 결과의 메시지로 그대로 돌려준다. 백엔드가 사용자용 문장으로 만든 문구라서다. 없으면 기본 문구로 바꾼다
 - **인증 오류**: `requireAuthOrRedirect()` → `/auth/signin` 리다이렉트
 
 ### 인증 흐름
