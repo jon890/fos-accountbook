@@ -1,6 +1,7 @@
 package com.bifos.accountbook.config;
 
 import com.bifos.accountbook.shared.filter.RequestResponseLoggingFilter;
+import com.bifos.accountbook.config.security.ApiTokenAuthenticationFilter;
 import com.bifos.accountbook.config.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +28,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final ApiTokenAuthenticationFilter apiTokenAuthenticationFilter;
   private final CorsProperties corsProperties;
   private final RequestResponseLoggingFilter requestResponseLoggingFilter;
 
@@ -63,7 +65,8 @@ public class SecurityConfig {
             .permitAll()
             .anyRequest().authenticated())
         .addFilterBefore(requestResponseLoggingFilter, SecurityContextHolderFilter.class)
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(apiTokenAuthenticationFilter, JwtAuthenticationFilter.class);
 
     return http.build();
   }
