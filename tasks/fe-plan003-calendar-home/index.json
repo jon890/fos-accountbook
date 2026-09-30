@@ -1,0 +1,45 @@
+{
+  "name": "fe-plan003-calendar-home",
+  "description": "첫 화면을 부부 지출을 비교하는 달력으로 바꾸고, 날짜 기준 등록·수정·삭제와 하단 탭 「전체」 메뉴로 모바일 탐색을 정리한다",
+  "status": "pending",
+  "created_at": "2026-09-30",
+  "total_phases": 5,
+  "current_phase": 1,
+  "phases": [
+    {
+      "number": 1,
+      "file": "phase-01.md",
+      "title": "타입, 달력 조회 service·action, 구성원 색 토큰, 금액 줄임 표기",
+      "status": "pending",
+      "execution_profile": "standard"
+    },
+    {
+      "number": 2,
+      "file": "phase-02.md",
+      "title": "날짜 기준 등록과 수정 다이얼로그 안 삭제, revalidatePath 정리",
+      "status": "pending",
+      "execution_profile": "standard"
+    },
+    {
+      "number": 3,
+      "file": "phase-03.md",
+      "title": "달력 홈 화면과 첫 화면 전환",
+      "status": "pending",
+      "execution_profile": "deep"
+    },
+    {
+      "number": 4,
+      "file": "phase-04.md",
+      "title": "하단 탭, 전체 메뉴, 뒤로 가기, 안전 영역",
+      "status": "pending",
+      "execution_profile": "standard"
+    },
+    {
+      "number": 5,
+      "file": "phase-05.md",
+      "title": "대시보드 제거와 분석 화면 위쪽 이전",
+      "status": "pending",
+      "execution_profile": "standard"
+    }
+  ]
+}

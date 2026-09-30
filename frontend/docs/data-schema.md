@@ -87,16 +87,16 @@ interface Family {
   expenseCount: number;
   categoryCount: number;
   role?: "OWNER" | "MEMBER";
-  members?: FamilyMember[];
 }
 
-interface FamilyMember {
-  uuid: string;
+// GET /families/{uuid}/members. 가입 순서(joinedAt 오름차순). ACTIVE 구성원만
+interface FamilyMemberSummary {
   userUuid: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
   role: "OWNER" | "MEMBER";
-  userName?: string;
-  userEmail?: string;
-  userImage?: string;
+  joinedAt: string;
 }
 ```
 
@@ -130,6 +130,7 @@ const createCategorySchema = z.object({
 interface Expense {
   uuid: string;
   familyUuid: string;
+  userUuid: string; // 등록한 사용자. 이름은 FamilyMemberSummary 에서 찾는다
   categoryUuid: string;
   category: CategoryInfo | null;
   amount: number; // 백엔드 BigDecimal → 문자열 → Number 변환
@@ -162,6 +163,7 @@ interface GetExpensesParams {
 interface Income {
   uuid: string;
   familyUuid: string;
+  userUuid: string; // 등록한 사용자
   categoryUuid: string;
   category: CategoryInfo;
   amount: number;
@@ -196,6 +198,21 @@ interface DailyTransactionSummary {
   date: string;
   income: number;
   expense: number;
+}
+
+interface MemberAmount {
+  userUuid: string;
+  amount: number;
+}
+
+// GET /dashboard/daily-stats. 달력 홈이 쓴다
+interface DailyStatsWithMembers {
+  year: number;
+  month: number;
+  dailyStats: Array<DailyTransactionSummary & { memberExpenses: MemberAmount[] }>;
+  totalIncome: number;
+  totalExpense: number;
+  memberExpenseTotals: MemberAmount[];
 }
 
 interface RecentExpense {

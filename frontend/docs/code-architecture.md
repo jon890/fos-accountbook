@@ -102,7 +102,8 @@ src/
 │   ├── ui/                 Shadcn 기반 기본 컴포넌트
 │   ├── layout/             Header, BottomNavigation, SettingsCard (페이지 카드 helper)
 │   └── {domain}/           도메인별 UI 컴포넌트
-├── app/(authenticated)/    인증 필요 라우트 (Server Component 기본)
+├── components/calendar/    달력 홈 (CalendarHome, CalendarGrid, DayTransactionList, MemberTotals)
+├── app/(authenticated)/    인증 필요 라우트 (Server Component 기본). 첫 화면은 calendar/, 전체 메뉴는 menu/
 ├── app/api/auth/           NextAuth API Route
 └── __tests__/              서비스 단위 테스트
 ```
