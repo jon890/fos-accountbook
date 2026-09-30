@@ -170,3 +170,19 @@ export function applyAlpha(color: string, alpha: number): string {
 
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
+
+export function formatCompactAmount(amount: number): string {
+  const absoluteAmount = Math.abs(amount);
+  const sign = amount < 0 ? "-" : "";
+
+  if (absoluteAmount >= 1000000) {
+    return `${sign}${Math.round(absoluteAmount / 10000)}만`;
+  }
+  if (absoluteAmount >= 10000) {
+    return `${sign}${Number((absoluteAmount / 10000).toFixed(1))}만`;
+  }
+  if (absoluteAmount >= 1000) {
+    return `${sign}${Number((absoluteAmount / 1000).toFixed(1))}천`;
+  }
+  return `${sign}${Math.round(absoluteAmount)}`;
+}

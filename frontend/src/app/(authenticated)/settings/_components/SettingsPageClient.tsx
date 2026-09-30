@@ -210,7 +210,7 @@ export function SettingsPageClient({
                 <div>
                   <h3 className="font-medium text-fg text-sm">{family.name}</h3>
                   <p className="text-xs text-fg-muted mt-0.5">
-                    구성원 {family.members?.length || 0}명 · 카테고리{" "}
+                    구성원 {family.memberCount}명 · 카테고리{" "}
                     {family.categories?.length || 0}개 · 지출{" "}
                     {family.expenseCount || 0}건
                   </p>

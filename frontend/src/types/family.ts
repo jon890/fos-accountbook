@@ -52,13 +52,13 @@ export interface UpdateFamilyRequest {
 /**
  * 가족 구성원 (클라이언트 사이드)
  */
-export interface FamilyMember {
-  uuid: string;
+export interface FamilyMemberSummary {
   userUuid: string;
-  role: string;
-  userName?: string;
-  userEmail?: string;
-  userImage?: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
+  role: "OWNER" | "MEMBER";
+  joinedAt: string;
 }
 
 /**
@@ -85,7 +85,6 @@ export interface Family {
   categoryCount: number;
   description?: string;
   role?: string;
-  members?: FamilyMember[];
   categories?: FamilyCategory[];
 }
 

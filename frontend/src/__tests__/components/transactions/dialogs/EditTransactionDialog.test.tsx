@@ -69,6 +69,7 @@ const mockCategories = [
 ];
 
 const mockExpense: Expense = {
+  userUuid: "user-1",
   uuid: "expense-1",
   familyUuid: "family-1",
   categoryUuid: "cat-1",
@@ -81,6 +82,7 @@ const mockExpense: Expense = {
 };
 
 const mockIncome: Income = {
+  userUuid: "user-1",
   uuid: "income-1",
   familyUuid: "family-1",
   categoryUuid: "cat-1",

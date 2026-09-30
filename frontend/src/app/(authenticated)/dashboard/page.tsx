@@ -55,13 +55,6 @@ export default async function DashboardPage() {
   const selectedFamily =
     families.find((f) => f.uuid === selectedFamilyUuid) || null;
 
-  const members =
-    selectedFamily?.members?.map((m) => ({
-      uuid: m.uuid,
-      name: m.userName ?? m.userEmail ?? "멤버",
-      avatarUrl: m.userImage,
-    })) ?? [];
-
   // KST 기준 일자 (서버 UTC 와 무관하게 사용자 시간대로 daysRemaining 계산)
   const todayKstDay = Number(
     new Intl.DateTimeFormat("en-CA", {
@@ -76,7 +69,7 @@ export default async function DashboardPage() {
     <>
       <DashboardHeader
         familyName={selectedFamily?.name ?? null}
-        members={members}
+        members={[]}
         year={statsData.year}
         month={statsData.month}
       />

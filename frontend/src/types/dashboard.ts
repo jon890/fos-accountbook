@@ -57,3 +57,22 @@ export interface MonthlyCategoryBreakdown {
   totalExpense: number;
   items: CategoryBreakdownItem[];
 }
+
+export interface MemberAmount {
+  userUuid: string;
+  amount: number;
+}
+
+export interface DailyStatsWithMembers {
+  year: number;
+  month: number;
+  dailyStats: Array<{
+    date: string;
+    income: number;
+    expense: number;
+    memberExpenses: MemberAmount[];
+  }>;
+  totalIncome: number;
+  totalExpense: number;
+  memberExpenseTotals: MemberAmount[];
+}

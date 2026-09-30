@@ -4,6 +4,7 @@ import type {
   CreateFamilyData,
   CreateFamilyResult,
   Family,
+  FamilyMemberSummary,
   UpdateFamilyRequest,
 } from "@/types/family";
 
@@ -44,4 +45,10 @@ export async function selectFamily(familyUuid: string): Promise<void> {
 
 export async function setDefaultFamily(familyUuid: string): Promise<void> {
   await serverApiPut<void>("/users/me/profile", { defaultFamilyUuid: familyUuid });
+}
+
+export async function getFamilyMembers(
+  familyUuid: string
+): Promise<FamilyMemberSummary[]> {
+  return serverApiGet<FamilyMemberSummary[]>(`/families/${familyUuid}/members`);
 }

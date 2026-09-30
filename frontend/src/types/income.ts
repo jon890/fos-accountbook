@@ -23,6 +23,7 @@ export interface IncomeResponse {
  * 수입 엔티티 (클라이언트 사이드용)
  */
 export interface Income {
+  userUuid: string;
   uuid: string;
   familyUuid: string;
   categoryUuid: string;
