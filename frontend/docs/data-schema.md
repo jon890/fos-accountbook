@@ -272,6 +272,24 @@ interface CreateRecurringExpenseRequest {
 }
 ```
 
+### ApiToken
+
+외부 에이전트 연동 토큰 (backend ADR-B18). 원문은 발급 응답에만 실린다.
+
+```typescript
+interface ApiToken {
+  uuid: string;
+  name: string;
+  tokenPrefix: string; // 표시용 앞부분 (fab_ + 8자)
+  lastUsedAt: string | null;
+  createdAt: string;
+}
+
+interface CreatedApiToken extends ApiToken {
+  token: string; // 원문. 이 응답에서만 받는다
+}
+```
+
 ### 공통 타입
 
 ```typescript
@@ -317,6 +335,7 @@ Invitation:        POST /invitations/families/{uuid}
                    POST /invitations/accept
 Notification:      GET/PATCH /families/{uuid}/notifications[/{uuid}]
 Profile:           GET/PUT /users/me/profile
+ApiToken:          POST/GET /users/me/api-tokens, DELETE /users/me/api-tokens/{uuid}
 RecurringExpense:  POST /families/{uuid}/recurring-expenses
                    GET  /families/{uuid}/recurring-expenses          (month=YYYY-MM)
                    GET  /families/{uuid}/recurring-expenses/monthly-total

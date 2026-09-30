@@ -1,0 +1,14 @@
+{
+  "name": "mono-plan003-api-token",
+  "description": "외부 에이전트가 사용자별 연동 토큰으로 가계부 기록 경로를 부르게 한다. 발급, 목록, 폐기 API 와 인증 필터, 설정 화면 카드",
+  "status": "pending",
+  "created_at": "2026-09-30",
+  "total_phases": 4,
+  "current_phase": 1,
+  "phases": [
+    { "number": 1, "file": "phase-01.md", "title": "백엔드 연동 토큰 저장과 발급, 목록, 폐기 API", "status": "pending", "execution_profile": "standard" },
+    { "number": 2, "file": "phase-02.md", "title": "백엔드 연동 토큰 인증 필터와 허용 목록", "status": "pending", "execution_profile": "deep" },
+    { "number": 3, "file": "phase-03.md", "title": "프론트 연동 토큰 타입, service, Server Action", "status": "pending", "execution_profile": "standard" },
+    { "number": 4, "file": "phase-04.md", "title": "설정 화면 외부 연동 카드", "status": "pending", "execution_profile": "standard" }
+  ]
+}
