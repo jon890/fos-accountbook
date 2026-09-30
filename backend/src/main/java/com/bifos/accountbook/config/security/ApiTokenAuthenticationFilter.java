@@ -16,6 +16,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
@@ -37,6 +38,7 @@ public class ApiTokenAuthenticationFilter extends OncePerRequestFilter {
   private static final String TOKEN_HEADER_PREFIX = "Bearer fab_";
   private static final String BEARER_PREFIX = "Bearer ";
   private static final String AUTHORITY = "API_TOKEN";
+  private static final String INVALID_TOKEN_CHALLENGE = "Bearer error=\"invalid_token\"";
 
   private final ApiTokenService apiTokenService;
   private final ApiTokenAccessPolicy apiTokenAccessPolicy;
@@ -72,7 +74,12 @@ public class ApiTokenAuthenticationFilter extends OncePerRequestFilter {
     context.setAuthentication(authentication);
     SecurityContextHolder.setContext(context);
 
-    apiTokenService.recordUsage(token, LocalDateTime.now(clock));
+    // 사용 시각은 부가 기록이라 실패해도 요청은 계속 처리한다. 토큰 값과 예외 메시지는 로그에 남기지 않는다.
+    try {
+      apiTokenService.recordUsage(token, LocalDateTime.now(clock));
+    } catch (RuntimeException e) {
+      log.warn("연동 토큰 사용 시각을 기록하지 못했습니다: {}", e.getClass().getSimpleName());
+    }
 
     filterChain.doFilter(request, response);
   }
@@ -80,6 +87,9 @@ public class ApiTokenAuthenticationFilter extends OncePerRequestFilter {
   private void writeError(HttpServletRequest request, HttpServletResponse response, ErrorCode errorCode)
       throws IOException {
     response.setStatus(errorCode.getStatusCode());
+    if (errorCode.getStatusCode() == HttpServletResponse.SC_UNAUTHORIZED) {
+      response.setHeader(HttpHeaders.WWW_AUTHENTICATE, INVALID_TOKEN_CHALLENGE);
+    }
     response.setContentType("application/json;charset=UTF-8");
     response.getWriter().write(
         jsonMapper.writeValueAsString(ApiErrorResponse.of(errorCode, request.getRequestURI())));

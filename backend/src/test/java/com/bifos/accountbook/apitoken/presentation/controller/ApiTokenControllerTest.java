@@ -173,5 +173,13 @@ class ApiTokenControllerTest extends AbstractControllerTest {
 
     assertThat(output.getOut()).contains("Auth: Bearer " + token.substring(0, 12) + "***");
     assertThat(output.getOut()).doesNotContain(token.substring(token.length() - 10));
+
+    // 스킴이 소문자이거나 공백이 두 번이어도 fab_ 뒤 원문 끝부분이 남으면 안 된다
+    mockMvc.perform(get(BASE_URL).header("Authorization", "bearer " + token));
+    mockMvc.perform(get(BASE_URL).header("Authorization", "Bearer  " + token));
+
+    assertThat(output.getOut()).contains("Auth: bearer " + token.substring(0, 12) + "***");
+    assertThat(output.getOut()).contains("Auth: Bearer  " + token.substring(0, 12) + "***");
+    assertThat(output.getOut()).doesNotContain(token.substring(token.length() - 10));
   }
 }

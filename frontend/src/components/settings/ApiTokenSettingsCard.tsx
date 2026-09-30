@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/client/utils";
 import type { ApiToken } from "@/types/api-token";
 import { format } from "date-fns";
+import { ko } from "date-fns/locale";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -133,9 +134,11 @@ export function ApiTokenSettingsCard({
                 {token.tokenPrefix}…
               </p>
               <p className="text-xs text-fg-muted mt-0.5 font-num tabular-nums">
-                발급 {format(new Date(token.createdAt), "yyyy.MM.dd")} ·{" "}
+                발급 {format(new Date(token.createdAt), "yyyy.MM.dd", { locale: ko })} ·{" "}
                 {token.lastUsedAt
-                  ? `마지막 사용 ${format(new Date(token.lastUsedAt), "yyyy.MM.dd HH:mm")}`
+                  ? `마지막 사용 ${format(new Date(token.lastUsedAt), "yyyy.MM.dd HH:mm", {
+                      locale: ko,
+                    })}`
                   : "사용 기록 없음"}
               </p>
             </div>

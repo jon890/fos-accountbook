@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -135,7 +136,8 @@ class ApiTokenAuthenticationFilterTest extends AbstractControllerTest {
     perform(get("/api/v1/users/me/api-tokens"), tokenA.getToken())
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value("A005"))
-        .andExpect(jsonPath("$.path").value("/api/v1/users/me/api-tokens"));
+        .andExpect(jsonPath("$.path").value("/api/v1/users/me/api-tokens"))
+        .andExpect(header().doesNotExist("WWW-Authenticate"));
 
     perform(delete("/api/v1/families/" + familyA.getUuid().getValue()), tokenA.getToken())
         .andExpect(status().isForbidden())
@@ -160,10 +162,11 @@ class ApiTokenAuthenticationFilterTest extends AbstractControllerTest {
   }
 
   @Test
-  @DisplayName("발급하지 않은 fab_ 토큰은 401 A002 이다")
+  @DisplayName("발급하지 않은 fab_ 토큰은 401 A002 이고 WWW-Authenticate 로 invalid_token 을 알린다")
   void unknownTokenIsUnauthorized() throws Exception {
     perform(get("/api/v1/families"), "fab_unknown")
         .andExpect(status().isUnauthorized())
+        .andExpect(header().string("WWW-Authenticate", "Bearer error=\"invalid_token\""))
         .andExpect(jsonPath("$.code").value("A002"))
         .andExpect(jsonPath("$.success").value(false));
   }
