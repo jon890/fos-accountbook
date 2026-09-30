@@ -1,5 +1,6 @@
 package com.bifos.accountbook.category.domain.entity;
 
+import com.bifos.accountbook.category.domain.value.CategoryColor;
 import com.bifos.accountbook.category.domain.value.CategoryStatus;
 import com.bifos.accountbook.shared.value.CustomUuid;
 import jakarta.persistence.Column;
@@ -44,7 +45,7 @@ public class Category implements Serializable {
   @Column(nullable = false, length = 50)
   private String name;
 
-  @Column(nullable = false, length = 7)
+  @Column(nullable = false, length = 50)
   @Builder.Default
   private String color = "#6366f1";
 
@@ -115,8 +116,8 @@ public class Category implements Serializable {
    * 카테고리 색상 변경
    */
   public void updateColor(String color) {
-    if (color != null && !color.matches("^#[0-9a-fA-F]{6}$")) {
-      throw new IllegalArgumentException("유효하지 않은 색상 코드입니다");
+    if (color != null && !CategoryColor.isValid(color)) {
+      throw new IllegalArgumentException(CategoryColor.MESSAGE);
     }
     this.color = color != null ? color : this.color;
   }
