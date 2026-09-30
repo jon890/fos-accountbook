@@ -130,8 +130,8 @@ type 전환 시: amount / category / description 은 유지, type-specific 필�
     ├─ getFamiliesAction() → /families
     │       └─ [ { uuid, name, members? } ]
     │
-    └─ getMonthlyCategoryBreakdownAction() — ADR-F16 server-side 집계
-            └─ /expenses?startDate=...&endDate=... 응답을 service 측에서 카테고리별 합산
+    └─ getMonthlyCategoryBreakdownAction() — ADR-F30 백엔드 집계
+            └─ /dashboard/stats/category-breakdown?year&month
                     └─ { year, month, totalExpense, items: CategoryBreakdownItem[] }
 
 [page.tsx 7요소 직접 배치 (DashboardClient wrapper 없음)]
@@ -161,6 +161,11 @@ type 전환 시: amount / category / description 은 유지, type-specific 필�
 
 helper: `services/transaction/transaction-service.ts` 의 `groupTransactionsWithTotal` (groupByDate wrap + 합계). `applyClientFilters` 는 amountMin/Max/q post-filter (현재 미사용 — 후속 plan 에서 wiring).
 
+page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 탭을 바꾸면 URL 이 바뀌고 서버가 그 탭만 다시 그린다.
+세 탭을 모두 slot props 로 넘기면 RSC 가 보이지 않는 탭까지 렌더링해 조회가 매번 세 배로 나간다.
+시간대는 세션의 `session.user.profile.timezone` 을 쓰고 프로필 API 를 따로 부르지 않는다.
+검색어와 금액 필터는 백엔드 지출·수입 목록 API 가 받지 않아 아직 적용되지 않는다(`prd.md` 「후속 검토」).
+
 ---
 
 ## 5-3. /analytics 페이지 구조 (plan006)
@@ -169,11 +174,11 @@ helper: `services/transaction/transaction-service.ts` 의 `groupTransactionsWith
 [page.tsx (server) — searchParams { period: m1|m3|m6|y1 }]
     │
     └─ Promise.all 5 Action:
-        ├─ getDashboardStatsAction()
-        ├─ getMonthlyDailyStatsAction(year, month)
-        ├─ getExpensesAction({ familyUuid, startDate, endDate, limit: 1000 })
-        ├─ getCategoryBreakdownWithDeltaAction(year, month)   # 이번 달 vs 직전 달 비교
-        └─ getMonthlyTrendAction(period, year, month)         # period 기반 월별 추이
+        ├─ getDashboardStatsAction()                          # /dashboard/stats/monthly
+        ├─ getMonthlyDailyStatsAction(year, month)            # /dashboard/daily-stats
+        ├─ getExpensesAction({ familyUuid, startDate, endDate, limit: 1000 })  # 지출 상위 5건 표시용
+        ├─ getCategoryBreakdownWithDeltaAction(year, month)   # /dashboard/stats/category-breakdown?compareWithPrev=true + 두 달 monthly-trend
+        └─ getMonthlyTrendAction(period, year, month)         # /dashboard/stats/monthly-trend?from&to 한 번
     │
     └─ AnalyticsClient (use client)
             ├─ AnalyticsPeriodToggle (segmented role=tablist, URL ?period= 단방향)
@@ -182,11 +187,11 @@ helper: `services/transaction/transaction-service.ts` 의 `groupTransactionsWith
             └─ CategoryDetailList (progress + 전월 delta % 2-col grid)
 ```
 
-데이터 흐름 핵심:
-- `services/analytics/analytics-service.ts` 가 `services/dashboard/getMonthlyCategoryBreakdown` 직접 재사용 (service→service, ADR-F04 위반 아님)
-- `getCategoryBreakdownWithDelta`: 이번 달 + 직전 달 두 번 fetch → uuid 매칭 후 `((cur-prev)/prev)*100` delta 계산. prev=0 시 null
-- `getMonthlyTrend`: m1/m3/m6/y1 → 1~12개월 시점 누적 fetch → 합계 + 평균
-- backend `monthly-trend` endpoint 분리는 후속 (issue #126) — 클라 집계 임계 (월 500건 / TTI 700ms) 도달 시 plan007+ 전환
+데이터 흐름 핵심 (ADR-F30):
+- 합계는 모두 백엔드 집계 API 가 계산한다. 프론트는 목록을 받아 더하지 않는다.
+- `getCategoryBreakdownWithDelta`: `category-breakdown?compareWithPrev=true` 로 카테고리별 `deltaPercent` 를 받는다. 전체 합계의 전월 대비(`totalDelta`)는 같은 호출과 병렬로 직전 달부터 이번 달까지 `monthly-trend` 를 받아 계산한다. 직전 달 합계가 0 이면 null
+- `getMonthlyTrend`: m1/m3/m6/y1 → `monthly-trend?from=YYYY-MM&to=YYYY-MM` 한 번. 응답에 없는 달은 0 으로 채워 개월 수만큼 점을 만든다
+- 비율과 전월 대비는 백엔드가 소수 둘째 자리까지 주고 프론트가 정수로 반올림한다
 
 ---
 

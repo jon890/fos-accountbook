@@ -22,7 +22,7 @@
 |---|---|
 | Server Action 작성 / Actions-Services 경계 | ADR-F04 — `actions/`와 `services/` 엄격 분리 |
 | Page에서 데이터 조회 | ADR-F12 — Page에서 `serverApiGet` 직접 호출 금지, Action 경유 |
-| HTTP 클라이언트 / 재시도 설정 | ADR-F05 — ky 사용, 408/429/5xx 최대 2회 재시도 |
+| HTTP 클라이언트 / 재시도 설정 | ADR-F05 — ky 사용. ADR-F31 — 재시도는 GET 만, 타임아웃 5초 |
 | NextAuth 세션/토큰 수정 | ADR-F03 — JWT 전략, profile 캐싱, 만료 5분 전 갱신 |
 | 401 응답 / 토큰 만료 처리 | ADR-F26 — 401 을 `A002`(세션 만료) 로 변환, 인증 에러는 기본값으로 숨기지 않고 로그인 리다이렉트 |
 | DropdownMenu 안 Server Action 호출 | ADR-F27 — `form` submit 금지, `onSelect` 에서 preventDefault 후 직접 호출 |
@@ -32,7 +32,7 @@
 | 강조 배경 위 텍스트 색 (Badge / 강조 라벨) | ADR-F23 — `text-expense-fg` 같은 시맨틱 foreground 토큰 사용. `text-white` / `text-black` 금지 |
 | 폰트 추가 / 수치 표기 | ADR-F14 — Pretendard Variable + Inter (`.num` / tabular-nums) |
 | dark mode 셀렉터 | ADR-F15 — `[data-theme="dark"]` 만. `.dark` 신규 사용 금지 |
-| 카테고리 분포·월 집계 stat 추가 | ADR-F16 — Server Action 측 집계. backend endpoint 신설 전 임계 트리거 확인 |
+| 카테고리 분포·월 집계 stat 추가 | ADR-F30 — 백엔드 집계 API 를 부른다. 목록을 받아 프론트에서 더하지 않는다 |
 | URL searchParams 기반 input/필터 | ADR-F17 — useEffect 안 setState 금지, `draft ?? current` derived value 패턴 |
 | `alert/confirm/prompt` 대체 | ADR-F08 — sonner 토스트 사용 |
 | Jest 테스트 추가 | ADR-F09 — MSW 아닌 jest.mock 방식 |

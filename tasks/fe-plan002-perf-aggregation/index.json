@@ -1,0 +1,24 @@
+{
+  "name": "fe-plan002-perf-aggregation",
+  "description": "목록을 1000건씩 받아 프론트에서 더하던 월 합계를 백엔드 집계 API 로 바꾸고, 내역 화면의 불필요한 조회와 쓰기 재시도를 없애 화면 응답을 줄인다",
+  "status": "pending",
+  "created_at": "2026-09-30",
+  "total_phases": 2,
+  "current_phase": 1,
+  "phases": [
+    {
+      "number": 1,
+      "file": "phase-01.md",
+      "title": "월 합계와 추이를 백엔드 집계 API 로 전환",
+      "status": "pending",
+      "execution_profile": "standard"
+    },
+    {
+      "number": 2,
+      "file": "phase-02.md",
+      "title": "내역 화면 활성 탭만 조회, 재시도 GET 한정, recharts 지연 로드",
+      "status": "pending",
+      "execution_profile": "standard"
+    }
+  ]
+}
