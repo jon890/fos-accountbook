@@ -65,4 +65,17 @@ class JwtTokenProviderTest {
 
     assertThat(sut.validateToken(token)).isFalse();
   }
+
+  @Test
+  @DisplayName("수신자가 지정된 토큰은 access token 으로 받지 않는다")
+  void validateToken_ReturnsFalse_WhenAudiencePresent() {
+    String token = Jwts.builder()
+                       .subject("google:123")
+                       .audience().add(SocialLoginAssertionVerifier.AUDIENCE).and()
+                       .expiration(new Date(System.currentTimeMillis() + 60_000))
+                       .signWith(sut.getSigningKey(), sut.getAlgorithm())
+                       .compact();
+
+    assertThat(sut.validateToken(token)).isFalse();
+  }
 }

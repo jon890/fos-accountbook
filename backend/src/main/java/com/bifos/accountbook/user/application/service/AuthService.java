@@ -4,6 +4,7 @@ import com.bifos.accountbook.shared.exception.BusinessException;
 import com.bifos.accountbook.shared.exception.ErrorCode;
 import com.bifos.accountbook.config.security.AccessToken;
 import com.bifos.accountbook.config.security.JwtTokenProvider;
+import com.bifos.accountbook.config.security.SocialLoginAssertionVerifier;
 import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.user.domain.repository.UserRepository;
 import com.bifos.accountbook.shared.value.CustomUuid;
@@ -24,13 +25,20 @@ public class AuthService {
   private final UserRepository userRepository;
   private final UserService userService; // 사용자 조회
   private final JwtTokenProvider jwtTokenProvider;
+  private final SocialLoginAssertionVerifier socialLoginAssertionVerifier;
 
 
   /**
    * 소셜 로그인
    */
   @Transactional
-  public AuthResponse socialLogin(SocialLoginRequest request) {
+  public AuthResponse socialLogin(SocialLoginRequest request, String assertion) {
+    if (!socialLoginAssertionVerifier.verify(assertion, request.getProvider(), request.getProviderId(),
+                                             request.getEmail())) {
+      throw new BusinessException(ErrorCode.INVALID_CREDENTIALS, "로그인 요청 서명이 올바르지 않습니다")
+          .addParameter("provider", request.getProvider());
+    }
+
     User user;
 
     if (userRepository.existsByProviderAndProviderId(request.getProvider(), request.getProviderId())) {
