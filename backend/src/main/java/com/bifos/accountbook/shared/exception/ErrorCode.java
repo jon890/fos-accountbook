@@ -90,7 +90,13 @@ public enum ErrorCode {
   // ============================================
   // Notification Errors (8000~8999)
   // ============================================
-  NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "알림을 찾을 수 없습니다");
+  NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "알림을 찾을 수 없습니다"),
+
+  // ============================================
+  // Api Token Errors (9000~9999)
+  // ============================================
+  API_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "AT001", "연동 토큰을 찾을 수 없습니다"),
+  API_TOKEN_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "AT002", "연동 토큰은 5개까지 만들 수 있습니다");
 
   private final HttpStatus httpStatus;
   private final String code;
