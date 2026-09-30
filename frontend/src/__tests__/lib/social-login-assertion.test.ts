@@ -37,8 +37,11 @@ describe("signSocialLoginAssertion", () => {
     });
   });
 
-  it("AUTH_SECRET 원문으로 HMAC-SHA256 서명한다", () => {
-    const expected = createHmac("sha256", SECRET)
+  it("AUTH_SECRET 에서 파생한 키로 HMAC-SHA256 서명한다", () => {
+    const key = createHmac("sha256", SECRET)
+      .update("accountbook-social-login")
+      .digest();
+    const expected = createHmac("sha256", key)
       .update(`${header}.${payload}`)
       .digest("base64url");
     expect(signature).toBe(expected);

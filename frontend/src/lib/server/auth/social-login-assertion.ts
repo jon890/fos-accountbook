@@ -21,6 +21,7 @@ const base64url = (value: object) =>
  *
  * 백엔드는 이 서명이 있어야 social-login 요청을 받는다.
  * 서명이 없으면 백엔드에 닿는 누구든 providerId 만으로 다른 사용자의 토큰을 받을 수 있다.
+ * 키는 AUTH_SECRET 으로 AUDIENCE 를 HMAC 한 파생 키라 백엔드 access token 키와 섞이지 않는다.
  */
 export function signSocialLoginAssertion(
   { provider, providerId, email }: SocialLoginIdentity,
@@ -36,7 +37,8 @@ export function signSocialLoginAssertion(
     iat: issuedAt,
     exp: issuedAt + LIFETIME_SECONDS,
   });
-  const signature = createHmac("sha256", secret)
+  const key = createHmac("sha256", secret).update(AUDIENCE).digest();
+  const signature = createHmac("sha256", key)
     .update(`${header}.${payload}`)
     .digest("base64url");
 

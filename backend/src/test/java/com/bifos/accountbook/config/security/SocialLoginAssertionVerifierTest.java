@@ -16,7 +16,7 @@ class SocialLoginAssertionVerifierTest {
 
   private static final String SECRET = "shared-auth-secret-between-frontend-and-backend";
 
-  private final SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+  private final SecretKey key = SocialLoginAssertionVerifier.deriveKey(SECRET);
   private SocialLoginAssertionVerifier sut;
 
   @BeforeEach
@@ -42,6 +42,15 @@ class SocialLoginAssertionVerifierTest {
     String assertion = sign(key, SocialLoginAssertionVerifier.AUDIENCE, "google:123", "a@b.com", 60_000);
 
     assertThat(sut.verify(assertion, "google", "123", "a@b.com")).isTrue();
+  }
+
+  @Test
+  @DisplayName("비밀값 원문으로 서명하면 거절한다. access token 키와 나뉘어 있어야 한다")
+  void verify_Fails_WhenSignedWithRawSecret() {
+    SecretKey raw = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+    String assertion = sign(raw, SocialLoginAssertionVerifier.AUDIENCE, "google:123", "a@b.com", 60_000);
+
+    assertThat(sut.verify(assertion, "google", "123", "a@b.com")).isFalse();
   }
 
   @Test

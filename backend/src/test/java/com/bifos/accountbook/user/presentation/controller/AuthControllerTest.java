@@ -9,8 +9,6 @@ import com.bifos.accountbook.config.security.SocialLoginAssertionVerifier;
 import com.bifos.accountbook.shared.AbstractControllerTest;
 import com.bifos.accountbook.user.presentation.dto.SocialLoginRequest;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,8 +34,7 @@ class AuthControllerTest extends AbstractControllerTest {
                .claim("email", email)
                .issuedAt(new Date(now))
                .expiration(new Date(now + 60_000))
-               .signWith(Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8)),
-                         Jwts.SIG.HS256)
+               .signWith(SocialLoginAssertionVerifier.deriveKey(jwtProperties.getSecret()), Jwts.SIG.HS256)
                .compact();
   }
 
