@@ -37,9 +37,40 @@ export function FamilySelector({
     onFamilySelect(family);
   }, [refreshSession, onFamilySelect]);
 
+  // effect 에서 부르므로 상태는 Promise 콜백 안에서만 바꾼다. loading 의 초기값은 true 다
+  const loadFamilies = useCallback(
+    () =>
+      getFamiliesAction()
+        .then((result) => {
+          if (!result.success) {
+            setError(
+              result.error.message || "가족 목록을 불러오는데 실패했습니다."
+            );
+            return;
+          }
+
+          setFamilies(result.data);
+          setError(null);
+        })
+        .catch((err) => {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "알 수 없는 오류가 발생했습니다"
+          );
+        })
+        .finally(() => setLoading(false)),
+    []
+  );
+
+  const retryLoadFamilies = () => {
+    setLoading(true);
+    loadFamilies();
+  };
+
   useEffect(() => {
-    initializeSelector();
-  }, []);
+    loadFamilies();
+  }, [loadFamilies]);
 
   useEffect(() => {
     if (loading || autoSelectedRef.current || families.length === 0) return;
@@ -68,29 +99,6 @@ export function FamilySelector({
     selectFamily();
   }, [families, loading, onFamilySelect, handleFamilySelect]);
 
-  const initializeSelector = async () => {
-    try {
-      setLoading(true);
-      const result = await getFamiliesAction();
-
-      if (!result.success) {
-        setError(
-          result.error.message || "가족 목록을 불러오는데 실패했습니다."
-        );
-        return;
-      }
-
-      setFamilies(result.data);
-      setError(null);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -105,7 +113,7 @@ export function FamilySelector({
         <Card className="w-full max-w-md">
           <CardContent className="py-8 text-center">
             <p className="text-expense mb-4">{error}</p>
-            <Button onClick={initializeSelector}>다시 시도</Button>
+            <Button onClick={retryLoadFamilies}>다시 시도</Button>
           </CardContent>
         </Card>
       </div>
