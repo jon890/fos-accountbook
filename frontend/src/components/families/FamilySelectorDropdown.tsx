@@ -23,17 +23,15 @@ export function FamilySelectorDropdown() {
   const [selectedFamily, setSelectedFamily] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
-  const loadInitialData = async () => {
-    try {
-      setLoading(true);
+  // effect 에서 부르므로 상태는 Promise 콜백 안에서만 바꾼다. loading 의 초기값은 true 다
+  const loadInitialData = () =>
+    // 가족 목록과 선택된 가족을 병렬로 가져오기
+    Promise.all([getFamiliesAction(), getSelectedFamilyAction()])
+      .then(async ([familiesResult, selectedFamilyResult]) => {
+        if (!familiesResult.success || !familiesResult.data) {
+          return;
+        }
 
-      // 가족 목록과 선택된 가족을 병렬로 가져오기
-      const [familiesResult, selectedFamilyResult] = await Promise.all([
-        getFamiliesAction(),
-        getSelectedFamilyAction(),
-      ]);
-
-      if (familiesResult.success && familiesResult.data) {
         setFamilies(familiesResult.data);
 
         // 쿠키에 저장된 선택된 가족이 있으면 사용
@@ -54,13 +52,11 @@ export function FamilySelectorDropdown() {
             await refreshSession();
           }
         }
-      }
-    } catch (err) {
-      console.error("Failed to load initial data:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      })
+      .catch((err) => {
+        console.error("Failed to load initial data:", err);
+      })
+      .finally(() => setLoading(false));
 
   useEffect(() => {
     loadInitialData();
@@ -81,6 +77,7 @@ export function FamilySelectorDropdown() {
     } else {
       console.error("Failed to select family:", result.error.message);
       // 실패 시 이전 선택으로 롤백
+      setLoading(true);
       loadInitialData();
     }
   };

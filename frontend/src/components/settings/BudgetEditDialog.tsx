@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 interface BudgetEditDialogProps {
@@ -46,12 +46,16 @@ export function BudgetEditDialog({
   const [value, setValue] = useState(currentBudget.toString());
   const [isSaving, setIsSaving] = useState(false);
 
-  // open 될 때마다 currentBudget 으로 리셋
-  useEffect(() => {
-    if (open) {
-      setValue(currentBudget.toString());
+  // 열릴 때와 열린 채로 currentBudget 이 바뀔 때 입력값을 되돌린다.
+  // effect 대신 렌더 중에 이전 값과 비교한다 (react.dev: 「prop 이 바뀔 때 state 조정하기」)
+  const resetKey = open ? currentBudget : null;
+  const [prevResetKey, setPrevResetKey] = useState(resetKey);
+  if (resetKey !== prevResetKey) {
+    setPrevResetKey(resetKey);
+    if (resetKey !== null) {
+      setValue(resetKey.toString());
     }
-  }, [open, currentBudget]);
+  }
 
   const handleQuickAdd = (delta: number) => {
     const cur = parseFloat(value) || 0;
