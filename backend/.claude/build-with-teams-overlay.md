@@ -77,7 +77,7 @@ critic·code-reviewer 는 P1~P7(공통) + "backend-fos" 절의 아래 3개를 �
 
 ```bash
 # cwd: backend
-mise exec gradle@9.5.0 -- gradle wrapper --gradle-version 9.5.0
+mise exec gradle@9.8.0 -- gradle wrapper --gradle-version 9.8.0
 ./gradlew dependencies --no-daemon
 docker compose -f docker/compose.yml up -d   # 로컬 MySQL — 테스트는 H2 in-memory 사용이라 선택
 ```
