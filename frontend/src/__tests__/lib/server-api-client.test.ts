@@ -3,6 +3,12 @@
  * @jest-environment node
  */
 
+import ky, { HTTPError, TimeoutError } from "@/__mocks__/ky";
+import {
+  logAndImproveHttpError,
+  serverApiClient,
+} from "@/lib/server/api/client";
+
 jest.mock("@/lib/env/server.env", () => ({
   serverEnv: {
     BACKEND_API_URL: "http://localhost:8080",
@@ -12,9 +18,6 @@ jest.mock("@/lib/env/server.env", () => ({
 jest.mock("next/headers", () => ({
   cookies: async () => ({ get: () => undefined }),
 }));
-
-import { HTTPError } from "@/__mocks__/ky";
-import { logAndImproveHttpError } from "@/lib/server/api/client";
 
 describe("beforeError 훅", () => {
   it("훅이 지나간 뒤에도 응답 body 를 다시 읽을 수 있다", async () => {
@@ -30,5 +33,38 @@ describe("beforeError 훅", () => {
       errors: { message: string }[];
     };
     expect(body.errors[0].message).toBe(message);
+  });
+});
+
+describe("백엔드 요청 정책", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it.each(["GET", "POST", "PUT", "DELETE", "PATCH"])(
+    "%s 요청에서 GET 재시도와 5초 타임아웃을 설정한다",
+    async (method) => {
+      await serverApiClient("/expenses", { method, skipAuth: true });
+
+      expect(ky.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          timeout: 5000,
+          retry: {
+            methods: ["get"],
+            limit: 2,
+            statusCodes: [408, 413, 429, 500, 502, 503, 504],
+          },
+        }),
+      );
+    },
+  );
+
+  it("타임아웃 오류를 호출자에게 전달한다", async () => {
+    const error = new TimeoutError();
+    ky.get.mockRejectedValueOnce(error);
+
+    await expect(
+      serverApiClient("/expenses", { skipAuth: true }),
+    ).rejects.toBe(error);
   });
 });

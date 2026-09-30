@@ -22,7 +22,7 @@
 - [ADR-F13](#adr-f13) — OKLCH 색 시스템 채택
 - [ADR-F14](#adr-f14) — Pretendard Variable 폰트 도입
 - [ADR-F15](#adr-f15) — next-themes attribute='data-theme'
-- [ADR-F16](#adr-f16) — 카테고리 월 분포는 Server Action 측 집계
+- [ADR-F16](#adr-f16) — 카테고리 월 분포는 Server Action 측 집계 (superseded → ADR-F30)
 - [ADR-F17](#adr-f17) — URL searchParams ↔ Client state 동기화는 draft 패턴
 - [ADR-F18](#adr-f18) — react-day-picker → @daypicker/react 패키지 이전
 - [ADR-F19](#adr-f19) — TypeScript 5.9 → 6.0 메이저 이전 + breaking 대응 패턴
@@ -36,6 +36,8 @@
 - [ADR-F27](#adr-f27) — Radix `DropdownMenuItem` 안에서 form submit 금지 — `onSelect` 직접 호출
 - [ADR-F28](#adr-f28) — brand 색 Teal(h=188) → Toss Blue(h=257) 변경
 - [ADR-F29](#adr-f29) — Tailwind v4 markdown 스캔 위험 패턴 차단 — md-lint 게이트 + 안전 표기
+- [ADR-F30](#adr-f30) — 월 합계와 추이는 백엔드 집계 API 를 부른다
+- [ADR-F31](#adr-f31) — 백엔드 호출 재시도는 GET 만 하고 타임아웃을 명시한다
 
 ---
 
@@ -106,6 +108,8 @@
 
 **결정**: axios 대신 ky 사용. **2026-05-09**: ky 1.x → 2.x 업그레이드 (plan004).
 
+**현재 설치 상태 (2026-09-30)**: lockfile 의 ky 버전은 1.14.3 이다. 현재 hook 은 1.x 의 위치 인자 방식을 사용한다.
+
 **이유**:
 
 - Node 22+ native fetch 기반 → 추가 polyfill 없음
@@ -114,6 +118,8 @@
 - 자동 재시도 설정이 간결 (`retry` 옵션)
 
 **재시도 설정**: 408, 413, 429, 500, 502, 503, 504 → 최대 2회 재시도
+
+**대체된 부분**: 재시도 대상 메서드와 타임아웃은 [ADR-F31](#adr-f31) 이 정한다. 재시도는 GET 만 한다.
 
 **ky 2.x 마이그레이션 결정 (2026-05-09)**:
 
@@ -318,6 +324,9 @@
 <a id="adr-f16"></a>
 
 ## ADR-F16: 카테고리 월 분포는 Server Action 측 집계
+
+- **status**: `superseded`
+- **대체된 부분**: 결정 전체. 월 합계는 [ADR-F30](#adr-f30) 에 따라 백엔드 집계 API 로 받는다. 아래는 2026-05 당시의 맥락이다.
 - **결정**: 대시보드의 카테고리별 월 합계는 backend 신규 endpoint 없이 기존 `GET /expenses?month=YYYY-MM` 응답을 `services/dashboard/dashboard-service.ts` 의 `getMonthlyCategoryBreakdown(familyUuid, year, month)` 에서 집계한다.
 - **맥락**: handoff dashboard 의 "카테고리 분포" 가 핵심 강조 요소. backend 에 신규 endpoint 신설 시 frontend plan002 이 backend 일정에 묶임. 1가구 월 거래 100~300건 추정 → 응답 사이즈 50~150KB 수준, Server Action 집계로 충분.
 - **대안 기각**:
@@ -533,3 +542,39 @@
 - **적용 범위**: `scripts/check-tailwind-md.mjs`, `package.json`, `.github/workflows/frontend-ci.yml`.
   함정 코드: `common-pitfalls.md` CODE-3(`auto-gate: md-lint`).
 
+<a id="adr-f30"></a>
+
+## ADR-F30: 월 합계와 추이는 백엔드 집계 API 를 부른다 (2026-09-30)
+
+- **status**: `accepted`
+- **결정**: 일별 합계, 카테고리 월 분포와 전월 대비, 월별 추이는 백엔드의 `/dashboard/daily-stats`, `/dashboard/stats/category-breakdown`, `/dashboard/stats/monthly-trend` 로 받는다.
+  지출과 수입 목록을 `size=1000` 으로 받아 프론트에서 더하지 않는다.
+  [ADR-F16](#adr-f16) 을 대체한다.
+- **맥락**: 2026-09-30 운영에서 사용자가 느리다고 보고했다.
+  분석 화면을 한 번 열 때 1000건 목록 조회가 기간 `y1` 기준 15회 넘게 나갔다. 월별 추이가 달마다 한 번, 전월 대비가 두 번, 일별 합계가 두 번 불렀다.
+  같은 시점에 백엔드는 위 세 집계 API 를 이미 제공하고 있었고 처리 시간은 평균 6~30ms 였다.
+  ADR-F16 이 걱정한 "프론트 일정이 백엔드에 묶이는 문제" 는 API 가 이미 있어 더는 해당하지 않는다.
+- **대안 기각**:
+  - 목록 집계를 유지하고 React `cache()` 로 중복 제거: 같은 렌더 안의 중복만 없앤다. 월별 추이의 달마다 조회는 그대로 남는다.
+  - 새 통합 API 한 개로 분석 화면 전체를 받기: 기존 API 로 충분하고 백엔드 변경이 필요하다.
+- **결과**:
+  - 얻는 것: 분석 화면의 백엔드 호출이 1000건 목록 기준 15회 넘게에서 1회로 줄어든다. 남는 1회는 지출 상위 5건 표시용이다.
+  - 감당할 것: 합산 규칙을 백엔드가 소유한다. 삭제되지 않은(`ACTIVE`) 지출을 모두 더하고 예산 제외 표시는 보지 않는다. 월별 추이 응답은 지출이 없는 달을 빼고 오므로 프론트가 0 으로 채운다. 카테고리 비율과 전월 대비는 백엔드가 소수 둘째 자리까지 주고 프론트가 반올림한다.
+- **적용 범위**: `services/dashboard/dashboard-service.ts`, `services/analytics/analytics-service.ts`. 지출 상위 5건용 목록 조회는 백엔드가 금액 정렬을 지원하기 전까지 남긴다.
+
+<a id="adr-f31"></a>
+
+## ADR-F31: 백엔드 호출 재시도는 GET 만 하고 타임아웃을 명시한다 (2026-09-30)
+
+- **status**: `accepted`
+- **결정**: `lib/server/api/client.ts` 의 ky 재시도 대상 메서드를 `get` 하나로 둔다. 요청 타임아웃은 5초로 명시한다.
+- **맥락**: 이전 설정은 POST, PUT, DELETE 도 5xx 에서 최대 2회 재시도했다.
+  백엔드가 지출을 저장한 뒤 응답 전에 502 나 504 를 돌려주면 같은 지출이 두 번 이상 등록된다. 등록 API 는 멱등키를 받지 않는다.
+  타임아웃은 ky 기본값 10초였다. 한 호출이 재시도까지 최대 30초를 넘게 붙잡을 수 있었다.
+- **대안 기각**:
+  - 등록 API 에 멱등키 도입: 백엔드 저장 모델을 바꿔야 한다. 두 사람이 쓰는 서비스에서 실패한 등록은 사용자가 다시 누르면 된다.
+  - 재시도를 모두 끄기: GET 은 멱등이라 일시적인 502 를 재시도로 넘기는 이득이 남는다.
+- **결과**:
+  - 얻는 것: 쓰기 요청의 자동 재시도로 인한 중복 반영을 막는다. 요청 한 번의 타임아웃을 5초로 줄인다. GET 은 재시도와 대기 때문에 전체 호출이 5초를 넘을 수 있다.
+  - 감당할 것: 쓰기 요청의 일시 오류는 사용자에게 그대로 토스트로 보인다. 5초를 넘는 정상 요청이 생기면 그 호출만 옵션으로 늘린다.
+- **적용 범위**: `src/lib/server/api/client.ts`.

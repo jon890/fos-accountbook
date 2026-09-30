@@ -13,17 +13,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { CategoryResponse } from "@/types/category";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { getUserProfileAction } from "@/actions/user/get-user-profile-action";
 import { getRecurringExpensesAction } from "@/actions/recurring-expense";
 import { getSelectedFamilyAction } from "@/actions/family/get-selected-family-action";
 import { getFamilyCategoriesAction } from "@/actions/category/get-categories-action";
 import { getMonthRange } from "@/lib/utils/date-timezone";
+import { getCachedSession } from "@/lib/server/cache";
 
 // 쿠키를 사용하므로 동적 렌더링 필요
 export const dynamic = "force-dynamic";
 
 interface SearchParams {
-  tab?: "expenses" | "incomes" | "recurring";
+  tab?: string | string[];
   categoryId?: string;
   startDate?: string;
   endDate?: string;
@@ -43,19 +43,17 @@ export default async function TransactionsPage({
 }: TransactionsPageProps) {
   const resolvedSearchParams = await searchParams;
 
-  // 기본 탭은 지출
-  const activeTab = resolvedSearchParams.tab || "expenses";
+  // URL에서 받은 탭은 허용한 값만 사용하고 나머지는 지출로 처리한다.
+  const requestedTab = resolvedSearchParams.tab;
+  const isSupportedTab =
+    requestedTab === "expenses" ||
+    requestedTab === "incomes" ||
+    requestedTab === "recurring";
+  const activeTab = isSupportedTab ? requestedTab : "expenses";
 
-  // 사용자 프로필에서 시간대 가져오기
-  let timezone = "Asia/Seoul"; // 기본값
-  try {
-    const profileResult = await getUserProfileAction();
-    if (profileResult.success && profileResult.data.timezone) {
-      timezone = profileResult.data.timezone;
-    }
-  } catch (error) {
-    console.error("Failed to fetch user timezone, fallback to Asia/Seoul:", error);
-  }
+  // 로그인 때 세션에 저장한 시간대 사용
+  const session = await getCachedSession();
+  const timezone = session?.user?.profile?.timezone ?? "Asia/Seoul";
 
   // 시간대 기준으로 현재 달의 시작일과 종료일 계산
   const { startDate: defaultStartDate, endDate: defaultEndDate } =
@@ -95,26 +93,54 @@ export default async function TransactionsPage({
         endDate,
       }}
       expenseListContent={
-        <div className="space-y-4 md:space-y-6">
-          {/* 카테고리별 지출 요약 */}
-          <Suspense
-            fallback={
-              <Card className="w-full border-0 bg-bg-elev backdrop-blur-sm shadow-xl">
-                <CardContent className="flex justify-center items-center min-h-[200px] py-8">
-                  <LoadingSpinner />
-                </CardContent>
-              </Card>
-            }
-          >
-            <ExpenseSummaryWrapper
-              familyId={familyUuid}
-              categoryId={resolvedSearchParams.categoryId}
-              startDate={startDate}
-              endDate={endDate}
-            />
-          </Suspense>
+        activeTab === "expenses" ? (
+          <div className="space-y-4 md:space-y-6">
+            {/* 카테고리별 지출 요약 */}
+            <Suspense
+              fallback={
+                <Card className="w-full border-0 bg-bg-elev backdrop-blur-sm shadow-xl">
+                  <CardContent className="flex justify-center items-center min-h-[200px] py-8">
+                    <LoadingSpinner />
+                  </CardContent>
+                </Card>
+              }
+            >
+              <ExpenseSummaryWrapper
+                familyId={familyUuid}
+                categoryId={resolvedSearchParams.categoryId}
+                startDate={startDate}
+                endDate={endDate}
+              />
+            </Suspense>
 
-          {/* 지출 목록 */}
+            {/* 지출 목록 */}
+            <Suspense
+              fallback={
+                <Card className="w-full">
+                  <CardContent className="flex justify-center items-center min-h-[400px] py-12">
+                    <LoadingSpinner />
+                  </CardContent>
+                </Card>
+              }
+            >
+              <ExpenseList
+                familyId={familyUuid}
+                categories={categories}
+                categoryId={resolvedSearchParams.categoryId}
+                startDate={startDate}
+                endDate={endDate}
+                page={page}
+                limit={limit}
+                q={resolvedSearchParams.q}
+                amountMin={resolvedSearchParams.amountMin}
+                amountMax={resolvedSearchParams.amountMax}
+              />
+            </Suspense>
+          </div>
+        ) : null
+      }
+      incomeListContent={
+        activeTab === "incomes" ? (
           <Suspense
             fallback={
               <Card className="w-full">
@@ -124,9 +150,8 @@ export default async function TransactionsPage({
               </Card>
             }
           >
-            <ExpenseList
+            <IncomeList
               familyId={familyUuid}
-              categories={categories}
               categoryId={resolvedSearchParams.categoryId}
               startDate={startDate}
               endDate={endDate}
@@ -137,45 +162,22 @@ export default async function TransactionsPage({
               amountMax={resolvedSearchParams.amountMax}
             />
           </Suspense>
-        </div>
-      }
-      incomeListContent={
-        <Suspense
-          fallback={
-            <Card className="w-full">
-              <CardContent className="flex justify-center items-center min-h-[400px] py-12">
-                <LoadingSpinner />
-              </CardContent>
-            </Card>
-          }
-        >
-          <IncomeList
-            familyId={familyUuid}
-            categoryId={resolvedSearchParams.categoryId}
-            startDate={startDate}
-            endDate={endDate}
-            page={page}
-            limit={limit}
-            q={resolvedSearchParams.q}
-            amountMin={resolvedSearchParams.amountMin}
-            amountMax={resolvedSearchParams.amountMax}
-          />
-        </Suspense>
+        ) : null
       }
       recurringListContent={
-        <Suspense
-          fallback={
-            <Card className="w-full">
-              <CardContent className="flex justify-center items-center min-h-[400px] py-12">
-                <LoadingSpinner />
-              </CardContent>
-            </Card>
-          }
-        >
-          <RecurringExpenseListWrapper
-            month={currentMonth}
-          />
-        </Suspense>
+        activeTab === "recurring" ? (
+          <Suspense
+            fallback={
+              <Card className="w-full">
+                <CardContent className="flex justify-center items-center min-h-[400px] py-12">
+                  <LoadingSpinner />
+                </CardContent>
+              </Card>
+            }
+          >
+            <RecurringExpenseListWrapper month={currentMonth} />
+          </Suspense>
+        ) : null
       }
     />
   );

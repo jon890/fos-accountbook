@@ -6,7 +6,7 @@
  *
  * Features:
  * - ky hooks를 활용한 요청/응답 로깅
- * - 자동 재시도 (retry)
+ * - GET 자동 재시도
  * - 타입 안전한 API 호출
  */
 
@@ -30,6 +30,9 @@ import {
 
 const API_URL = serverEnv.BACKEND_API_URL;
 
+// ADR-F31: 백엔드 요청 타임아웃은 5초로 명시한다.
+const KY_TIMEOUT_MS = 5000;
+
 /**
  * ky 클라이언트 설정
  */
@@ -37,7 +40,7 @@ const KY_RETRY_CONFIG = {
   /** 재시도 횟수 */
   limit: 2,
   /** 재시도할 HTTP 메서드 */
-  methods: ["get", "post", "put", "delete"],
+  methods: ["get"],
   /** 재시도할 HTTP 상태 코드 */
   statusCodes: [408, 413, 429, 500, 502, 503, 504],
 };
@@ -95,6 +98,7 @@ async function createKyInstance(skipAuth: boolean = false) {
   return ky.create({
     prefixUrl: API_URL,
     retry: KY_RETRY_CONFIG,
+    timeout: KY_TIMEOUT_MS,
     hooks: {
       /**
        * beforeRequest Hook

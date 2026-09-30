@@ -1,102 +1,98 @@
-/**
- * getMonthlyCategoryBreakdown service 단위 테스트
- * @jest-environment node
- */
-
-jest.mock("@/lib/env/server.env", () => ({
-  serverEnv: {
-    BACKEND_API_URL: "http://localhost:8080",
-  },
+/** @jest-environment node */
+jest.mock("@/lib/server/api/client", () => ({ serverApiGet: jest.fn() }));
+jest.mock("@/lib/server/cache", () => ({
+  getCachedDashboardStats: jest.fn(),
+  getCachedFamilyCategories: jest.fn(),
 }));
-jest.mock("@/lib/server/auth/auth", () => ({
-  handlers: {},
-  auth: jest.fn(),
-  signIn: jest.fn(),
-  signOut: jest.fn(),
-}));
-jest.mock("@/lib/server/api/client");
-jest.mock("@/lib/server/cache");
 
-import { getMonthlyCategoryBreakdown } from "@/services/dashboard/dashboard-service";
 import { serverApiGet } from "@/lib/server/api/client";
-import { getCachedFamilyCategories } from "@/lib/server/cache";
+import { ServerApiError } from "@/lib/server/api/types";
+import { getMonthlyCategoryBreakdown } from "@/services/dashboard/dashboard-service";
 
-const mockServerApiGet = serverApiGet as jest.MockedFunction<typeof serverApiGet>;
-const mockGetCachedFamilyCategories = getCachedFamilyCategories as jest.MockedFunction<
-  typeof getCachedFamilyCategories
->;
+const api = jest.mocked(serverApiGet);
 
-const FAMILY_UUID = "family-uuid-1";
-
-const mockCategories = [
-  { uuid: "cat-1", name: "식비", icon: "🍔", color: "#FF5733" },
-  { uuid: "cat-2", name: "교통", icon: "🚌", color: "#3498DB" },
-  { uuid: "cat-3", name: "문화", icon: "🎬", color: "#9B59B6" },
-];
+beforeEach(() => api.mockReset());
 
 describe("getMonthlyCategoryBreakdown", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockGetCachedFamilyCategories.mockResolvedValue(mockCategories as never);
-  });
-
-  it("정상 3 카테고리 × 4건 → 합계/percentage 정확", async () => {
-    // cat-1: 10000+20000=30000, cat-2: 5000+5000=10000, cat-3: 2000+8000=10000
-    // total: 50000
-    mockServerApiGet.mockResolvedValue({
+  it("집계 경로와 삭제된 카테고리, 비율 반올림을 확인한다", async () => {
+    api.mockResolvedValue({
+      year: 2026,
+      month: 3,
+      totalExpense: 300,
       items: [
-        { uuid: "e1", amount: 10000, date: "2024-03-01", categoryName: "식비", categoryUuid: "cat-1" },
-        { uuid: "e2", amount: 20000, date: "2024-03-05", categoryName: "식비", categoryUuid: "cat-1" },
-        { uuid: "e3", amount: 5000,  date: "2024-03-10", categoryName: "교통", categoryUuid: "cat-2" },
-        { uuid: "e4", amount: 5000,  date: "2024-03-15", categoryName: "교통", categoryUuid: "cat-2" },
-        { uuid: "e5", amount: 2000,  date: "2024-03-20", categoryName: "문화", categoryUuid: "cat-3" },
-        { uuid: "e6", amount: 8000,  date: "2024-03-25", categoryName: "문화", categoryUuid: "cat-3" },
-        // 4건은 각 카테고리가 2건씩 총 6건이지만 "3 카테고리 × 4건" = 12 아이템이 있어도 동작 검증
+        {
+          categoryUuid: "deleted",
+          name: null,
+          icon: null,
+          color: null,
+          totalAmount: 100,
+          percentage: 33.33,
+        },
+        {
+          categoryUuid: "food",
+          name: "식비",
+          icon: "🍔",
+          color: "teal",
+          totalAmount: 200,
+          percentage: 66.67,
+        },
       ],
     });
-
-    const result = await getMonthlyCategoryBreakdown(FAMILY_UUID, 2024, 3);
-
-    expect(result.year).toBe(2024);
-    expect(result.month).toBe(3);
-    expect(result.totalExpense).toBe(50000);
-    expect(result.items).toHaveLength(3);
-
-    // totalAmount desc 정렬
-    expect(result.items[0].categoryUuid).toBe("cat-1");
-    expect(result.items[0].totalAmount).toBe(30000);
-    expect(result.items[0].percentage).toBe(60);
-
-    expect(result.items[1].totalAmount).toBe(10000);
-    expect(result.items[1].percentage).toBe(20);
-
-    expect(result.items[2].totalAmount).toBe(10000);
-    expect(result.items[2].percentage).toBe(20);
-  });
-
-  it("빈 배열 → items: [], totalExpense: 0", async () => {
-    mockServerApiGet.mockResolvedValue({ items: [] });
-
-    const result = await getMonthlyCategoryBreakdown(FAMILY_UUID, 2024, 3);
-
-    expect(result.totalExpense).toBe(0);
-    expect(result.items).toEqual([]);
-  });
-
-  it("음수/0/NaN 항목 무시", async () => {
-    mockServerApiGet.mockResolvedValue({
+    expect(await getMonthlyCategoryBreakdown("family", 2026, 3)).toEqual({
+      year: 2026,
+      month: 3,
+      totalExpense: 300,
       items: [
-        { uuid: "e1", amount: -500,      date: "2024-03-01", categoryName: "식비", categoryUuid: "cat-1" },
-        { uuid: "e2", amount: 0,         date: "2024-03-02", categoryName: "식비", categoryUuid: "cat-1" },
-        { uuid: "e3", amount: NaN,       date: "2024-03-03", categoryName: "식비", categoryUuid: "cat-1" },
-        { uuid: "e4", amount: 10000,     date: "2024-03-04", categoryName: "교통", categoryUuid: "cat-2" },
+        {
+          categoryUuid: "deleted",
+          name: "Unknown",
+          icon: "💰",
+          color: undefined,
+          totalAmount: 100,
+          percentage: 33,
+        },
+        {
+          categoryUuid: "food",
+          name: "식비",
+          icon: "🍔",
+          color: "teal",
+          totalAmount: 200,
+          percentage: 67,
+        },
       ],
     });
+    expect(api).toHaveBeenCalledWith(
+      "/families/family/dashboard/stats/category-breakdown?year=2026&month=3&compareWithPrev=false",
+    );
+  });
 
-    const result = await getMonthlyCategoryBreakdown(FAMILY_UUID, 2024, 3);
+  it("빈 집계를 유지한다", async () => {
+    api.mockResolvedValue({ year: 2026, month: 3, totalExpense: 0, items: [] });
+    expect(await getMonthlyCategoryBreakdown("family", 2026, 3)).toEqual({
+      year: 2026,
+      month: 3,
+      totalExpense: 0,
+      items: [],
+    });
+  });
 
-    expect(result.totalExpense).toBe(10000);
-    expect(result.items).toHaveLength(1);
-    expect(result.items[0].categoryUuid).toBe("cat-2");
+  it.each([new ServerApiError("failed", 500), new Error("network")])(
+    "일반 실패는 빈 집계로 바꾼다: %s",
+    async (error) => {
+      api.mockRejectedValue(error);
+      expect(await getMonthlyCategoryBreakdown("family", 2026, 3)).toEqual({
+        year: 2026,
+        month: 3,
+        totalExpense: 0,
+        items: [],
+      });
+    },
+  );
+  it("401은 전파한다", async () => {
+    const error = new ServerApiError("expired", 401);
+    api.mockRejectedValue(error);
+    await expect(getMonthlyCategoryBreakdown("family", 2026, 3)).rejects.toBe(
+      error,
+    );
   });
 });

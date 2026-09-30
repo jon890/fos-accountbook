@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
+import dynamic from "next/dynamic";
 import { getCategoryTone } from "@/lib/utils/category-tone";
 import { formatCurrency } from "@/lib/utils/format";
 import type { MonthlyCategoryBreakdown } from "@/types/dashboard";
@@ -15,35 +9,21 @@ interface CategoryDistributionProps {
   breakdown: MonthlyCategoryBreakdown;
 }
 
-const EMPTY_DONUT_FILL = "var(--color-neutral-200)";
-
-interface EmptyEntry {
-  value: number;
-  fill: string;
-}
-
-interface DataEntry {
-  categoryUuid: string;
-  name: string;
-  icon: string;
-  color?: string;
-  totalAmount: number;
-  percentage: number;
-  fill: string;
-}
-
-const EMPTY_DONUT: EmptyEntry[] = [{ value: 1, fill: EMPTY_DONUT_FILL }];
+const CategoryDistributionChart = dynamic(
+  () => import("./CategoryDistributionChart"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-[120px] h-[120px] md:w-[180px] md:h-[180px]">
+        <div className="ab-skel [--skel-h:100%]" />
+      </div>
+    ),
+  },
+);
 
 export function CategoryDistribution({ breakdown }: CategoryDistributionProps) {
   const { totalExpense, items } = breakdown;
   const isEmpty = items.length === 0;
-
-  const chartData: EmptyEntry[] | DataEntry[] = isEmpty
-    ? EMPTY_DONUT
-    : items.map((item) => ({
-        ...item,
-        fill: getCategoryTone(item.name).fg,
-      }));
 
   // Show up to 5 on mobile, 6 on desktop (slice done in render via hidden class)
   const topItems = items.slice(0, 6);
@@ -66,43 +46,7 @@ export function CategoryDistribution({ breakdown }: CategoryDistributionProps) {
         <div className="flex gap-4 md:gap-6 items-start">
           {/* Donut */}
           <div className="relative shrink-0 w-[120px] h-[120px] md:w-[180px] md:h-[180px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius="55%"
-                  outerRadius="80%"
-                  dataKey={isEmpty ? "value" : "totalAmount"}
-                  stroke="none"
-                  paddingAngle={isEmpty ? 0 : 2}
-                  minAngle={4}
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={"fill" in entry ? entry.fill : EMPTY_DONUT_FILL}
-                    />
-                  ))}
-                </Pie>
-                {!isEmpty && (
-                  <Tooltip
-                    formatter={(value) => [
-                      formatCurrency(typeof value === "number" ? value : 0),
-                      "지출",
-                    ]}
-                    contentStyle={{
-                      fontSize: 12,
-                      borderRadius: 8,
-                      border: "1px solid var(--color-border)",
-                      background: "var(--color-bg-elev)",
-                      color: "var(--color-fg)",
-                    }}
-                  />
-                )}
-              </PieChart>
-            </ResponsiveContainer>
+            <CategoryDistributionChart breakdown={breakdown} />
             {/* Center label */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-[9px] md:text-[11px] text-fg-muted">총 지출</span>

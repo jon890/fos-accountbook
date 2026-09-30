@@ -26,7 +26,7 @@ const inputSchema = z.object({
 
 /**
  * 월별 일일 수입/지출 합계 조회
- * (API가 없으므로 목록 조회 후 집계)
+ * /dashboard/daily-stats 집계 API 조회 (ADR-F30)
  */
 export async function getMonthlyDailyStatsAction(
   year: number,

@@ -63,6 +63,10 @@ page.tsx          (Server) — 데이터 fetch, SEO
 규칙: `"use client"` 경계를 말단 컴포넌트로 밀어내 번들 최소화.
 모든 `page.tsx`는 Server Component. 인터랙션이 필요한 부분만 `*Client.tsx`로 분리.
 
+대시보드 분포, 분석 분포와 예산 누적 차트는 기존 Client wrapper 를 유지하고 recharts 를 사용하는 차트 본체만 분리한다.
+wrapper 가 `next/dynamic` 의 `ssr: false` 로 본체를 지연 로드해 recharts 를 초기 동기 번들에서 제외한다.
+다운로드 중에는 차트와 같은 반응형 높이의 자리표시자를 표시해 화면이 밀리지 않게 한다.
+
 ### 에러 처리
 
 - **Server Action**: `{ success: false, error }` 반환 → 클라이언트에서 `toast.error`
