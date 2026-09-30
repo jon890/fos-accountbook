@@ -164,6 +164,7 @@ public class ApiErrorResponse {
     private String code;
     private String field;
     private Object rejectedValue;
+    private String message;
   }
 }
 

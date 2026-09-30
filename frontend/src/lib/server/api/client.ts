@@ -54,6 +54,37 @@ async function getBackendAccessToken(): Promise<string | null> {
 }
 
 /**
+ * beforeError 훅 본문
+ *
+ * clone()으로 읽어 원본 body를 보존한다. 원본을 직접 읽으면
+ * serverApiClient의 catch가 같은 body를 다시 읽지 못해 errorData가 null이 된다.
+ */
+export async function logAndImproveHttpError<
+  E extends { message: string; response: Response },
+>(error: E): Promise<E> {
+  const { response } = error;
+
+  if (response) {
+    const raw = await response.clone().json().catch(() => null);
+    const errorData =
+      raw !== null && typeof raw === "object" && !Array.isArray(raw)
+        ? (raw as { message?: string; error?: string })
+        : null;
+
+    // 에러 상세 로깅
+    logApiError(response.url, response.status, response.statusText, errorData);
+
+    // 에러 메시지 개선
+    error.message =
+      errorData?.message ||
+      errorData?.error ||
+      `API 오류: ${response.status} ${response.statusText}`;
+  }
+
+  return error;
+}
+
+/**
  * ky 인스턴스 생성 (hooks 포함)
  *
  * @param skipAuth - 인증 헤더 스킵 여부
@@ -136,37 +167,7 @@ async function createKyInstance(skipAuth: boolean = false) {
        * - HTTPError를 ServerApiError로 변환
        * - 에러 상세 로깅
        */
-      beforeError: [
-        async (error) => {
-          const { response } = error;
-
-          if (response) {
-            const raw = await response.json().catch(() => null);
-            const errorData =
-              raw !== null &&
-              typeof raw === "object" &&
-              !Array.isArray(raw)
-                ? (raw as { message?: string; error?: string })
-                : null;
-
-            // 에러 상세 로깅
-            logApiError(
-              response.url,
-              response.status,
-              response.statusText,
-              errorData
-            );
-
-            // 에러 메시지 개선
-            error.message =
-              errorData?.message ||
-              errorData?.error ||
-              `API 오류: ${response.status} ${response.statusText}`;
-          }
-
-          return error;
-        },
-      ],
+      beforeError: [logAndImproveHttpError],
     },
   });
 }

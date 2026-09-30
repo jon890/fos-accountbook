@@ -17,7 +17,7 @@
 { success: true, message: string, data: T, timestamp: string }
 
 // 실패
-{ success: false, message: string, error?: ErrorDetails, timestamp: string }
+{ success: false, message: string, errors?: ErrorDetails[], timestamp: string }
 ```
 
 ### 페이지네이션
@@ -107,7 +107,7 @@ interface Category {
   uuid: string;
   familyUuid: string;
   name: string;
-  color?: string; // hex color (#6366f1)
+  color?: string; // #RRGGBB(기존 값, 기본 카테고리) 또는 oklch(L C H)(팔레트에서 고른 값)
   icon?: string; // 이모지 또는 아이콘 이름
   excludeFromBudget?: boolean;
   isDefault?: boolean; // true = 삭제 불가 ('미분류')
@@ -282,8 +282,15 @@ interface CategoryInfo {
 interface ApiErrorResponse {
   success: false;
   message: string;
-  error?: ErrorDetails;
+  errors?: ErrorDetails[]; // @Valid 검증 실패(400)일 때 필드마다 하나
   timestamp: string;
+}
+
+interface ErrorDetails {
+  code: string;          // 검증 실패는 "VALIDATION_ERROR"
+  field: string;
+  rejectedValue: unknown;
+  message: string;       // 그 필드의 검증 메시지. Action 이 사용자에게 그대로 보여 준다
 }
 ```
 

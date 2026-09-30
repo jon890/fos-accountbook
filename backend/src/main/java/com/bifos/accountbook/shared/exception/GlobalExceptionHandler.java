@@ -115,6 +115,7 @@ public class GlobalExceptionHandler {
                                                                                                .code("VALIDATION_ERROR")
                                                                                                .field(fieldName)
                                                                                                .rejectedValue(rejectedValue)
+                                                                                               .message(errorMessage)
                                                                                                .build();
                                                          })
                                                          .collect(Collectors.toList());

@@ -46,6 +46,47 @@ describe("handleActionError 변환기", () => {
     });
   });
 
+  describe("ServerApiError 400 → 필드 문구", () => {
+    const message = "색상은 #RRGGBB 또는 oklch(L C H) 형식이어야 합니다";
+
+    it("errors[0].message 를 C001 실패 메시지로 그대로 돌려준다", () => {
+      const error = new ServerApiError("Bad Request", 400, {
+        errors: [{ field: "color", message }],
+      });
+      const result = handleActionError(error, "카테고리 생성에 실패했습니다");
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe("C001");
+        expect(result.error.message).toBe(message);
+      }
+    });
+
+    it("errors 가 없으면 기본 문구(internalError)를 유지한다", () => {
+      const error = new ServerApiError("Bad Request", 400, {});
+      const result = handleActionError(error, "카테고리 생성에 실패했습니다");
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe("C003");
+        expect(result.error.message).toBe("카테고리 생성에 실패했습니다");
+      }
+    });
+
+    it("status 500 은 errors 가 있어도 기본 문구를 유지한다", () => {
+      const error = new ServerApiError("Internal Server Error", 500, {
+        errors: [{ field: "color", message }],
+      });
+      const result = handleActionError(error, "카테고리 생성에 실패했습니다");
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe("C003");
+        expect(result.error.message).toBe("카테고리 생성에 실패했습니다");
+      }
+    });
+  });
+
   describe("이미 ActionError인 경우 그대로 통과", () => {
     it("ActionError는 변환 없이 그대로 반환한다", () => {
       const error = ActionError.unauthorized();
