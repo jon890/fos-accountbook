@@ -25,8 +25,15 @@ export function CalendarHome(props: CalendarHomeProps) {
 function CalendarMonthContent({ data, initialDate, today, familyUuid }: CalendarHomeProps) {
   const router = useRouter();
   const [dateDraft, setDateDraft] = useState<string | null>(null);
+  const [previousInitialDate, setPreviousInitialDate] = useState(initialDate);
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<CalendarTransaction | null>(null);
+
+  if (initialDate !== previousInitialDate) {
+    setPreviousInitialDate(initialDate);
+    setDateDraft(null);
+  }
+
   const selectedDate = dateDraft ?? initialDate;
   const colors = buildMemberColorMap(data.members);
   const expenseTotal = data.daily.dailyStats.find((day) => day.date === selectedDate)?.expense ?? 0;

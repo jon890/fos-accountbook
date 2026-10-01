@@ -97,12 +97,22 @@ describe("달력 홈", () => {
       incomes: [calendarIncome({ description: "새 수입", date: "2026-09-15T11:00:00" })],
       daily: { ...data.daily, dailyStats: [{ date: "2026-09-15", expense: 77700, income: 50000, memberExpenses: [{ userUuid: "wife", amount: 77700 }] }] },
     });
-    view.rerender(<CalendarHome {...props} data={latest} initialDate="2026-09-01" />);
+    view.rerender(<CalendarHome {...props} data={latest} />);
     expect(screen.getByText("9월 15일 (화)")).toBeInTheDocument();
     expect(screen.getByText("새 기록")).toBeInTheDocument();
     expect(screen.getByText("새 수입")).toBeInTheDocument();
     expect(screen.getByText("₩77,700")).toBeInTheDocument();
     expect(screen.queryByText("다음 날 식사")).not.toBeInTheDocument();
+  });
+
+  it("같은 월에서도 서버의 초기 날짜가 바뀌면 날짜 초안을 지우고 오늘로 돌아간다", async () => {
+    const view = render(<CalendarHome {...props} initialDate="2026-09-13" />);
+    await userEvent.setup().click(screen.getByRole("button", { name: "9월 15일" }));
+    view.rerender(<CalendarHome {...props} />);
+
+    expect(screen.getByText("9월 14일 (월)")).toBeInTheDocument();
+    expect(screen.getByText("점심")).toBeInTheDocument();
+    expect(new URLSearchParams(window.location.search).get("date")).toBe(props.today);
   });
 
   it("월 또는 가족이 바뀌면 서버가 지정한 날짜를 선택한다", async () => {
