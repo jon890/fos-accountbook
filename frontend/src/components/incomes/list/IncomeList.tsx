@@ -2,10 +2,12 @@ import { getIncomesAction } from "@/actions/income/get-incomes-action";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/empty/EmptyState";
 import { Inbox } from "lucide-react";
+import type { FamilyMemberSummary } from "@/types/family";
 import { IncomeListClient } from "./IncomeListClient";
 
 interface IncomeListProps {
   familyId: string;
+  members: FamilyMemberSummary[];
   categoryId?: string;
   startDate?: string;
   endDate?: string;
@@ -18,6 +20,7 @@ interface IncomeListProps {
 
 export async function IncomeList({
   familyId,
+  members,
   categoryId,
   startDate,
   endDate,
@@ -42,7 +45,7 @@ export async function IncomeList({
     return (
       <Card>
         <CardContent className="py-6 md:py-8">
-          <p className="text-center text-gray-500">{result.error?.message}</p>
+          <p className="text-center text-fg-muted">{result.error?.message}</p>
         </CardContent>
       </Card>
     );
@@ -50,7 +53,6 @@ export async function IncomeList({
 
   const {
     items: incomes,
-    totalElements,
     totalPages,
     currentPage,
   } = result.data;
@@ -74,10 +76,9 @@ export async function IncomeList({
     <IncomeListClient
       incomes={incomes}
       familyUuid={familyId}
-      totalElements={totalElements}
       totalPages={totalPages}
       currentPage={currentPage + 1} // UI는 1-based
-      limit={limit}
+      members={members}
     />
   );
 }

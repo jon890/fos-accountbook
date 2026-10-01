@@ -1,5 +1,6 @@
 import TransactionsPage from "@/app/(authenticated)/transactions/page";
 import { getSelectedFamilyAction } from "@/actions/family/get-selected-family-action";
+import { getFamilyMembersAction } from "@/actions/family/get-family-members-action";
 import { getFamilyCategoriesAction } from "@/actions/category/get-categories-action";
 import { getExpensesAction } from "@/actions/expense/get-expenses-action";
 import { getUserProfileAction } from "@/actions/user/get-user-profile-action";
@@ -11,6 +12,9 @@ jest.mock("@/lib/server/cache", () => ({ getCachedSession: jest.fn() }));
 jest.mock("@/lib/utils/date-timezone", () => ({ getMonthRange: jest.fn() }));
 jest.mock("@/actions/family/get-selected-family-action", () => ({
   getSelectedFamilyAction: jest.fn(),
+}));
+jest.mock("@/actions/family/get-family-members-action", () => ({
+  getFamilyMembersAction: jest.fn(),
 }));
 jest.mock("@/actions/category/get-categories-action", () => ({
   getFamilyCategoriesAction: jest.fn(),
@@ -47,6 +51,7 @@ jest.mock("next/navigation", () => ({
 
 const mockGetSession = jest.mocked(getCachedSession);
 const mockGetFamily = jest.mocked(getSelectedFamilyAction);
+const mockGetMembers = jest.mocked(getFamilyMembersAction);
 const mockGetCategories = jest.mocked(getFamilyCategoriesAction);
 const mockGetMonthRange = jest.mocked(getMonthRange);
 
@@ -66,6 +71,10 @@ describe("내역 페이지", () => {
       expires: "2026-10-01T00:00:00Z",
     });
     mockGetFamily.mockResolvedValue({ success: true, data: "family-1" });
+    mockGetMembers.mockResolvedValue({
+      success: true,
+      data: [{ userUuid: "user-1", name: "민지", email: null, image: null, role: "OWNER", joinedAt: "2026-01-01" }],
+    });
     mockGetCategories.mockResolvedValue({ success: true, data: [] });
     mockGetMonthRange.mockReturnValue({
       startDate: "2026-09-01",
@@ -158,5 +167,42 @@ describe("내역 페이지", () => {
 
     expect(redirect).toHaveBeenCalledWith("/families/create");
     expect(mockGetCategories).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["expenses", (page: Awaited<ReturnType<typeof TransactionsPage>>) => page.props.expenseListContent.props.children[1].props.children],
+    ["incomes", (page: Awaited<ReturnType<typeof TransactionsPage>>) => page.props.incomeListContent.props.children],
+  ] as const)("가족 구성원을 %s 목록에 전달한다", async (tab, getList) => {
+    const page = await TransactionsPage({ searchParams: Promise.resolve({ tab }) });
+    const list = getList(page);
+
+    expect(list.props.members).toEqual([
+      expect.objectContaining({ userUuid: "user-1", name: "민지" }),
+    ]);
+    expect(mockGetMembers).toHaveBeenCalledWith();
+  });
+
+  it("구성원 조회 실패 메시지를 페이지에 표시한다", async () => {
+    mockGetMembers.mockResolvedValue({
+      success: false,
+      error: { code: "C003", message: "구성원 조회 실패" },
+    });
+
+    const page = await TransactionsPage({ searchParams: Promise.resolve({}) });
+
+    expect(page.props.role).toBe("alert");
+    expect(page.props.children).toBe("구성원 조회 실패");
+  });
+
+  it("구성원 조회 인증 실패는 로그인 화면으로 이동한다", async () => {
+    mockGetMembers.mockResolvedValue({
+      success: false,
+      error: { code: "A002", message: "세션이 만료되었습니다" },
+    });
+
+    await expect(TransactionsPage({ searchParams: Promise.resolve({}) })).rejects.toThrow("redirect");
+    expect(redirect).toHaveBeenCalledWith(
+      "/auth/signin?error=auth&message=%EC%84%B8%EC%85%98%EC%9D%B4%20%EB%A7%8C%EB%A3%8C%EB%90%98%EC%97%88%EC%8A%B5%EB%8B%88%EB%8B%A4",
+    );
   });
 });

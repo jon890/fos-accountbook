@@ -15,9 +15,11 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getRecurringExpensesAction } from "@/actions/recurring-expense";
 import { getSelectedFamilyAction } from "@/actions/family/get-selected-family-action";
+import { getFamilyMembersAction } from "@/actions/family/get-family-members-action";
 import { getFamilyCategoriesAction } from "@/actions/category/get-categories-action";
 import { getMonthRange } from "@/lib/utils/date-timezone";
 import { getCachedSession } from "@/lib/server/cache";
+import { handleActionError } from "@/lib/server/action-result-handler";
 
 // 쿠키를 사용하므로 동적 렌더링 필요
 export const dynamic = "force-dynamic";
@@ -69,6 +71,20 @@ export default async function TransactionsPage({
     redirect("/families/create");
   }
   const familyUuid = familyResult.data;
+
+  const membersResult = await getFamilyMembersAction();
+  if (!membersResult.success) {
+    const isAuthError = membersResult.error.code === "A001" || membersResult.error.code === "A002";
+    if (isAuthError) {
+      handleActionError(membersResult);
+    }
+    return (
+      <div role="alert" className="rounded-md border border-border bg-bg-elev p-4 text-sm text-fg-muted">
+        {membersResult.error.message}
+      </div>
+    );
+  }
+  const members = membersResult.data;
 
   // 카테고리 목록 조회
   const categoriesResult = await getFamilyCategoriesAction(familyUuid);
@@ -125,7 +141,7 @@ export default async function TransactionsPage({
             >
               <ExpenseList
                 familyId={familyUuid}
-                categories={categories}
+                members={members}
                 categoryId={resolvedSearchParams.categoryId}
                 startDate={startDate}
                 endDate={endDate}
@@ -152,6 +168,7 @@ export default async function TransactionsPage({
           >
             <IncomeList
               familyId={familyUuid}
+              members={members}
               categoryId={resolvedSearchParams.categoryId}
               startDate={startDate}
               endDate={endDate}

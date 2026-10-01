@@ -79,6 +79,44 @@ const notifications = [
   },
 ];
 
+const members = [
+  {
+    userUuid: "22222222-2222-2222-2222-222222222222",
+    name: "민지",
+    email: "minji@example.com",
+    image: null,
+    role: "OWNER",
+    joinedAt: createdAt,
+  },
+];
+
+const transactions = {
+  expenses: [{
+    uuid: "55555555-5555-5555-5555-555555555551",
+    familyUuid: FAMILY_UUID,
+    userUuid: members[0].userUuid,
+    categoryUuid: categories[0].uuid,
+    category: { ...categories[0], icon: "🍜" },
+    amount: 12500,
+    description: "점심 식사",
+    date: "2026-10-01T12:30:00.000Z",
+    createdAt,
+    updatedAt: createdAt,
+  }],
+  incomes: [{
+    uuid: "55555555-5555-5555-5555-555555555552",
+    familyUuid: FAMILY_UUID,
+    userUuid: members[0].userUuid,
+    categoryUuid: categories[2].uuid,
+    category: { ...categories[2], icon: "💳" },
+    amount: 3000000,
+    description: "급여",
+    date: "2026-10-01T09:00:00.000Z",
+    createdAt,
+    updatedAt: createdAt,
+  }],
+};
+
 function sendJson(response, status, body) {
   response.writeHead(status, { "Content-Type": "application/json; charset=utf-8" });
   response.end(JSON.stringify(body));
@@ -125,6 +163,31 @@ const server = createServer(async (request, response) => {
   }
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/categories`) {
     sendJson(response, 200, { success: true, data: categoriesAreEmpty ? [] : categories });
+    return;
+  }
+  if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/members`) {
+    sendJson(response, 200, { success: true, data: members });
+    return;
+  }
+  if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/expenses`) {
+    sendJson(response, 200, {
+      success: true,
+      data: { items: transactions.expenses, totalElements: 1, totalPages: 1, currentPage: 0 },
+    });
+    return;
+  }
+  if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/incomes`) {
+    sendJson(response, 200, {
+      success: true,
+      data: { items: transactions.incomes, totalElements: 1, totalPages: 1, currentPage: 0 },
+    });
+    return;
+  }
+  if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/dashboard/expenses/by-category`) {
+    sendJson(response, 200, {
+      success: true,
+      data: { totalExpense: 12500, categoryStats: [] },
+    });
     return;
   }
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/notifications/unread-count`) {
