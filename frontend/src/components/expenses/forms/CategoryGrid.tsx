@@ -54,7 +54,7 @@ export function CategoryGrid({
             key={category.uuid}
             type="button"
             variant={null}
-            size="default"
+            size={null}
             role="radio"
             aria-checked={isSelected}
             aria-label={category.excludeFromBudget ? `${category.name} 예산 제외` : category.name}
@@ -82,7 +82,7 @@ export function CategoryGrid({
             {category.excludeFromBudget && (
               <EyeOff
                 aria-hidden="true"
-                className="absolute right-1.5 top-1.5 h-3.5 w-3.5 text-fg-muted"
+                className="absolute right-1.5 top-1.5 size-3.5 text-fg-muted"
               />
             )}
           </Button>
