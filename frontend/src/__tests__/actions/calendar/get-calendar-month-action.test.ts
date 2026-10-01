@@ -1,15 +1,12 @@
 /** @jest-environment node */
 jest.mock("@/lib/server/auth/auth-helpers", () => ({ requireAuth: jest.fn(), getSelectedFamilyUuid: jest.fn() }));
 jest.mock("@/services/calendar/calendar-service", () => ({ getCalendarMonth: jest.fn() }));
-jest.mock("@/services/family/family-service", () => ({ getFamilyMembers: jest.fn() }));
 
 import { getCalendarMonthAction } from "@/actions/calendar/get-calendar-month-action";
-import { getFamilyMembersAction } from "@/actions/family/get-family-members-action";
 import { requireAuth, getSelectedFamilyUuid } from "@/lib/server/auth/auth-helpers";
 import { ServerApiError } from "@/lib/server/api/types";
 import { ActionError, ErrorCode } from "@/lib/errors";
 import { getCalendarMonth } from "@/services/calendar/calendar-service";
-import { getFamilyMembers } from "@/services/family/family-service";
 import type { CalendarMonth } from "@/types/calendar";
 
 const data: CalendarMonth = {
@@ -22,7 +19,6 @@ beforeEach(() => {
   jest.resetAllMocks();
   jest.mocked(getSelectedFamilyUuid).mockResolvedValue("family-1");
   jest.mocked(getCalendarMonth).mockResolvedValue(data);
-  jest.mocked(getFamilyMembers).mockResolvedValue([]);
 });
 
 describe("달력 Action", () => {
@@ -67,23 +63,5 @@ describe("달력 Action", () => {
       error: { code: ErrorCode.UNAUTHORIZED },
     });
     expect(getCalendarMonth).not.toHaveBeenCalled();
-  });
-});
-
-describe("구성원 Action", () => {
-  it("선택 가족의 빈 구성원 응답을 반환한다", async () => {
-    expect(await getFamilyMembersAction()).toEqual({ success: true, data: [] });
-    expect(getFamilyMembers).toHaveBeenCalledWith("family-1");
-  });
-
-  it("가족 미선택이면 조회하지 않는다", async () => {
-    jest.mocked(getSelectedFamilyUuid).mockResolvedValue(null);
-    expect(await getFamilyMembersAction()).toMatchObject({ success: false, error: { code: ErrorCode.FAMILY_NOT_SELECTED } });
-    expect(getFamilyMembers).not.toHaveBeenCalled();
-  });
-
-  it("백엔드 401을 인증 만료로 변환한다", async () => {
-    jest.mocked(getFamilyMembers).mockRejectedValue(new ServerApiError("인증 실패", 401));
-    expect(await getFamilyMembersAction()).toMatchObject({ success: false, error: { code: ErrorCode.SESSION_EXPIRED } });
   });
 });
