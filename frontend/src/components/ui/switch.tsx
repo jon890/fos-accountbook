@@ -16,7 +16,7 @@ export function Switch({ checked, className, ...props }: SwitchProps) {
       role="switch"
       aria-checked={checked}
       className={cn(
-        "group relative flex h-11 w-12 shrink-0 items-center justify-center rounded-full outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+        "relative flex h-11 w-12 shrink-0 items-center justify-center rounded-full outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}
