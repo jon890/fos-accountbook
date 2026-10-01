@@ -89,7 +89,7 @@ export function MenuPageClient({
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 pb-6">
+    <div className="mx-auto max-w-2xl space-y-4 md:space-y-6">
       <div className="px-1 pt-3">
         <h1 className="text-2xl font-bold text-fg">전체 메뉴</h1>
         <p className="mt-3 font-semibold text-fg">{familyName}</p>

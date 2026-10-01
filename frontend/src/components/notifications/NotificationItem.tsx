@@ -96,7 +96,7 @@ export function NotificationItem({
     <button
       onClick={handleClick}
       className={cn(
-        "w-full p-4 text-left transition-colors hover:bg-bg-muted",
+        "w-full p-3 text-left transition-colors hover:bg-bg-muted md:p-4",
         !notification.isRead && "bg-brand-50/50"
       )}
     >

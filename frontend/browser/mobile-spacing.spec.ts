@@ -16,6 +16,8 @@ function expectedSpacing(projectName: string) {
       paddingLeft: isMobile ? "16px" : "24px",
       paddingTop: isMobile ? "32px" : "52px",
     },
+    heroPaddingLeft: isMobile ? "16px" : "24px",
+    notificationItemPaddingTop: isMobile ? "12px" : "16px",
   };
 }
 
@@ -107,6 +109,25 @@ test("카테고리의 바깥 여백을 폭별로 표시한다", async ({ page },
     expect(firstCardBox.x).toBe(192);
     expect(firstCardBox.x).toBeGreaterThanOrEqual(mainPaddingLeft);
   }
+});
+
+test("알림 항목과 카테고리 히어로의 폭별 안쪽 여백을 표시한다", async ({ page }, testInfo) => {
+  const expected = expectedSpacing(testInfo.project.name);
+
+  await page.goto("/notifications");
+  const firstNotificationItem = page.getByRole("button", { name: /식비 예산이 80%를 넘었습니다/ });
+  await expect(firstNotificationItem).toBeVisible();
+  expect(await firstNotificationItem.evaluate((element) => getComputedStyle(element).paddingTop)).toBe(
+    expected.notificationItemPaddingTop,
+  );
+
+  await page.goto("/categories");
+  const hero = page.locator('[data-slot="card"]', { hasText: "카테고리 관리" });
+  const heroContent = hero.locator(":scope > div");
+  await expect(heroContent).toBeVisible();
+  expect(await heroContent.evaluate((element) => getComputedStyle(element).paddingLeft)).toBe(
+    expected.heroPaddingLeft,
+  );
 });
 
 test("클라이언트 탐색 중 알림의 바깥 여백을 표시한다", async ({ page, request }, testInfo) => {

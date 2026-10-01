@@ -99,7 +99,7 @@ export function NotificationList({
       {/* 알림 목록 */}
       <ScrollArea className="flex-1">
         {recentNotifications.length === 0 ? (
-          <div className="p-8 text-center">
+          <div className="p-6 text-center md:p-8">
             <div className="w-16 h-16 rounded-full bg-brand-50 mx-auto mb-3 flex items-center justify-center">
               <Bell className="w-8 h-8 text-brand-500 opacity-85" />
             </div>

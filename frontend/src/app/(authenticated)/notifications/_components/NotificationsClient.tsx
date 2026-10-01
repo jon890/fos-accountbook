@@ -101,7 +101,7 @@ export function NotificationsClient({
 
       {/* 알림 목록 */}
       {visible.length === 0 ? (
-        <div className="py-16 text-center">
+        <div className="py-10 text-center md:py-16">
           <p className="text-sm font-semibold text-fg">
             {filter === "unread" ? "안 읽은 알림이 없어요" : "알림이 없어요"}
           </p>

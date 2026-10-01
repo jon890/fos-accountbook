@@ -75,7 +75,7 @@ export function BudgetClient({
       {/* 예산 미설정 빈 상태 */}
       {!hasBudget && (
         <Card className="border-dashed border-2 border-border bg-bg-elev">
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center md:py-12">
+          <CardContent className="flex flex-col items-center justify-center py-8 text-center md:py-12">
             <div className="p-4 bg-brand-50 rounded-full mb-4">
               <PiggyBank className="w-8 h-8 text-brand-500 opacity-85" />
             </div>

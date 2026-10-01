@@ -84,7 +84,7 @@ export default function CreateFamilyPage() {
           </CardHeader>
 
           <CardContent className="pt-0 md:pt-0">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
               {/* 가족 타입 선택 */}
               <div className="space-y-3">
                 <Label className="text-sm font-medium">가족 타입</Label>
@@ -137,7 +137,7 @@ export default function CreateFamilyPage() {
             </form>
 
             {/* 안내 박스 */}
-            <div className="mt-6 p-4 bg-brand-50 rounded-md border border-brand-100">
+            <div className="mt-4 p-4 bg-brand-50 rounded-md border border-brand-100 md:mt-6">
               <h4 className="font-semibold text-sm text-brand-700 mb-1">
                 {familyType === "personal"
                   ? "혼자 사용하기"

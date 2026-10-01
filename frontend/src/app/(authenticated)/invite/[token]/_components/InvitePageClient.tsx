@@ -98,9 +98,9 @@ export function InvitePageClient({
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-6 pt-0 md:pt-0">
+        <CardContent className="space-y-4 pt-0 md:space-y-6 md:pt-0">
           {/* 가족 정보 */}
-          <div className="bg-bg-muted rounded-2xl p-5 space-y-4">
+          <div className="bg-bg-muted rounded-2xl p-4 space-y-4 md:p-5">
             <div className="flex items-center gap-3">
               <Users className="w-5 h-5 text-brand-500" />
               <div className="flex-1">
