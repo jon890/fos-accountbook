@@ -1,5 +1,6 @@
 import { endOfMonth, format } from "date-fns";
 import { serverApiGet } from "@/lib/server/api/client";
+import { getCachedFamilyCategories } from "@/lib/server/cache";
 import { getFamilyMembers } from "@/services/family/family-service";
 import type { CalendarMonth } from "@/types/calendar";
 import type { DailyStatsWithMembers, MemberAmount } from "@/types/dashboard";
@@ -35,7 +36,7 @@ export async function getCalendarMonth(
   const startDate = format(firstOfMonth, "yyyy-MM-dd");
   const endDate = format(endOfMonth(firstOfMonth), "yyyy-MM-dd");
   const range = `startDate=${startDate}&endDate=${endDate}&size=1000`;
-  const [daily, expenses, incomes, members] = await Promise.all([
+  const [daily, expenses, incomes, members, categories] = await Promise.all([
     serverApiGet<ApiDailyStats>(
       `/families/${familyUuid}/dashboard/daily-stats?year=${year}&month=${month}`
     ),
@@ -46,7 +47,14 @@ export async function getCalendarMonth(
       `/families/${familyUuid}/incomes?${range}`
     ),
     getFamilyMembers(familyUuid),
+    getCachedFamilyCategories(familyUuid),
   ]);
+  const categoryMap = new Map(categories.map((category) => [category.uuid, {
+    uuid: category.uuid,
+    name: category.name,
+    icon: category.icon ?? "",
+    color: category.color ?? "",
+  }]));
 
   return {
     year,
@@ -63,8 +71,16 @@ export async function getCalendarMonth(
         memberExpenses: day.memberExpenses.map(normalizeMemberAmount),
       })),
     },
-    expenses: expenses.items.map((expense) => ({ ...expense, amount: Number(expense.amount) })),
-    incomes: incomes.items.map((income) => ({ ...income, amount: Number(income.amount) })),
+    expenses: expenses.items.map((expense) => ({
+      ...expense,
+      amount: Number(expense.amount),
+      category: categoryMap.get(expense.categoryUuid) ?? null,
+    })),
+    incomes: incomes.items.map((income) => ({
+      ...income,
+      amount: Number(income.amount),
+      category: categoryMap.get(income.categoryUuid) ?? null,
+    })),
     members,
   };
 }

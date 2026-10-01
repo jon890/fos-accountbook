@@ -32,7 +32,7 @@ export interface Income {
     name: string;
     color: string;
     icon: string;
-  };
+  } | null;
   amount: number;
   description: string | null;
   date: string;

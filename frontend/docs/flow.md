@@ -126,11 +126,12 @@ ADR-F21 에 따라 모든 진입점(달력의 「이 날짜에 추가」, Bottom
 [/calendar?month=YYYY-MM&date=YYYY-MM-DD] (Server Component)
     │   month 없음 → 사용자 시간대의 이번 달. date 없음 → 오늘이 그 달이면 오늘, 아니면 그 달 1일
     │
-    └─ getCalendarMonthAction(year, month)  ── Promise.all 4개 호출
+    └─ getCalendarMonthAction(year, month)  ── Promise.all 5개 호출
             ├─ /dashboard/daily-stats?year&month       → 날짜별 합계, memberExpenses, memberExpenseTotals
             ├─ /expenses?startDate&endDate&size=1000   → 그 달 지출 목록 (날짜 목록 표시용)
             ├─ /incomes?startDate&endDate&size=1000    → 그 달 수입 목록
-            └─ /families/{uuid}/members                → 구성원 이름, 사진, 가입 순서
+            ├─ /families/{uuid}/members                → 구성원 이름, 사진, 가입 순서
+            └─ getCachedFamilyCategories              → categoryUuid로 카테고리 이름과 아이콘 연결
     │
     └─ CalendarHome ("use client")
             ├─ MonthHeader: ‹ 2026년 9월 ›  (월 이동 = URL month 변경, 서버 다시 조회)
@@ -147,7 +148,7 @@ ADR-F21 에 따라 모든 진입점(달력의 「이 날짜에 추가」, Bottom
 - 칸에는 지출이 큰 구성원 두 명을 표시하고, 나머지는 `+N`으로 줄인다. 버튼의 접근성 이름에는 모든 구성원의 이름과 지출을 담는다.
 - 구성원 목록에서 찾지 못한 `userUuid`(가족을 떠난 사람)는 회색 점과 「이전 구성원」 으로 표시한다.
 - 빈 상태: 그 달 거래가 없으면 달력은 그대로 두고 날짜 목록에 「이 날 기록이 없어요」 와 추가 버튼을 둔다.
-- 실패: 네 호출 중 하나라도 실패하면 `(authenticated)/error.tsx` 로 간다. 401 은 ADR-F26 에 따라 로그인으로 보낸다.
+- 실패: 다섯 호출 중 하나라도 실패하면 `(authenticated)/error.tsx` 로 간다. 401 은 ADR-F26 에 따라 로그인으로 보낸다.
 - 등록, 수정, 삭제 뒤에는 Server Action 의 `revalidatePath("/calendar")` 로 같은 달을 다시 받는다.
 - `/dashboard` 는 없앤다. 예전 주소로 들어오면 `/analytics` 로 보낸다. 대시보드의 예산 카드, 이번 달 수입·지출, 고정비 카드는 `/analytics` 위쪽으로 옮긴다(「5-3」). 최근 내역과 빠른 메뉴는 달력과 전체 메뉴가 대신하므로 옮기지 않는다.
 

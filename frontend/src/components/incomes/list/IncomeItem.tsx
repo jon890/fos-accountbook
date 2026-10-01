@@ -80,13 +80,13 @@ export function IncomeItem({
         <div className="flex items-center space-x-2 md:space-x-4 flex-1 min-w-0">
           {/* 카테고리 아이콘 */}
           <div className="w-9 h-9 md:w-12 md:h-12 bg-income/15 rounded-lg md:rounded-2xl flex items-center justify-center text-base md:text-xl shadow-sm shrink-0">
-            {income.category.icon}
+            {income.category?.icon || "💰"}
           </div>
 
           {/* 카테고리명 + 설명 */}
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-foreground text-xs md:text-base truncate">
-              {income.category.name}
+              {income.category?.name || "기타"}
             </p>
             <div className="flex items-center gap-1 text-[10px] md:text-sm text-muted-foreground mt-0.5">
               <span>{formatExpenseDate(income.date, timezone)}</span>

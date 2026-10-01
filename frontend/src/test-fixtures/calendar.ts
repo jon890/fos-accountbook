@@ -8,7 +8,7 @@ export function calendarExpense(overrides: Partial<Expense> = {}): Expense {
     userUuid: "wife",
     familyUuid: "family-1",
     categoryUuid: "category-1",
-    category: { uuid: "category-1", name: "식비", icon: "🍚", color: "" },
+    category: null,
     amount: 32000,
     description: "점심",
     date: "2026-09-14T12:00:00",
@@ -22,7 +22,8 @@ export function calendarIncome(overrides: Partial<Income> = {}): Income {
   return {
     ...calendarExpense(),
     uuid: "income-1",
-    category: { uuid: "category-2", name: "급여", icon: "💰", color: "" },
+    categoryUuid: "category-2",
+    category: null,
     amount: 50000,
     description: "보너스",
     date: "2026-09-14T09:00:00",

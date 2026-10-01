@@ -19,6 +19,17 @@ const props = {
 beforeEach(() => jest.clearAllMocks());
 
 describe("선택 날짜 거래 목록", () => {
+  it("서비스가 연결한 카테고리 이름과 아이콘을 지출과 수입에 표시한다", () => {
+    render(<DayTransactionList {...props}
+      expenses={[calendarExpense({ category: { uuid: "category-1", name: "식비", icon: "🍚", color: "" } })]}
+      incomes={[calendarIncome({ category: { uuid: "category-2", name: "급여", icon: "💰", color: "" } })]}
+    />);
+    expect(screen.getByText("식비 · 12:00")).toBeInTheDocument();
+    expect(screen.getByText("🍚")).toBeInTheDocument();
+    expect(screen.getByText("급여 · 09:00")).toBeInTheDocument();
+    expect(screen.getByText("💰")).toBeInTheDocument();
+    expect(screen.queryByText(/기타/)).not.toBeInTheDocument();
+  });
   it("선택한 날의 지출과 수입을 시간순으로 보이고 서버의 지출 합계를 쓴다", () => {
     render(<DayTransactionList {...props} />);
     expect(screen.getByText("9월 14일 (월)")).toBeInTheDocument();
