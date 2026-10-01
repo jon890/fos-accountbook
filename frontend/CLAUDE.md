@@ -60,7 +60,7 @@
 
 - `alert()`, `confirm()`, `prompt()` 는 쓰지 않는다. ADR-F08 의 sonner 토스트를 사용한다.
 - 클라이언트 코드에 `console.log` 를 남기지 않는다. 서버 로그는 `lib/server/api/logging.ts` 를 거친다.
-- 클라이언트 컴포넌트가 `@/lib/env` 의 `serverEnv` 를 import 하지 않는다.
+- 클라이언트 코드는 `@/lib/env/server.env` 의 `serverEnv` 를 import 하지 않고, `NEXT_PUBLIC_` 이 없는 `process.env` 값을 직접 읽지 않는다.
 - Server Action 권한 검증은 ADR-F25 의 3 패턴 중 하나로 명시한다.
   - (a) **Single-family**: `getSelectedFamilyUuid()` + 입력 familyUuid 가 있으면 session 비교 (`updateExpenseAction` 패턴)
   - (b) **Multi-family**: `assertFamilyAccess(familyUuid)` helper (`updateFamilyAction` 패턴)
