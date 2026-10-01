@@ -90,6 +90,7 @@ const mockExpense: Expense = {
   amount: 15000,
   description: "점심",
   date: "2024-01-15T00:00:00Z",
+  excludeFromBudget: false,
   createdAt: "2024-01-15T00:00:00Z",
   updatedAt: "2024-01-15T00:00:00Z",
 };
@@ -136,6 +137,19 @@ describe("EditTransactionDialog", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetCategories.mockResolvedValue({ success: true, data: mockCategories });
+  });
+
+  it("기존 지출의 예산 제외 값을 스위치 초기값으로 사용한다", async () => {
+    render(
+      <EditTransactionDialog
+        open
+        onOpenChange={onOpenChange}
+        type="expense"
+        transaction={{ ...mockExpense, excludeFromBudget: true }}
+      />,
+    );
+
+    expect(await screen.findByRole("switch", { name: "예산에서 제외" })).toBeChecked();
   });
 
   it.each(["expense", "income"] as const)("%s 수정 응답을 기다리는 동안 삭제 확인을 열지 않는다", async (type) => {

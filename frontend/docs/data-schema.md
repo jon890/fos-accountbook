@@ -1,4 +1,4 @@
-# Data Schema — fos-accountbook (프론트엔드 타입)
+# fos-accountbook 프론트엔드 타입
 
 > **소유권**: DB 스키마·API 스펙의 canonical 소스는 `backend/`.
 > → [`backend/docs/data-schema.md`](../../backend/docs/data-schema.md) 참고
@@ -132,10 +132,11 @@ interface Expense {
   familyUuid: string;
   userUuid: string; // 등록한 사용자. 이름은 FamilyMemberSummary 에서 찾는다
   categoryUuid: string;
-  category: CategoryInfo | null;
+  category: (CategoryInfo & { excludeFromBudget?: boolean }) | null;
   amount: number; // 백엔드 BigDecimal → 문자열 → Number 변환
   description: string | null;
   date: string; // ISO 8601
+  excludeFromBudget: boolean; // 이 지출만 예산에서 뺀다. 카테고리가 제외면 이 값과 관계없이 제외된다
   createdAt: string;
   updatedAt: string;
 }
@@ -145,6 +146,15 @@ interface CreateExpenseRequest {
   amount: number;
   description?: string;
   date: string; // ISO 8601 (YYYY-MM-DDTHH:mm:ss)
+  excludeFromBudget?: boolean;
+}
+
+interface UpdateExpenseRequest {
+  categoryUuid?: string;
+  amount?: number;
+  description?: string;
+  date?: string;
+  excludeFromBudget?: boolean; // false도 변경값이다. 누락하면 기존 값을 유지한다
 }
 
 interface GetExpensesParams {
