@@ -26,13 +26,13 @@
 ## 의도 메모
 
 - 고정지출 버튼은 `gradient-primary`(브랜드)와 그 전경 토큰을 쓴다. 지출 빨강, 수입 초록과 겹치지 않고 대비가 충분하다. 종류 토글의 고정지출 선택 색도 같은 값으로 맞춘다.
-- 옛 폼을 지우면 그 테스트도 함께 지운다. 새 폼이 같은 경우를 덮는지는 `CategoryGrid.test.tsx`, `AmountInput.test.tsx` 가 남아 있으므로 그대로 둔다.
+- 옛 폼 전용 테스트는 현재 없다. 공용 입력 테스트 `CategoryGrid.test.tsx`, `AmountInput.test.tsx` 는 그대로 둔다.
 
 ## 작업 항목
 
 ### 1. `dialog.tsx`, `sheet.tsx` 기본 배경을 `bg-bg-elev` 로
 
-### 2. 옛 폼 세 파일과 그 테스트 삭제
+### 2. 옛 폼 세 파일 삭제
 
 ### 3. 고정지출 저장 버튼과 종류 토글 색
 
@@ -43,6 +43,8 @@
 - 390px 에서 하단 가운데 버튼(`getByRole("button", { name: "거래 추가" })`)을 누르면 시트가 열린다.
 - 다크 테마(`page.emulateMedia({ colorScheme: "dark" })` 나 앱의 `data-theme="dark"` 설정 방식)에서 시트와 `/categories` 의 카테고리 추가 다이얼로그 배경색이 흰색(`rgb(255, 255, 255)`)이 아니다.
 - 가짜 백엔드가 모르는 경로를 받으면 `frontend/browser/fake-backend.mjs` 에 더한다.
+- 고정지출 종류 선택 버튼과 저장 버튼에 `gradient-primary text-brand-fg` 가 적용됐는지 확인한다.
+- 데스크톱에서 거래 추가 제목이 실제로 보이는지 확인한다.
 
 ## 검증
 

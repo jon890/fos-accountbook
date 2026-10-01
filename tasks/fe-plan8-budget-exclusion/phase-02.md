@@ -1,7 +1,7 @@
 # Phase 02. 등록 화면의 예산 제외 표시와 지출별 스위치
 
 **Execution profile**: standard
-**Domain**: color-token
+**Domain**: color-token, server-action, app-router
 
 ## 목표
 
@@ -27,6 +27,8 @@
 ## 의도 메모
 
 - 공용 Switch 는 새 의존성 없이 `button role="switch" aria-checked` 로 만든다. 높이는 터치 영역 44px.
+- 공용 ui의 Switch 구현만 native button 예외로 둔다. 버튼 기본 키보드 동작과 접근 이름, disabled 상태를 유지한다.
+- 기존 action → service → server API 경계와 쓰기 후 `revalidateTransactionPaths` 호출을 유지한다.
 - 카테고리 타일: 제외 카테고리는 우상단에 작은 배지(아이콘 14px, 예: `EyeOff`)를 달고 접근 이름에 「예산 제외」 를 붙인다. 11px 글자를 더 얹지 않는다.
 - 스위치 위치: 카테고리 줄 바로 아래, 지출일 때만 한 행(왼쪽에 라벨 「예산에서 제외」, 오른쪽에 스위치). 수입과 고정지출에는 보이지 않는다.
 - 잠금: 고른 카테고리가 제외면 스위치는 켜진 채 `disabled` 이고 아래에 「이 카테고리는 예산에서 제외돼요」 한 줄. 이때 폼은 `excludeFromBudget` 을 보내지 않거나 `false` 로 보낸다(카테고리 플래그가 이미 제외한다). 카테고리를 바꾸면 잠금이 풀리고 사용자가 고른 값으로 돌아간다.
@@ -40,6 +42,7 @@
 ### 2. 타입과 액션에 `excludeFromBudget`
 
 - `frontend/src/types/expense.ts`, `create-expense-action.ts`, `update-expense-action.ts`, 지출 서비스가 백엔드로 넘기는 요청(`frontend/src/services/expense/expense-service.ts`).
+- 수정 액션의 빈 변경 검사에 `excludeFromBudget !== undefined` 를 반영한다. `false`만 보낸 변경도 유효하다.
 
 ### 3. `CategoryGrid` 의 제외 배지
 
@@ -47,7 +50,8 @@
 
 ### 5. 이 phase 를 검증하는 테스트
 
-- Jest `frontend/src/__tests__/actions/expense/create-expense-action.test.ts`, `update-expense-action.test.ts`: `excludeFromBudget=true` 가 서비스 요청에 실린다. 없으면 보내지 않는다.
+- Jest `frontend/src/__tests__/actions/expense/create-expense-action.test.ts`, `update-expense-action.test.ts`: `excludeFromBudget=true` 와 `false` 가 서비스 요청에 실린다. 없으면 보내지 않는다. 수정은 플래그 하나만 보낸 경우도 성공한다.
+- Jest `frontend/src/__tests__/services/expense/expense-service.test.ts` 에서 true, false, 누락이 백엔드 요청까지 유지되는지 확인한다.
 - Jest `frontend/src/__tests__/components/expenses/CategoryGrid.test.tsx`: 제외 카테고리 타일의 접근 이름에 「예산 제외」 가 있다.
 - Jest `frontend/src/__tests__/components/transactions/TransactionFormFields.test.tsx`(없으면 신규): 지출일 때만 스위치가 있다. 제외 카테고리를 고르면 스위치가 켜진 채 잠기고 안내 문구가 보인다. 다른 카테고리로 바꾸면 이전 값으로 돌아간다. 수입에는 스위치가 없다.
 
@@ -81,3 +85,4 @@ pnpm test
 | `frontend/src/__tests__/actions/expense/update-expense-action.test.ts` | 수정 |
 | `frontend/src/__tests__/components/expenses/CategoryGrid.test.tsx` | 수정 |
 | `frontend/src/__tests__/components/transactions/TransactionFormFields.test.tsx` | 신규 |
+| `frontend/src/__tests__/services/expense/expense-service.test.ts` | 신규 |
