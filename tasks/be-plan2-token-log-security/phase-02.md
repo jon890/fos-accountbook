@@ -26,7 +26,8 @@ refresh token 으로 API 를 부르거나 access token 으로 토큰을 갱신�
   - `backend/src/main/java/com/bifos/accountbook/config/security/JwtAuthenticationFilter.java:29` 가 `validateToken` 으로 API 인증을 한다.
   - `backend/src/main/java/com/bifos/accountbook/user/application/service/AuthService.java:73` 의 `refreshToken(String)` 이 `validateToken` 으로 refresh token 을 확인하고, 실패하면 `BusinessException(ErrorCode.INVALID_TOKEN, ...)` 을 던진다. `INVALID_TOKEN` 은 401, 코드 `A002` 다.
   - `AuthService` 98-99 행이 두 토큰을 발급한다.
-  - 테스트: `backend/src/test/java/com/bifos/accountbook/config/security/JwtTokenProviderTest.java`, `ApiTokenAuthenticationFilterTest.java:188`(JWT 로 부르는 경우).
+- 테스트: `backend/src/test/java/com/bifos/accountbook/config/security/JwtTokenProviderTest.java`, `ApiTokenAuthenticationFilterTest.java:188`(JWT 로 부르는 경우).
+- `backend/src/main/java/com/bifos/accountbook/config/SecurityConfig.java` 에는 인증 실패 entry point 가 없어 인증되지 않은 보호 경로 요청이 403 이 된다. 기존 `AuthControllerTest` 의 비인증 요청 기대값도 403 이다.
 - `backend/src/test/java/com/bifos/accountbook/user/presentation/controller/AuthControllerTest.java` 는 `AbstractControllerTest` 를 상속하고 `mockMvc` 로 `/api/v1/auth/social-login` 을 부른다. refresh 경로 테스트는 같은 방식으로 더한다.
 
 ## 의도 메모
@@ -47,6 +48,7 @@ refresh token 으로 API 를 부르거나 access token 으로 토큰을 갱신�
 
 - 필터는 access 만 인증한다.
 - `refreshToken` 은 refresh 만 받는다. 아니면 지금과 같은 `INVALID_TOKEN` 예외다.
+- `SecurityConfig` 에 인증 실패 entry point 를 추가한다. 인증 없음이나 잘못된 JWT 로 보호 경로를 부르면 기존 `ApiErrorResponse` 형식과 `INVALID_TOKEN` 코드 `A002` 로 401 을 반환한다. 인증된 사용자의 권한 부족은 403 을 유지하고, 연동 토큰 필터의 401 과 403 처리는 바꾸지 않는다.
 
 ### 3. 이 phase 를 검증하는 테스트
 
@@ -55,6 +57,7 @@ refresh token 으로 API 를 부르거나 access token 으로 토큰을 갱신�
   - POST `/api/v1/auth/refresh` 에 refresh token 을 주면 200 과 새 토큰.
   - access token 을 주면 401.
   - 보호 경로(예: GET `/api/v1/families`)를 refresh token 으로 부르면 401.
+  - 인증 없음과 잘못된 JWT 의 기존 403 기대값을 401 과 코드 A002 검증으로 바꾼다.
 - 기존 테스트가 직접 만든 JWT 로 인증하는 곳이 있으면 `typ` 을 넣게 고친다(`git grep -n "Jwts.builder" backend/src/test` 로 찾는다). 소셜 로그인 서명 토큰은 그대로 둔다.
 
 ## 검증
@@ -62,8 +65,9 @@ refresh token 으로 API 를 부르거나 access token 으로 토큰을 갱신�
 `backend/` 에서 실행한다. `gradle/wrapper/gradle-wrapper.jar` 가 없으면 먼저 `mise exec gradle@9.8.0 -- gradle wrapper --gradle-version 9.8.0` 을 돌린다. jar 는 커밋하지 않는다.
 
 ```bash
-./gradlew test --tests "com.bifos.accountbook.config.security.JwtTokenProviderTest" --tests "com.bifos.accountbook.user.presentation.controller.AuthControllerTest"
-./gradlew checkstyleMain checkstyleTest test
+# cwd: backend/
+./gradlew test --tests "com.bifos.accountbook.config.security.JwtTokenProviderTest" --tests "com.bifos.accountbook.user.presentation.controller.AuthControllerTest" --no-daemon --console=plain
+./gradlew checkstyleMain checkstyleTest test --no-daemon --console=plain
 ```
 
 기대값: 두 명령 모두 BUILD SUCCESSFUL.
@@ -75,6 +79,7 @@ refresh token 으로 API 를 부르거나 access token 으로 토큰을 갱신�
 | `backend/src/main/java/com/bifos/accountbook/config/security/JwtTokenProvider.java` | 수정 |
 | `backend/src/main/java/com/bifos/accountbook/config/security/AbstractJwtTokenProvider.java` | 수정 |
 | `backend/src/main/java/com/bifos/accountbook/config/security/JwtAuthenticationFilter.java` | 수정 |
+| `backend/src/main/java/com/bifos/accountbook/config/SecurityConfig.java` | 수정 |
 | `backend/src/main/java/com/bifos/accountbook/user/application/service/AuthService.java` | 수정 |
 | `backend/src/test/java/com/bifos/accountbook/config/security/JwtTokenProviderTest.java` | 수정 |
 | `backend/src/test/java/com/bifos/accountbook/user/presentation/controller/AuthControllerTest.java` | 수정 |

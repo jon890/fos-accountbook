@@ -1,4 +1,4 @@
-# User Flow — fos-accountbook-backend
+# fos-accountbook-backend 사용자 흐름
 
 > 핵심 사용자 시나리오별 흐름. API 엔드포인트 목록은 `data-schema.md` 참고.
 
@@ -135,6 +135,8 @@ POST /auth/refresh  body: { refreshToken }
 ```
 
 API 인증 필터(`JwtAuthenticationFilter`)는 `typ=access` 인 토큰만 인증한다. refresh token 이나 `typ` 없는 토큰은 인증하지 않아 보호 경로에서 401 이 된다([ADR-B19](adr/ADR-B19-jwt-token-type-claim.md)).
+
+보호 경로에서 인증이 없거나 JWT 가 유효하지 않으면 `ApiErrorResponse` 형식의 401(A002)을 반환한다. 인증된 사용자의 권한 부족은 403 을 유지한다.
 
 ---
 

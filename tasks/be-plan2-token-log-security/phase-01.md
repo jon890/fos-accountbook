@@ -37,7 +37,8 @@
 
 ### 1. `RequestResponseLoggingFilter` 의 로그 수준과 본문 정책
 
-- INFO 로그(`[REQ]`, `[RES]`)에는 메서드, 경로(쿼리 포함), 상태, 처리 시간, 가린 Authorization 과 세션 토큰만 남긴다. 본문을 넣지 않는다.
+- INFO 로그(`[REQ]`, `[RES]`)에는 메서드, 가린 경로와 쿼리, 상태, 처리 시간, 가린 Authorization 과 세션 토큰만 남긴다. 본문을 넣지 않는다.
+- `/api/v1/invitations/token/{token}` 의 토큰 부분은 `***` 로 가린다. 쿼리는 키만 남기고 모든 값을 `***` 로 가린다. 이 규칙은 DEBUG 로그에도 적용한다.
 - 본문은 `log.isDebugEnabled()` 일 때만 붙인다. 요청 본문은 `filterChain.doFilter` 뒤에 읽어야 채워져 있다. 요청 로그를 체인 뒤에 남기거나, 본문만 응답 로그와 함께 DEBUG 로 남긴다.
 - `/api/v1/auth/` 로 시작하는 경로와 연동 토큰 발급 경로는 DEBUG 에서도 요청과 응답 본문을 남기지 않고 `(인증 경로라 생략)` 같은 표시만 남긴다. 기존 `isApiTokenIssue` 판정은 이 규칙에 합친다.
 
@@ -52,19 +53,22 @@
 - 신규 `backend/src/test/java/com/bifos/accountbook/shared/filter/RequestResponseLoggingFilterTest.java`
   - 필터를 직접 만들어 `MockHttpServletRequest`, `MockHttpServletResponse`, 본문을 쓰는 `FilterChain` 으로 부른다. 로그는 Logback `ListAppender` 를 필터의 로거에 붙여 받는다. 로거 수준은 테스트 안에서 INFO 와 DEBUG 로 바꾼다.
   - INFO: `/api/v1/auth/refresh` 응답 본문 `{"accessToken":"secret-access"}` 가 어떤 로그 줄에도 없다. 일반 경로 응답 본문도 없다. `[RES]` 줄에 상태와 경로는 있다.
+  - INFO: 일반 경로의 요청 본문도 없고 초대 토큰 경로와 쿼리 값 원문은 어떤 로그 줄에도 없다. DEBUG 에서도 경로와 쿼리 값은 가려진다.
   - DEBUG: 일반 경로의 요청 본문과 응답 본문이 남는다. `/api/v1/auth/refresh` 의 요청 본문 `{"refreshToken":"secret-refresh"}` 와 응답 본문은 DEBUG 에서도 남지 않는다.
 - 신규 `backend/src/test/java/com/bifos/accountbook/shared/exception/GlobalExceptionHandlerTest.java`
   - `MockEnvironment` 로 prod 프로파일을 준 핸들러: 4xx `BusinessException` 의 응답 `parameters` 와 `debugInfo` 가 null 이다.
   - test 프로파일을 준 핸들러: `parameters` 가 실린다.
   - 4xx 는 WARN, 5xx 는 ERROR 로 남는다(`ListAppender` 로 수준 확인).
+  - 4xx 로그의 `getThrowableProxy()` 는 null 이고, 5xx 로그에는 throwable 이 있다. 두 로그 모두 `parameters` 원문이 없다.
 
 ## 검증
 
 `backend/` 에서 실행한다. `gradle/wrapper/gradle-wrapper.jar` 가 없으면 먼저 `mise exec gradle@9.8.0 -- gradle wrapper --gradle-version 9.8.0` 을 돌린다. jar 는 커밋하지 않는다.
 
 ```bash
-./gradlew test --tests "com.bifos.accountbook.shared.filter.RequestResponseLoggingFilterTest" --tests "com.bifos.accountbook.shared.exception.GlobalExceptionHandlerTest"
-./gradlew checkstyleMain checkstyleTest test
+# cwd: backend/
+./gradlew test --tests "com.bifos.accountbook.shared.filter.RequestResponseLoggingFilterTest" --tests "com.bifos.accountbook.shared.exception.GlobalExceptionHandlerTest" --no-daemon --console=plain
+./gradlew checkstyleMain checkstyleTest test --no-daemon --console=plain
 ```
 
 기대값: 두 명령 모두 BUILD SUCCESSFUL. 첫 명령에서 새 테스트가 실행된 건수가 0 이 아니다.

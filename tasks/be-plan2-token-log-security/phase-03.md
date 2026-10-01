@@ -36,6 +36,8 @@
 ### 2. 이 phase 를 검증하는 `ApiTokenAuthenticationFilterTest` 케이스
 
 - 토큰을 발급한 사용자를 삭제 상태로 바꾼 뒤 그 토큰으로 허용 경로를 부르면 401.
+- 테스트에서 `JdbcTemplate` 으로 저장된 `users` 행의 `status` 를 `UserStatus.DELETED.getCode()` 로 변경한다. 조건은 발급한 토큰 주인의 UUID 이고, 수정한 행이 하나인지 확인한다. 상태 변경용 제품 메서드나 fixture API 는 추가하지 않는다.
+- 테스트는 `@Transactional` 을 쓰지 않아 fixture 저장과 JDBC 갱신이 각각 커밋된다. 요청에서 새 영속성 컨텍스트로 조회하므로 별도의 flush 나 clear 는 필요하지 않다.
 - 같은 테스트 안의 기존 정상 케이스가 그대로 통과한다.
 
 ## 검증
@@ -43,8 +45,9 @@
 `backend/` 에서 실행한다. `gradle/wrapper/gradle-wrapper.jar` 가 없으면 먼저 `mise exec gradle@9.8.0 -- gradle wrapper --gradle-version 9.8.0` 을 돌린다. jar 는 커밋하지 않는다.
 
 ```bash
-./gradlew test --tests "com.bifos.accountbook.config.security.ApiTokenAuthenticationFilterTest"
-./gradlew checkstyleMain checkstyleTest test
+# cwd: backend/
+./gradlew test --tests "com.bifos.accountbook.config.security.ApiTokenAuthenticationFilterTest" --no-daemon --console=plain
+./gradlew checkstyleMain checkstyleTest test --no-daemon --console=plain
 ```
 
 기대값: 두 명령 모두 BUILD SUCCESSFUL.
