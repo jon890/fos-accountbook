@@ -73,3 +73,5 @@ pnpm test:browser browser/add-transaction.spec.ts
 | `frontend/src/components/layout/BottomNavigation.tsx` | 수정 |
 | `frontend/browser/add-transaction.spec.ts` | 신규 |
 | `frontend/browser/fake-backend.mjs` | 수정 |
+| `frontend/src/__tests__/components/layout/BottomNavigation.test.tsx` | 수정 |
+| `frontend/browser/transactions.spec.ts` | 수정 |
