@@ -1,6 +1,6 @@
 ### 프론트엔드에서 특히 볼 것 (frontend/)
 
-프론트엔드 점검 기준은 `frontend/CLAUDE.md` 와 `frontend/docs/adr.md`, `frontend/docs/code-architecture.md`, `frontend/docs/data-schema.md` 가 소유한다.
+프론트엔드 점검 기준은 `frontend/CLAUDE.md` 와 `frontend/docs/adr/INDEX.md`, `frontend/docs/code-architecture.md`, `frontend/docs/data-schema.md` 가 소유한다.
 `frontend/CLAUDE.md` 의 「상황별 ADR 필수 참조」 표가 작업별로 읽을 ADR 을 가리킨다. 아래 목록에 한정하지 않는다.
 
 **TypeScript 와 타입 안전성**

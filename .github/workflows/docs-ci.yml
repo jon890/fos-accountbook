@@ -1,0 +1,25 @@
+name: Docs CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "**/*.md"
+      - ".github/**"
+      - ".claude/**"
+      - "scripts/check-adr-links.py"
+      - "scripts/test_check_adr_links.py"
+
+jobs:
+  adr-links:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Test ADR link checker
+        run: python3 -m unittest scripts/test_check_adr_links.py
+
+      - name: Check ADR links and INDEX inventories
+        run: python3 scripts/check-adr-links.py

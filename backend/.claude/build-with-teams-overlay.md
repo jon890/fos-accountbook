@@ -64,7 +64,7 @@ critic·code-reviewer 는 P1~P7(공통) + "backend-fos" 절의 아래 3개를 �
 
 전용 도메인 에이전트가 없으므로, `oh-my-claudecode:architect` 스폰 시 아래 항목을 프롬프트에 명시한다:
 
-1. `docs/adr.md` 결정사항 위반 여부 (특히 상황별 필수 ADR — `CLAUDE.md` "상황별 ADR 필수 참조" 표).
+1. `docs/adr/INDEX.md` 결정사항 위반 여부 (특히 상황별 필수 ADR — `CLAUDE.md` "상황별 ADR 필수 참조" 표).
 2. 레이어 규칙 (`presentation → application → domain ← infra`, Controller 가 Repository 직접 주입 금지).
 3. 코딩 규칙 — Entity `@Data` 금지, Response DTO `static from(Entity)`, wildcard import 금지, 한국어 발음 표기 식별자 금지.
 4. 문서 부패 — 제거·변경된 기능이 `docs/*.md` 에 dead reference 로 남아 있는지 `grep -rn`.

@@ -8,7 +8,7 @@
 | 문서                                         | 내용                                 | 언제 읽을까                    |
 | -------------------------------------------- | ------------------------------------ | ------------------------------ |
 | [`docs/prd.md`](docs/prd.md)                 | 제품 목적, 기능 범위, v2 계획        | 새 기능 추가 전                |
-| [`docs/adr.md`](docs/adr.md)                 | 프론트엔드 기술 결정 기록 (ADR-F)    | 기술 결정 시, 아키텍처 질문 시 |
+| [`docs/adr/INDEX.md`](docs/adr/INDEX.md)                 | 프론트엔드 기술 결정 기록 (ADR-F)    | 기술 결정 시, 아키텍처 질문 시 |
 | [`docs/data-schema.md`](docs/data-schema.md) | DB 스키마, TypeScript 타입, API 구조 | API 연동, 타입 정의 시         |
 | [`docs/flow.md`](docs/flow.md)               | 사용자 플로우, 데이터 흐름           | UI/UX 수정, 플로우 변경 시     |
 | [`docs/code-architecture.md`](docs/code-architecture.md) | 디렉터리 구조, 레이어 분리, API 전략 | 디렉터리 구조 변경, 레이어 경계 검토 |

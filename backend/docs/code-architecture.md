@@ -231,7 +231,7 @@ static class TestClockConfig {
 | ADR-B13 | 반복 지출 수정 즉시 전체 반영          |
 | ADR-B16 | 도메인 기반 패키지 리팩토링            |
 
-전체 결정 이력: `docs/adr.md`
+전체 결정 이력: `docs/adr/INDEX.md`
 
 ---
 

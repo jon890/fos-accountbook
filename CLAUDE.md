@@ -9,9 +9,9 @@
 |---|---|---|
 | `frontend/` | Next.js 프론트엔드 | `frontend/CLAUDE.md` |
 | `backend/` | Spring Boot 백엔드 | `backend/CLAUDE.md` |
-| `docs/adr.md` | 저장소 전체 결정 (ADR-M) | — |
+| `docs/adr/INDEX.md` | 저장소 전체 결정 (ADR-M) | — |
 
-프론트엔드 결정은 `frontend/docs/adr.md` 의 ADR-F, 백엔드 결정은 `backend/docs/adr.md` 의 ADR-B, 저장소 전체 결정은 루트 `docs/adr.md` 의 ADR-M 이 소유한다.
+프론트엔드 결정은 `frontend/docs/adr/INDEX.md` 의 ADR-F, 백엔드 결정은 `backend/docs/adr/INDEX.md` 의 ADR-B, 저장소 전체 결정은 루트 `docs/adr/INDEX.md` 의 ADR-M 이 소유한다.
 합친 배경은 ADR-M01 이다.
 API 를 함께 바꾸는 변경은 PR 하나로 낸다.
 

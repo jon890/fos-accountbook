@@ -39,7 +39,7 @@ cd frontend && pnpm install
   "status": "pending",                   // pending | completed
   "created_at": "2026-07-16",            // YYYY-MM-DD
   "total_phases": 4,                     // phases 배열 길이와 일치
-  "related_docs": ["frontend/docs/adr.md", "frontend/CLAUDE.md"],
+  "related_docs": ["frontend/docs/adr/INDEX.md", "frontend/CLAUDE.md"],
   "phases": [
     {
       "number": 1,                       // 1부터 순차 증가
