@@ -117,6 +117,22 @@ const transactions = {
   }],
 };
 
+const recurringExpenses = [
+  {
+    uuid: "55555555-5555-5555-5555-555555555553",
+    familyUuid: FAMILY_UUID,
+    categoryUuid: categories[2].uuid,
+    category: { ...categories[2], icon: "🏠" },
+    name: "월세",
+    amount: 850000,
+    dayOfMonth: 25,
+    status: "ACTIVE",
+    generatedThisMonth: true,
+    createdAt,
+    updatedAt: createdAt,
+  },
+];
+
 function sendJson(response, status, body) {
   response.writeHead(status, { "Content-Type": "application/json; charset=utf-8" });
   response.end(JSON.stringify(body));
@@ -180,6 +196,13 @@ const server = createServer(async (request, response) => {
     sendJson(response, 200, {
       success: true,
       data: { items: transactions.incomes, totalElements: 1, totalPages: 1, currentPage: 0 },
+    });
+    return;
+  }
+  if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/recurring-expenses`) {
+    sendJson(response, 200, {
+      success: true,
+      data: { items: recurringExpenses, totalMonthlyAmount: 850000 },
     });
     return;
   }

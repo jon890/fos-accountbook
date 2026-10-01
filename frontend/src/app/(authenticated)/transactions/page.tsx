@@ -100,7 +100,6 @@ export default async function TransactionsPage({
 
   return (
     <TransactionsPageClient
-      familyUuid={familyUuid}
       categories={categories}
       activeTab={activeTab}
       searchParams={{
