@@ -37,7 +37,7 @@ shared/
 ├── value/          CustomUuid, CodeEnum
 ├── converter/      UuidConverter (CustomUuid 전용)
 ├── filter/         RequestResponseLoggingFilter
-└── utils/          TimeUtils
+└── utils/          BusinessTime (Asia/Seoul 업무 시간대 상수)
 ```
 
 ### 도메인별 소유 원칙
@@ -52,7 +52,9 @@ shared/
 | CategoryInfo DTO               | `category/application/dto/` (다른 도메인이 category를 참조) |
 
 **의존성 방향**: `presentation → application → domain ← infra`
-상위 레이어는 하위를 직접 참조하지 않는다. Controller는 Repository를 직접 주입받지 않는다.
+하위 레이어는 상위 레이어를 참조하지 않는다.
+presentation은 DTO 변환을 위해 domain의 Entity와 값 타입을 참조할 수 있다.
+Controller는 Repository와 infra를 직접 사용하지 않는다.
 
 ---
 
