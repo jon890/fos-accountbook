@@ -15,5 +15,5 @@
   - 기존 위반을 모두 고친 뒤 규칙을 켜기: 그동안 새 위반이 계속 들어온다.
 - **결과**:
   - 얻는 것: 경계를 넘는 새 의존과 규칙 위반이 리뷰 전에 실패한다. 에이전트가 쓴 코드도 같은 모양이 된다. 규칙마다 이름이 있어 지침이 그 이름을 가리킨다.
-  - 감당할 것: 위반을 고치면 기준 파일도 함께 줄인다. 같은 클래스 안의 `@Transactional` 호출은 도구로 잡지 못해 리뷰에서 본다. 포맷 커밋 뒤 `git blame` 은 `--ignore-revs-file` 을 써야 원래 작성자를 보여 준다.
+  - 감당할 것: 위반을 고치면 기준 파일도 함께 줄인다. 기준을 줄일 때만 `-Parchunit.freeze.store.default.allowStoreUpdate=true`를 붙여 `archTest`를 실행한다. 새 위반을 이 옵션으로 기준 파일에 넣어서는 안 된다. 최초 기준 생성과 전체 기준 재생성은 수동 예외로 두며, 구체적인 Gradle 속성 조합은 `backend/CLAUDE.md`의 코드 스타일 규칙 표를 따른다. 같은 클래스 안의 `@Transactional` 호출은 도구로 잡지 못해 리뷰에서 본다. 포맷 커밋 뒤 `git blame` 은 `--ignore-revs-file` 을 써야 원래 작성자를 보여 준다.
 - **적용 범위**: `backend/` 의 Java 소스와 테스트, `.github/workflows/backend-ci.yml`.

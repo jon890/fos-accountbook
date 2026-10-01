@@ -119,10 +119,16 @@ tasks.register<Test>("archTest") {
     }
 }
 
+tasks.register("qualityCheck") {
+    group = "verification"
+    description = "포맷, Checkstyle, ArchUnit 검사를 함께 실행한다."
+    dependsOn("spotlessCheck", "checkstyleMain", "checkstyleTest", "archTest")
+}
+
 spotless {
     java {
         target("src/main/java/**/*.java", "src/test/java/**/*.java")
-        googleJavaFormat(libs.versions.google.java.format.get()).reorderImports(false)
+        googleJavaFormat(libs.versions.google.java.format.get())
         trimTrailingWhitespace()
         endWithNewline()
     }
