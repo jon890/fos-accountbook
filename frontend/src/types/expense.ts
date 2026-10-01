@@ -23,6 +23,7 @@ export interface ExpenseResponse {
  * 지출 엔티티 (클라이언트 사이드용)
  */
 export interface Expense {
+  userUuid: string;
   uuid: string;
   familyUuid: string;
   categoryUuid: string;

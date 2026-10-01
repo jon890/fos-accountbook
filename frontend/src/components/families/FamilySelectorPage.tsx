@@ -21,8 +21,8 @@ export function FamilySelectorPage() {
     if (result.success) {
       // 세션 갱신 (프로필의 defaultFamilyUuid가 변경됨)
       await refreshSession();
-      // 기본 가족 설정 완료 → 대시보드로 이동
-      router.push("/dashboard");
+      // 기본 가족 설정 완료 후 달력으로 이동
+      router.push("/calendar");
     }
   };
 

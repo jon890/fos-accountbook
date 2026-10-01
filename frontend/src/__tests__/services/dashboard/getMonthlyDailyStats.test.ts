@@ -38,10 +38,10 @@ describe("getMonthlyDailyStats", () => {
   });
 
   it.each([new ServerApiError("failed", 500), new Error("network")])(
-    "일반 실패는 빈 배열로 바꾼다: %s",
+    "일반 실패는 원인을 그대로 전달한다: %s",
     async (error) => {
       api.mockRejectedValue(error);
-      expect(await getMonthlyDailyStats("family", 2026, 3)).toEqual([]);
+      await expect(getMonthlyDailyStats("family", 2026, 3)).rejects.toBe(error);
     },
   );
   it("401은 전파한다", async () => {

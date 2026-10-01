@@ -63,7 +63,9 @@ describe("createExpenseAction", () => {
     // Then
     expect(result.success).toBe(true);
     expect(mockRevalidatePath).toHaveBeenCalledWith("/transactions");
-    expect(mockRevalidatePath).toHaveBeenCalledWith("/");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/calendar");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/budget");
+    expect(mockRevalidatePath).not.toHaveBeenCalledWith("/");
     expect(mockRevalidatePath).toHaveBeenCalledWith("/analytics");
   });
 });

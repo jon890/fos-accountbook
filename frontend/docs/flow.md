@@ -13,14 +13,14 @@
     │                       └─ Google / Naver OAuth 선택
     │                               └─ NextAuth 처리 → JWT 발급 → /
     │
-    └─ 로그인됨 → /dashboard redirect → defaultFamilyUuid 확인
+    └─ 로그인됨 → /calendar redirect → defaultFamilyUuid 확인
                     │
                     ├─ 없음 → /families/create
                     │           └─ 가족 이름 + 월 예산 입력
                     │                   └─ 가족 생성 → 기본 카테고리('미분류') 자동 생성
-                    │                           └─ /dashboard
+                    │                           └─ /calendar
                     │
-                    └─ 있음 → /dashboard
+                    └─ 있음 → /calendar
 ```
 
 ---
@@ -55,7 +55,7 @@
     │                           └─ 수락 → acceptInvitationAction(token) — requireAuth + token Zod uuid 검증 (ADR-F06)
     │                                   └─ FamilyMember 생성 (MEMBER 역할)
     │                                   └─ defaultFamilyUuid 설정
-    │                                   └─ /dashboard 리다이렉트
+    │                                   └─ /calendar 리다이렉트
 
 [초대 링크 삭제 (OWNER)]
     │
@@ -68,10 +68,11 @@
 
 ## 3. 거래 등록 플로우 (plan014 통합)
 
-ADR-F21 에 따라 6 진입점 (Dashboard QuickActions / BottomNav FAB / Transactions 의 지출·수입·고정지출 탭 / Settings 고정지출) 이 동일한 `AddTransactionDialog` 호출.
+ADR-F21 에 따라 모든 진입점(달력의 「이 날짜에 추가」, BottomNav FAB, Transactions 의 지출·수입·고정지출 탭, Settings 고정지출)이 동일한 `AddTransactionDialog` 를 부른다.
+진입점은 `defaultType` 과 `defaultDate` 를 넘긴다. 달력 화면의 FAB 와 「이 날짜에 추가」 는 선택한 날짜를, 나머지는 오늘을 넘긴다.
 
 ```
-[6 진입점 — defaultType 만 다름]
+[진입점: defaultType, defaultDate 만 다름]
     │
     └─ AddTransactionDialog (responsive: mobile Sheet bottom / md+ Dialog 720px)
             │
@@ -82,7 +83,7 @@ ADR-F21 에 따라 6 진입점 (Dashboard QuickActions / BottomNav FAB / Transac
             │   ├─ AmountInput (₩ + 56/64px num, 빠른 추가 칩 +1k/+5k/+10k, md+ +50k)
             │   ├─ CategoryGrid (5×2 mobile / 10×1 desktop, role=radiogroup, --color-cat-*-bg/-fg 톤)
             │   ├─ Description input (메모, name="description")
-            │   ├─ [expense/income 일 때] Date input (type="date", default: 오늘)
+            │   ├─ [expense/income 일 때] Date input (type="date", default: defaultDate ?? 오늘)
             │   └─ [recurring 일 때]  Name input + DayOfMonth (1~28)
             │
             └─ 저장 → type 분기
@@ -92,57 +93,67 @@ ADR-F21 에 따라 6 진입점 (Dashboard QuickActions / BottomNav FAB / Transac
                             └─ revalidatePath → toast 성공 메시지
 ```
 
-type 전환 시: amount / category / description 은 유지, type-specific 필드 (date vs name+dayOfMonth) 만 초기화.
+거래 종류를 바꿔도 금액, 카테고리, 설명과 선택한 날짜를 유지한다.
+고정지출을 거쳐 지출이나 수입으로 돌아와도 날짜는 그대로다.
+고정지출 이름과 결제일은 종류를 바꿀 때 초기화한다.
 
 ---
 
-## 4. 지출 수정/삭제 플로우
+## 4. 지출·수입 수정/삭제 플로우
 
 ```
-[ExpenseItem]
+[달력 날짜 목록의 항목 탭] 또는 [내역 목록의 수정 버튼]
     │
-    ├─ 수정 아이콘 클릭
-    │   └─ EditTransactionDialog (type=expense, 잠금) 열림 (기존 값 pre-fill)
-    │           └─ 수정 후 저장 → updateExpenseAction()
-    │                   └─ 검증 → updateExpense() → PUT /expenses/{uuid}
-    │                           └─ revalidatePath → UI 갱신
-    │
-    └─ 삭제 아이콘 클릭
-            └─ 확인 AlertDialog
-                    └─ 확인 → deleteExpenseAction()
-                            └─ DELETE /expenses/{uuid} (Soft Delete)
-                                    └─ revalidatePath → 목록에서 제거
+    └─ EditTransactionDialog (type 잠금, 기존 값 pre-fill, 모바일 Sheet bottom)
+            ├─ 저장 → updateExpenseAction() / updateIncomeAction()
+            │       └─ PUT /expenses/{uuid} | /incomes/{uuid} → revalidatePath → UI 갱신
+            └─ 삭제 버튼 (다이얼로그 하단 왼쪽, text-expense)
+                    └─ 확인 AlertDialog → deleteExpenseAction() / deleteIncomeAction()
+                            └─ DELETE (Soft Delete) → revalidatePath → 다이얼로그 닫고 목록에서 제거
 ```
+
+가족 구성원이면 누가 등록했든 수정하고 삭제할 수 있다. 등록자만 허용하는 제한은 두지 않는다.
+내역 목록의 기존 삭제 버튼은 그대로 둔다.
+수정 창이 열린 동안에는 서버 조회 결과가 갱신돼도 작성 중인 폼 값을 유지한다. 창을 닫고 다시 열면 최신 거래 값으로 초기화한다. 수정 요청 중에는 같은 거래의 삭제를 막는다.
 
 ---
 
-## 5. 대시보드 데이터 흐름
+## 5. 달력 홈 (`/calendar`)
+
+로그인 뒤 첫 화면이다. 부부가 각자 등록한 지출을 날짜별로 비교하고, 날짜를 골라 등록, 수정, 삭제한다. 결정 근거는 ADR-F32 다.
 
 ```
-[/dashboard 접속] (Server Component, page.tsx 가 모든 섹션 직접 배치)
+[/calendar?month=YYYY-MM&date=YYYY-MM-DD] (Server Component)
+    │   month 없음 → 사용자 시간대의 이번 달. date 없음 → 오늘이 그 달이면 오늘, 아니면 그 달 1일
     │
-    ├─ getDashboardStatsAction() → /dashboard/stats/monthly
-    │       └─ { monthlyExpense, monthlyIncome, remainingBudget, budget, year, month }
+    └─ getCalendarMonthAction(year, month)  ── Promise.all 5개 호출
+            ├─ /dashboard/daily-stats?year&month       → 날짜별 합계, memberExpenses, memberExpenseTotals
+            ├─ /expenses?startDate&endDate&size=1000   → 그 달 지출 목록 (날짜 목록 표시용)
+            ├─ /incomes?startDate&endDate&size=1000    → 그 달 수입 목록
+            ├─ /families/{uuid}/members                → 구성원 이름, 사진, 가입 순서
+            └─ getCachedFamilyCategories              → categoryUuid로 카테고리 이름과 아이콘 연결
     │
-    ├─ getRecentExpensesAction(10) → /expenses?limit=10
-    │       └─ [ { amount, memo, date, category, createdBy? } × 10 ]
-    │
-    ├─ getFamiliesAction() → /families
-    │       └─ [ { uuid, name, members? } ]
-    │
-    └─ getMonthlyCategoryBreakdownAction() — ADR-F30 백엔드 집계
-            └─ /dashboard/stats/category-breakdown?year&month
-                    └─ { year, month, totalExpense, items: CategoryBreakdownItem[] }
-
-[page.tsx 7요소 직접 배치 (DashboardClient wrapper 없음)]
-    ├─ DashboardHeader: 가족명 + "{year}년 {month}월" + Bell + CoupleAvatars
-    ├─ BudgetHeroCard: Teal gradient + 잔여 예산 + progress + daysRemaining
-    ├─ IncomeExpenseStats: 월 수입 / 월 지출 (text-income/expense 토큰)
-    ├─ CategoryDistribution ("use client"): recharts Donut + top 5/6 리스트
-    ├─ RecentActivity ("use client"): TransactionRow variant=compact (category-tone 36px + memo + .num amount + createdBy 16px)
-    ├─ QuickActions ("use client"): 지출/수입/가족초대/카테고리 4-grid
-    └─ CalendarView: 일별 수입·지출 바 차트
+    └─ CalendarHome ("use client")
+            ├─ MonthHeader: ‹ 2026년 9월 ›  (월 이동 = URL month 변경, 서버 다시 조회)
+            ├─ MemberTotals: 구성원별 이번 달 지출 (색 점, 이름, 금액), 가족 합계
+            ├─ CalendarGrid: 7열. 칸마다 날짜, 구성원별 지출 한 줄씩(색 점과 줄인 금액)
+            │       └─ 날짜 탭 → 선택 날짜 변경 (클라이언트 상태와 history.replaceState, 서버 호출 없음)
+            └─ DayTransactionList: 선택 날짜의 지출과 수입 (등록자 색 점, 카테고리, 메모, 금액)
+                    ├─ 항목 탭 → EditTransactionDialog (「4. 지출·수입 수정/삭제 플로우」)
+                    └─ 「이 날짜에 추가」 → AddTransactionDialog(defaultDate = 선택 날짜)
 ```
+
+- 구성원 색은 가입 순서로 정한다. 첫 구성원 `member-1`, 다음 `member-2` 순서이고 네 가지 색을 돌려 쓴다. 토큰은 `globals.css` 의 `--color-member-{1..4}`.
+- 칸의 금액 표기: 1만 이상은 `3.2만`, 1천 이상은 `9.8천`, 그 밖은 숫자 그대로. 글자는 11px 이상.
+- 칸에는 지출이 큰 구성원 두 명을 표시하고, 나머지는 `+N`으로 줄인다. 버튼의 접근성 이름에는 모든 구성원의 이름과 지출을 담는다.
+- 구성원 목록에서 찾지 못한 `userUuid`(가족을 떠난 사람)는 회색 점과 「이전 구성원」 으로 표시한다.
+- 빈 상태: 그 달 거래가 없으면 달력은 그대로 두고 날짜 목록에 「이 날 기록이 없어요」 와 추가 버튼을 둔다.
+- 지출 또는 수입의 `totalElements`가 1000을 넘으면 서버에 종류, 조회 연월, 전체 건수와 받은 건수를 경고로 남긴다. 거래 내용과 가족 식별자는 기록하지 않는다.
+- 실패: 다섯 호출 중 하나라도 실패하면 `(authenticated)/error.tsx` 로 간다. 401은 ADR-F26에 따라 로그인으로, 유효하지 않은 기본 가족의 403/404는 `/families/select`로 보낸다.
+- 등록, 수정, 삭제 뒤에는 Server Action 의 `revalidatePath("/calendar")` 로 같은 달을 다시 받는다.
+- 같은 달을 다시 받아도 초기 날짜가 같으면 선택 날짜를 유지한다. 초기 날짜가 바뀌면 선택을 초기화해 서버가 지정한 날짜로 돌아간다.
+- 하단 달력 탭으로 돌아와 URL의 `date`가 제거되면, 초기 날짜가 같아도 선택 날짜를 초기화한다.
+- `/dashboard` 는 없앤다. 예전 주소로 들어오면 `/analytics` 로 보낸다. 대시보드의 예산 카드, 이번 달 수입·지출, 고정비 카드는 `/analytics` 위쪽으로 옮긴다(「5-3」). 최근 내역과 빠른 메뉴는 달력과 전체 메뉴가 대신하므로 옮기지 않는다.
 
 ---
 
@@ -173,13 +184,18 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 ```
 [page.tsx (server) — searchParams { period: m1|m3|m6|y1 }]
     │
-    └─ Promise.all 5 Action:
+    └─ Promise.all 6 Action:
         ├─ getDashboardStatsAction()                          # /dashboard/stats/monthly
         ├─ getMonthlyDailyStatsAction(year, month)            # /dashboard/daily-stats
         ├─ getExpensesAction({ familyUuid, startDate, endDate, limit: 1000 })  # 지출 상위 5건 표시용
         ├─ getCategoryBreakdownWithDeltaAction(year, month)   # /dashboard/stats/category-breakdown?compareWithPrev=true + 두 달 monthly-trend
-        └─ getMonthlyTrendAction(period, year, month)         # /dashboard/stats/monthly-trend?from&to 한 번
+        ├─ getMonthlyTrendAction(period, year, month)         # /dashboard/stats/monthly-trend?from&to 한 번
+        └─ getRecurringExpensesTotalAction()                 # /recurring-expenses/monthly-total
     │
+    ├─ 「이번 달 YYYY년 M월」 제목: 아래 차트의 월 이동과 관계없이 이번 달 기준
+    │   ├─ 예산 카드 → /budget
+    │   ├─ 이번 달 수입·지출 카드
+    │   └─ 이달 고정비 카드 → /transactions?tab=recurring
     └─ AnalyticsClient (use client)
             ├─ AnalyticsPeriodToggle (segmented role=tablist, URL ?period= 단방향)
             ├─ AnalyticsCategoryDonut (172/160px Donut + 중앙 totalDelta ↑/↓)
@@ -192,6 +208,14 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 - `getCategoryBreakdownWithDelta`: `category-breakdown?compareWithPrev=true` 로 카테고리별 `deltaPercent` 를 받는다. 전체 합계의 전월 대비(`totalDelta`)는 같은 호출과 병렬로 직전 달부터 이번 달까지 `monthly-trend` 를 받아 계산한다. 직전 달 합계가 0 이면 null
 - `getMonthlyTrend`: m1/m3/m6/y1 → `monthly-trend?from=YYYY-MM&to=YYYY-MM` 한 번. 응답에 없는 달은 0 으로 채워 개월 수만큼 점을 만든다
 - 비율과 전월 대비는 백엔드가 소수 둘째 자리까지 주고 프론트가 정수로 반올림한다
+
+분석 화면 위쪽에는 예전 대시보드의 예산 카드(`BudgetHeroCard`, 누르면 `/budget`), 이번 달 수입·지출(`IncomeExpenseStats`), 고정비 카드(「14」)를 둔다.
+그 아래가 기간 토글과 차트다.
+통계, 분석과 예산의 현재 연월은 세션 프로필의 시간대를 쓴다.
+시간대가 없거나 잘못되면 `Asia/Seoul` 을 쓴다.
+명시한 조회 연월은 바꾸지 않는다.
+예산의 남은 일수도 같은 시간대의 오늘로 계산한다.
+분석 Page의 일반 조회 실패는 오류 화면으로 전달하고 인증 실패는 로그인으로 보낸다.
 
 ---
 
@@ -372,7 +396,8 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 ```
 [Header sticky top-0 z-50 backdrop-blur-xl bg-bg-elev/95 border-b border-border]
     ├─ 좌: 로고 (brand-500 Wallet 아이콘 + "우리집 가계부" text-fg 단색)
-    │      → /dashboard 링크
+    │      → /calendar 링크
+    │      (하위 화면에서는 로고 자리에 뒤로 가기 버튼. 「16. 하단 탭과 전체 메뉴」)
     │
     └─ 우 (md+ 전용 / 모바일 별도 진입점):
             ├─ FamilySelectorDropdown (md+ 전용 표시, 모바일은 Avatar dropdown 안 진입)
@@ -399,7 +424,7 @@ App Router 의 segment 경계에서 일관 표시:
 
 - **Empty** (`src/components/empty/EmptyState.tsx`): 거래 0건 등 — 96px brand-50 round + inbox 아이콘 + 제목/부제 + (선택) CTA + (선택) 팁 박스
 - **Error** (`src/app/error.tsx` + `src/app/global-error.tsx` + `src/app/(authenticated)/error.tsx`): 88px expense/10 round + AlertCircle + "문제가 발생했어요" + DEV ONLY 디버그 박스 (production 숨김) + 다시 시도 / 홈으로
-- **Loading** (`src/app/(authenticated)/{dashboard,transactions,analytics,*}/loading.tsx`): `Skel` shimmer (ab-shimmer keyframe + .ab-skel class in globals.css) — 페이지별 구조 매치
+- **Loading** (`src/app/(authenticated)/{calendar,transactions,analytics,*}/loading.tsx`): 페이지 구조에 맞춘 `Skel`을 표시한다. `globals.css`의 `ab-shimmer` 애니메이션과 `.ab-skel` 클래스를 재사용한다.
 
 `error.tsx` 는 모두 `"use client"` 첫 줄 필수 (App Router 규약). `loading.tsx` 는 Server Component OK.
 
@@ -411,8 +436,8 @@ App Router 의 segment 경계에서 일관 표시:
 
 | status | 톤 | 아이콘 | 메시지 | CTA |
 |---|---|---|---|---|
-| 404 | brand (bg-brand-50 + text-brand-500) | Compass | "찾을 수 없어요" | public: "홈으로" → `/` / authenticated: "대시보드로" → `/dashboard` |
-| 403 | warning (bg-warning/10 + text-warning) | Lock | "권한이 없어요" | "홈으로" → `/dashboard` (+ 보조: "로그인 다시 시도" → `/auth/signin`) |
+| 404 | brand (bg-brand-50 + text-brand-500) | Compass | "찾을 수 없어요" | public: "홈으로" → `/` / authenticated: "홈으로" → `/calendar` |
+| 403 | warning (bg-warning/10 + text-warning) | Lock | "권한이 없어요" | "홈으로" → `/calendar` (+ 보조: "로그인 다시 시도" → `/auth/signin`) |
 | 500 | expense (bg-expense/10 + text-expense) | AlertCircle | "문제가 발생했어요" | "다시 시도" → reset() + "홈으로" |
 
 라우팅:
@@ -524,8 +549,7 @@ Teal 리디자인 + 인라인 style 제거 + Empty state 일관화.
                 │       Amount input + 빠른 입력 칩 (+10만/+50만/+100만)
                 │       저장 → updateFamilyAction({ monthlyBudget })
                 │
-                ├─ [내 가족 목록 카드] — 멤버/카테고리/지출 통계
-                │       └─ "관리" → /families/{uuid}
+                ├─ [내 가족 목록 카드]: 구성원 수, 카테고리 수, 지출 수
                 │
                 └─ [외부 연동 카드] ApiTokenSettingsCard — 외부 에이전트가 가계부를 기록할 때 쓰는 토큰 (backend ADR-B18)
                         ├─ 목록: 이름, 앞부분(fab_xxxxxxxx), 발급일, 마지막 사용(없으면 「사용 기록 없음」)
@@ -543,16 +567,43 @@ Teal 리디자인 + 인라인 style 제거 + Empty state 일관화.
 
 ---
 
-## 14. 대시보드 고정비 카드
+## 14. 고정비 카드 (분석 화면 위쪽)
 
 ```
-[/dashboard 접속] (Server Component)
+[/analytics 접속] (Server Component)
     │
     └─ getRecurringExpensesTotalAction()
             └─ GET /families/{uuid}/recurring-expenses/monthly-total
                     └─ { totalMonthlyAmount }
                             │
                             └─ "이달 고정비 OOO원" 카드 렌더링
-                                    (기존 4개 요약 카드 아래 새 행)
                                     └─ 클릭 → /transactions?tab=recurring
 ```
+
+고정지출을 등록, 수정하거나 삭제하면 내역과 분석 화면을 다시 조회한다.
+
+---
+
+## 16. 하단 탭과 전체 메뉴
+
+결정 근거는 ADR-F33 이다.
+
+```
+[BottomNavigation]  모든 인증 화면 하단, 안전 영역만큼 아래 여백
+    ├─ 달력  → /calendar       (홈)
+    ├─ 내역  → /transactions
+    ├─ ＋ FAB → AddTransactionDialog (/calendar 에서는 URL date, 그 밖에는 오늘)
+    ├─ 분석  → /analytics
+    └─ 전체  → /menu
+
+[/menu] 전체 메뉴 (Server Component, 목록형)
+    ├─ 가계부: 카테고리 → /categories, 예산 → /budget, 고정지출 → /transactions?tab=recurring
+    ├─ 가족: 가족 전환(Sheet), 구성원 초대(InviteFamilyDialog)
+    ├─ 알림 → /notifications
+    └─ 설정 → /settings (프로필, 기본 가족, 예산, 외부 연동)
+```
+
+- 탭은 `Link` 로 만들고 현재 탭에 `aria-current="page"` 를 둔다. 탭 버튼은 칸 폭을 똑같이 나눠 쓰고 라벨은 12px 이다.
+- 하위 화면(`/categories`, `/budget`, `/notifications`, `/settings`, `/invite/*`)은 Header 왼쪽에 뒤로 가기 버튼을 둔다. `document.referrer`의 origin이 현재 사이트와 같으면 `router.back()`으로 돌아가고, 비었거나 외부 사이트이면 `/menu`로 간다.
+- 가족 생성, 선택, 초대 수락 화면(`/families/*`, `/invite/*`)에서는 하단 탭을 숨긴다. 가족이 없을 때 거래를 추가하지 못하게 하기 위해서다.
+- 설정의 가족 「관리」 버튼은 없는 경로(`/families/{uuid}`)를 가리켜 404 가 났다. 버튼을 없애고 가족 정보는 설정 화면 안에서 보여 준다.

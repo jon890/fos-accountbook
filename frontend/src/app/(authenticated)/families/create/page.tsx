@@ -51,7 +51,7 @@ export default function CreateFamilyPage() {
       if (result.success) {
         await refreshSession();
         toast.success("가족이 성공적으로 생성되었습니다!");
-        router.push("/dashboard");
+        router.push("/calendar");
       } else {
         toast.error(result.error.message);
       }

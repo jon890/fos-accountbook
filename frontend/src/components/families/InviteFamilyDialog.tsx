@@ -26,7 +26,7 @@ import {
   Trash2,
   UserPlus,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface InviteFamilyDialogProps {
@@ -41,32 +41,84 @@ export function InviteFamilyDialog({
   const [isCreating, setIsCreating] = useState(false);
   const [invitations, setInvitations] = useState<InvitationInfo[]>([]);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const requestVersion = useRef(0);
+  const copyTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mounted = useRef(false);
 
-  // 다이얼로그가 열릴 때 초대 목록 로드
-  const handleOpenChange = async (newOpen: boolean) => {
-    onOpenChange(newOpen);
-    if (newOpen) {
-      await loadInvitations();
+  useEffect(() => {
+    if (!open) {
+      return;
     }
-  };
+
+    const version = ++requestVersion.current;
+    const fetchInvitations = async () => {
+      try {
+        const result = await getActiveInvitationsAction();
+        if (version !== requestVersion.current) {
+          return;
+        }
+        if (result.success) {
+          setInvitations(result.data);
+        } else {
+          toast.error(result.error.message);
+        }
+      } catch {
+        if (version === requestVersion.current) {
+          toast.error("초대 목록을 불러오지 못했습니다");
+        }
+      }
+    };
+
+    void fetchInvitations();
+    return () => {
+      requestVersion.current += 1;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      if (copyTimeout.current) {
+        clearTimeout(copyTimeout.current);
+      }
+    };
+  }, []);
 
   const loadInvitations = async () => {
-    const result = await getActiveInvitationsAction();
-    if (result.success) {
-      setInvitations(result.data);
-    } else {
-      toast.error(result.error.message);
+    const version = requestVersion.current;
+    try {
+      const result = await getActiveInvitationsAction();
+      if (version !== requestVersion.current) {
+        return;
+      }
+      if (result.success) {
+        setInvitations(result.data);
+      } else {
+        toast.error(result.error.message);
+      }
+    } catch {
+      if (version === requestVersion.current) {
+        toast.error("초대 목록을 불러오지 못했습니다");
+      }
     }
   };
 
   const handleCreateInvitation = async () => {
+    const version = requestVersion.current;
     setIsCreating(true);
     try {
       const result = await createInvitationLinkAction();
+      if (version !== requestVersion.current) {
+        return;
+      }
 
       if (result.success) {
         toast.success("초대 링크가 생성되었습니다");
         await loadInvitations();
+        if (version !== requestVersion.current) {
+          return;
+        }
 
         // 자동으로 클립보드에 복사
         await copyToClipboard(result.data.inviteUrl, result.data.token);
@@ -74,30 +126,47 @@ export function InviteFamilyDialog({
         toast.error(result.error.message);
       }
     } catch {
-      toast.error("초대 링크 생성에 실패했습니다");
+      if (version === requestVersion.current) {
+        toast.error("초대 링크 생성에 실패했습니다");
+      }
     } finally {
-      setIsCreating(false);
+      if (mounted.current) {
+        setIsCreating(false);
+      }
     }
   };
 
   const copyToClipboard = async (url: string, token: string) => {
+    const version = requestVersion.current;
     try {
       await navigator.clipboard.writeText(url);
+      if (version !== requestVersion.current) {
+        return;
+      }
       setCopiedToken(token);
       toast.success("초대 링크가 복사되었습니다!");
 
       // 2초 후 복사 상태 초기화
-      setTimeout(() => {
+      if (copyTimeout.current) {
+        clearTimeout(copyTimeout.current);
+      }
+      copyTimeout.current = setTimeout(() => {
         setCopiedToken(null);
       }, 2000);
     } catch {
-      toast.error("복사에 실패했습니다");
+      if (version === requestVersion.current) {
+        toast.error("복사에 실패했습니다");
+      }
     }
   };
 
   const handleDeleteInvitation = async (uuid: string) => {
+    const version = requestVersion.current;
     try {
       const result = await deleteInvitationAction(uuid);
+      if (version !== requestVersion.current) {
+        return;
+      }
 
       if (result.success) {
         toast.success("초대가 삭제되었습니다");
@@ -106,12 +175,14 @@ export function InviteFamilyDialog({
         toast.error(result.error.message);
       }
     } catch {
-      toast.error("초대 삭제에 실패했습니다");
+      if (version === requestVersion.current) {
+        toast.error("초대 삭제에 실패했습니다");
+      }
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
@@ -119,7 +190,7 @@ export function InviteFamilyDialog({
             <span>가족 초대</span>
           </DialogTitle>
           <DialogDescription>
-            초대 링크를 생성하여 가족 구성원을 추가하세요 (24시간 유효)
+            초대 링크를 생성하여 가족 구성원을 추가하세요 (72시간 유효)
           </DialogDescription>
         </DialogHeader>
 
@@ -173,6 +244,7 @@ export function InviteFamilyDialog({
 
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <Button
+                        aria-label="초대 링크 복사"
                         size="sm"
                         variant="ghost"
                         onClick={() =>
@@ -191,6 +263,7 @@ export function InviteFamilyDialog({
                       </Button>
 
                       <Button
+                        aria-label="초대 링크 삭제"
                         size="sm"
                         variant="ghost"
                         onClick={() => handleDeleteInvitation(invitation.uuid)}

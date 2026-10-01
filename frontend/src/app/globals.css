@@ -25,6 +25,11 @@
   --color-warning-fg: oklch(0.985 0.003 78);
   --color-brand-fg:   oklch(0.985 0.004 257);
 
+  --color-member-1: oklch(0.55 0.15 275);
+  --color-member-2: oklch(0.55 0.13 205);
+  --color-member-3: oklch(0.55 0.15 330);
+  --color-member-4: oklch(0.55 0.12 85);
+
   /* ── neutral (cool gray, h=230) ─────────────── */
   --color-neutral-0:   oklch(1 0 0);
   --color-neutral-50:  oklch(0.985 0.003 230);
@@ -143,6 +148,11 @@
 }
 
 [data-theme="dark"] {
+  --color-member-1: oklch(0.78 0.12 275);
+  --color-member-2: oklch(0.78 0.10 205);
+  --color-member-3: oklch(0.78 0.12 330);
+  --color-member-4: oklch(0.78 0.10 85);
+
   --color-bg:           oklch(0.155 0.010 230);
   --color-bg-elev:      oklch(0.205 0.012 230);
   --color-bg-muted:     oklch(0.235 0.012 230);
@@ -323,4 +333,7 @@
     height: var(--skel-h, 12px);
     border-radius: var(--skel-r, 8px);
   }
+}
+@utility safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom);
 }

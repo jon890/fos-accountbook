@@ -88,7 +88,9 @@ describe("updateExpenseAction", () => {
       expect.any(Object)
     );
     expect(mockedRevalidatePath).toHaveBeenCalledWith("/transactions");
-    expect(mockedRevalidatePath).toHaveBeenCalledWith("/");
+    expect(mockedRevalidatePath).toHaveBeenCalledWith("/calendar");
+    expect(mockedRevalidatePath).toHaveBeenCalledWith("/budget");
+    expect(mockedRevalidatePath).not.toHaveBeenCalledWith("/");
     expect(mockedRevalidatePath).toHaveBeenCalledWith("/analytics");
   });
 

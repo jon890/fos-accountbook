@@ -4,6 +4,25 @@
 
 import { format, startOfMonth, endOfMonth, subMonths, subYears, parseISO } from "date-fns";
 
+export function getDatePartsInTimezone(
+  timezone?: string | null,
+  now: Date = new Date()
+): { year: number; month: number; day: number; date: string } {
+  const validTimezone = timezone && isValidTimezone(timezone) ? timezone : "Asia/Seoul";
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: validTimezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const year = Number(parts.find((part) => part.type === "year")?.value);
+  const month = Number(parts.find((part) => part.type === "month")?.value);
+  const day = Number(parts.find((part) => part.type === "day")?.value);
+  const date = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+  return { year, month, day, date };
+}
+
 /**
  * 주어진 시간대에서 현재 날짜를 기준으로 해당 월의 첫날과 마지막날을 반환
  */

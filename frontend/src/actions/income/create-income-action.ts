@@ -11,7 +11,7 @@ import {
 } from "@/lib/server/auth/auth-helpers";
 import { createIncome } from "@/services/income/income-service";
 import type { CreateIncomeFormState } from "@/types/income";
-import { revalidatePath } from "next/cache";
+import { revalidateTransactionPaths } from "@/lib/server/revalidate-transaction-paths";
 import { z } from "zod";
 
 const createIncomeSchema = z.object({
@@ -51,9 +51,7 @@ export async function createIncomeAction(
 
     await createIncome(familyUuid, validatedFields.data);
 
-    revalidatePath("/transactions");
-    revalidatePath("/");
-    revalidatePath("/analytics");
+    revalidateTransactionPaths();
 
     return { message: "수입이 성공적으로 추가되었습니다.", success: true };
   } catch (error) {

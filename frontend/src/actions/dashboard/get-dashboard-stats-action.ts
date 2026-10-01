@@ -21,14 +21,14 @@ export async function getDashboardStatsAction(): Promise<
   ActionResult<DashboardStats>
 > {
   try {
-    await requireAuth();
+    const session = await requireAuth();
 
     const selectedFamilyUuid = await getSelectedFamilyUuid();
     if (!selectedFamilyUuid) {
       throw ActionError.familyNotSelected();
     }
 
-    const stats = await getDashboardStats(selectedFamilyUuid);
+    const stats = await getDashboardStats(selectedFamilyUuid, session?.user.profile?.timezone);
     return successResult(stats);
   } catch (error) {
     return handleActionError(error, "대시보드 통계를 불러오는데 실패했습니다");

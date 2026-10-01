@@ -38,6 +38,8 @@
 - [ADR-F29](#adr-f29) — Tailwind v4 markdown 스캔 위험 패턴 차단 — md-lint 게이트 + 안전 표기
 - [ADR-F30](#adr-f30) — 월 합계와 추이는 백엔드 집계 API 를 부른다
 - [ADR-F31](#adr-f31) — 백엔드 호출 재시도는 GET 만 하고 타임아웃을 명시한다
+- [ADR-F32](#adr-f32) — 달력을 첫 화면으로 두고 한 달 목록을 한 번에 받는다
+- [ADR-F33](#adr-f33) — 메뉴는 하단 탭의 「전체」 에 모은다
 
 ---
 
@@ -401,6 +403,9 @@
 <a id="adr-f20"></a>
 
 ## ADR-F20: 인증 안 한 사용자의 `/` 진입은 Landing 표시
+
+**대체된 부분**: 인증 사용자의 첫 화면은 [ADR-F32](#adr-f32)에 따라 `/calendar`로 바뀌었다. 비로그인 사용자의 Landing 표시는 유지한다.
+
 - **결정**: `/` 라우트를 public 으로 변경. 인증 안 한 사용자는 Landing (Hero + Features 3 + CTA), 인증 사용자는 `/dashboard` 자동 redirect. `src/app/page.tsx` 가 page-level `auth()` 호출 후 세션 분기 처리. proxy.ts (ADR-F19) 는 전역 auth proxy 라 별도 matcher 수정 불필요.
 - **맥락**: 기존 동작은 인증 안 한 모든 진입 = `/auth/signin` 강제 redirect. login 페이지가 사실상 첫 화면이라 "어떤 서비스인지" 가 부재 — 신규 사용자가 가입 가치를 판단할 정보 없음. 부부 가계부 라는 도메인 특성상 가치 제안 (가족·카테고리·분석) 을 먼저 보여줄 entry 가 필요.
 - **대안 기각**:
@@ -412,12 +417,17 @@
 <a id="adr-f21"></a>
 
 ## ADR-F21: Add/Edit Transaction 다이얼로그 단일화
+
+**대체된 부분**: 거래 종류 전환 시 날짜를 초기화하던 정책은 [ADR-F32](#adr-f32)의 날짜 유지 정책으로 대체한다.
+나머지 단일 다이얼로그 결정은 유지한다.
+
 - **결정**: 지출/수입/고정지출 3 도메인의 Add 다이얼로그를 단일 `AddTransactionDialog` + 3 segmented 토글 (gradient-expense / gradient-income / gradient-budget) 로 통합. Edit 도 동일 패턴 (`EditTransactionDialog`, type 잠금). 위치: `src/components/transactions/dialogs/`.
 - **맥락**: 같은 "추가" 진입점이 6 곳 (Dashboard QuickActions / BottomNav FAB / Transactions 의 지출·수입·고정지출 탭 / Settings 고정지출) 인데 호출하는 다이얼로그가 셋 (AddExpenseDialog / AddIncomeDialog / AddRecurringExpenseSheet) 으로 분기. 시각·반응형 (Sheet 방향 right vs bottom)·field 구성·legacy 토큰 (`text-destructive`, `text-gray-500`, `text-muted-foreground`) 모두 불일치 → 사용자 인지 부담 + 유지보수 비용.
 - **대안 기각**:
   - 도메인별 분리 유지 + 시각·토큰만 통일: 진입점마다 다른 UI 가 그대로 노출. type 전환 (지출→수입) 시 다이얼로그 닫고 다른 진입점 찾아야 함 — 같은 의도 ("거래 추가") 가 분기됨.
   - "Add+ 페이지" 신설 (전용 라우트): 모달 흐름이 자연스러운 작업을 페이지로 격상 → 단순 추가가 무거워짐. recurring 처럼 가끔 쓰는 영역에서 매번 라우팅 비용.
 - **트레이드오프**: 단일 컴포넌트가 3 type conditional 필드 분기 — form complexity ↑ but UX 일관성 ↑. type 전환 시 type-specific 필드 (date vs dayOfMonth+name) 가 mount/unmount 되며 입력 잔존 정책은 "이전 type 의 amount/category/description 은 유지, type-specific 필드만 초기화" 로 명시.
+- **갱신 (2026-09-30)**: 진입점에 달력의 「이 날짜에 추가」 가 더해지고 대시보드 QuickActions 는 빠졌다. 진입점은 `defaultDate` 도 넘긴다. 수정 다이얼로그에 삭제 버튼을 둔다([ADR-F32](#adr-f32)).
 - **적용 범위**: `src/components/transactions/dialogs/{Add,Edit}TransactionDialog.tsx`, `src/components/transactions/forms/TransactionFormFields.tsx`, 진입점 갱신, legacy 다이얼로그 6 파일 제거 (Add/EditExpenseDialog, Add/EditIncomeDialog, Add/EditRecurringExpenseSheet).
 
 <a id="adr-f22"></a>
@@ -562,6 +572,8 @@
   - 감당할 것: 합산 규칙을 백엔드가 소유한다. 삭제되지 않은(`ACTIVE`) 지출을 모두 더하고 예산 제외 표시는 보지 않는다. 월별 추이 응답은 지출이 없는 달을 빼고 오므로 프론트가 0 으로 채운다. 카테고리 비율과 전월 대비는 백엔드가 소수 둘째 자리까지 주고 프론트가 반올림한다.
 - **적용 범위**: `services/dashboard/dashboard-service.ts`, `services/analytics/analytics-service.ts`. 지출 상위 5건용 목록 조회는 백엔드가 금액 정렬을 지원하기 전까지 남긴다.
 
+**오류 처리 보강**: 일별 조회 Service는 실패를 Action으로 전달한다. 분석 화면은 일반 실패를 오류 화면으로 보내고, 예산 화면은 기존 빈 차트 표시를 유지한다. 인증 실패는 두 화면 모두 로그인으로 보낸다.
+
 <a id="adr-f31"></a>
 
 ## ADR-F31: 백엔드 호출 재시도는 GET 만 하고 타임아웃을 명시한다 (2026-09-30)
@@ -578,3 +590,43 @@
   - 얻는 것: 쓰기 요청의 자동 재시도로 인한 중복 반영을 막는다. 요청 한 번의 타임아웃을 5초로 줄인다. GET 은 재시도와 대기 때문에 전체 호출이 5초를 넘을 수 있다.
   - 감당할 것: 쓰기 요청의 일시 오류는 사용자에게 그대로 토스트로 보인다. 5초를 넘는 정상 요청이 생기면 그 호출만 옵션으로 늘린다.
 - **적용 범위**: `src/lib/server/api/client.ts`.
+<a id="adr-f32"></a>
+
+## ADR-F32: 달력을 첫 화면으로 두고 한 달 목록을 한 번에 받는다 (2026-09-30)
+
+- **status**: `accepted`
+- **결정**: 로그인 뒤 첫 화면을 `/calendar` 로 한다. 달을 열 때 일별 합계(`daily-stats`), 그 달 지출과 수입 목록, 구성원 목록을 서버에서 한 번에 받는다.
+  날짜를 누르면 받아 둔 목록에서 그날 항목을 골라 보여 주고 서버를 다시 부르지 않는다. 합계는 `daily-stats` 가 주는 값을 쓴다([ADR-F30](#adr-f30) 과 같은 규칙).
+  거래 추가에서 지출, 수입, 고정지출을 전환해도 선택한 날짜를 유지한다.
+  고정지출을 거쳐 돌아올 때도 같은 날짜를 사용하며 이 결정이 [ADR-F21](#adr-f21)의 날짜 초기화 정책을 대체한다.
+  통계, 분석과 예산의 현재 연월과 예산의 남은 일수는 세션 시간대로 계산하며 시간대가 없거나 잘못되면 서울을 사용한다.
+  명시한 조회 연월과 기존 집계 방식은 유지한다.
+- **맥락**: 두 사람이 휴대폰으로 가계부를 쓰며, 서로 무엇을 썼는지 날짜별로 빠르게 비교하는 것이 가장 잦은 동작이다(2026-09-30 사용자 요청).
+  기존 첫 화면인 대시보드는 넓은 요약 카드 중심이라 휴대폰에서 이 비교가 어려웠다.
+  운영은 한국 휴대폰에서 서버까지 왕복이 0.2초 안팎이라, 날짜를 누를 때마다 서버를 부르면 누를 때마다 기다리게 된다.
+  한 가구의 월 거래는 100~300건이라 한 달 목록 응답은 수십 KB 다.
+- **대안 기각**:
+  - 날짜를 누를 때마다 그날 목록 조회: 응답은 작지만 누를 때마다 왕복을 기다린다. 비교하려고 날짜를 여러 번 오가는 사용 방식과 맞지 않는다.
+  - 날짜 목록을 하단 시트로 띄우기: 달력 칸을 크게 쓸 수 있지만, 다른 날짜를 보려면 시트를 닫고 다시 눌러야 한다. 사용자가 달력 아래 목록을 골랐다.
+  - 대시보드를 첫 화면으로 두고 달력을 탭으로 추가: 탭이 하나 늘고, 가장 잦은 동작이 두 번째 탭에 있게 된다.
+- **결과**:
+  - 얻는 것: 날짜를 바꿀 때 기다림이 없다. 달을 바꿀 때만 서버를 부른다.
+  - 감당할 것: 지출 또는 수입이 한 달에 1000건을 넘으면 목록이 잘린다. 응답의 전체 건수를 확인해 서버에 조회 한도 초과 경고를 남기고, 초과가 확인되면 페이지를 나눠 받거나 날짜별 조회로 바꾼다. 등록, 수정, 삭제 뒤에는 그 달 전체를 다시 받는다.
+- **적용 범위**: `src/app/(authenticated)/calendar/`, `src/components/calendar/`, `src/actions/calendar/`, `src/services/calendar/`. 대시보드 화면(`/dashboard`)은 없애고 `/analytics` 로 보낸다.
+
+<a id="adr-f33"></a>
+
+## ADR-F33: 메뉴는 하단 탭의 「전체」 에 모은다 (2026-09-30)
+
+- **status**: `accepted`
+- **결정**: 하단 탭을 달력, 내역, 추가 버튼, 분석, 전체로 둔다. 카테고리, 예산, 고정지출, 가족, 알림, 설정은 「전체」(`/menu`) 한 화면에 목록으로 모은다.
+  하위 화면은 Header 에 뒤로 가기 버튼을 둔다.
+- **맥락**: 카테고리 화면은 대시보드의 빠른 메뉴에서만, 예산 화면은 어디에서도 들어갈 수 없었다(2026-09-30 점검). 사용자가 카테고리를 찾기 어렵다고 했다.
+  홈 화면에 추가해 앱처럼 쓰면 브라우저 뒤로 가기가 없어 하위 화면에서 빠져나올 방법이 없었다.
+- **대안 기각**:
+  - 햄버거 메뉴(왼쪽 위 아이콘을 누르면 열리는 서랍): 한 손으로 쥐었을 때 엄지가 닿지 않고, 메뉴가 아이콘 뒤에 숨어 있어 있는지부터 알기 어렵다.
+  - 하단 탭에 카테고리를 직접 추가: 탭이 여섯이 되어 360px 폭에서 라벨이 좁아진다. 예산과 알림은 여전히 갈 곳이 없다.
+- **결과**:
+  - 얻는 것: 모든 화면이 하단 탭에서 두 번 안에 닿는다. 국내 금융 앱과 같은 구성이라 익숙하다.
+  - 감당할 것: 새 화면을 만들면 `/menu` 목록에 넣어야 한다. 넣지 않으면 다시 들어갈 곳이 없는 화면이 생긴다.
+- **적용 범위**: `src/components/layout/BottomNavigation.tsx`, `src/components/layout/Header.tsx`, `src/app/(authenticated)/menu/`.

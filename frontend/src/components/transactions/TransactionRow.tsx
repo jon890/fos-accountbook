@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getCategoryToneStyle } from "@/lib/utils/category-tone";
 import { formatCurrency } from "@/lib/utils/format";
 import { format, parseISO } from "date-fns";
+import type { KeyboardEvent } from "react";
 
 export interface TxBase {
   uuid: string;
@@ -16,7 +17,7 @@ export interface TxBase {
     icon: string;
     color?: string | null;
   } | null;
-  createdBy?: { uuid?: string; name: string } | null;
+  createdBy?: { uuid?: string; name: string; colorClass?: string } | null;
 }
 
 interface TransactionRowProps {
@@ -37,11 +38,41 @@ export function TransactionRow({
   const absAmount = Math.abs(tx.amount);
   const isClickable = !!onEdit;
 
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const isActivationKey = event.key === "Enter" || event.key === " ";
+    if (onEdit && isActivationKey) {
+      event.preventDefault();
+      onEdit();
+    }
+  }
+
+  function renderCreator(avatarClass: string) {
+    if (!tx.createdBy?.name) {
+      return <div className={avatarClass} />;
+    }
+    if (tx.createdBy.colorClass) {
+      return (
+        <span className="flex items-center gap-1 text-[11px] text-fg-muted">
+          <span aria-hidden="true" className={`size-1.5 rounded-full ${tx.createdBy.colorClass}`} />
+          {tx.createdBy.name}
+        </span>
+      );
+    }
+    return (
+      <Avatar className={avatarClass}>
+        <AvatarFallback className="text-[8px] font-medium bg-brand-200 text-brand-800">
+          {tx.createdBy.name.charAt(0)}
+        </AvatarFallback>
+      </Avatar>
+    );
+  }
+
   if (variant === "compact") {
     return (
       <div
-        className="flex items-center gap-3 py-2.5 px-0"
+        className="flex items-center gap-3 py-2.5 px-0 focus-visible:outline-2 focus-visible:outline-brand-500 focus-visible:outline-offset-2"
         onClick={onEdit}
+        onKeyDown={handleKeyDown}
         role={isClickable ? "button" : undefined}
         tabIndex={isClickable ? 0 : undefined}
       >
@@ -68,15 +99,7 @@ export function TransactionRow({
           <span className="num text-sm font-bold text-fg">
             {formatCurrency(absAmount)}
           </span>
-          {tx.createdBy?.name ? (
-            <Avatar className="size-4">
-              <AvatarFallback className="text-[8px] font-medium bg-brand-200 text-brand-800">
-                {tx.createdBy.name.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-          ) : (
-            <div className="size-4" />
-          )}
+          {renderCreator("size-4")}
         </div>
       </div>
     );
@@ -85,8 +108,9 @@ export function TransactionRow({
   // full: mobile = compact flex / desktop = 5-col grid
   return (
     <div
-      className="flex items-center gap-3 py-2.5 md:grid md:grid-cols-[44px_1fr_110px_28px_140px] md:gap-4 md:items-center md:py-3"
+      className="flex items-center gap-3 py-2.5 md:grid md:grid-cols-[44px_1fr_110px_28px_140px] md:gap-4 md:items-center md:py-3 focus-visible:outline-2 focus-visible:outline-brand-500 focus-visible:outline-offset-2"
       onClick={onEdit}
+      onKeyDown={handleKeyDown}
       role={isClickable ? "button" : undefined}
       tabIndex={isClickable ? 0 : undefined}
     >
@@ -121,15 +145,7 @@ export function TransactionRow({
 
       {/* Col 4: 아바타 22px — desktop only */}
       <div className="hidden md:flex items-center justify-center">
-        {tx.createdBy?.name ? (
-          <Avatar className="size-[22px]">
-            <AvatarFallback className="text-[8px] font-medium bg-brand-200 text-brand-800">
-              {tx.createdBy.name.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-        ) : (
-          <div className="size-[22px]" />
-        )}
+        {renderCreator("size-[22px]")}
       </div>
 
       {/* Col 5: 금액 right-aligned */}
@@ -139,15 +155,7 @@ export function TransactionRow({
         </span>
         {/* 모바일에서만 아바타 표시 */}
         <div className="md:hidden mt-0.5">
-          {tx.createdBy?.name ? (
-            <Avatar className="size-4">
-              <AvatarFallback className="text-[8px] font-medium bg-brand-200 text-brand-800">
-                {tx.createdBy.name.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-          ) : (
-            <div className="size-4" />
-          )}
+          {renderCreator("size-4")}
         </div>
       </div>
     </div>

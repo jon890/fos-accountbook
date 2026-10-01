@@ -1,3 +1,4 @@
+import { getDatePartsInTimezone } from "@/lib/utils/date-timezone";
 import { getDashboardStatsAction } from "@/actions/dashboard/get-dashboard-stats-action";
 import { getMonthlyCategoryBreakdownAction } from "@/actions/dashboard/get-monthly-category-breakdown-action";
 import { getMonthlyDailyStatsAction } from "@/actions/dashboard/get-monthly-daily-stats-action";
@@ -18,9 +19,7 @@ export default async function BudgetPage() {
     redirect("/");
   }
 
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+  const { year, month, day } = getDatePartsInTimezone(session.user.profile?.timezone);
 
   const [statsResult, dailyResult, breakdownResult] = await Promise.all([
     getDashboardStatsAction(),
@@ -54,6 +53,7 @@ export default async function BudgetPage() {
       remainingBudget={stats.remainingBudget}
       year={stats.year}
       month={stats.month}
+      day={day}
       dailyExpenses={daily}
       categoryItems={breakdown.items}
     />

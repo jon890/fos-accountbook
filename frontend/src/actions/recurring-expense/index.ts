@@ -50,7 +50,7 @@ export async function createRecurringExpenseAction(
     const result = await createRecurringExpense(familyUuid, parsed.data);
 
     revalidatePath("/transactions");
-    revalidatePath("/dashboard");
+    revalidatePath("/analytics");
 
     return successResult(result);
   } catch (error) {
@@ -86,6 +86,7 @@ export async function updateRecurringExpenseAction(
     const result = await updateRecurringExpense(familyUuid, uuid, parsed.data);
 
     revalidatePath("/transactions");
+    revalidatePath("/analytics");
 
     return successResult(result);
   } catch (error) {
@@ -111,6 +112,7 @@ export async function deleteRecurringExpenseAction(
     await deleteRecurringExpense(familyUuid, uuid);
 
     revalidatePath("/transactions");
+    revalidatePath("/analytics");
 
     return successResult(undefined);
   } catch (error) {

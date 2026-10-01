@@ -88,7 +88,9 @@ describe("Income Actions", () => {
         expect.any(Object)
       );
       expect(mockRevalidatePath).toHaveBeenCalledWith("/transactions");
-      expect(mockRevalidatePath).toHaveBeenCalledWith("/");
+      expect(mockRevalidatePath).toHaveBeenCalledWith("/calendar");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/budget");
+    expect(mockRevalidatePath).not.toHaveBeenCalledWith("/");
       expect(mockRevalidatePath).toHaveBeenCalledWith("/analytics");
     });
 
@@ -159,7 +161,9 @@ describe("Income Actions", () => {
         "/families/family-1/incomes/income-1"
       );
       expect(mockRevalidatePath).toHaveBeenCalledWith("/transactions");
-      expect(mockRevalidatePath).toHaveBeenCalledWith("/");
+      expect(mockRevalidatePath).toHaveBeenCalledWith("/calendar");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/budget");
+    expect(mockRevalidatePath).not.toHaveBeenCalledWith("/");
       expect(mockRevalidatePath).toHaveBeenCalledWith("/analytics");
     });
 

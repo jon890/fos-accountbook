@@ -11,7 +11,7 @@ import {
   getSelectedFamilyUuid,
 } from "@/lib/server/auth/auth-helpers";
 import { deleteExpense } from "@/services/expense/expense-service";
-import { revalidatePath } from "next/cache";
+import { revalidateTransactionPaths } from "@/lib/server/revalidate-transaction-paths";
 
 export async function deleteExpenseAction(
   familyUuid: string,
@@ -34,9 +34,7 @@ export async function deleteExpenseAction(
 
     await deleteExpense(familyUuid, expenseUuid);
 
-    revalidatePath("/transactions");
-    revalidatePath("/");
-    revalidatePath("/analytics");
+    revalidateTransactionPaths();
 
     return successResult(undefined);
   } catch (error) {

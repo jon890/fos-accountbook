@@ -54,8 +54,8 @@ export function InvitePageClient({
 
       if (result.success) {
         toast.success("초대를 수락했습니다");
-        // 성공 시 대시보드로 이동
-        router.push("/");
+        // 성공 시 달력으로 이동
+        router.push("/calendar");
       } else {
         toast.error(result.error.message);
       }

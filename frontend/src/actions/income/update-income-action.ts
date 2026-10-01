@@ -6,7 +6,7 @@ import {
 } from "@/lib/server/auth/auth-helpers";
 import { updateIncome } from "@/services/income/income-service";
 import type { UpdateIncomeFormState } from "@/types/income";
-import { revalidatePath } from "next/cache";
+import { revalidateTransactionPaths } from "@/lib/server/revalidate-transaction-paths";
 import { z } from "zod";
 
 // 수입 수정 스키마 (모든 필드가 선택적)
@@ -66,9 +66,7 @@ export async function updateIncomeAction(
       date,
     });
 
-    revalidatePath("/transactions");
-    revalidatePath("/");
-    revalidatePath("/analytics");
+    revalidateTransactionPaths();
 
     return { success: true, message: "수입이 수정되었습니다" };
   } catch (error) {

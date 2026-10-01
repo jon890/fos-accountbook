@@ -7,11 +7,9 @@ import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/client/utils";
 import { useSessionRefresh } from "@/lib/client/use-session-refresh";
 import type { Family } from "@/types/family";
 import { ChevronRight, Plus, User, Users } from "lucide-react";
-import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface FamilySelectorProps {
@@ -169,14 +167,14 @@ export function FamilySelector({
                             {family.name}
                           </h3>
                           <Badge variant="secondary" className="text-xs">
-                            {family.members?.length || 0}명
+                            {family.memberCount}명
                           </Badge>
                         </div>
 
                         <div className="flex items-center gap-4 text-sm text-fg-muted">
                           <span className="flex items-center gap-1">
                             <Users className="w-4 h-4" />
-                            구성원 {family.members?.length || 0}명
+                            구성원 {family.memberCount}명
                           </span>
                           <span>지출 {family.expenseCount || 0}건</span>
                           <span>
@@ -184,39 +182,6 @@ export function FamilySelector({
                           </span>
                         </div>
 
-                        {/* 멤버 avatar 겹침 */}
-                        {family.members && family.members.length > 0 && (
-                          <div className="flex items-center mt-3">
-                            {family.members.slice(0, 3).map((member, i) => (
-                              <div
-                                key={member.uuid}
-                                className={cn(
-                                  "w-8 h-8 rounded-full ring-2 ring-bg-elev overflow-hidden",
-                                  i > 0 && "-ml-2"
-                                )}
-                              >
-                                {member.userImage ? (
-                                  <Image
-                                    src={member.userImage}
-                                    alt={member.userName ?? ""}
-                                    width={32}
-                                    height={32}
-                                    className="object-cover w-full h-full"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full bg-bg-muted text-fg-muted text-xs font-semibold flex items-center justify-center">
-                                    {member.userName?.charAt(0) ?? "U"}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                            {family.members.length > 3 && (
-                              <div className="-ml-2 w-8 h-8 rounded-full ring-2 ring-bg-elev bg-bg-muted text-fg-muted text-xs font-semibold flex items-center justify-center">
-                                +{family.members.length - 3}
-                              </div>
-                            )}
-                          </div>
-                        )}
                       </div>
 
                       <ChevronRight className="w-5 h-5 text-fg-subtle" />
