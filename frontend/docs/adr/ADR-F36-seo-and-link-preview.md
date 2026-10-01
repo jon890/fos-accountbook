@@ -12,4 +12,4 @@
   - 얻는 것: 메신저 미리보기에 이름, 소개, 이미지가 나온다. 홈 화면 아이콘과 이름이 앱처럼 보인다. 개인 화면이 검색에 노출되지 않는다.
   - 감당할 것: 미리보기 이미지를 그리는 라이브러리(satori)는 woff2 와 oklch 를 읽지 못한다. 이미지에는 otf 글꼴과 hex 색을 쓰고, manifest 와 브라우저 테마 색에도 같은 hex 값을 쓴다. 이것은 ADR-F13 의 예외다. 색은 brand 토큰과 손으로 맞춘다. 새 공개 화면을 만들면 sitemap 과 robots 를 함께 고친다.
   - 배포 주소는 요청 시점의 `AUTH_URL` 을 사용한다. Docker 빌드에 서버 환경 변수를 넣지 않으므로 메타데이터와 검색 엔진용 주소를 빌드 시점에 고정하지 않는다. 오류 화면과 로그아웃 화면도 색인을 허용하지 않는다.
-- **적용 범위**: `src/app/layout.tsx`, `src/app/page.tsx`, `src/app/(authenticated)/layout.tsx`, `src/app/` 의 `opengraph-image`, `icon`, `apple-icon`, `robots`, `sitemap`, `manifest` 파일.
+- **적용 범위**: `src/app/layout.tsx`, `src/app/page.tsx`, `src/app/(authenticated)/layout.tsx`, `src/app/auth/error/page.tsx`, `src/app/auth/signout/page.tsx`, `src/app/` 의 `opengraph-image`, `icon`, `apple-icon`, `robots`, `sitemap`, `manifest` 파일.
