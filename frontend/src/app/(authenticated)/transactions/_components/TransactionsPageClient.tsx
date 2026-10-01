@@ -4,6 +4,7 @@ import { TransactionsTabs } from "@/app/(authenticated)/transactions/_components
 import { FilterChips } from "@/app/(authenticated)/transactions/_components/FilterChips";
 import { SearchBar } from "@/app/(authenticated)/transactions/_components/SearchBar";
 import type { CategoryResponse } from "@/types/category";
+import { useNavigationPending } from "@/lib/client/navigation";
 import { ReactNode } from "react";
 
 type TabType = "expenses" | "incomes" | "recurring";
@@ -34,6 +35,8 @@ export function TransactionsPageClient({
   incomeListContent,
   recurringListContent,
 }: TransactionsPageClientProps) {
+  const isNavigationPending = useNavigationPending();
+
   return (
     <div className="space-y-4">
       <div>
@@ -58,7 +61,10 @@ export function TransactionsPageClient({
       )}
 
       {/* 내역 목록 */}
-      <div>
+      <div
+        aria-busy={isNavigationPending}
+        className={`transition-opacity ${isNavigationPending ? "pointer-events-none opacity-60" : ""}`}
+      >
         {activeTab === "expenses"
           ? expenseListContent
           : activeTab === "incomes"

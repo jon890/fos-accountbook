@@ -58,6 +58,10 @@ export function useNavigationProgress() {
   return useContext(NavigationProgressContext)?.pendingCount ?? 0;
 }
 
+export function useNavigationPending() {
+  return useNavigationProgress() > 0;
+}
+
 export function useAppRouter() {
   const router = useRouter();
   const progress = useContext(NavigationProgressContext);

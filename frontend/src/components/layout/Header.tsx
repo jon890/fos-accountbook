@@ -21,6 +21,7 @@ import dynamic from "next/dynamic";
 import { signOutAction } from "@/actions/auth/signout-action";
 import { getFamiliesAction } from "@/actions/family/get-families-action";
 import { FamilySelectorList } from "@/components/families/FamilySelectorList";
+import { Skel } from "@/components/loading/Skel";
 import type { Family } from "@/types/family";
 import { toast } from "sonner";
 
@@ -80,14 +81,26 @@ export function Header({ session, selectedFamilyUuid }: HeaderProps) {
   };
   const [familySheetOpen, setFamilySheetOpen] = useState(false);
   const [sheetFamilies, setSheetFamilies] = useState<Family[]>([]);
+  const [isLoadingFamilies, setIsLoadingFamilies] = useState(false);
 
   const handleOpenFamilySheet = async () => {
-    const result = await getFamiliesAction();
-    if (result.success && result.data) {
-      setSheetFamilies(result.data);
-      setFamilySheetOpen(true);
-    } else {
+    setFamilySheetOpen(true);
+    setIsLoadingFamilies(true);
+
+    try {
+      const result = await getFamiliesAction();
+      if (result.success && result.data) {
+        setSheetFamilies(result.data);
+        return;
+      }
+
+      setFamilySheetOpen(false);
       toast.error("가족 목록을 불러오지 못했습니다.");
+    } catch {
+      setFamilySheetOpen(false);
+      toast.error("가족 목록을 불러오지 못했습니다.");
+    } finally {
+      setIsLoadingFamilies(false);
     }
   };
 
@@ -187,11 +200,17 @@ export function Header({ session, selectedFamilyUuid }: HeaderProps) {
           <SheetHeader>
             <SheetTitle>가족 전환</SheetTitle>
           </SheetHeader>
-          <FamilySelectorList
-            families={sheetFamilies}
-            selectedFamilyUuid={selectedFamilyUuid ?? ""}
-            onSelected={() => setFamilySheetOpen(false)}
-          />
+          {isLoadingFamilies ? (
+            <div aria-label="가족 목록을 불러오는 중" className="space-y-2 py-2">
+              {[0, 1, 2].map((index) => <Skel key={index} h={36} r={6} />)}
+            </div>
+          ) : (
+            <FamilySelectorList
+              families={sheetFamilies}
+              selectedFamilyUuid={selectedFamilyUuid ?? ""}
+              onSelected={() => setFamilySheetOpen(false)}
+            />
+          )}
         </SheetContent>
       </Sheet>
     </>

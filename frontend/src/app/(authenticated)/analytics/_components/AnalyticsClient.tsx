@@ -9,6 +9,7 @@ import type { Expense } from "@/types/expense";
 import { ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { startTransition, useState, useMemo } from "react";
+import { useNavigationPending } from "@/lib/client/navigation";
 import { AnalyticsPeriodToggle } from "./AnalyticsPeriodToggle";
 import { AnalyticsCategoryDonut } from "./AnalyticsCategoryDonut";
 import { MonthlyTrendBar } from "./MonthlyTrendBar";
@@ -56,6 +57,8 @@ export function AnalyticsClient({
   const [dailyStats, setDailyStats] = useState(initialDailyStats);
   const [expenses, setExpenses] = useState(initialExpenses);
   const [isPending, setIsPending] = useState(false);
+  const isNavigationPending = useNavigationPending();
+  const isBusy = isPending || isNavigationPending;
 
   const isCurrentMonth = useMemo(() => {
     const now = new Date();
@@ -131,7 +134,10 @@ export function AnalyticsClient({
     (year === now.getFullYear() && month >= now.getMonth() + 1);
 
   return (
-    <div className={`space-y-4 transition-opacity duration-200 ${isPending ? "opacity-50 pointer-events-none" : ""}`}>
+    <div
+      aria-busy={isNavigationPending}
+      className={`space-y-4 transition-opacity duration-200 ${isBusy ? "pointer-events-none opacity-60" : ""}`}
+    >
       {/* 헤더: 기간 토글 + 월 선택기 */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">

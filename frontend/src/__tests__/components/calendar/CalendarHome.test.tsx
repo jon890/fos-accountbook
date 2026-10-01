@@ -10,11 +10,13 @@ import type { Income } from "@/types/income";
 const mockPush = jest.fn();
 const mockEditLoadError = jest.fn();
 const mockSearchParams = jest.fn();
+const mockNavigationPending = jest.fn();
 jest.mock("next/navigation", () => ({
   useSearchParams: () => mockSearchParams(),
 }));
 jest.mock("@/lib/client/navigation", () => ({
   useAppRouter: () => ({ push: mockPush }),
+  useNavigationPending: () => mockNavigationPending(),
 }));
 jest.mock("@/actions/calendar/get-calendar-month-action", () => ({ getCalendarMonthAction: jest.fn() }));
 jest.mock("@/lib/server/auth", () => ({ auth: async () => ({ user: { profile: { defaultFamilyUuid: "family-1", timezone: "Asia/Seoul" } } }) }));
@@ -37,11 +39,19 @@ const props = { data, initialDate: "2026-09-14", today: "2026-09-14", familyUuid
 beforeEach(() => {
   jest.clearAllMocks();
   mockSearchParams.mockImplementation(() => new URLSearchParams(window.location.search));
+  mockNavigationPending.mockReturnValue(false);
   window.history.replaceState({}, "", "/calendar?month=2026-09&date=2026-09-14");
   jest.mocked(getCalendarMonthAction).mockResolvedValue({ success: true, data });
 });
 
 describe("달력 홈", () => {
+  it("월 전환 중 달력 격자와 날짜 목록 영역을 흐리게 하고 aria-busy를 표시한다", () => {
+    mockNavigationPending.mockReturnValue(true);
+    const { container } = render(<CalendarHome {...props} />);
+
+    const pendingRegion = container.querySelector('[aria-busy="true"]');
+    expect(pendingRegion).toHaveClass("opacity-60", "pointer-events-none");
+  });
   it.each(["/calendar?month=2026-08", "/calendar?month=2026-08&date=invalid"])("초기 URL %s의 날짜를 서버가 선택한 날짜로 맞춘다", (url) => {
     window.history.replaceState({}, "", url);
     render(<CalendarHome {...props} data={calendarMonth({ month: 8 })} initialDate="2026-08-01" />);
