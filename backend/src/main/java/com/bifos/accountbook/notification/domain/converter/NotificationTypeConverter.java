@@ -1,8 +1,7 @@
 package com.bifos.accountbook.notification.domain.converter;
 
-import com.bifos.accountbook.shared.converter.AbstractCodeEnumConverter;
-
 import com.bifos.accountbook.notification.domain.value.NotificationType;
+import com.bifos.accountbook.shared.converter.AbstractCodeEnumConverter;
 import jakarta.persistence.Converter;
 
 /**

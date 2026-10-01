@@ -1,8 +1,6 @@
 package com.bifos.accountbook.shared.auth;
 
 import com.bifos.accountbook.shared.value.CustomUuid;
-import com.bifos.accountbook.shared.auth.LoginUser;
-import com.bifos.accountbook.shared.auth.LoginUserDto;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.core.MethodParameter;

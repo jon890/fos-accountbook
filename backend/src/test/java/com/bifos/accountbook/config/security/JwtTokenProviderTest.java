@@ -1,8 +1,10 @@
 package com.bifos.accountbook.config.security;
 
-import com.bifos.accountbook.user.domain.entity.User;
-import com.bifos.accountbook.shared.value.CustomUuid;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.bifos.accountbook.shared.utils.TimeUtils;
+import com.bifos.accountbook.shared.value.CustomUuid;
+import com.bifos.accountbook.user.domain.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
@@ -11,8 +13,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

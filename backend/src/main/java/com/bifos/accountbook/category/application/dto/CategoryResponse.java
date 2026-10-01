@@ -1,6 +1,5 @@
 package com.bifos.accountbook.category.application.dto;
 
-import com.bifos.accountbook.category.application.dto.CategoryInfo;
 import com.bifos.accountbook.category.domain.entity.Category;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;

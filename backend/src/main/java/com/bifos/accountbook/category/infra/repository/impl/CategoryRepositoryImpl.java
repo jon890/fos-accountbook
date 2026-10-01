@@ -1,10 +1,10 @@
 package com.bifos.accountbook.category.infra.repository.impl;
 
-import com.bifos.accountbook.config.CacheConfig;
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.category.domain.repository.CategoryRepository;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.category.infra.repository.jpa.CategoryJpaRepository;
+import com.bifos.accountbook.config.CacheConfig;
+import com.bifos.accountbook.shared.value.CustomUuid;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

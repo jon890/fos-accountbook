@@ -1,8 +1,8 @@
 package com.bifos.accountbook.notification.domain.repository;
 
 import com.bifos.accountbook.notification.domain.entity.Notification;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.notification.domain.value.NotificationType;
+import com.bifos.accountbook.shared.value.CustomUuid;
 import java.util.List;
 import java.util.Optional;
 

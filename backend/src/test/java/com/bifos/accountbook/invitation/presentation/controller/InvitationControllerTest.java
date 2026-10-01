@@ -1,9 +1,12 @@
 package com.bifos.accountbook.invitation.presentation.controller;
 
-import com.bifos.accountbook.shared.AbstractControllerTest;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.invitation.domain.entity.Invitation;
 import com.bifos.accountbook.invitation.domain.repository.InvitationRepository;
+import com.bifos.accountbook.shared.AbstractControllerTest;
 import com.bifos.accountbook.user.domain.entity.User;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,9 +14,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DisplayName("초대장 컨트롤러 통합 테스트")
 class InvitationControllerTest extends AbstractControllerTest {

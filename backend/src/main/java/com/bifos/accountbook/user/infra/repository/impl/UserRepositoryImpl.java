@@ -1,8 +1,8 @@
 package com.bifos.accountbook.user.infra.repository.impl;
 
+import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.user.domain.repository.UserRepository;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.user.infra.repository.jpa.UserJpaRepository;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

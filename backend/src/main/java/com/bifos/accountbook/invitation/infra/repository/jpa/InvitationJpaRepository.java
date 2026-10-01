@@ -1,8 +1,8 @@
 package com.bifos.accountbook.invitation.infra.repository.jpa;
 
 import com.bifos.accountbook.invitation.domain.entity.Invitation;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.invitation.domain.value.InvitationStatus;
+import com.bifos.accountbook.shared.value.CustomUuid;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;

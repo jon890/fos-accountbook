@@ -1,8 +1,8 @@
 package com.bifos.accountbook.income.domain.entity;
 
 import com.bifos.accountbook.family.domain.entity.Family;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.income.domain.value.IncomeStatus;
+import com.bifos.accountbook.shared.value.CustomUuid;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;

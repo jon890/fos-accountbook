@@ -1,9 +1,9 @@
 package com.bifos.accountbook.family.domain.entity;
 
 import com.bifos.accountbook.expense.domain.entity.Expense;
+import com.bifos.accountbook.family.domain.value.FamilyStatus;
 import com.bifos.accountbook.income.domain.entity.Income;
 import com.bifos.accountbook.shared.value.CustomUuid;
-import com.bifos.accountbook.family.domain.value.FamilyStatus;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

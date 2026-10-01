@@ -1,20 +1,20 @@
 package com.bifos.accountbook.shared;
 
+import com.bifos.accountbook.category.domain.entity.Category;
+import com.bifos.accountbook.category.domain.repository.CategoryRepository;
+import com.bifos.accountbook.expense.domain.repository.ExpenseRepository;
+import com.bifos.accountbook.family.domain.entity.Family;
+import com.bifos.accountbook.family.domain.repository.FamilyMemberRepository;
+import com.bifos.accountbook.family.domain.repository.FamilyRepository;
+import com.bifos.accountbook.income.domain.repository.IncomeRepository;
+import com.bifos.accountbook.recurring.domain.repository.RecurringExpenseRepository;
 import com.bifos.accountbook.shared.fixtures.CategoryFixtures;
 import com.bifos.accountbook.shared.fixtures.ExpenseFixtures;
 import com.bifos.accountbook.shared.fixtures.FamilyFixtures;
 import com.bifos.accountbook.shared.fixtures.IncomeFixtures;
 import com.bifos.accountbook.shared.fixtures.RecurringExpenseFixtures;
 import com.bifos.accountbook.shared.fixtures.UserFixtures;
-import com.bifos.accountbook.category.domain.entity.Category;
-import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.user.domain.entity.User;
-import com.bifos.accountbook.category.domain.repository.CategoryRepository;
-import com.bifos.accountbook.expense.domain.repository.ExpenseRepository;
-import com.bifos.accountbook.family.domain.repository.FamilyMemberRepository;
-import com.bifos.accountbook.family.domain.repository.FamilyRepository;
-import com.bifos.accountbook.income.domain.repository.IncomeRepository;
-import com.bifos.accountbook.recurring.domain.repository.RecurringExpenseRepository;
 import com.bifos.accountbook.user.domain.repository.UserRepository;
 import org.springframework.context.ApplicationContext;
 

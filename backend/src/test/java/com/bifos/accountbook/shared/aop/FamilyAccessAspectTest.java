@@ -2,16 +2,14 @@ package com.bifos.accountbook.shared.aop;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-
-import com.bifos.accountbook.shared.exception.BusinessException;
-import com.bifos.accountbook.shared.exception.ErrorCode;
+import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.notification.application.service.NotificationService;
 import com.bifos.accountbook.shared.FosSpringBootTest;
 import com.bifos.accountbook.shared.TestFixturesSupport;
-import com.bifos.accountbook.family.domain.entity.Family;
-import com.bifos.accountbook.family.domain.entity.FamilyMember;
-import com.bifos.accountbook.user.domain.entity.User;
+import com.bifos.accountbook.shared.exception.BusinessException;
+import com.bifos.accountbook.shared.exception.ErrorCode;
 import com.bifos.accountbook.shared.value.CustomUuid;
+import com.bifos.accountbook.user.domain.entity.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

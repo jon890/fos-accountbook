@@ -1,33 +1,32 @@
 package com.bifos.accountbook.notification.presentation.controller;
 
-import com.bifos.accountbook.shared.AbstractControllerTest;
-
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.expense.application.dto.CreateExpenseRequest;
 import com.bifos.accountbook.expense.application.service.ExpenseService;
-import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.family.domain.entity.FamilyMember;
-import com.bifos.accountbook.notification.domain.entity.Notification;
-import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.family.domain.repository.FamilyMemberRepository;
-import com.bifos.accountbook.notification.domain.repository.NotificationRepository;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.family.domain.value.FamilyMemberStatus;
+import com.bifos.accountbook.notification.domain.entity.Notification;
+import com.bifos.accountbook.notification.domain.repository.NotificationRepository;
+import com.bifos.accountbook.shared.AbstractControllerTest;
+import com.bifos.accountbook.shared.value.CustomUuid;
+import com.bifos.accountbook.user.domain.entity.User;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import static org.assertj.core.api.Assertions.assertThat;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * NotificationController 통합 테스트

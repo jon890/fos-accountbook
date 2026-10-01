@@ -1,8 +1,7 @@
 package com.bifos.accountbook.family.domain.converter;
 
-import com.bifos.accountbook.shared.converter.AbstractCodeEnumConverter;
-
 import com.bifos.accountbook.family.domain.value.FamilyMemberStatus;
+import com.bifos.accountbook.shared.converter.AbstractCodeEnumConverter;
 import jakarta.persistence.Converter;
 
 /**

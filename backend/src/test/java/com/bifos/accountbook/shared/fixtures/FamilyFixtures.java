@@ -2,11 +2,11 @@ package com.bifos.accountbook.shared.fixtures;
 
 import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.family.domain.entity.FamilyMember;
-import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.family.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.family.domain.repository.FamilyRepository;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.family.domain.value.FamilyMemberStatus;
+import com.bifos.accountbook.shared.value.CustomUuid;
+import com.bifos.accountbook.user.domain.entity.User;
 import java.math.BigDecimal;
 
 /**

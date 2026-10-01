@@ -1,6 +1,5 @@
 package com.bifos.accountbook.shared.exception;
 
-import com.bifos.accountbook.shared.exception.BusinessException;
 import com.bifos.accountbook.shared.dto.ApiErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;

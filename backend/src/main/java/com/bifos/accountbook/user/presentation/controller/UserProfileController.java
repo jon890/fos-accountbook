@@ -1,11 +1,11 @@
 package com.bifos.accountbook.user.presentation.controller;
 
+import com.bifos.accountbook.shared.auth.LoginUser;
+import com.bifos.accountbook.shared.auth.LoginUserDto;
+import com.bifos.accountbook.shared.dto.ApiSuccessResponse;
+import com.bifos.accountbook.user.application.service.UserProfileService;
 import com.bifos.accountbook.user.presentation.dto.UpdateUserProfileRequest;
 import com.bifos.accountbook.user.presentation.dto.UserProfileResponse;
-import com.bifos.accountbook.user.application.service.UserProfileService;
-import com.bifos.accountbook.shared.auth.LoginUser;
-import com.bifos.accountbook.shared.dto.ApiSuccessResponse;
-import com.bifos.accountbook.shared.auth.LoginUserDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

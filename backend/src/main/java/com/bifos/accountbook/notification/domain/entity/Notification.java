@@ -1,7 +1,7 @@
 package com.bifos.accountbook.notification.domain.entity;
 
-import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.notification.domain.value.NotificationType;
+import com.bifos.accountbook.shared.value.CustomUuid;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;

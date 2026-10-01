@@ -1,8 +1,7 @@
 package com.bifos.accountbook.expense.domain.converter;
 
-import com.bifos.accountbook.shared.converter.AbstractCodeEnumConverter;
-
 import com.bifos.accountbook.expense.domain.value.ExpenseStatus;
+import com.bifos.accountbook.shared.converter.AbstractCodeEnumConverter;
 import jakarta.persistence.Converter;
 
 /**

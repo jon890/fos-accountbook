@@ -1,7 +1,7 @@
 package com.bifos.accountbook.user.domain.repository;
 
-import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.shared.value.CustomUuid;
+import com.bifos.accountbook.user.domain.entity.User;
 import java.util.Optional;
 
 /**

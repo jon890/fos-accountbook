@@ -1,8 +1,7 @@
 package com.bifos.accountbook.category.domain.converter;
 
-import com.bifos.accountbook.shared.converter.AbstractCodeEnumConverter;
-
 import com.bifos.accountbook.category.domain.value.CategoryStatus;
+import com.bifos.accountbook.shared.converter.AbstractCodeEnumConverter;
 import jakarta.persistence.Converter;
 
 /**

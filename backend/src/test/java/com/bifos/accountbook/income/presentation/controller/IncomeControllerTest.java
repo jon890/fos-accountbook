@@ -1,33 +1,31 @@
 package com.bifos.accountbook.income.presentation.controller;
 
-import com.bifos.accountbook.shared.AbstractControllerTest;
-import com.bifos.accountbook.income.application.dto.IncomeResponse;
-import static org.assertj.core.api.Assertions.assertThat;
-
-import com.bifos.accountbook.income.application.dto.CreateIncomeRequest;
-import com.bifos.accountbook.income.application.dto.UpdateIncomeRequest;
-import com.bifos.accountbook.category.domain.entity.Category;
-import com.bifos.accountbook.family.domain.entity.Family;
-import com.bifos.accountbook.income.domain.entity.Income;
-import com.bifos.accountbook.user.domain.entity.User;
-import com.bifos.accountbook.income.domain.repository.IncomeRepository;
-import com.bifos.accountbook.user.domain.repository.UserRepository;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.bifos.accountbook.category.domain.entity.Category;
+import com.bifos.accountbook.family.domain.entity.Family;
+import com.bifos.accountbook.income.application.dto.CreateIncomeRequest;
+import com.bifos.accountbook.income.application.dto.IncomeResponse;
+import com.bifos.accountbook.income.application.dto.UpdateIncomeRequest;
+import com.bifos.accountbook.income.domain.entity.Income;
+import com.bifos.accountbook.income.domain.repository.IncomeRepository;
+import com.bifos.accountbook.shared.AbstractControllerTest;
+import com.bifos.accountbook.user.domain.entity.User;
+import com.bifos.accountbook.user.domain.repository.UserRepository;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @DisplayName("IncomeController 통합 테스트")
 class IncomeControllerTest extends AbstractControllerTest {

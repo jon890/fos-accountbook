@@ -1,21 +1,20 @@
 package com.bifos.accountbook.user.presentation.controller;
 
-import com.bifos.accountbook.shared.AbstractControllerTest;
-
-import com.bifos.accountbook.user.presentation.dto.UpdateUserProfileRequest;
-import com.bifos.accountbook.user.domain.entity.User;
-import com.bifos.accountbook.user.domain.entity.UserProfile;
-import com.bifos.accountbook.user.domain.repository.UserProfileRepository;
 import static org.assertj.core.api.Assertions.assertThat;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.bifos.accountbook.shared.AbstractControllerTest;
+import com.bifos.accountbook.user.domain.entity.User;
+import com.bifos.accountbook.user.domain.entity.UserProfile;
+import com.bifos.accountbook.user.domain.repository.UserProfileRepository;
+import com.bifos.accountbook.user.presentation.dto.UpdateUserProfileRequest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 
 /**
  * UserProfileController 통합 테스트

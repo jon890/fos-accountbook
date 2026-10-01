@@ -1,8 +1,7 @@
 package com.bifos.accountbook.income.domain.converter;
 
-import com.bifos.accountbook.shared.converter.AbstractCodeEnumConverter;
-
 import com.bifos.accountbook.income.domain.value.IncomeStatus;
+import com.bifos.accountbook.shared.converter.AbstractCodeEnumConverter;
 import jakarta.persistence.Converter;
 
 /**

@@ -1,8 +1,8 @@
 package com.bifos.accountbook.shared.fixtures;
 
 import com.bifos.accountbook.category.domain.entity.Category;
-import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.category.domain.repository.CategoryRepository;
+import com.bifos.accountbook.family.domain.entity.Family;
 
 /**
  * Category 도메인 테스트 Fixture

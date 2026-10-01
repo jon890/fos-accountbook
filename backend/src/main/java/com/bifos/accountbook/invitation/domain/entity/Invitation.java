@@ -1,8 +1,8 @@
 package com.bifos.accountbook.invitation.domain.entity;
 
 import com.bifos.accountbook.family.domain.entity.Family;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.invitation.domain.value.InvitationStatus;
+import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.user.domain.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

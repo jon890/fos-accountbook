@@ -1,18 +1,18 @@
 package com.bifos.accountbook.family.infra.repository.impl;
 
-import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.category.domain.entity.QCategory;
+import com.bifos.accountbook.category.domain.value.CategoryStatus;
 import com.bifos.accountbook.expense.domain.entity.QExpense;
+import com.bifos.accountbook.expense.domain.value.ExpenseStatus;
+import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.family.domain.entity.QFamily;
 import com.bifos.accountbook.family.domain.entity.QFamilyMember;
 import com.bifos.accountbook.family.domain.repository.FamilyRepository;
 import com.bifos.accountbook.family.domain.repository.projection.FamilyWithCountsProjection;
-import com.bifos.accountbook.category.domain.value.CategoryStatus;
-import com.bifos.accountbook.shared.value.CustomUuid;
-import com.bifos.accountbook.expense.domain.value.ExpenseStatus;
 import com.bifos.accountbook.family.domain.value.FamilyMemberStatus;
 import com.bifos.accountbook.family.domain.value.FamilyStatus;
 import com.bifos.accountbook.family.infra.repository.jpa.FamilyJpaRepository;
+import com.bifos.accountbook.shared.value.CustomUuid;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.JPQLQuery;

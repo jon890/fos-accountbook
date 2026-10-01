@@ -1,7 +1,7 @@
 package com.bifos.accountbook.user.infra.repository.jpa;
 
-import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.shared.value.CustomUuid;
+import com.bifos.accountbook.user.domain.entity.User;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 

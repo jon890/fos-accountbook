@@ -2,9 +2,9 @@ package com.bifos.accountbook.user.application.service;
 
 import com.bifos.accountbook.shared.exception.BusinessException;
 import com.bifos.accountbook.shared.exception.ErrorCode;
+import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.user.domain.repository.UserRepository;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -1,17 +1,17 @@
 package com.bifos.accountbook.dashboard.infra.repository.impl;
 
 import com.bifos.accountbook.category.domain.entity.QCategory;
-import com.bifos.accountbook.expense.domain.entity.QExpense;
-import com.bifos.accountbook.income.domain.entity.QIncome;
+import com.bifos.accountbook.category.domain.value.CategoryStatus;
 import com.bifos.accountbook.dashboard.domain.repository.DashboardRepository;
 import com.bifos.accountbook.dashboard.domain.repository.projection.MonthlyTrendProjection;
 import com.bifos.accountbook.dashboard.infra.repository.projection.MonthlyTrendProjectionImpl;
+import com.bifos.accountbook.expense.domain.entity.QExpense;
 import com.bifos.accountbook.expense.domain.repository.projection.CategoryExpenseProjection;
-import com.bifos.accountbook.category.domain.value.CategoryStatus;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.expense.domain.value.ExpenseStatus;
-import com.bifos.accountbook.income.domain.value.IncomeStatus;
 import com.bifos.accountbook.expense.infra.repository.projection.CategoryExpenseProjectionImpl;
+import com.bifos.accountbook.income.domain.entity.QIncome;
+import com.bifos.accountbook.income.domain.value.IncomeStatus;
+import com.bifos.accountbook.shared.value.CustomUuid;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.dsl.BooleanExpression;

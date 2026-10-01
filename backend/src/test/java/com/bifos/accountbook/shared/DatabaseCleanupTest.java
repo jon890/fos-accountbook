@@ -1,11 +1,11 @@
 package com.bifos.accountbook.shared;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.user.domain.repository.UserRepository;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

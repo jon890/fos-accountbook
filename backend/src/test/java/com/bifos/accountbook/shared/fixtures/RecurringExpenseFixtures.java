@@ -3,8 +3,8 @@ package com.bifos.accountbook.shared.fixtures;
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.recurring.domain.entity.RecurringExpense;
-import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.recurring.domain.repository.RecurringExpenseRepository;
+import com.bifos.accountbook.user.domain.entity.User;
 import java.math.BigDecimal;
 
 /**

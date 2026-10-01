@@ -1,29 +1,28 @@
 package com.bifos.accountbook.family.presentation.controller;
 
-import com.bifos.accountbook.shared.AbstractControllerTest;
-
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.nullValue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import com.bifos.accountbook.family.application.dto.CreateFamilyRequest;
 import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.family.domain.entity.FamilyMember;
 import com.bifos.accountbook.family.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.family.domain.repository.FamilyRepository;
 import com.bifos.accountbook.family.domain.value.FamilyMemberRole;
-import com.bifos.accountbook.user.domain.repository.UserRepository;
-import java.time.LocalDateTime;
-import static org.hamcrest.Matchers.nullValue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import com.bifos.accountbook.shared.AbstractControllerTest;
 import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.user.domain.entity.UserProfile;
 import com.bifos.accountbook.user.domain.repository.UserProfileRepository;
-import static org.assertj.core.api.Assertions.assertThat;
+import com.bifos.accountbook.user.domain.repository.UserRepository;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DisplayName("가족 컨트롤러 통합 테스트")
 class FamilyControllerTest extends AbstractControllerTest {

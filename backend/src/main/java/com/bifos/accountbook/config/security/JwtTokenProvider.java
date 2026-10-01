@@ -1,7 +1,7 @@
 package com.bifos.accountbook.config.security;
 
-import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.shared.utils.TimeUtils;
+import com.bifos.accountbook.user.domain.entity.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.SecureDigestAlgorithm;
 import java.util.Date;

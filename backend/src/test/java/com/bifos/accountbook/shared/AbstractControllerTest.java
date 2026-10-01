@@ -1,15 +1,11 @@
 package com.bifos.accountbook.shared;
 
-import com.bifos.accountbook.shared.DatabaseCleanupListener;
-import com.bifos.accountbook.shared.FosSpringBootTest;
-import com.bifos.accountbook.shared.TestFixtures;
-import com.bifos.accountbook.shared.TestFixturesSupport;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.support.TransactionTemplate;

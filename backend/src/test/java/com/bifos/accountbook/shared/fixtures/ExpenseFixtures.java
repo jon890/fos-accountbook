@@ -2,10 +2,10 @@ package com.bifos.accountbook.shared.fixtures;
 
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.expense.domain.entity.Expense;
-import com.bifos.accountbook.family.domain.entity.Family;
-import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.expense.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.expense.domain.value.ExpenseStatus;
+import com.bifos.accountbook.family.domain.entity.Family;
+import com.bifos.accountbook.user.domain.entity.User;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
