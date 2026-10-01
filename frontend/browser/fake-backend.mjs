@@ -9,6 +9,7 @@ let categorySummaryIsEmpty = false;
 let notificationsAreHeld = false;
 let notificationHold;
 let budgetIsConfigured = true;
+const responseDelays = new Map();
 
 const family = {
   uuid: FAMILY_UUID,
@@ -227,6 +228,7 @@ const server = createServer(async (request, response) => {
     transactionsAreEmpty = false;
     categorySummaryIsEmpty = false;
     budgetIsConfigured = true;
+    responseDelays.clear();
     setNotificationsHeld(false);
     sendJson(response, 200, { success: true });
     return;
@@ -281,10 +283,26 @@ const server = createServer(async (request, response) => {
     sendJson(response, 200, { success: true });
     return;
   }
+  if (method === "POST" && pathname === "/__test/delay") {
+    const body = await readJson(request);
+    const isApiPath = typeof body?.pathPrefix === "string"
+      && body.pathPrefix.startsWith("/api/v1/");
+    const isValidDelay = typeof body?.ms === "number"
+      && Number.isFinite(body.ms)
+      && body.ms >= 0;
+    if (!isApiPath || !isValidDelay) {
+      sendJson(response, 400, { success: false, message: "Expected an API pathPrefix and a non-negative ms" });
+      return;
+    }
+    setResponseDelay(body.pathPrefix, body.ms);
+    sendJson(response, 200, { success: true });
+    return;
+  }
   if (method === "GET" && pathname === "/__test/unhandled") {
     sendJson(response, 200, unhandledRequests);
     return;
   }
+  await waitForResponseDelay(pathname);
   if (method === "GET" && pathname === "/api/v1/families") {
     sendJson(response, 200, { success: true, data: [family] });
     return;
@@ -456,6 +474,24 @@ function setNotificationsHeld(hold) {
 async function waitForNotifications() {
   if (!notificationsAreHeld) return;
   await notificationHold.promise;
+}
+
+function setResponseDelay(pathPrefix, ms) {
+  if (ms === 0) {
+    responseDelays.delete(pathPrefix);
+    return;
+  }
+  responseDelays.set(pathPrefix, ms);
+}
+
+async function waitForResponseDelay(pathname) {
+  const matchingDelays = [...responseDelays]
+    .filter(([pathPrefix]) => pathname.startsWith(pathPrefix))
+    .map(([, ms]) => ms);
+  const delayMs = Math.max(0, ...matchingDelays);
+  if (delayMs > 0) {
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
 }
 
 async function readJson(request) {
