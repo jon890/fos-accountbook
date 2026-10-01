@@ -236,6 +236,22 @@ const server = createServer(async (request, response) => {
     sendJson(response, 200, { success: true, data: [family] });
     return;
   }
+  if (method === "GET" && pathname === "/api/v1/users/me/profile") {
+    sendJson(response, 200, {
+      success: true,
+      data: {
+        timezone: "Asia/Seoul",
+        language: "ko",
+        currency: "KRW",
+        defaultFamilyUuid: FAMILY_UUID,
+      },
+    });
+    return;
+  }
+  if (method === "GET" && pathname === "/api/v1/users/me/api-tokens") {
+    sendJson(response, 200, { success: true, data: [] });
+    return;
+  }
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/categories`) {
     sendJson(response, 200, { success: true, data: categoriesAreEmpty ? [] : categories });
     return;
