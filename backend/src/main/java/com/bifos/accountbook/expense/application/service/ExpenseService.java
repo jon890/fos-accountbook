@@ -165,7 +165,7 @@ public class ExpenseService {
     Pageable pageable = PageRequest.of(
         searchRequest.getPage(),
         searchRequest.getSize(),
-        Sort.by(Sort.Direction.DESC, "date"));
+        Sort.by(Sort.Direction.DESC, "date", "id"));
 
     // QueryDSL이 null 조건을 자동으로 처리하므로 단일 메서드 호출
     Page<Expense> expenses = expenseRepository.findByFamilyUuidWithFilters(

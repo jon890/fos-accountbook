@@ -86,7 +86,7 @@ public class IncomeService {
     Pageable pageable = PageRequest.of(
         searchRequest.getPage(),
         searchRequest.getSize(),
-        Sort.by(Sort.Direction.DESC, "date"));
+        Sort.by(Sort.Direction.DESC, "date", "id"));
 
     // 카테고리 맵 생성 (Repository 캐시 활용)
     Map<String, CategoryResponse> categoryMap = categoryService.getFamilyCategories(userUuid, familyUuid)
