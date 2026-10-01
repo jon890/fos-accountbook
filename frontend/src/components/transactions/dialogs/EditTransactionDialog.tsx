@@ -21,10 +21,7 @@ import {
 import { getFamilyCategoriesAction } from "@/actions/category/get-categories-action";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/client/utils";
-import {
-  getMissingField,
-  type MissingTransactionField,
-} from "@/lib/client/transaction-form-readiness";
+import { getMissingField, MISSING_FIELD_MESSAGE } from "@/lib/client/transaction-form-readiness";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
@@ -104,7 +101,7 @@ async function updateRecurringWrapper(
   if (dayOfMonth === null || dayOfMonth === "") {
     return {
       success: false,
-      errors: { dayOfMonth: ["결제일을 1~28 중에서 입력해 주세요"] },
+      errors: { dayOfMonth: [MISSING_FIELD_MESSAGE.dayOfMonth] },
       message: "",
     };
   }
@@ -318,13 +315,6 @@ function EditTransactionDialogBody({
     name,
     dayOfMonth,
   });
-  const missingFieldMessage: Record<MissingTransactionField, string> = {
-    amount: "금액을 입력해 주세요",
-    category: "카테고리를 골라 주세요",
-    date: "날짜를 골라 주세요",
-    name: "이름을 입력해 주세요",
-    dayOfMonth: "결제일을 1~28 중에서 입력해 주세요",
-  };
   const destructiveActionLabel = isRecurringTransaction ? "종료" : "삭제";
   const destructivePendingLabel = isRecurringTransaction
     ? "종료 중..."
@@ -491,7 +481,7 @@ function EditTransactionDialogBody({
               id="transaction-form-missing-field"
               className="mb-2 text-xs text-fg-muted"
             >
-              {missingFieldMessage[missingField]}
+              {MISSING_FIELD_MESSAGE[missingField]}
             </p>
           )}
           <div className="flex gap-2 pb-4">

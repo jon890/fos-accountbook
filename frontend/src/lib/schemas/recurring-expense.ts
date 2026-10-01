@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const DAY_OF_MONTH_MESSAGE = "결제일을 1~28 중에서 입력해 주세요";
+
 export const recurringExpenseSchema = z.object({
   name: z.string().trim().min(1, "이름은 필수입니다"),
   categoryUuid: z.string().uuid("카테고리를 선택해주세요"),
@@ -7,8 +9,8 @@ export const recurringExpenseSchema = z.object({
   dayOfMonth: z
     .number()
     .int()
-    .min(1, "결제일을 1~28 중에서 입력해 주세요")
-    .max(28, "결제일을 1~28 중에서 입력해 주세요"),
+    .min(1, DAY_OF_MONTH_MESSAGE)
+    .max(28, DAY_OF_MONTH_MESSAGE),
 });
 
 export const updateRecurringExpenseSchema = recurringExpenseSchema.partial();

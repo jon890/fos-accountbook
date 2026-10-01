@@ -1,3 +1,4 @@
+import { DAY_OF_MONTH_MESSAGE } from "@/lib/schemas/recurring-expense";
 import type { TransactionType } from "@/types/transaction";
 
 export type MissingTransactionField =
@@ -6,6 +7,15 @@ export type MissingTransactionField =
   | "date"
   | "name"
   | "dayOfMonth";
+
+// 저장 버튼 위 안내 문구. 등록과 수정 창이 함께 쓴다 (ADR-F40).
+export const MISSING_FIELD_MESSAGE: Record<MissingTransactionField, string> = {
+  amount: "금액을 입력해 주세요",
+  category: "카테고리를 골라 주세요",
+  date: "날짜를 골라 주세요",
+  name: "이름을 입력해 주세요",
+  dayOfMonth: DAY_OF_MONTH_MESSAGE,
+};
 
 interface TransactionFormReadinessInput {
   type: TransactionType;
