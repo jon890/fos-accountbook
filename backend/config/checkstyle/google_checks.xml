@@ -316,7 +316,8 @@
     <!-- <module name="NonEmptyAtclauseDescription"/> -->
     <!-- InvalidJavadocPosition: Javadoc 위치 검사 완화 -->
     <!-- <module name="InvalidJavadocPosition"/> -->
-    <module name="JavadocTagContinuationIndentation"/>
+    <!-- google-java-format이 Javadoc 줄바꿈을 결정하므로 continuation indentation 검사는 끈다. -->
+    <!-- <module name="JavadocTagContinuationIndentation"/> -->
     <!-- SummaryJavadoc: Javadoc 요약 마침표 검사 완화 -->
     <!--
     <module name="SummaryJavadoc">
@@ -387,4 +388,3 @@
     </module>
   </module>
 </module>
-

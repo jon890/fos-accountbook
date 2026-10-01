@@ -1,6 +1,7 @@
 plugins {
     id("java")
     id("checkstyle")
+    alias(libs.plugins.spotless)
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
 }
@@ -85,6 +86,15 @@ tasks.clean {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+spotless {
+    java {
+        target("src/main/java/**/*.java", "src/test/java/**/*.java")
+        googleJavaFormat(libs.versions.google.java.format.get()).reorderImports(false)
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
 }
 
 // Checkstyle 설정 (Google Java Style)
