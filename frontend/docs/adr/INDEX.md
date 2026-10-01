@@ -39,3 +39,4 @@
 | [ADR-F32](ADR-F32-calendar-home-monthly-list.md) | 달력을 첫 화면으로 두고 한 달 목록을 한 번에 받는다 | accepted |
 | [ADR-F33](ADR-F33-bottom-tabs-menu.md) | 메뉴는 하단 탭의 「전체」 에 모은다 | accepted |
 | [ADR-F34](ADR-F34-browser-tests-fake-backend.md) | 브라우저 테스트는 가짜 백엔드와 직접 만든 세션으로 돌린다 | accepted |
+| [ADR-F36](ADR-F36-seo-and-link-preview.md) | 랜딩만 검색에 노출하고 링크 미리보기와 아이콘은 코드로 만든다 | accepted |
