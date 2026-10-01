@@ -38,12 +38,14 @@
 ### 2. `/dashboard` 제거
 
 - `app/(authenticated)/dashboard/page.tsx` 를 `redirect("/analytics")` 만 하는 파일로 바꾸고 `loading.tsx` 는 지운다.
-- 대시보드 전용이 된 컴포넌트를 지운다: `RecentActivity`, `QuickActions`, `CalendarView`, `DashboardHeader`, `CoupleAvatars`, 대시보드 skeleton. 지우기 전에 `grep -rn "<이름>" src` 로 다른 사용처가 없는지 확인한다.
+- 대시보드 전용이 된 컴포넌트를 지운다: `RecentActivity`, `QuickActions`, `CalendarView`, `DashboardHeader`, 대시보드 skeleton. 지우기 전에 `grep -rn "<이름>" src` 로 다른 사용처가 없는지 확인한다. `CoupleAvatars`는 비로그인 첫 화면도 쓰므로 유지한다.
+- 인증된 오류·404·403 화면의 홈 링크와 이름을 「홈으로」와 `/calendar`로 맞춘다. 대시보드 이전 주소의 redirect 때문에 분석으로 이동하는 오류를 막는다.
 - `actions/dashboard/get-recent-expenses-action.ts` 는 사용처 확인 후 지운다. `get-monthly-daily-stats-action.ts` 는 예산 Page, 분석 Page와 AnalyticsClient가 사용하는 공유 조회·타입 export이므로 유지한다. `services/dashboard/dashboard-service.ts` 의 함수는 `fe-plan002` 와 충돌하므로 지우지 않는다.
 
 ### 3. `InviteFamilyDialog` 위치
 
 - `components/families/InviteFamilyDialog.tsx` 로 옮기고 `menu/_components/MenuPageClient.tsx` 의 import를 함께 고친다.
+- 외부 `open` 값이 참으로 바뀌면 활성 초대 목록을 조회한다. 전체 메뉴에서 여는 첫 화면에도 기존 초대를 표시하며 조회 실패와 다시 열기를 검증한다.
 
 ### 4. phase 01 에서 남긴 `members` 정리
 
@@ -55,13 +57,14 @@
 - `frontend/src/__tests__/app/dashboard/page.test.tsx`: 대시보드 페이지가 `/analytics` 로 redirect 한다.
 - 지운 컴포넌트의 기존 테스트는 함께 지운다.
 - 분석 Page의 수입·지출 카드, 일반 조회 실패, 401 로그인 처리도 확인한다. `frontend/docs/flow.md` 「5-3」의 조회 목록과 위쪽 카드, 「15」의 삭제된 관리 버튼 설명을 실제 구현에 맞춘다. 계층·타입 설명이 바뀐 관련 docs도 같은 커밋에서 현재 사실로 갱신한다.
+- 인증된 오류·404·403 화면의 홈 링크를 검증한다. `flow.md`의 거래 종류 전환 설명과 ADR-F32를 날짜 유지 동작에 맞춘다. 과거 ADR-F21의 결정은 이력으로 보존하고 ADR-F32가 날짜 초기화 정책을 대체함을 적는다.
 - UTC 9월 30일 16시에 서울은 10월 1일 01시다. 이 시각을 고정한 테스트에서 통계 캐시와 분석·예산 조회가 10월을 사용하고 다른 시간대는 해당 지역 월을 사용하는지 확인한다. 세션 시간대가 Action→Service로 전달되는지, 기본 연월과 명시 연월도 검증한다.
 
 ## 검증
 
 ```bash
 # cwd: <repo root>
-cd frontend && pnpm test src/__tests__/app/analytics/page.test.tsx src/__tests__/app/dashboard/page.test.tsx src/__tests__/app/budget/page.test.tsx src/__tests__/services/dashboard/getDashboardStats.test.ts src/__tests__/actions/dashboard/current-month-actions.test.ts src/__tests__/actions/recurring-expense
+cd frontend && pnpm test src/__tests__/app/analytics/page.test.tsx src/__tests__/app/dashboard/page.test.tsx src/__tests__/app/budget/page.test.tsx src/__tests__/app/authenticated-status-pages.test.tsx src/__tests__/components/families/InviteFamilyDialog.test.tsx src/__tests__/services/dashboard/getDashboardStats.test.ts src/__tests__/actions/dashboard/current-month-actions.test.ts src/__tests__/actions/recurring-expense
 pnpm lint && pnpm test
 pnpm exec tsc --noEmit
 git grep -ln 'QuickActions\|RecentActivity\|CalendarView' -- src   # 결과 없음
@@ -78,7 +81,6 @@ git grep -ln 'QuickActions\|RecentActivity\|CalendarView' -- src   # 결과 없�
 | `frontend/src/components/dashboard/QuickActions.tsx` | 삭제 |
 | `frontend/src/components/dashboard/CalendarView.tsx` | 삭제 |
 | `frontend/src/components/dashboard/DashboardHeader.tsx` | 삭제 |
-| `frontend/src/components/dashboard/CoupleAvatars.tsx` | 삭제 |
 | `frontend/src/components/dashboard/skeleton/**` | 삭제 |
 | `frontend/src/components/dashboard/InviteFamilyDialog.tsx` | 삭제 |
 | `frontend/src/components/families/InviteFamilyDialog.tsx` | 신규 |
@@ -105,3 +107,9 @@ git grep -ln 'QuickActions\|RecentActivity\|CalendarView' -- src   # 결과 없�
 | `frontend/src/__tests__/services/dashboard/getDashboardStats.test.ts` | 신규 |
 | `frontend/src/__tests__/actions/dashboard/current-month-actions.test.ts` | 신규 |
 | `frontend/src/__tests__/app/budget/page.test.tsx` | 신규 |
+| `frontend/src/app/(authenticated)/error.tsx` | 수정 |
+| `frontend/src/app/(authenticated)/not-found.tsx` | 수정 |
+| `frontend/src/app/(authenticated)/forbidden.tsx` | 수정 |
+| `frontend/src/__tests__/app/authenticated-status-pages.test.tsx` | 신규 |
+| `frontend/docs/adr.md` | 수정 |
+| `frontend/src/__tests__/components/families/InviteFamilyDialog.test.tsx` | 신규 |
