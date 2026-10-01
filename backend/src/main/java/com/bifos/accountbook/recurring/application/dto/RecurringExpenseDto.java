@@ -52,8 +52,8 @@ public class RecurringExpenseDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static Response from(RecurringExpense entity, boolean generatedThisMonth,
-        CategoryInfo category) {
+    public static Response from(
+        RecurringExpense entity, boolean generatedThisMonth, CategoryInfo category) {
       return Response.builder()
           .uuid(entity.getUuid().getValue())
           .familyUuid(entity.getFamilyUuid())

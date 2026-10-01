@@ -16,8 +16,7 @@ public interface RecurringExpenseRepository {
 
   List<RecurringExpense> findAllActiveByDayOfMonth(int dayOfMonth);
 
-  boolean existsByRecurringExpenseUuidAndYearMonth(
-      String recurringExpenseUuid, String yearMonth);
+  boolean existsByRecurringExpenseUuidAndYearMonth(String recurringExpenseUuid, String yearMonth);
 
   BigDecimal sumActiveAmountByFamilyUuid(String familyUuid);
 

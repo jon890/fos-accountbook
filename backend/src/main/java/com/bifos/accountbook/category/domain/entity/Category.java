@@ -60,27 +60,17 @@ public class Category implements Serializable {
   @Column(name = "updated_at", nullable = false)
   private LocalDateTime updatedAt;
 
-  /**
-   * 카테고리 상태
-   * CategoryStatusConverter가 자동으로 코드값으로 변환하여 DB에 저장합니다.
-   */
+  /** 카테고리 상태 CategoryStatusConverter가 자동으로 코드값으로 변환하여 DB에 저장합니다. */
   @Column(nullable = false, length = 20)
   @Builder.Default
   private CategoryStatus status = CategoryStatus.ACTIVE;
 
-  /**
-   * 예산 계산에서 제외 여부
-   * true인 경우 이 카테고리의 모든 지출이 월별 예산 합계 계산에서 제외됩니다.
-   */
+  /** 예산 계산에서 제외 여부 true인 경우 이 카테고리의 모든 지출이 월별 예산 합계 계산에서 제외됩니다. */
   @Column(name = "exclude_from_budget", nullable = false)
   @Builder.Default
   private boolean excludeFromBudget = false;
 
-  /**
-   * 기본 카테고리 여부
-   * true인 경우 삭제할 수 없습니다.
-   * 각 가족마다 최소 하나 이상의 기본 카테고리('미분류')가 존재해야 합니다.
-   */
+  /** 기본 카테고리 여부 true인 경우 삭제할 수 없습니다. 각 가족마다 최소 하나 이상의 기본 카테고리('미분류')가 존재해야 합니다. */
   @Column(name = "is_default", nullable = false)
   @Builder.Default
   private boolean isDefault = false;
@@ -102,9 +92,7 @@ public class Category implements Serializable {
 
   // ========== 비즈니스 메서드 ==========
 
-  /**
-   * 카테고리 이름 변경
-   */
+  /** 카테고리 이름 변경 */
   public void updateName(String name) {
     if (name == null || name.trim().isEmpty()) {
       throw new IllegalArgumentException("카테고리 이름은 필수입니다");
@@ -112,9 +100,7 @@ public class Category implements Serializable {
     this.name = name;
   }
 
-  /**
-   * 카테고리 색상 변경
-   */
+  /** 카테고리 색상 변경 */
   public void updateColor(String color) {
     if (color != null && !CategoryColor.isValid(color)) {
       throw new IllegalArgumentException(CategoryColor.MESSAGE);
@@ -122,23 +108,17 @@ public class Category implements Serializable {
     this.color = color != null ? color : this.color;
   }
 
-  /**
-   * 카테고리 아이콘 변경
-   */
+  /** 카테고리 아이콘 변경 */
   public void updateIcon(String icon) {
     this.icon = icon;
   }
 
-  /**
-   * 카테고리 삭제 (Soft Delete)
-   */
+  /** 카테고리 삭제 (Soft Delete) */
   public void delete() {
     this.status = CategoryStatus.DELETED;
   }
 
-  /**
-   * 예산 제외 여부 설정
-   */
+  /** 예산 제외 여부 설정 */
   public void setExcludeFromBudget(boolean excludeFromBudget) {
     this.excludeFromBudget = excludeFromBudget;
   }

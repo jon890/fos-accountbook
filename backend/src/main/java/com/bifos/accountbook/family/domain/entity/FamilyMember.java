@@ -1,9 +1,9 @@
 package com.bifos.accountbook.family.domain.entity;
 
-import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.family.domain.value.FamilyMemberRole;
-import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.family.domain.value.FamilyMemberStatus;
+import com.bifos.accountbook.shared.value.CustomUuid;
+import com.bifos.accountbook.user.domain.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -22,9 +22,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "family_members", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"family_uuid", "user_uuid"})
-})
+@Table(
+    name = "family_members",
+    uniqueConstraints = {@UniqueConstraint(columnNames = {"family_uuid", "user_uuid"})})
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -52,20 +52,25 @@ public class FamilyMember {
   @Builder.Default
   private LocalDateTime joinedAt = LocalDateTime.now();
 
-  /**
-   * 가족 구성원 상태
-   * FamilyMemberStatusConverter가 자동으로 코드값으로 변환하여 DB에 저장합니다.
-   */
+  /** 가족 구성원 상태 FamilyMemberStatusConverter가 자동으로 코드값으로 변환하여 DB에 저장합니다. */
   @Column(nullable = false, length = 20)
   @Builder.Default
   private FamilyMemberStatus status = FamilyMemberStatus.ACTIVE;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "family_uuid", referencedColumnName = "uuid", insertable = false, updatable = false)
+  @JoinColumn(
+      name = "family_uuid",
+      referencedColumnName = "uuid",
+      insertable = false,
+      updatable = false)
   private Family family;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_uuid", referencedColumnName = "uuid", insertable = false, updatable = false)
+  @JoinColumn(
+      name = "user_uuid",
+      referencedColumnName = "uuid",
+      insertable = false,
+      updatable = false)
   private User user;
 
   @PrePersist

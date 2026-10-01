@@ -13,7 +13,7 @@
 
 ## 통합 검증 명령
 
-`CLAUDE.md` "Commands" 섹션이 단일 소스. 통합 검증은 `./gradlew checkstyleMain checkstyleTest test build --no-daemon`.
+`CLAUDE.md` "Commands" 섹션이 단일 소스. 통합 검증은 `./gradlew qualityCheck test build --no-daemon`.
 
 ## 브랜치 규칙
 

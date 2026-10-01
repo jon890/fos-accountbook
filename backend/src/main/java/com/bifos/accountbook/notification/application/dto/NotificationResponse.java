@@ -8,9 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 알림 응답 DTO
- */
+/** 알림 응답 DTO */
 @Getter
 @Builder
 @NoArgsConstructor
@@ -34,19 +32,21 @@ public class NotificationResponse {
     NotificationType type = notification.getType();
 
     return NotificationResponse.builder()
-                               .notificationUuid(notification.getNotificationUuid().getValue())
-                               .familyUuid(notification.getFamilyUuid().getValue())
-                               .userUuid(notification.getUserUuid() != null ? notification.getUserUuid().getValue() : null)
-                               .type(type.getCode())
-                               .typeDisplayName(type.getDisplayName())
-                               .title(notification.getTitle())
-                               .message(notification.getMessage())
-                               .referenceUuid(notification.getReferenceUuid() != null ? notification.getReferenceUuid().getValue() : null)
-                               .referenceType(notification.getReferenceType())
-                               .yearMonth(notification.getYearMonth())
-                               .isRead(notification.getIsRead())
-                               .createdAt(notification.getCreatedAt())
-                               .build();
+        .notificationUuid(notification.getNotificationUuid().getValue())
+        .familyUuid(notification.getFamilyUuid().getValue())
+        .userUuid(notification.getUserUuid() != null ? notification.getUserUuid().getValue() : null)
+        .type(type.getCode())
+        .typeDisplayName(type.getDisplayName())
+        .title(notification.getTitle())
+        .message(notification.getMessage())
+        .referenceUuid(
+            notification.getReferenceUuid() != null
+                ? notification.getReferenceUuid().getValue()
+                : null)
+        .referenceType(notification.getReferenceType())
+        .yearMonth(notification.getYearMonth())
+        .isRead(notification.getIsRead())
+        .createdAt(notification.getCreatedAt())
+        .build();
   }
 }
-

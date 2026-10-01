@@ -4,6 +4,4 @@ import com.bifos.accountbook.dashboard.domain.repository.projection.MonthlyTrend
 import java.math.BigDecimal;
 
 public record MonthlyTrendProjectionImpl(int year, int month, BigDecimal totalExpense)
-    implements MonthlyTrendProjection {
-
-}
+    implements MonthlyTrendProjection {}

@@ -5,59 +5,36 @@ import com.bifos.accountbook.shared.value.CustomUuid;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * 가족 구성원 Repository 인터페이스
- * JPA에 의존하지 않는 순수 도메인 레이어 인터페이스
- */
+/** 가족 구성원 Repository 인터페이스 JPA에 의존하지 않는 순수 도메인 레이어 인터페이스 */
 public interface FamilyMemberRepository {
 
-  /**
-   * 가족 구성원 저장
-   */
+  /** 가족 구성원 저장 */
   FamilyMember save(FamilyMember familyMember);
 
-  /**
-   * UUID로 가족 구성원 조회
-   */
+  /** UUID로 가족 구성원 조회 */
   Optional<FamilyMember> findByUuid(CustomUuid uuid);
 
-  /**
-   * 가족 UUID와 사용자 UUID로 구성원 조회
-   */
+  /** 가족 UUID와 사용자 UUID로 구성원 조회 */
   Optional<FamilyMember> findByFamilyUuidAndUserUuid(CustomUuid familyUuid, CustomUuid userUuid);
 
-  /**
-   * 가족 UUID로 모든 구성원 조회
-   */
+  /** 가족 UUID로 모든 구성원 조회 */
   List<FamilyMember> findAllByFamilyUuid(CustomUuid familyUuid);
 
-  /**
-   * 활성 구성원과 사용자를 가입 시각, ID 오름차순으로 조회
-   */
+  /** 활성 구성원과 사용자를 가입 시각, ID 오름차순으로 조회 */
   List<FamilyMember> findAllActiveByFamilyUuid(CustomUuid familyUuid);
 
-  /**
-   * 사용자 UUID로 모든 구성원 조회
-   */
+  /** 사용자 UUID로 모든 구성원 조회 */
   List<FamilyMember> findAllByUserUuid(CustomUuid userUuid);
 
-  /**
-   * 가족 UUID와 사용자 UUID로 활성 구성원 존재 여부 확인
-   */
+  /** 가족 UUID와 사용자 UUID로 활성 구성원 존재 여부 확인 */
   boolean existsActiveByFamilyUuidAndUserUuid(CustomUuid familyUuid, CustomUuid userUuid);
 
-  /**
-   * 가족 UUID로 구성원 수 조회
-   */
+  /** 가족 UUID로 구성원 수 조회 */
   int countByFamilyUuid(CustomUuid familyUuid);
 
-  /**
-   * 사용자 UUID로 가족 수 조회 (해당 사용자가 속한 가족 수)
-   */
+  /** 사용자 UUID로 가족 수 조회 (해당 사용자가 속한 가족 수) */
   int countByUserUuid(CustomUuid userUuid);
 
-  /**
-   * 가족의 모든 활성 구성원을 LEFT 상태로 벌크 변경
-   */
+  /** 가족의 모든 활성 구성원을 LEFT 상태로 벌크 변경 */
   long leaveAllByFamilyUuid(CustomUuid familyUuid);
 }

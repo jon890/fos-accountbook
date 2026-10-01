@@ -6,8 +6,9 @@ import jakarta.persistence.Converter;
 
 /**
  * CodeEnum을 DB 코드값으로 변환하는 추상 Converter
- * <p>
- * 사용 예시:
+ *
+ * <p>사용 예시:
+ *
  * <pre>
  * &#64;Converter(autoApply = true)
  * public class UserStatusConverter extends AbstractCodeEnumConverter&lt;UserStatus&gt; {
@@ -49,8 +50,6 @@ public abstract class AbstractCodeEnumConverter<E extends Enum<E> & CodeEnum>
       }
     }
     throw new IllegalArgumentException(
-        String.format("DB 값 '%s'를 %s로 변환할 수 없습니다", dbData, enumClass.getSimpleName())
-    );
+        String.format("DB 값 '%s'를 %s로 변환할 수 없습니다", dbData, enumClass.getSimpleName()));
   }
 }
-

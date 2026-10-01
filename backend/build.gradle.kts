@@ -1,6 +1,9 @@
+import org.gradle.api.tasks.PathSensitivity
+
 plugins {
     id("java")
     id("checkstyle")
+    alias(libs.plugins.spotless)
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
 }
@@ -60,6 +63,7 @@ dependencies {
 
     // Test (Bundle 사용)
     testImplementation(libs.bundles.spring.test)
+    testImplementation(libs.archunit)
     testRuntimeOnly(libs.junit.platform.launcher)
     testRuntimeOnly(libs.h2.database)
 }
@@ -83,8 +87,51 @@ tasks.clean {
     delete(querydslDir)
 }
 
-tasks.test {
+/**
+ * ArchUnit 기준 파일의 생성·갱신은 Gradle 속성으로만 명시적으로 켠다.
+ * 기본 설정은 archunit.properties 에서 읽으며, 이 속성은 최초 기준 생성 때만 쓴다.
+ */
+val archunitFreezeProperties = listOf(
+    "archunit.freeze.refreeze",
+    "archunit.freeze.store.default.allowStoreCreation",
+    "archunit.freeze.store.default.allowStoreUpdate",
+)
+
+tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+
+    archunitFreezeProperties.forEach { name ->
+        providers.gradleProperty(name).orNull?.let { systemProperty(name, it) }
+    }
+
+    inputs.files(fileTree("config/archunit/store"))
+        .withPropertyName("archunitStore")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+tasks.register<Test>("archTest") {
+    group = "verification"
+    description = "ArchUnit 구조 규칙만 검사한다."
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    useJUnitPlatform {
+        includeTags("architecture")
+    }
+}
+
+tasks.register("qualityCheck") {
+    group = "verification"
+    description = "포맷, Checkstyle, ArchUnit 검사를 함께 실행한다."
+    dependsOn("spotlessCheck", "checkstyleMain", "checkstyleTest", "archTest")
+}
+
+spotless {
+    java {
+        target("src/main/java/**/*.java", "src/test/java/**/*.java")
+        googleJavaFormat(libs.versions.google.java.format.get())
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
 }
 
 // Checkstyle 설정 (Google Java Style)

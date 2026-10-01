@@ -1,13 +1,10 @@
 package com.bifos.accountbook.notification.domain.converter;
 
-import com.bifos.accountbook.shared.converter.AbstractCodeEnumConverter;
-
 import com.bifos.accountbook.notification.domain.value.NotificationType;
+import com.bifos.accountbook.shared.converter.AbstractCodeEnumConverter;
 import jakarta.persistence.Converter;
 
-/**
- * NotificationType을 DB 코드값으로 변환하는 컨버터
- */
+/** NotificationType을 DB 코드값으로 변환하는 컨버터 */
 @Converter(autoApply = true)
 public class NotificationTypeConverter extends AbstractCodeEnumConverter<NotificationType> {
 
@@ -15,4 +12,3 @@ public class NotificationTypeConverter extends AbstractCodeEnumConverter<Notific
     super(NotificationType.class);
   }
 }
-

@@ -26,9 +26,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * {@code Authorization: Bearer fab_...} 요청을 토큰 주인으로 인증한다 (ADR-B18).
- * 허용 목록 밖의 경로는 403 으로 끝내고, 가족 권한은 기존처럼 서비스가 검증한다.
- * JWT 필터보다 앞에 두며, JWT 필터는 fab_ 값을 검증하지 못해 여기서 설정한 인증을 바꾸지 않는다.
+ * {@code Authorization: Bearer fab_...} 요청을 토큰 주인으로 인증한다 (ADR-B18). 허용 목록 밖의 경로는 403 으로 끝내고, 가족 권한은
+ * 기존처럼 서비스가 검증한다. JWT 필터보다 앞에 두며, JWT 필터는 fab_ 값을 검증하지 못해 여기서 설정한 인증을 바꾸지 않는다.
  */
 @Slf4j
 @Component
@@ -46,9 +45,11 @@ public class ApiTokenAuthenticationFilter extends OncePerRequestFilter {
   private final Clock clock;
 
   @Override
-  protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                  @NonNull HttpServletResponse response,
-                                  @NonNull FilterChain filterChain) throws ServletException, IOException {
+  protected void doFilterInternal(
+      @NonNull HttpServletRequest request,
+      @NonNull HttpServletResponse response,
+      @NonNull FilterChain filterChain)
+      throws ServletException, IOException {
     String header = request.getHeader("Authorization");
     if (header == null || !header.startsWith(TOKEN_HEADER_PREFIX)) {
       filterChain.doFilter(request, response);
@@ -68,8 +69,9 @@ public class ApiTokenAuthenticationFilter extends OncePerRequestFilter {
       return;
     }
 
-    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-        token.getUserUuid().getValue(), null, List.of(new SimpleGrantedAuthority(AUTHORITY)));
+    UsernamePasswordAuthenticationToken authentication =
+        new UsernamePasswordAuthenticationToken(
+            token.getUserUuid().getValue(), null, List.of(new SimpleGrantedAuthority(AUTHORITY)));
     SecurityContext context = SecurityContextHolder.createEmptyContext();
     context.setAuthentication(authentication);
     SecurityContextHolder.setContext(context);
@@ -84,14 +86,17 @@ public class ApiTokenAuthenticationFilter extends OncePerRequestFilter {
     filterChain.doFilter(request, response);
   }
 
-  private void writeError(HttpServletRequest request, HttpServletResponse response, ErrorCode errorCode)
+  private void writeError(
+      HttpServletRequest request, HttpServletResponse response, ErrorCode errorCode)
       throws IOException {
     response.setStatus(errorCode.getStatusCode());
     if (errorCode.getStatusCode() == HttpServletResponse.SC_UNAUTHORIZED) {
       response.setHeader(HttpHeaders.WWW_AUTHENTICATE, INVALID_TOKEN_CHALLENGE);
     }
     response.setContentType("application/json;charset=UTF-8");
-    response.getWriter().write(
-        jsonMapper.writeValueAsString(ApiErrorResponse.of(errorCode, request.getRequestURI())));
+    response
+        .getWriter()
+        .write(
+            jsonMapper.writeValueAsString(ApiErrorResponse.of(errorCode, request.getRequestURI())));
   }
 }

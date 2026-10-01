@@ -58,23 +58,17 @@ class BusinessClockIntegrationTest extends AbstractControllerTest {
     }
   }
 
-  @Autowired
-  private RecurringExpenseScheduler recurringExpenseScheduler;
+  @Autowired private RecurringExpenseScheduler recurringExpenseScheduler;
 
-  @Autowired
-  private ExpenseRepository expenseRepository;
+  @Autowired private ExpenseRepository expenseRepository;
 
-  @Autowired
-  private IncomeRepository incomeRepository;
+  @Autowired private IncomeRepository incomeRepository;
 
-  @Autowired
-  private NotificationRepository notificationRepository;
+  @Autowired private NotificationRepository notificationRepository;
 
-  @Autowired
-  private ApiTokenService apiTokenService;
+  @Autowired private ApiTokenService apiTokenService;
 
-  @Autowired
-  private ApiTokenJpaRepository apiTokenJpaRepository;
+  @Autowired private ApiTokenJpaRepository apiTokenJpaRepository;
 
   @Test
   void appliesFixedBusinessClockToRecurringTransactionsAndDashboard() throws Exception {
@@ -84,112 +78,160 @@ class BusinessClockIntegrationTest extends AbstractControllerTest {
     String familyUuid = family.getUuid().getValue();
     String userUuid = user.getUuid().getValue();
 
-    String recurringResponse = mockMvc.perform(post(
-            "/api/v1/families/{familyUuid}/recurring-expenses", familyUuid)
-            .header("X-User-UUID", userUuid)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(new CreateRecurringExpenseRequest(
-                category.getUuid().getValue(), "월 구독", BigDecimal.valueOf(100), 1))))
-        .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.data.generatedThisMonth").value(false))
-        .andReturn()
-        .getResponse()
-        .getContentAsString();
-    String recurringUuid = objectMapper.readTree(recurringResponse).path("data").path("uuid").asText();
+    String recurringResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/families/{familyUuid}/recurring-expenses", familyUuid)
+                    .header("X-User-UUID", userUuid)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        objectMapper.writeValueAsString(
+                            new CreateRecurringExpenseRequest(
+                                category.getUuid().getValue(),
+                                "월 구독",
+                                BigDecimal.valueOf(100),
+                                1))))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.data.generatedThisMonth").value(false))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String recurringUuid =
+        objectMapper.readTree(recurringResponse).path("data").path("uuid").asText();
 
     recurringExpenseScheduler.generateRecurringExpenses();
 
-    assertThat(notificationRepository.findByFamilyAndType(
-        family.getUuid(), NotificationType.RECURRING_EXPENSE_CREATED))
+    assertThat(
+            notificationRepository.findByFamilyAndType(
+                family.getUuid(), NotificationType.RECURRING_EXPENSE_CREATED))
         .extracting(Notification::getYearMonth)
         .containsExactly("2026-04");
 
-    mockMvc.perform(put("/api/v1/families/{familyUuid}/recurring-expenses/{uuid}",
-            familyUuid, recurringUuid)
-            .header("X-User-UUID", userUuid)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(new UpdateRecurringExpenseRequest(
-                null, "월 구독 갱신", BigDecimal.valueOf(100), 1))))
+    mockMvc
+        .perform(
+            put(
+                    "/api/v1/families/{familyUuid}/recurring-expenses/{uuid}",
+                    familyUuid,
+                    recurringUuid)
+                .header("X-User-UUID", userUuid)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        new UpdateRecurringExpenseRequest(
+                            null, "월 구독 갱신", BigDecimal.valueOf(100), 1))))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.generatedThisMonth").value(true));
 
-    mockMvc.perform(get("/api/v1/families/{familyUuid}/recurring-expenses", familyUuid)
-            .header("X-User-UUID", userUuid))
+    mockMvc
+        .perform(
+            get("/api/v1/families/{familyUuid}/recurring-expenses", familyUuid)
+                .header("X-User-UUID", userUuid))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.items[0].generatedThisMonth").value(true));
 
-    mockMvc.perform(get("/api/v1/families/{familyUuid}/recurring-expenses", familyUuid)
-            .header("X-User-UUID", userUuid)
-            .param("month", "2026-03"))
+    mockMvc
+        .perform(
+            get("/api/v1/families/{familyUuid}/recurring-expenses", familyUuid)
+                .header("X-User-UUID", userUuid)
+                .param("month", "2026-03"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.items[0].generatedThisMonth").value(false));
 
-    String expenseResponse = mockMvc.perform(post("/api/v1/families/{familyUuid}/expenses", familyUuid)
-            .header("X-User-UUID", userUuid)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(new CreateExpenseRequest(
-                category.getUuid().getValue(), BigDecimal.valueOf(200), "기본 날짜 지출", null, false))))
-        .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.data.date").value("2026-04-01T01:00:00"))
-        .andReturn()
-        .getResponse()
-        .getContentAsString();
+    String expenseResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/families/{familyUuid}/expenses", familyUuid)
+                    .header("X-User-UUID", userUuid)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        objectMapper.writeValueAsString(
+                            new CreateExpenseRequest(
+                                category.getUuid().getValue(),
+                                BigDecimal.valueOf(200),
+                                "기본 날짜 지출",
+                                null,
+                                false))))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.data.date").value("2026-04-01T01:00:00"))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
     String expenseUuid = objectMapper.readTree(expenseResponse).path("data").path("uuid").asText();
 
     Expense expense = expenseRepository.findByUuid(CustomUuid.from(expenseUuid)).orElseThrow();
     assertThat(expense.getDate()).isEqualTo(BUSINESS_NOW);
 
-    mockMvc.perform(post("/api/v1/families/{familyUuid}/expenses", familyUuid)
-            .header("X-User-UUID", userUuid)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(new CreateExpenseRequest(
-                category.getUuid().getValue(), BigDecimal.valueOf(400), "명시 날짜 지출",
-                LocalDateTime.of(2026, 3, 15, 10, 0), false))))
+    mockMvc
+        .perform(
+            post("/api/v1/families/{familyUuid}/expenses", familyUuid)
+                .header("X-User-UUID", userUuid)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        new CreateExpenseRequest(
+                            category.getUuid().getValue(),
+                            BigDecimal.valueOf(400),
+                            "명시 날짜 지출",
+                            LocalDateTime.of(2026, 3, 15, 10, 0),
+                            false))))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.data.date").value("2026-03-15T10:00:00"));
 
-    String incomeResponse = mockMvc.perform(post("/api/v1/families/{familyUuid}/incomes", familyUuid)
-            .header("X-User-UUID", userUuid)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(CreateIncomeRequest.builder()
-                .categoryUuid(category.getUuid().getValue())
-                .amount(BigDecimal.valueOf(300))
-                .description("기본 날짜 수입")
-                .build())))
-        .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.data.date").value("2026-04-01T01:00:00"))
-        .andReturn()
-        .getResponse()
-        .getContentAsString();
+    String incomeResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/families/{familyUuid}/incomes", familyUuid)
+                    .header("X-User-UUID", userUuid)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        objectMapper.writeValueAsString(
+                            CreateIncomeRequest.builder()
+                                .categoryUuid(category.getUuid().getValue())
+                                .amount(BigDecimal.valueOf(300))
+                                .description("기본 날짜 수입")
+                                .build())))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.data.date").value("2026-04-01T01:00:00"))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
     String incomeUuid = objectMapper.readTree(incomeResponse).path("data").path("uuid").asText();
 
     Income income = incomeRepository.findByUuid(CustomUuid.from(incomeUuid)).orElseThrow();
     assertThat(income.getDate()).isEqualTo(BUSINESS_NOW);
 
-    mockMvc.perform(post("/api/v1/families/{familyUuid}/incomes", familyUuid)
-            .header("X-User-UUID", userUuid)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(CreateIncomeRequest.builder()
-                .categoryUuid(category.getUuid().getValue())
-                .amount(BigDecimal.valueOf(500))
-                .description("명시 날짜 수입")
-                .date(LocalDateTime.of(2026, 3, 15, 10, 0))
-                .build())))
+    mockMvc
+        .perform(
+            post("/api/v1/families/{familyUuid}/incomes", familyUuid)
+                .header("X-User-UUID", userUuid)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        CreateIncomeRequest.builder()
+                            .categoryUuid(category.getUuid().getValue())
+                            .amount(BigDecimal.valueOf(500))
+                            .description("명시 날짜 수입")
+                            .date(LocalDateTime.of(2026, 3, 15, 10, 0))
+                            .build())))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.data.date").value("2026-03-15T10:00:00"));
 
-    mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly", familyUuid)
-            .header("X-User-UUID", userUuid))
+    mockMvc
+        .perform(
+            get("/api/v1/families/{familyUuid}/dashboard/stats/monthly", familyUuid)
+                .header("X-User-UUID", userUuid))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.year").value(2026))
         .andExpect(jsonPath("$.data.month").value(4))
         .andExpect(jsonPath("$.data.monthlyExpense").value(300))
         .andExpect(jsonPath("$.data.monthlyIncome").value(300));
 
-    mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/monthly", familyUuid)
-            .header("X-User-UUID", userUuid)
-            .param("year", "2026")
-            .param("month", "3"))
+    mockMvc
+        .perform(
+            get("/api/v1/families/{familyUuid}/dashboard/stats/monthly", familyUuid)
+                .header("X-User-UUID", userUuid)
+                .param("year", "2026")
+                .param("month", "3"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.year").value(2026))
         .andExpect(jsonPath("$.data.month").value(3))
@@ -201,11 +243,13 @@ class BusinessClockIntegrationTest extends AbstractControllerTest {
   void preservesUtcTimestampsForApiTokenUsageAndRevocation() throws Exception {
     User user = fixtures.getDefaultUser();
     Family family = fixtures.getDefaultFamily();
-    CreatedApiTokenResponse issued = apiTokenService.issue(
-        user.getUuid(), new CreateApiTokenRequest("시간대 회귀 검증"));
+    CreatedApiTokenResponse issued =
+        apiTokenService.issue(user.getUuid(), new CreateApiTokenRequest("시간대 회귀 검증"));
 
-    mockMvc.perform(get("/api/v1/families/{familyUuid}/expenses", family.getUuid().getValue())
-            .header("Authorization", "Bearer " + issued.getToken()))
+    mockMvc
+        .perform(
+            get("/api/v1/families/{familyUuid}/expenses", family.getUuid().getValue())
+                .header("Authorization", "Bearer " + issued.getToken()))
         .andExpect(status().isOk());
 
     ApiToken usedToken = storedToken(issued.getUuid());

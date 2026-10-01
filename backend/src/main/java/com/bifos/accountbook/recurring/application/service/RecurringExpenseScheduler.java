@@ -35,7 +35,8 @@ public class RecurringExpenseScheduler {
     int dayOfMonth = today.getDayOfMonth();
     String yearMonth = today.format(YEAR_MONTH_FORMATTER);
 
-    log.info("Starting recurring expense generation for day={}, yearMonth={}", dayOfMonth, yearMonth);
+    log.info(
+        "Starting recurring expense generation for day={}, yearMonth={}", dayOfMonth, yearMonth);
 
     List<RecurringExpense> templates =
         recurringExpenseRepository.findAllActiveByDayOfMonth(dayOfMonth);
@@ -55,22 +56,22 @@ public class RecurringExpenseScheduler {
           familyCountMap.merge(template.getFamilyUuid(), 1, Integer::sum);
         }
       } catch (Exception exception) {
-        log.warn("Failed to generate recurring expense: recurringUuid={}, message={}",
-            template.getUuid().getValue(), exception.getMessage());
+        log.warn(
+            "Failed to generate recurring expense: recurringUuid={}, message={}",
+            template.getUuid().getValue(),
+            exception.getMessage());
       }
     }
 
     // 가족별 이벤트 발행
     for (Map.Entry<String, Integer> entry : familyCountMap.entrySet()) {
-      eventPublisher.publishEvent(new RecurringExpenseCreatedEvent(
-          entry.getKey(),
-          "반복 지출",
-          entry.getValue()));
+      eventPublisher.publishEvent(
+          new RecurringExpenseCreatedEvent(entry.getKey(), "반복 지출", entry.getValue()));
     }
 
-    log.info("Recurring expense generation completed. {} families, {} expenses created",
+    log.info(
+        "Recurring expense generation completed. {} families, {} expenses created",
         familyCountMap.size(),
         familyCountMap.values().stream().mapToInt(Integer::intValue).sum());
   }
-
 }

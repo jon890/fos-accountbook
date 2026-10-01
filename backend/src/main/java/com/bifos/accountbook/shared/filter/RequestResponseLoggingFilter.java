@@ -16,11 +16,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
-/**
- * HTTP 요청/응답 로깅 필터
- * 개발 환경에서 API 요청/응답을 상세하게 로깅합니다.
- * RequestBody와 ResponseBody도 캡처하여 로깅합니다.
- */
+/** HTTP 요청/응답 로깅 필터 개발 환경에서 API 요청/응답을 상세하게 로깅합니다. RequestBody와 ResponseBody도 캡처하여 로깅합니다. */
 @Slf4j
 @Component
 public class RequestResponseLoggingFilter extends OncePerRequestFilter {
@@ -34,9 +30,11 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
   private static final int API_TOKEN_VISIBLE_LENGTH = 12;
 
   @Override
-  protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                  @NonNull HttpServletResponse response,
-                                  @NonNull FilterChain filterChain) throws ServletException, IOException {
+  protected void doFilterInternal(
+      @NonNull HttpServletRequest request,
+      @NonNull HttpServletResponse response,
+      @NonNull FilterChain filterChain)
+      throws ServletException, IOException {
 
     // Swagger UI 및 정적 리소스는 로깅 제외
     if (isAsyncDispatch(request) || shouldNotFilter(request)) {
@@ -86,9 +84,8 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
     return null;
   }
 
-  private void logResponse(ContentCachingRequestWrapper request,
-                           ContentCachingResponseWrapper response,
-                           long duration) {
+  private void logResponse(
+      ContentCachingRequestWrapper request, ContentCachingResponseWrapper response, long duration) {
     String method = request.getMethod();
     int status = response.getStatus();
 
@@ -170,10 +167,7 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
     return maskedQuery.toString();
   }
 
-  /**
-   * 연동 토큰은 끝부분만으로도 원문 추정 범위가 줄어드므로 표시용 앞부분만 남긴다.
-   * 스킴의 대소문자나 공백 수가 달라도 fab_ 가 보이면 같은 규칙으로 가린다.
-   */
+  /** 연동 토큰은 끝부분만으로도 원문 추정 범위가 줄어드므로 표시용 앞부분만 남긴다. 스킴의 대소문자나 공백 수가 달라도 fab_ 가 보이면 같은 규칙으로 가린다. */
   private String maskAuthorization(String authHeader) {
     int tokenStart = indexOfApiTokenPrefix(authHeader);
     if (tokenStart >= 0) {
@@ -207,20 +201,18 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
     return str.substring(0, maxLength) + "... (truncated)";
   }
 
-  /**
-   * 로깅 제외할 경로 필터링
-   */
+  /** 로깅 제외할 경로 필터링 */
   @Override
   protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
     String path = request.getRequestURI();
-    return path.startsWith("/swagger-ui") ||
-        path.startsWith("/v3/api-docs") ||
-        path.startsWith("/webjars") ||
-        path.startsWith("/actuator") ||
-        path.equals("/health") ||
-        path.endsWith(".css") ||
-        path.endsWith(".js") ||
-        path.endsWith(".png") ||
-        path.endsWith(".ico");
+    return path.startsWith("/swagger-ui")
+        || path.startsWith("/v3/api-docs")
+        || path.startsWith("/webjars")
+        || path.startsWith("/actuator")
+        || path.equals("/health")
+        || path.endsWith(".css")
+        || path.endsWith(".js")
+        || path.endsWith(".png")
+        || path.endsWith(".ico");
   }
 }

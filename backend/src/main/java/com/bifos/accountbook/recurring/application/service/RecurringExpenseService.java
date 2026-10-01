@@ -1,27 +1,26 @@
 package com.bifos.accountbook.recurring.application.service;
 
-import com.bifos.accountbook.category.application.service.CategoryService;
-import com.bifos.accountbook.category.application.dto.CategoryResponse;
 import com.bifos.accountbook.category.application.dto.CategoryInfo;
-import com.bifos.accountbook.recurring.application.dto.RecurringExpenseDto;
-import com.bifos.accountbook.shared.exception.BusinessException;
-import com.bifos.accountbook.shared.exception.ErrorCode;
+import com.bifos.accountbook.category.application.dto.CategoryResponse;
+import com.bifos.accountbook.category.application.service.CategoryService;
 import com.bifos.accountbook.category.domain.entity.Category;
-import com.bifos.accountbook.recurring.domain.entity.RecurringExpense;
 import com.bifos.accountbook.category.domain.repository.CategoryRepository;
+import com.bifos.accountbook.recurring.application.dto.RecurringExpenseDto;
+import com.bifos.accountbook.recurring.domain.entity.RecurringExpense;
 import com.bifos.accountbook.recurring.domain.repository.RecurringExpenseRepository;
-import com.bifos.accountbook.shared.value.CustomUuid;
-import com.bifos.accountbook.shared.utils.BusinessTime;
 import com.bifos.accountbook.shared.aop.FamilyUuid;
 import com.bifos.accountbook.shared.aop.UserUuid;
 import com.bifos.accountbook.shared.aop.ValidateFamilyAccess;
+import com.bifos.accountbook.shared.exception.BusinessException;
+import com.bifos.accountbook.shared.exception.ErrorCode;
+import com.bifos.accountbook.shared.utils.BusinessTime;
+import com.bifos.accountbook.shared.value.CustomUuid;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -53,32 +52,30 @@ public class RecurringExpenseService {
     CategoryResponse categoryResponse =
         categoryService.validateAndFindCached(familyUuid, categoryCustomUuid);
 
-    RecurringExpense entity = RecurringExpense.builder()
-        .familyUuid(familyUuid.getValue())
-        .categoryUuid(dto.getCategoryUuid())
-        .userUuid(userUuid.getValue())
-        .name(dto.getName())
-        .amount(dto.getAmount())
-        .dayOfMonth(dto.getDayOfMonth())
-        .build();
+    RecurringExpense entity =
+        RecurringExpense.builder()
+            .familyUuid(familyUuid.getValue())
+            .categoryUuid(dto.getCategoryUuid())
+            .userUuid(userUuid.getValue())
+            .name(dto.getName())
+            .amount(dto.getAmount())
+            .dayOfMonth(dto.getDayOfMonth())
+            .build();
 
     entity = recurringExpenseRepository.save(entity);
 
-    String currentYearMonth = LocalDate.now(clock.withZone(BusinessTime.ZONE))
-        .format(YEAR_MONTH_FORMATTER);
-    boolean generated = recurringExpenseRepository
-        .existsByRecurringExpenseUuidAndYearMonth(
+    String currentYearMonth =
+        LocalDate.now(clock.withZone(BusinessTime.ZONE)).format(YEAR_MONTH_FORMATTER);
+    boolean generated =
+        recurringExpenseRepository.existsByRecurringExpenseUuidAndYearMonth(
             entity.getUuid().getValue(), currentYearMonth);
 
-    return RecurringExpenseDto.Response.from(entity, generated,
-        categoryResponse.toCategoryInfo());
+    return RecurringExpenseDto.Response.from(entity, generated, categoryResponse.toCategoryInfo());
   }
 
   @ValidateFamilyAccess
   public List<RecurringExpenseDto.Response> getAll(
-      @UserUuid CustomUuid userUuid,
-      @FamilyUuid CustomUuid familyUuid,
-      String yearMonth) {
+      @UserUuid CustomUuid userUuid, @FamilyUuid CustomUuid familyUuid, String yearMonth) {
 
     List<RecurringExpense> entities =
         recurringExpenseRepository.findAllActiveByFamilyUuid(familyUuid.getValue());
@@ -86,29 +83,28 @@ public class RecurringExpenseService {
     // 카테고리 맵 생성 (캐시 활용)
     Map<String, CategoryInfo> categoryMap =
         categoryService.getFamilyCategoriesEntity(familyUuid).stream()
-            .collect(Collectors.toMap(
-                c -> c.getUuid().getValue(),
-                CategoryInfo::from));
+            .collect(Collectors.toMap(c -> c.getUuid().getValue(), CategoryInfo::from));
 
-    String targetYearMonth = yearMonth != null
-        ? yearMonth
-        : LocalDate.now(clock.withZone(BusinessTime.ZONE)).format(YEAR_MONTH_FORMATTER);
+    String targetYearMonth =
+        yearMonth != null
+            ? yearMonth
+            : LocalDate.now(clock.withZone(BusinessTime.ZONE)).format(YEAR_MONTH_FORMATTER);
 
     return entities.stream()
-        .map(entity -> {
-          boolean generated = recurringExpenseRepository
-              .existsByRecurringExpenseUuidAndYearMonth(
-                  entity.getUuid().getValue(), targetYearMonth);
-          CategoryInfo category = categoryMap.get(entity.getCategoryUuid());
-          return RecurringExpenseDto.Response.from(entity, generated, category);
-        })
+        .map(
+            entity -> {
+              boolean generated =
+                  recurringExpenseRepository.existsByRecurringExpenseUuidAndYearMonth(
+                      entity.getUuid().getValue(), targetYearMonth);
+              CategoryInfo category = categoryMap.get(entity.getCategoryUuid());
+              return RecurringExpenseDto.Response.from(entity, generated, category);
+            })
         .collect(Collectors.toList());
   }
 
   @ValidateFamilyAccess
   public BigDecimal getMonthlyTotal(
-      @UserUuid CustomUuid userUuid,
-      @FamilyUuid CustomUuid familyUuid) {
+      @UserUuid CustomUuid userUuid, @FamilyUuid CustomUuid familyUuid) {
 
     return recurringExpenseRepository.sumActiveAmountByFamilyUuid(familyUuid.getValue());
   }
@@ -121,9 +117,13 @@ public class RecurringExpenseService {
       CustomUuid uuid,
       RecurringExpenseDto.Update dto) {
 
-    RecurringExpense entity = recurringExpenseRepository.findActiveByUuid(uuid)
-        .orElseThrow(() -> new BusinessException(ErrorCode.RECURRING_EXPENSE_NOT_FOUND)
-            .addParameter("uuid", uuid.getValue()));
+    RecurringExpense entity =
+        recurringExpenseRepository
+            .findActiveByUuid(uuid)
+            .orElseThrow(
+                () ->
+                    new BusinessException(ErrorCode.RECURRING_EXPENSE_NOT_FOUND)
+                        .addParameter("uuid", uuid.getValue()));
 
     if (!entity.getFamilyUuid().equals(familyUuid.getValue())) {
       throw new BusinessException(ErrorCode.ACCESS_DENIED);
@@ -140,18 +140,19 @@ public class RecurringExpenseService {
 
     entity.update(dto.getCategoryUuid(), dto.getName(), dto.getAmount(), dto.getDayOfMonth());
 
-    String currentYearMonth = LocalDate.now(clock.withZone(BusinessTime.ZONE))
-        .format(YEAR_MONTH_FORMATTER);
-    boolean generated = recurringExpenseRepository
-        .existsByRecurringExpenseUuidAndYearMonth(
+    String currentYearMonth =
+        LocalDate.now(clock.withZone(BusinessTime.ZONE)).format(YEAR_MONTH_FORMATTER);
+    boolean generated =
+        recurringExpenseRepository.existsByRecurringExpenseUuidAndYearMonth(
             entity.getUuid().getValue(), currentYearMonth);
 
     // 업데이트 후 카테고리 정보 조회
-    CategoryInfo category = CategoryInfo.from(
-        categoryService.getFamilyCategoriesEntity(familyUuid).stream()
-            .filter(c -> c.getUuid().getValue().equals(entity.getCategoryUuid()))
-            .findFirst()
-            .orElse(null));
+    CategoryInfo category =
+        CategoryInfo.from(
+            categoryService.getFamilyCategoriesEntity(familyUuid).stream()
+                .filter(c -> c.getUuid().getValue().equals(entity.getCategoryUuid()))
+                .findFirst()
+                .orElse(null));
 
     return RecurringExpenseDto.Response.from(entity, generated, category);
   }
@@ -159,13 +160,15 @@ public class RecurringExpenseService {
   @ValidateFamilyAccess
   @Transactional
   public void delete(
-      @UserUuid CustomUuid userUuid,
-      @FamilyUuid CustomUuid familyUuid,
-      CustomUuid uuid) {
+      @UserUuid CustomUuid userUuid, @FamilyUuid CustomUuid familyUuid, CustomUuid uuid) {
 
-    RecurringExpense entity = recurringExpenseRepository.findActiveByUuid(uuid)
-        .orElseThrow(() -> new BusinessException(ErrorCode.RECURRING_EXPENSE_NOT_FOUND)
-            .addParameter("uuid", uuid.getValue()));
+    RecurringExpense entity =
+        recurringExpenseRepository
+            .findActiveByUuid(uuid)
+            .orElseThrow(
+                () ->
+                    new BusinessException(ErrorCode.RECURRING_EXPENSE_NOT_FOUND)
+                        .addParameter("uuid", uuid.getValue()));
 
     if (!entity.getFamilyUuid().equals(familyUuid.getValue())) {
       throw new BusinessException(ErrorCode.ACCESS_DENIED);
@@ -175,10 +178,12 @@ public class RecurringExpenseService {
   }
 
   @Transactional
-  public void moveRecurringExpensesToDefaultCategory(CustomUuid familyUuid,
-      CustomUuid oldCategoryUuid) {
-    Category defaultCategory = categoryRepository.getDefaultCategoryByFamily(familyUuid)
-        .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
+  public void moveRecurringExpensesToDefaultCategory(
+      CustomUuid familyUuid, CustomUuid oldCategoryUuid) {
+    Category defaultCategory =
+        categoryRepository
+            .getDefaultCategoryByFamily(familyUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
 
     recurringExpenseRepository.moveRecurringExpenses(oldCategoryUuid, defaultCategory.getUuid());
   }

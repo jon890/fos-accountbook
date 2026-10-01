@@ -29,36 +29,41 @@ public class RecurringExpenseGenerator {
 
     if (recurringExpenseRepository.existsByRecurringExpenseUuidAndYearMonth(
         recurringUuid, yearMonth)) {
-      log.warn("Recurring expense already generated: recurringUuid={}, yearMonth={}",
-          recurringUuid, yearMonth);
+      log.warn(
+          "Recurring expense already generated: recurringUuid={}, yearMonth={}",
+          recurringUuid,
+          yearMonth);
       return false;
     }
 
-    Family family = familyRepository.findActiveByUuid(
-        CustomUuid.from(template.getFamilyUuid())).orElse(null);
+    Family family =
+        familyRepository.findActiveByUuid(CustomUuid.from(template.getFamilyUuid())).orElse(null);
     if (family == null) {
-      log.warn("Family not found for recurring expense: familyUuid={}",
-          template.getFamilyUuid());
+      log.warn("Family not found for recurring expense: familyUuid={}", template.getFamilyUuid());
       return false;
     }
 
     LocalDateTime expenseDate = today.atTime(0, 0);
 
-    Expense expense = Expense.builder()
-        .family(family)
-        .categoryUuid(CustomUuid.from(template.getCategoryUuid()))
-        .userUuid(CustomUuid.from(template.getUserUuid()))
-        .amount(template.getAmount())
-        .description(template.getName())
-        .date(expenseDate)
-        .recurringExpenseUuid(recurringUuid)
-        .yearMonth(yearMonth)
-        .build();
+    Expense expense =
+        Expense.builder()
+            .family(family)
+            .categoryUuid(CustomUuid.from(template.getCategoryUuid()))
+            .userUuid(CustomUuid.from(template.getUserUuid()))
+            .amount(template.getAmount())
+            .description(template.getName())
+            .date(expenseDate)
+            .recurringExpenseUuid(recurringUuid)
+            .yearMonth(yearMonth)
+            .build();
 
     expenseRepository.save(expense);
 
-    log.info("Generated expense from recurring template: recurringUuid={}, familyUuid={}, amount={}",
-        recurringUuid, template.getFamilyUuid(), template.getAmount());
+    log.info(
+        "Generated expense from recurring template: recurringUuid={}, familyUuid={}, amount={}",
+        recurringUuid,
+        template.getFamilyUuid(),
+        template.getAmount());
     return true;
   }
 }

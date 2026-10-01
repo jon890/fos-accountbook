@@ -43,12 +43,13 @@ public class ApiTokenService {
     }
 
     String rawToken = generateRawToken();
-    ApiToken apiToken = ApiToken.builder()
-        .userUuid(userUuid)
-        .name(request.getName())
-        .tokenHash(hash(rawToken))
-        .tokenPrefix(rawToken.substring(0, DISPLAY_PREFIX_LENGTH))
-        .build();
+    ApiToken apiToken =
+        ApiToken.builder()
+            .userUuid(userUuid)
+            .name(request.getName())
+            .tokenHash(hash(rawToken))
+            .tokenPrefix(rawToken.substring(0, DISPLAY_PREFIX_LENGTH))
+            .build();
 
     ApiToken saved = apiTokenRepository.save(apiToken);
     return CreatedApiTokenResponse.of(saved, rawToken);
@@ -60,13 +61,13 @@ public class ApiTokenService {
         .toList();
   }
 
-  /**
-   * 남의 토큰도 없는 토큰과 같은 404 로 답해 존재 여부를 드러내지 않는다.
-   */
+  /** 남의 토큰도 없는 토큰과 같은 404 로 답해 존재 여부를 드러내지 않는다. */
   @Transactional
   public void revoke(CustomUuid userUuid, CustomUuid tokenUuid) {
-    ApiToken apiToken = apiTokenRepository.findActiveByUuidAndUserUuid(tokenUuid, userUuid)
-        .orElseThrow(() -> new BusinessException(ErrorCode.API_TOKEN_NOT_FOUND));
+    ApiToken apiToken =
+        apiTokenRepository
+            .findActiveByUuidAndUserUuid(tokenUuid, userUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.API_TOKEN_NOT_FOUND));
     apiToken.revoke(LocalDateTime.now(clock));
   }
 

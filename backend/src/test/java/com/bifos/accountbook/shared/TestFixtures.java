@@ -1,20 +1,20 @@
 package com.bifos.accountbook.shared;
 
+import com.bifos.accountbook.category.domain.entity.Category;
+import com.bifos.accountbook.category.domain.repository.CategoryRepository;
+import com.bifos.accountbook.expense.domain.repository.ExpenseRepository;
+import com.bifos.accountbook.family.domain.entity.Family;
+import com.bifos.accountbook.family.domain.repository.FamilyMemberRepository;
+import com.bifos.accountbook.family.domain.repository.FamilyRepository;
+import com.bifos.accountbook.income.domain.repository.IncomeRepository;
+import com.bifos.accountbook.recurring.domain.repository.RecurringExpenseRepository;
 import com.bifos.accountbook.shared.fixtures.CategoryFixtures;
 import com.bifos.accountbook.shared.fixtures.ExpenseFixtures;
 import com.bifos.accountbook.shared.fixtures.FamilyFixtures;
 import com.bifos.accountbook.shared.fixtures.IncomeFixtures;
 import com.bifos.accountbook.shared.fixtures.RecurringExpenseFixtures;
 import com.bifos.accountbook.shared.fixtures.UserFixtures;
-import com.bifos.accountbook.category.domain.entity.Category;
-import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.user.domain.entity.User;
-import com.bifos.accountbook.category.domain.repository.CategoryRepository;
-import com.bifos.accountbook.expense.domain.repository.ExpenseRepository;
-import com.bifos.accountbook.family.domain.repository.FamilyMemberRepository;
-import com.bifos.accountbook.family.domain.repository.FamilyRepository;
-import com.bifos.accountbook.income.domain.repository.IncomeRepository;
-import com.bifos.accountbook.recurring.domain.repository.RecurringExpenseRepository;
 import com.bifos.accountbook.user.domain.repository.UserRepository;
 import org.springframework.context.ApplicationContext;
 
@@ -22,6 +22,7 @@ import org.springframework.context.ApplicationContext;
  * 테스트용 Fixture 클래스 - 도메인별 Fixture 조합
  *
  * <h3>사용법:</h3>
+ *
  * <pre>{@code
  * @Test
  * void test() {
@@ -56,20 +57,22 @@ import org.springframework.context.ApplicationContext;
  * }</pre>
  *
  * <h3>구조:</h3>
+ *
  * <ul>
- *     <li>users: 사용자 생성 및 SecurityContext 관리</li>
- *     <li>families: 가족 생성 및 멤버 관리</li>
- *     <li>categories: 카테고리 생성 및 관리</li>
- *     <li>expenses: 지출 생성 및 관리</li>
- *     <li>incomes: 수입 생성 및 관리</li>
+ *   <li>users: 사용자 생성 및 SecurityContext 관리
+ *   <li>families: 가족 생성 및 멤버 관리
+ *   <li>categories: 카테고리 생성 및 관리
+ *   <li>expenses: 지출 생성 및 관리
+ *   <li>incomes: 수입 생성 및 관리
  * </ul>
  *
  * <h3>장점:</h3>
+ *
  * <ul>
- *     <li>도메인별 책임 분리 (Single Responsibility Principle)</li>
- *     <li>명확한 의존성 구조</li>
- *     <li>확장 용이 (새 도메인 추가 시 새 Fixture 클래스만 추가)</li>
- *     <li>Fluent API로 가독성 좋음</li>
+ *   <li>도메인별 책임 분리 (Single Responsibility Principle)
+ *   <li>명확한 의존성 구조
+ *   <li>확장 용이 (새 도메인 추가 시 새 Fixture 클래스만 추가)
+ *   <li>Fluent API로 가독성 좋음
  * </ul>
  */
 public class TestFixtures {
@@ -85,11 +88,14 @@ public class TestFixtures {
   public TestFixtures(ApplicationContext applicationContext) {
     final UserRepository userRepository = applicationContext.getBean(UserRepository.class);
     final FamilyRepository familyRepository = applicationContext.getBean(FamilyRepository.class);
-    final FamilyMemberRepository familyMemberRepository = applicationContext.getBean(FamilyMemberRepository.class);
-    final CategoryRepository categoryRepository = applicationContext.getBean(CategoryRepository.class);
+    final FamilyMemberRepository familyMemberRepository =
+        applicationContext.getBean(FamilyMemberRepository.class);
+    final CategoryRepository categoryRepository =
+        applicationContext.getBean(CategoryRepository.class);
     final ExpenseRepository expenseRepository = applicationContext.getBean(ExpenseRepository.class);
     final IncomeRepository incomeRepository = applicationContext.getBean(IncomeRepository.class);
-    final RecurringExpenseRepository recurringExpenseRepository = applicationContext.getBean(RecurringExpenseRepository.class);
+    final RecurringExpenseRepository recurringExpenseRepository =
+        applicationContext.getBean(RecurringExpenseRepository.class);
 
     // 의존성 순서대로 초기화
     this.users = new UserFixtures(userRepository);
@@ -100,41 +106,30 @@ public class TestFixtures {
     this.recurringExpenses = new RecurringExpenseFixtures(recurringExpenseRepository, users);
   }
 
-  /**
-   * 기본 유저 반환 (편의 메서드)
-   */
+  /** 기본 유저 반환 (편의 메서드) */
   public User getDefaultUser() {
     return users.getDefaultUser();
   }
 
-  /**
-   * 기본 가족 반환 (편의 메서드)
-   */
+  /** 기본 가족 반환 (편의 메서드) */
   public Family getDefaultFamily() {
     return families.getDefaultFamily();
   }
 
-  /**
-   * 기본 카테고리 반환 (편의 메서드)
-   */
+  /** 기본 카테고리 반환 (편의 메서드) */
   public Category getDefaultCategory() {
     return categories.getDefaultCategory();
   }
 
-  /**
-   * 이름으로 카테고리 찾기 (편의 메서드)
-   */
+  /** 이름으로 카테고리 찾기 (편의 메서드) */
   public Category findCategoryByName(Family family, String name) {
     return categories.findByName(family, name);
   }
 
-  /**
-   * 캐시 초기화 (각 테스트 후 호출)
-   */
+  /** 캐시 초기화 (각 테스트 후 호출) */
   public void clear() {
     users.clear();
     families.clear();
     categories.clear();
   }
 }
-

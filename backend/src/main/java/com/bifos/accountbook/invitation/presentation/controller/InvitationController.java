@@ -4,10 +4,10 @@ import com.bifos.accountbook.invitation.application.dto.AcceptInvitationRequest;
 import com.bifos.accountbook.invitation.application.dto.CreateInvitationRequest;
 import com.bifos.accountbook.invitation.application.dto.InvitationResponse;
 import com.bifos.accountbook.invitation.application.service.InvitationService;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.shared.auth.LoginUser;
-import com.bifos.accountbook.shared.dto.ApiSuccessResponse;
 import com.bifos.accountbook.shared.auth.LoginUserDto;
+import com.bifos.accountbook.shared.dto.ApiSuccessResponse;
+import com.bifos.accountbook.shared.value.CustomUuid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -46,16 +46,19 @@ public class InvitationController {
       @LoginUser LoginUserDto loginUser,
       @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
       @Valid @RequestBody(required = false) CreateInvitationRequest request) {
-    log.info("Creating invitation for family: {} by user: {}", familyUuid.getValue(), loginUser.userUuid());
+    log.info(
+        "Creating invitation for family: {} by user: {}",
+        familyUuid.getValue(),
+        loginUser.userUuid());
 
     if (request == null) {
       request = new CreateInvitationRequest(72); // 기본 3일
     }
 
-    InvitationResponse response = invitationService.createInvitation(loginUser.userUuid(), familyUuid, request);
+    InvitationResponse response =
+        invitationService.createInvitation(loginUser.userUuid(), familyUuid, request);
 
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
+    return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiSuccessResponse.of("초대장이 생성되었습니다", response));
   }
 
@@ -65,10 +68,13 @@ public class InvitationController {
   public ResponseEntity<ApiSuccessResponse<List<InvitationResponse>>> getFamilyInvitations(
       @LoginUser LoginUserDto loginUser,
       @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid) {
-    log.info("Fetching invitations for family: {} by user: {}", familyUuid.getValue(), loginUser.userUuid());
+    log.info(
+        "Fetching invitations for family: {} by user: {}",
+        familyUuid.getValue(),
+        loginUser.userUuid());
 
-    List<InvitationResponse> invitations = invitationService.getFamilyInvitations(loginUser.userUuid(),
-                                                                                  familyUuid);
+    List<InvitationResponse> invitations =
+        invitationService.getFamilyInvitations(loginUser.userUuid(), familyUuid);
 
     return ResponseEntity.ok(ApiSuccessResponse.of(invitations));
   }
@@ -80,7 +86,8 @@ public class InvitationController {
   @GetMapping("/token/{token}")
   public ResponseEntity<ApiSuccessResponse<InvitationResponse>> getInvitationByToken(
       @PathVariable String token) {
-    log.info("Fetching invitation by token: {}...", token.substring(0, Math.min(8, token.length())));
+    log.info(
+        "Fetching invitation by token: {}...", token.substring(0, Math.min(8, token.length())));
 
     InvitationResponse invitation = invitationService.getInvitationByToken(token);
 
@@ -93,10 +100,12 @@ public class InvitationController {
   @ApiResponse(responseCode = "404", description = "초대장을 찾을 수 없음")
   @PostMapping("/accept")
   public ResponseEntity<ApiSuccessResponse<Void>> acceptInvitation(
-      @LoginUser LoginUserDto loginUser,
-      @Valid @RequestBody AcceptInvitationRequest request) {
+      @LoginUser LoginUserDto loginUser, @Valid @RequestBody AcceptInvitationRequest request) {
     String token = request.getToken();
-    log.info("User: {} accepting invitation with token: {}...", loginUser.userUuid(), token.substring(0, Math.min(8, token.length())));
+    log.info(
+        "User: {} accepting invitation with token: {}...",
+        loginUser.userUuid(),
+        token.substring(0, Math.min(8, token.length())));
 
     invitationService.acceptInvitation(loginUser.userUuid(), token);
 
@@ -109,8 +118,7 @@ public class InvitationController {
   @ApiResponse(responseCode = "404", description = "초대장을 찾을 수 없음")
   @DeleteMapping("/{invitationUuid}")
   public ResponseEntity<ApiSuccessResponse<Void>> deleteInvitation(
-      @LoginUser LoginUserDto loginUser,
-      @PathVariable String invitationUuid) {
+      @LoginUser LoginUserDto loginUser, @PathVariable String invitationUuid) {
     log.info("Deleting invitation: {} by user: {}", invitationUuid, loginUser.userUuid());
 
     invitationService.deleteInvitation(loginUser.userUuid(), invitationUuid);

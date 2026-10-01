@@ -7,9 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 발급 직후 한 번만 돌려주는 응답. 원문 {@code token} 은 다시 조회할 수 없다.
- */
+/** 발급 직후 한 번만 돌려주는 응답. 원문 {@code token} 은 다시 조회할 수 없다. */
 @Getter
 @Builder
 @NoArgsConstructor

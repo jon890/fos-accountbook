@@ -3,24 +3,22 @@ package com.bifos.accountbook.shared.fixtures;
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.income.domain.entity.Income;
-import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.income.domain.repository.IncomeRepository;
+import com.bifos.accountbook.user.domain.entity.User;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
  * Income 도메인 테스트 Fixture
  *
- * 수입 생성 및 관리를 담당
+ * <p>수입 생성 및 관리를 담당
  */
 public class IncomeFixtures {
 
   private final IncomeRepository incomeRepository;
   private final UserFixtures userFixtures;
 
-  public IncomeFixtures(
-      IncomeRepository incomeRepository,
-      UserFixtures userFixtures) {
+  public IncomeFixtures(IncomeRepository incomeRepository, UserFixtures userFixtures) {
     this.incomeRepository = incomeRepository;
     this.userFixtures = userFixtures;
   }
@@ -32,16 +30,10 @@ public class IncomeFixtures {
    * @param category 수입 카테고리
    */
   public IncomeBuilder income(Family family, Category category) {
-    return new IncomeBuilder(
-        incomeRepository,
-        family,
-        category,
-        userFixtures.getDefaultUser());
+    return new IncomeBuilder(incomeRepository, family, category, userFixtures.getDefaultUser());
   }
 
-  /**
-   * Income Builder - 수입 생성
-   */
+  /** Income Builder - 수입 생성 */
   public static class IncomeBuilder {
     private BigDecimal amount = BigDecimal.valueOf(100000);
     private String description = "Test Income";
@@ -53,10 +45,7 @@ public class IncomeFixtures {
     private final Category category;
 
     IncomeBuilder(
-        IncomeRepository incomeRepository,
-        Family family,
-        Category category,
-        User defaultUser) {
+        IncomeRepository incomeRepository, Family family, Category category, User defaultUser) {
       this.incomeRepository = incomeRepository;
       this.family = family;
       this.category = category;
@@ -85,16 +74,16 @@ public class IncomeFixtures {
 
     public Income build() {
       // Income 직접 생성 (@Transactional 없이도 동작)
-      Income income = Income.builder()
-                            .family(family)
-                            .categoryUuid(category.getUuid())
-                            .userUuid(user.getUuid())
-                            .amount(amount)
-                            .description(description)
-                            .date(date)
-                            .build();
+      Income income =
+          Income.builder()
+              .family(family)
+              .categoryUuid(category.getUuid())
+              .userUuid(user.getUuid())
+              .amount(amount)
+              .description(description)
+              .date(date)
+              .build();
       return incomeRepository.save(income);
     }
   }
 }
-

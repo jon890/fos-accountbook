@@ -4,18 +4,15 @@ import com.bifos.accountbook.family.domain.entity.FamilyMember;
 import com.bifos.accountbook.family.domain.entity.QFamilyMember;
 import com.bifos.accountbook.family.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.family.domain.value.FamilyMemberStatus;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.family.infra.repository.jpa.FamilyMemberJpaRepository;
+import com.bifos.accountbook.shared.value.CustomUuid;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-/**
- * FamilyMemberRepository 구현체
- * JpaRepository를 내부적으로 사용하여 도메인 인터페이스 구현
- */
+/** FamilyMemberRepository 구현체 JpaRepository를 내부적으로 사용하여 도메인 인터페이스 구현 */
 @Repository
 @RequiredArgsConstructor
 public class FamilyMemberRepositoryImpl implements FamilyMemberRepository {
@@ -34,7 +31,8 @@ public class FamilyMemberRepositoryImpl implements FamilyMemberRepository {
   }
 
   @Override
-  public Optional<FamilyMember> findByFamilyUuidAndUserUuid(CustomUuid familyUuid, CustomUuid userUuid) {
+  public Optional<FamilyMember> findByFamilyUuidAndUserUuid(
+      CustomUuid familyUuid, CustomUuid userUuid) {
     return jpaRepository.findByFamilyUuidAndUserUuid(familyUuid, userUuid);
   }
 
@@ -46,13 +44,13 @@ public class FamilyMemberRepositoryImpl implements FamilyMemberRepository {
   @Override
   public List<FamilyMember> findAllActiveByFamilyUuid(CustomUuid familyUuid) {
     QFamilyMember member = QFamilyMember.familyMember;
-    return queryFactory.selectFrom(member)
-                       .join(member.user)
-                       .fetchJoin()
-                       .where(member.familyUuid.eq(familyUuid),
-                              member.status.eq(FamilyMemberStatus.ACTIVE))
-                       .orderBy(member.joinedAt.asc(), member.id.asc())
-                       .fetch();
+    return queryFactory
+        .selectFrom(member)
+        .join(member.user)
+        .fetchJoin()
+        .where(member.familyUuid.eq(familyUuid), member.status.eq(FamilyMemberStatus.ACTIVE))
+        .orderBy(member.joinedAt.asc(), member.id.asc())
+        .fetch();
   }
 
   @Override
@@ -78,11 +76,10 @@ public class FamilyMemberRepositoryImpl implements FamilyMemberRepository {
   @Override
   public long leaveAllByFamilyUuid(CustomUuid familyUuid) {
     QFamilyMember member = QFamilyMember.familyMember;
-    return queryFactory.update(member)
+    return queryFactory
+        .update(member)
         .set(member.status, FamilyMemberStatus.LEFT)
-        .where(member.family.uuid.eq(familyUuid)
-            .and(member.status.eq(FamilyMemberStatus.ACTIVE)))
+        .where(member.family.uuid.eq(familyUuid).and(member.status.eq(FamilyMemberStatus.ACTIVE)))
         .execute();
   }
 }
-
