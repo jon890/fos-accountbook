@@ -27,6 +27,8 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
 
   private static final int MAX_PAYLOAD_LENGTH = 1000; // 로그에 표시할 최대 길이
   private static final String API_TOKEN_ISSUE_PATH = "/api/v1/users/me/api-tokens";
+  private static final String AUTH_PATH_PREFIX = "/api/v1/auth/";
+  private static final String INVITATION_TOKEN_PATH_PREFIX = "/api/v1/invitations/token/";
   private static final String API_TOKEN_PREFIX = "fab_";
   // 연동 토큰의 표시용 앞 12자
   private static final int API_TOKEN_VISIBLE_LENGTH = 12;
@@ -49,11 +51,10 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
     Instant start = Instant.now();
 
     try {
-      logRequest(wrappedRequest);
-
       filterChain.doFilter(wrappedRequest, wrappedResponse);
 
       long duration = Duration.between(start, Instant.now()).toMillis();
+      logRequest(wrappedRequest);
       logResponse(wrappedRequest, wrappedResponse, duration);
 
     } finally {
@@ -63,9 +64,7 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
 
   private void logRequest(ContentCachingRequestWrapper request) {
     String method = request.getMethod();
-    String uri = request.getRequestURI();
-    String queryString = request.getQueryString();
-    String fullUrl = queryString != null ? uri + "?" + queryString : uri;
+    String fullUrl = maskRequestTarget(request);
 
     StringBuilder sb = new StringBuilder();
     sb.append("[REQ] ").append(method).append(" ").append(fullUrl);
@@ -80,13 +79,8 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
       sb.append(" | Session: ").append(maskToken(sessionToken));
     }
 
-    byte[] content = request.getContentAsByteArray();
-    if (content.length > 0) {
-      String body = new String(content, StandardCharsets.UTF_8);
-      sb.append(" | Body: ").append(truncate(body, MAX_PAYLOAD_LENGTH));
-    }
-
     log.info("{}", sb);
+    logDebugBody("[REQ]", request.getRequestURI(), request.getContentAsByteArray());
   }
 
   private String extractSessionToken(Cookie[] cookies) {
@@ -106,26 +100,67 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
                            ContentCachingResponseWrapper response,
                            long duration) {
     String method = request.getMethod();
-    String uri = request.getRequestURI();
     int status = response.getStatus();
 
     StringBuilder sb = new StringBuilder();
-    sb.append("[RES] ").append(method).append(" ").append(uri);
+    sb.append("[RES] ").append(method).append(" ").append(maskRequestTarget(request));
     sb.append(" → ").append(status).append(" (").append(duration).append("ms)");
 
-    byte[] content = response.getContentAsByteArray();
-    if (isApiTokenIssue(method, uri)) {
-      sb.append(" | Body: (연동 토큰 원문이 담겨 생략)");
-    } else if (content.length > 0) {
-      String body = new String(content, StandardCharsets.UTF_8);
-      sb.append(" | Body: ").append(truncate(body, MAX_PAYLOAD_LENGTH));
-    }
-
     log.info("{}", sb);
+    logDebugBody("[RES]", request.getRequestURI(), response.getContentAsByteArray());
   }
 
-  private boolean isApiTokenIssue(String method, String uri) {
-    return "POST".equals(method) && API_TOKEN_ISSUE_PATH.equals(uri);
+  private void logDebugBody(String logType, String requestUri, byte[] content) {
+    if (!log.isDebugEnabled()) {
+      return;
+    }
+
+    if (isBodyExcludedPath(requestUri)) {
+      log.debug("{} Body: (인증 경로라 생략)", logType);
+      return;
+    }
+
+    if (content.length > 0) {
+      String body = new String(content, StandardCharsets.UTF_8);
+      log.debug("{} Body: {}", logType, truncate(body, MAX_PAYLOAD_LENGTH));
+    }
+  }
+
+  private boolean isBodyExcludedPath(String requestUri) {
+    return requestUri.startsWith(AUTH_PATH_PREFIX) || API_TOKEN_ISSUE_PATH.equals(requestUri);
+  }
+
+  private String maskRequestTarget(HttpServletRequest request) {
+    String path = maskInvitationToken(request.getRequestURI());
+    String query = maskQuery(request.getQueryString());
+    return query == null ? path : path + "?" + query;
+  }
+
+  private String maskInvitationToken(String path) {
+    if (!path.startsWith(INVITATION_TOKEN_PATH_PREFIX)) {
+      return path;
+    }
+    return INVITATION_TOKEN_PATH_PREFIX + "***";
+  }
+
+  private String maskQuery(String query) {
+    if (query == null) {
+      return null;
+    }
+
+    String[] parameters = query.split("&", -1);
+    StringBuilder maskedQuery = new StringBuilder();
+    for (int index = 0; index < parameters.length; index++) {
+      if (index > 0) {
+        maskedQuery.append('&');
+      }
+
+      String parameter = parameters[index];
+      int equalsIndex = parameter.indexOf('=');
+      String key = equalsIndex >= 0 ? parameter.substring(0, equalsIndex) : parameter;
+      maskedQuery.append(key).append("=***");
+    }
+    return maskedQuery.toString();
   }
 
   /**

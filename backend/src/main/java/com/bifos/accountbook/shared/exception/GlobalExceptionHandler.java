@@ -51,11 +51,16 @@ public class GlobalExceptionHandler {
       BusinessException e,
       HttpServletRequest request) {
 
-    log.error("BusinessException occurred: code={}, message={}, parameters={}",
-              e.getErrorCode().getCode(),
-              e.getMessage(),
-              e.getParameters(),
-              e);
+    if (e.getErrorCode().getHttpStatus().is5xxServerError()) {
+      log.error("BusinessException occurred: code={}, message={}",
+                e.getErrorCode().getCode(),
+                e.getMessage(),
+                e);
+    } else {
+      log.warn("BusinessException occurred: code={}, message={}",
+               e.getErrorCode().getCode(),
+               e.getMessage());
+    }
 
     ApiErrorResponse errorResponse = ApiErrorResponse.builder()
                                                      .success(false)
@@ -64,7 +69,8 @@ public class GlobalExceptionHandler {
                                                      .message(e.getMessage())
                                                      .path(request.getRequestURI())
                                                      .timestamp(java.time.LocalDateTime.now())
-                                                     .parameters(e.getParameters().isEmpty() ? null : e.getParameters())
+                                                     .parameters(isDebugMode() && !e.getParameters().isEmpty()
+                                                         ? e.getParameters() : null)
                                                      .debugInfo(isDebugMode() && !e.getDebugInfo().isEmpty() ? e.getDebugInfo() : null)
                                                      .build();
 
@@ -242,4 +248,3 @@ public class GlobalExceptionHandler {
         Arrays.asList(environment.getActiveProfiles()).contains("test");
   }
 }
-
