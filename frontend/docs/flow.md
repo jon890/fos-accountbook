@@ -551,7 +551,7 @@ Teal 디자인을 적용하고 인라인 style을 제거하며 빈 상태 표시
         │
         └─ SettingsPageClient (use client)
                 │
-                ├─ SettingsHero (Teal gradient)
+                ├─ SettingsHero (gradient-budget)
                 │   ├─ 사용자 이름 + email
                 │   ├─ 현재 기본 가족명
                 │   └─ 월 예산
@@ -566,8 +566,9 @@ Teal 디자인을 적용하고 인라인 style을 제거하며 빈 상태 표시
                 │       Amount input + 빠른 입력 칩 (+10만/+50만/+100만)
                 │       저장 → updateFamilyAction({ monthlyBudget })
                 │
-                ├─ [화면 테마 카드] — 시스템 / 라이트 / 다크 radio, 고르면 바로 바뀌고 그 기기에 저장 (ADR-F38)
                 ├─ [내 가족 목록 카드]: 구성원 수, 카테고리 수, 지출 수
+                │
+                ├─ [화면 테마 카드] — 시스템 / 라이트 / 다크 radio, 고르면 바로 바뀌고 그 기기에 저장 (ADR-F38)
                 │
                 └─ [외부 연동 카드] ApiTokenSettingsCard — 외부 에이전트가 가계부를 기록할 때 쓰는 토큰 (backend ADR-B18)
                         ├─ 목록: 이름, 앞부분(fab_xxxxxxxx), 발급일, 마지막 사용(없으면 「사용 기록 없음」)

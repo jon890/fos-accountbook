@@ -186,6 +186,15 @@ async function assertBudgetSurfaces(
     await expectBackgroundBelow(recurringList, 0.45);
   }
 
+  await page.goto("/transactions");
+  const categorySummary = page.locator("[data-slot='card']")
+    .filter({ hasText: "카테고리별 지출" })
+    .first();
+  await expect(categorySummary).toBeVisible();
+  if (theme === "dark") {
+    await expectBackgroundBelow(categorySummary, 0.45);
+  }
+
   const response = await page.request.post(`${BACKEND_BASE_URL}/__test/budget`, {
     data: { configured: false },
   });

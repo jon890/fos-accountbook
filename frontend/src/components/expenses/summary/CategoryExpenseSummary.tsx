@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/client/utils";
 import type { CategoryExpenseSummaryResponse } from "@/types/expense";
@@ -88,14 +89,15 @@ export function CategoryExpenseSummary({
                   } as CSSProperties;
 
                   return (
-                    <button
+                    <Button
                       key={stat.categoryUuid}
                       type="button"
+                      variant="ghost"
                       aria-pressed={isSelected}
                       onClick={() => handleCategoryClick(stat.categoryUuid)}
                       className={cn(
-                        "flex w-full items-center gap-3 py-2.5 text-left",
-                        isSelected && "bg-brand-50",
+                        "h-auto w-full justify-start gap-3 rounded-none p-0 py-2.5 text-left hover:bg-transparent",
+                        isSelected && "bg-brand-50 hover:bg-brand-50",
                       )}
                       style={categoryColorStyle}
                     >
@@ -126,18 +128,19 @@ export function CategoryExpenseSummary({
                           {stat.percentage.toFixed(1)}%
                         </span>
                       </span>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
               {hasHiddenCategories && !showAll && (
-                <button
+                <Button
                   type="button"
-                  className="mt-3 w-full text-sm font-medium text-brand-700 hover:text-brand-800"
+                  variant="ghost"
+                  className="mt-3 h-auto w-full p-0 text-brand-700 hover:bg-transparent hover:text-brand-800"
                   onClick={() => setShowAll(true)}
                 >
                   전체 {sortedCategoryStats.length}개 보기
-                </button>
+                </Button>
               )}
             </CardContent>
           </AccordionContent>
