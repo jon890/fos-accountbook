@@ -44,3 +44,4 @@
 | [ADR-F37](ADR-F37-single-transaction-row.md) | 거래 목록은 공용 행 하나로 그리고 누르면 수정 시트를 연다 | accepted |
 | [ADR-F38](ADR-F38-dark-mode-tokens-and-theme-choice.md) | 다크 모드 색은 토큰이 맡고, 테마는 기기마다 고른다 | accepted |
 | [ADR-F39](ADR-F39-navigation-pending-feedback.md) | 화면 전환 대기 표시는 공용 라우터 훅과 상단 진행 막대가 맡는다 | accepted |
+| [ADR-F40](ADR-F40-in-sheet-amount-keypad.md) | 모바일 금액 입력은 시트 안 숫자패드로 하고, 저장할 수 없는 이유를 버튼 위에 보인다 | accepted |

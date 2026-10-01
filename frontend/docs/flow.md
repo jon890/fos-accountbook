@@ -76,19 +76,22 @@
     │
     └─ AddTransactionDialog (responsive: mobile Sheet bottom / md+ Dialog 720px)
             │
-            ├─ Segmented 3 토글: 지출 / 수입 / 고정지출
+            ├─ Segmented 3 토글: 지출 / 수입 / 고정지출 (role=radiogroup)
             │       (gradient-expense / gradient-income / gradient-primary)
             │
             ├─ TransactionFormFields (type 분기)
-            │   ├─ AmountInput (₩ + 56/64px num, 빠른 추가 칩 +1k/+5k/+10k, md+ +50k)
-            │   ├─ CategoryGrid (5×2 mobile / 10×1 desktop, role=radiogroup, --color-cat-*-bg/-fg 톤)
+            │   ├─ AmountInput (₩ + 56/64px num, 빠른 추가 칩 +1k/+5k/+10k, md+ +50k, 문구는 종류별)
+            │   │   └─ md 미만: 시트 안 숫자패드(1~9, 00, 0, 지우기), 기기 키보드 없음 (ADR-F40)
+            │   ├─ CategoryGrid (5×2 mobile / 10×1 desktop, role=radiogroup, 방향키 이동, 칸 44px 이상, --color-cat-*-bg/-fg 톤)
             │   │   └─ 지출·고정지출은 EXPENSE, 수입은 INCOME만 표시
             │   ├─ [expense 일 때] 예산에서 제외 스위치
             │   ├─ Description input (메모, name="description")
-            │   ├─ [expense/income 일 때] Date input (type="date", default: defaultDate ?? 오늘)
-            │   └─ [recurring 일 때]  Name input + DayOfMonth (1~28)
+            │   ├─ [expense/income 일 때] Date input (type="date", default: defaultDate ?? 오늘) + 「오늘」「어제」 칩
+            │   └─ [recurring 일 때]  Name input + DayOfMonth (1~28, 비우면 빈 칸 유지)
             │
-            └─ 저장 → type 분기
+            ├─ 저장 버튼 위 안내: 첫 번째로 빠진 값 (금액, 카테고리, 날짜 또는 이름, 결제일). 빠진 값이 있으면 버튼 비활성
+            │
+            └─ 저장 (요청 중 fieldset disabled) → type 분기
                     ├─ expense  → createExpenseAction()         → POST /families/{uuid}/expenses
                     ├─ income   → createIncomeAction()          → POST /families/{uuid}/incomes
                     └─ recurring→ createRecurringExpenseAction()→ POST /families/{uuid}/recurring-expenses
@@ -335,10 +338,11 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
     │
     └─ 하단 탭 가운데 추가 버튼
             └─ AddTransactionDialog 열림 → 고정지출 종류 선택
-                    ├─ 이름 (필수)
-                    ├─ 카테고리 선택 (드롭다운)
-                    ├─ 금액 입력 (숫자)
-                    └─ 매월 N일 (1~28, 숫자 입력 또는 선택)
+                    └─ TransactionFormFields의 공용 입력
+                            ├─ AmountInput: 금액
+                            ├─ CategoryGrid: 카테고리
+                            ├─ 이름 (필수)
+                            └─ 매월 N일 (1~28, 비우면 빈 칸 유지)
                             │
                             └─ 저장 → createRecurringExpenseAction()
                                     ├─ requireAuth()
@@ -347,6 +351,8 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
                                             └─ "내일부터 매월 N일에 자동 등록됩니다" toast
                                             └─ revalidatePath("/transactions")
 ```
+
+금액 입력, 저장 안내와 요청 중 잠금은 「3. 거래 등록 플로우」의 공용 규칙을 따른다.
 
 ---
 
@@ -541,6 +547,9 @@ Teal 디자인을 적용하고 인라인 style을 제거하며 빈 상태 표시
                 │       ├─ 아이콘 영역 정사각형 (w-10 h-10 / w-12 h-12)
                 │       ├─ 동적 색은 CSS variable (--cat-color)
                 │       └─ Edit / Delete (destructive variant, plan020)
+                │
+                ├─ 추가, 수정 창: md 미만 Sheet bottom / md+ Dialog (ADR-F40)
+                │   └─ 이모지 격자 8열, 색은 견본 원과 접근 이름으로만 보이고 색 문자열은 숨김
                 │
                 └─ Empty → EmptyState 공용 (plan012)
 ```

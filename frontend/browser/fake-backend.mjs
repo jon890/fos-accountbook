@@ -3,6 +3,7 @@ import { BACKEND_PORT, FAMILY_UUID } from "./settings.ts";
 
 const createdAt = "2026-01-01T00:00:00.000Z";
 const unhandledRequests = [];
+const createdTransactions = [];
 let categoriesAreEmpty = false;
 let transactionsAreEmpty = false;
 let categorySummaryIsEmpty = false;
@@ -29,7 +30,7 @@ const categories = [
     familyUuid: FAMILY_UUID,
     type: "EXPENSE",
     name: "식비",
-    icon: "utensils",
+    icon: "🍽️",
     color: "oklch(0.560 0.140 35)",
     excludeFromBudget: false,
     createdAt,
@@ -40,7 +41,7 @@ const categories = [
     familyUuid: FAMILY_UUID,
     type: "EXPENSE",
     name: "교통",
-    icon: "bus",
+    icon: "🚌",
     color: "oklch(0.540 0.130 230)",
     excludeFromBudget: true,
     createdAt,
@@ -51,7 +52,7 @@ const categories = [
     familyUuid: FAMILY_UUID,
     type: "EXPENSE",
     name: "생활",
-    icon: "house",
+    icon: "🏠",
     color: "oklch(0.510 0.110 188)",
     excludeFromBudget: false,
     createdAt,
@@ -62,7 +63,7 @@ const categories = [
     familyUuid: FAMILY_UUID,
     type: "INCOME",
     name: "급여",
-    icon: "wallet",
+    icon: "💰",
     color: "oklch(0.650 0.140 145)",
     createdAt,
     updatedAt: createdAt,
@@ -225,6 +226,7 @@ const server = createServer(async (request, response) => {
 
   if (method === "POST" && pathname === "/__test/reset") {
     unhandledRequests.length = 0;
+    createdTransactions.length = 0;
     categoriesAreEmpty = false;
     transactionsAreEmpty = false;
     categorySummaryIsEmpty = false;
@@ -233,6 +235,10 @@ const server = createServer(async (request, response) => {
     extraNotificationCount = 0;
     setNotificationsHeld(false);
     sendJson(response, 200, { success: true });
+    return;
+  }
+  if (method === "GET" && pathname === "/__test/created-transactions") {
+    sendJson(response, 200, createdTransactions);
     return;
   }
   if (method === "POST" && pathname === "/__test/categories") {
@@ -315,6 +321,27 @@ const server = createServer(async (request, response) => {
     return;
   }
   await waitForResponseDelay(pathname);
+  if (method === "POST" && pathname === `/api/v1/families/${FAMILY_UUID}/expenses`) {
+    const body = await readJson(request);
+    createdTransactions.push({ path: pathname, body });
+    sendJson(response, 200, {
+      success: true,
+      data: {
+        uuid: "55555555-5555-5555-5555-555555555556",
+        familyUuid: FAMILY_UUID,
+        userUuid: members[0].userUuid,
+        categoryUuid: body?.categoryUuid,
+        category: null,
+        amount: body?.amount,
+        description: body?.description ?? null,
+        date: body?.date,
+        excludeFromBudget: body?.excludeFromBudget ?? false,
+        createdAt,
+        updatedAt: createdAt,
+      },
+    });
+    return;
+  }
   if (method === "GET" && pathname === "/api/v1/families") {
     sendJson(response, 200, { success: true, data: [family] });
     return;

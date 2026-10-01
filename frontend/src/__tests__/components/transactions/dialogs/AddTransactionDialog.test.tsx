@@ -30,7 +30,7 @@ jest.mock("@/hooks/useMediaQuery", () => ({
 
 jest.mock("react", () => ({
   ...jest.requireActual("react"),
-  useActionState: jest.fn((action, initialState) => [initialState, action]),
+  useActionState: jest.fn((action, initialState) => [initialState, action, false]),
 }));
 
 import { getFamilyCategoriesAction } from "@/actions/category/get-categories-action";
@@ -41,6 +41,17 @@ import { AddTransactionDialog } from "@/components/transactions/dialogs/AddTrans
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import userEvent from "@testing-library/user-event";
+
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+Object.defineProperty(global, "ResizeObserver", {
+  writable: true,
+  value: ResizeObserverMock,
+});
 
 const mockGetCategories = getFamilyCategoriesAction as jest.MockedFunction<
   typeof getFamilyCategoriesAction
@@ -115,10 +126,10 @@ describe("AddTransactionDialog", () => {
     expect(dateInput).toHaveValue("2026-09-14");
     await user.clear(dateInput);
     await user.type(dateInput, "2026-09-13");
-    await user.click(screen.getByRole("button", { name: /^수입$/ }));
+    await user.click(screen.getByRole("radio", { name: "수입" }));
     expect(screen.getByLabelText(/날짜/)).toHaveValue("2026-09-13");
-    await user.click(screen.getByRole("button", { name: /^고정지출$/ }));
-    await user.click(screen.getByRole("button", { name: /^지출$/ }));
+    await user.click(screen.getByRole("radio", { name: "고정지출" }));
+    await user.click(screen.getByRole("radio", { name: "지출" }));
     expect(screen.getByLabelText(/날짜/)).toHaveValue("2026-09-13");
     rerender(
       <AddTransactionDialog open={false} onOpenChange={onOpenChange} defaultDate="2026-09-15" />,
@@ -167,7 +178,7 @@ describe("AddTransactionDialog", () => {
       expect(screen.getByRole("button", { name: /수입 추가/ })).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole("button", { name: /^지출$/ }));
+    await user.click(screen.getByRole("radio", { name: "지출" }));
 
     expect(screen.getByRole("button", { name: /지출 추가/ })).toBeInTheDocument();
   });
@@ -182,7 +193,7 @@ describe("AddTransactionDialog", () => {
       expect(screen.getByRole("button", { name: /지출 추가/ })).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole("button", { name: /^수입$/ }));
+    await user.click(screen.getByRole("radio", { name: "수입" }));
 
     expect(screen.getByRole("button", { name: /수입 추가/ })).toBeInTheDocument();
   });
@@ -195,11 +206,64 @@ describe("AddTransactionDialog", () => {
     await user.click(expenseCategory);
     expect(expenseCategory).toHaveAttribute("aria-checked", "true");
 
-    await user.click(screen.getByRole("button", { name: /^수입$/ }));
+    await user.click(screen.getByRole("radio", { name: "수입" }));
 
     const incomeCategory = screen.getByRole("radio", { name: "급여" });
     expect(incomeCategory).toHaveAttribute("aria-checked", "false");
     expect(screen.queryByRole("radio", { name: "식비" })).not.toBeInTheDocument();
+  });
+
+  it("첫 번째로 빠진 값을 안내하고, 저장 버튼 설명으로 연결한다", async () => {
+    const user = userEvent.setup();
+    render(<AddTransactionDialog open onOpenChange={onOpenChange} />);
+
+    const submitButton = screen.getByRole("button", { name: "지출 추가" });
+    expect(submitButton).toBeDisabled();
+    expect(screen.getByText("금액을 입력해 주세요")).toHaveAttribute(
+      "id",
+      "transaction-form-missing-field",
+    );
+    expect(submitButton).toHaveAttribute("aria-describedby", "transaction-form-missing-field");
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "금액 직접 입력" }), {
+      target: { value: "1000" },
+    });
+    expect(screen.getByText("카테고리를 골라 주세요")).toBeInTheDocument();
+
+    await user.click(await screen.findByRole("radio", { name: "식비" }));
+    expect(screen.queryByText("카테고리를 골라 주세요")).not.toBeInTheDocument();
+    expect(submitButton).toBeEnabled();
+    expect(submitButton).not.toHaveAttribute("aria-describedby");
+  });
+
+  it("종류 토글은 라디오 그룹이며 방향키로 선택을 옮긴다", async () => {
+    const user = userEvent.setup();
+    render(<AddTransactionDialog open onOpenChange={onOpenChange} />);
+
+    expect(screen.getByRole("radiogroup", { name: "거래 종류" })).toBeInTheDocument();
+    const expenseRadio = screen.getByRole("radio", { name: "지출" });
+    await user.click(expenseRadio);
+    fireEvent.keyDown(expenseRadio, { key: "ArrowRight" });
+
+    await waitFor(() => {
+      expect(screen.getByRole("radio", { name: "수입" })).toBeChecked();
+    });
+  });
+
+  it("저장 중에는 입력, 취소, 저장 버튼을 모두 잠근다", async () => {
+    const { useActionState } = jest.requireMock("react");
+    useActionState.mockImplementation((action: unknown, initialState: unknown) => [initialState, action, true]);
+
+    try {
+      render(<AddTransactionDialog open onOpenChange={onOpenChange} />);
+      await screen.findByRole("radio", { name: "식비" });
+
+      expect(screen.getByRole("spinbutton", { name: "금액 직접 입력" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "취소" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "지출 추가" })).toBeDisabled();
+    } finally {
+      useActionState.mockImplementation((action: unknown, initialState: unknown) => [initialState, action, false]);
+    }
   });
 
   it("고정지출 토글 클릭 → 고정지출 추가 버튼 + 이름/결제일 필드 표시", async () => {
@@ -212,7 +276,7 @@ describe("AddTransactionDialog", () => {
       expect(screen.getByRole("button", { name: /지출 추가/ })).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole("button", { name: /^고정지출$/ }));
+    await user.click(screen.getByRole("radio", { name: "고정지출" }));
 
     expect(screen.getByRole("button", { name: /고정지출 추가/ })).toBeInTheDocument();
     expect(screen.getByLabelText(/이름/i)).toBeInTheDocument();
@@ -278,5 +342,25 @@ describe("AddTransactionDialog", () => {
 
     // recurring 은 wrapper 가 useActionState 에 등록되므로 모듈 정의 존재만 검증
     expect(mockCreateRecurring).toBeDefined();
+  });
+
+  it("빈 결제일 제출은 고정지출 등록 action을 호출하지 않고 오류를 반환한다", async () => {
+    const { useActionState } = jest.requireMock("react");
+    useActionState.mockClear();
+
+    render(
+      <AddTransactionDialog open onOpenChange={onOpenChange} defaultType="recurring" />,
+    );
+    await screen.findByRole("button", { name: "고정지출 추가" });
+
+    const recurringWrapper = useActionState.mock.calls[2][0];
+    const result = await recurringWrapper({ success: false, errors: {}, message: "" }, new FormData());
+
+    expect(result).toEqual({
+      success: false,
+      errors: { dayOfMonth: ["결제일을 1~28 중에서 입력해 주세요"] },
+      message: "",
+    });
+    expect(mockCreateRecurring).not.toHaveBeenCalled();
   });
 });

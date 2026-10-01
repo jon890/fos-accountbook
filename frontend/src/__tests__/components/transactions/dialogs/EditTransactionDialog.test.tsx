@@ -53,6 +53,17 @@ import type { Expense, UpdateExpenseFormState } from "@/types/expense";
 import type { Income } from "@/types/income";
 import type { RecurringExpense } from "@/types/recurring-expense";
 
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+Object.defineProperty(global, "ResizeObserver", {
+  writable: true,
+  value: ResizeObserverMock,
+});
+
 const mockGetCategories = getFamilyCategoriesAction as jest.MockedFunction<
   typeof getFamilyCategoriesAction
 >;
@@ -168,6 +179,9 @@ describe("EditTransactionDialog", () => {
     try {
       await user.click(await screen.findByRole("button", { name: `${label} 수정` }));
       await waitFor(() => expect(updateAction).toHaveBeenCalled());
+      expect(screen.getByRole("spinbutton", { name: "금액 직접 입력" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "취소" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "수정 중..." })).toBeDisabled();
       const deleteButton = screen.getByRole("button", { name: "삭제" });
       expect(deleteButton).toBeDisabled();
       await user.click(deleteButton);
@@ -401,8 +415,8 @@ describe("EditTransactionDialog", () => {
         expect(screen.getByRole("button", { name: /지출 수정/ })).toBeInTheDocument();
       });
 
-      const incomeToggle = screen.getByRole("button", { name: /^수입$/ });
-      const recurringToggle = screen.getByRole("button", { name: /^고정지출$/ });
+      const incomeToggle = screen.getByRole("radio", { name: "수입" });
+      const recurringToggle = screen.getByRole("radio", { name: "고정지출" });
       expect(incomeToggle).toBeDisabled();
       expect(recurringToggle).toBeDisabled();
     });
@@ -422,8 +436,8 @@ describe("EditTransactionDialog", () => {
         expect(screen.getByRole("button", { name: /수입 수정/ })).toBeInTheDocument();
       });
 
-      const expenseToggle = screen.getByRole("button", { name: /^지출$/ });
-      const recurringToggle = screen.getByRole("button", { name: /^고정지출$/ });
+      const expenseToggle = screen.getByRole("radio", { name: "지출" });
+      const recurringToggle = screen.getByRole("radio", { name: "고정지출" });
       expect(expenseToggle).toBeDisabled();
       expect(recurringToggle).toBeDisabled();
     });
@@ -442,8 +456,8 @@ describe("EditTransactionDialog", () => {
         expect(screen.getByRole("button", { name: /고정지출 수정/ })).toBeInTheDocument();
       });
 
-      const expenseToggle = screen.getByRole("button", { name: /^지출$/ });
-      const incomeToggle = screen.getByRole("button", { name: /^수입$/ });
+      const expenseToggle = screen.getByRole("radio", { name: "지출" });
+      const incomeToggle = screen.getByRole("radio", { name: "수입" });
       expect(expenseToggle).toBeDisabled();
       expect(incomeToggle).toBeDisabled();
     });
@@ -603,6 +617,35 @@ describe("EditTransactionDialog", () => {
 
       // updateRecurringExpenseAction 이 모듈에 정의되어 있는지 검증
       expect(mockUpdateRecurring).toBeDefined();
+    });
+
+    it("빈 결제일 제출은 고정지출 수정 action을 호출하지 않고 오류를 반환한다", async () => {
+      const { useActionState } = jest.requireMock("react");
+      useActionState.mockImplementation((action: unknown, initialState: unknown) => [initialState, action, false]);
+
+      try {
+        render(
+          <EditTransactionDialog
+            open
+            onOpenChange={onOpenChange}
+            type="recurring"
+            transaction={mockRecurring}
+          />,
+        );
+        await screen.findByRole("button", { name: "고정지출 수정" });
+
+        const recurringWrapper = useActionState.mock.calls[2][0];
+        const result = await recurringWrapper({ success: false, errors: {}, message: "" }, new FormData());
+
+        expect(result).toEqual({
+          success: false,
+          errors: { dayOfMonth: ["결제일을 1~28 중에서 입력해 주세요"] },
+          message: "",
+        });
+        expect(mockUpdateRecurring).not.toHaveBeenCalled();
+      } finally {
+        useActionState.mockImplementation(jest.requireActual("react").useActionState);
+      }
     });
   });
 

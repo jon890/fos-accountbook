@@ -2,8 +2,10 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { AmountInput } from "@/components/expenses/forms/AmountInput";
 import { CategoryGrid } from "@/components/expenses/forms/CategoryGrid";
+import { toLocalDateInput } from "@/lib/utils/format";
 import { Switch } from "@/components/ui/switch";
 import type { CategoryResponse } from "@/types/category";
 import type { TransactionType } from "@/types/transaction";
@@ -29,7 +31,7 @@ interface TransactionFormFieldsProps {
   name?: string;
   onNameChange?: (s: string) => void;
   dayOfMonth?: number;
-  onDayOfMonthChange?: (n: number) => void;
+  onDayOfMonthChange?: (n: number | undefined) => void;
   // 공통
   isLoadingCategories: boolean;
   errors?: Record<string, string[] | undefined>;
@@ -64,6 +66,10 @@ export function TransactionFormFields({
   const filteredCategories = categories.filter(
     (category) => category.type === categoryType,
   );
+  const today = toLocalDateInput();
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterday = toLocalDateInput(yesterdayDate);
 
   function handleFocus(event: FocusEvent<HTMLDivElement>) {
     if (!isDesktop && event.target instanceof HTMLInputElement) {
@@ -76,7 +82,7 @@ export function TransactionFormFields({
       {/* 금액 (공용) */}
       <div className="space-y-2">
         <Label htmlFor="amount">금액 *</Label>
-        <AmountInput id="amount" value={amount} onChange={onAmountChange} />
+        <AmountInput id="amount" type={type} value={amount} onChange={onAmountChange} />
         <input type="hidden" name="amount" value={amount} />
         {errors?.amount && <p className="text-sm text-expense">{errors.amount[0]}</p>}
       </div>
@@ -153,7 +159,11 @@ export function TransactionFormFields({
                 max={28}
                 className="pr-8"
                 value={dayOfMonth ?? ""}
-                onChange={(e) => onDayOfMonthChange?.(Number(e.target.value))}
+                onChange={(e) =>
+                  onDayOfMonthChange?.(
+                    e.target.value === "" ? undefined : Number(e.target.value),
+                  )
+                }
                 required
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-fg-muted">
@@ -178,6 +188,26 @@ export function TransactionFormFields({
             onChange={(e) => onDateChange?.(e.target.value)}
             required
           />
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              aria-pressed={date === today}
+              className="min-h-11 flex-1 aria-pressed:border-fg aria-pressed:bg-bg-muted"
+              onClick={() => onDateChange?.(today)}
+            >
+              오늘
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              aria-pressed={date === yesterday}
+              className="min-h-11 flex-1 aria-pressed:border-fg aria-pressed:bg-bg-muted"
+              onClick={() => onDateChange?.(yesterday)}
+            >
+              어제
+            </Button>
+          </div>
           {errors?.date && <p className="text-sm text-expense">{errors.date[0]}</p>}
         </div>
       )}

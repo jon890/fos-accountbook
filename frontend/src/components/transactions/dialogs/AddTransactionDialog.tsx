@@ -4,7 +4,9 @@ import { getFamilyCategoriesAction } from "@/actions/category/get-categories-act
 import { createExpenseAction } from "@/actions/expense/create-expense-action";
 import { createIncomeAction } from "@/actions/income/create-income-action";
 import { createRecurringExpenseAction } from "@/actions/recurring-expense";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/client/utils";
+import { getMissingField, MISSING_FIELD_MESSAGE } from "@/lib/client/transaction-form-readiness";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -46,19 +48,39 @@ type FormState = {
   message: string;
 };
 
-const initialExpenseState: CreateExpenseFormState = { message: "", errors: {}, success: false };
-const initialIncomeState: CreateIncomeFormState = { message: "", errors: {}, success: false };
+const initialExpenseState: CreateExpenseFormState = {
+  message: "",
+  errors: {},
+  success: false,
+};
+const initialIncomeState: CreateIncomeFormState = {
+  message: "",
+  errors: {},
+  success: false,
+};
 const initialFormState: FormState = { success: false, errors: {}, message: "" };
 
 // createRecurringExpenseAction(data: unknown) → ActionResult 를
 // useActionState 호환 (prevState, FormData) → FormState 로 변환하는 wrapper.
 // 검증 schema 는 server action 과 공용 (recurringExpenseSchema) — 즉시 피드백 + 시그니처 변환 목적
-async function createRecurringWrapper(_prev: FormState, fd: FormData): Promise<FormState> {
+async function createRecurringWrapper(
+  _prev: FormState,
+  fd: FormData,
+): Promise<FormState> {
+  const dayOfMonth = fd.get("dayOfMonth");
+  if (dayOfMonth === null || dayOfMonth === "") {
+    return {
+      success: false,
+      errors: { dayOfMonth: [MISSING_FIELD_MESSAGE.dayOfMonth] },
+      message: "",
+    };
+  }
+
   const raw = {
     name: String(fd.get("name") ?? ""),
     categoryUuid: String(fd.get("categoryUuid") ?? ""),
     amount: Number(fd.get("amount")),
-    dayOfMonth: Number(fd.get("dayOfMonth")),
+    dayOfMonth: Number(dayOfMonth),
   };
   const parsed = recurringExpenseSchema.safeParse(raw);
   if (!parsed.success) {
@@ -72,7 +94,11 @@ async function createRecurringWrapper(_prev: FormState, fd: FormData): Promise<F
   const result = await createRecurringExpenseAction(parsed.data);
   return result.success
     ? { success: true, errors: {}, message: "고정지출이 등록되었습니다" }
-    : { success: false, errors: { _form: [result.error?.message ?? "등록 실패"] }, message: "" };
+    : {
+        success: false,
+        errors: { _form: [result.error?.message ?? "등록 실패"] },
+        message: "",
+      };
 }
 
 export function AddTransactionDialog({
@@ -97,7 +123,7 @@ export function AddTransactionDialog({
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[720px] bg-bg-elev">
+        <DialogContent className="max-h-[90dvh] max-w-[720px] flex flex-col overflow-hidden bg-bg-elev">
           <DialogHeader>
             <DialogTitle>거래 추가</DialogTitle>
           </DialogHeader>
@@ -109,7 +135,11 @@ export function AddTransactionDialog({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" style={sheetStyle} className="h-[100dvh] p-0 gap-0 bg-bg-elev">
+      <SheetContent
+        side="bottom"
+        style={sheetStyle}
+        className="h-[100dvh] p-0 gap-0 bg-bg-elev"
+      >
         <SheetHeader className="px-5 py-3 border-b border-border">
           <SheetTitle>거래 추가</SheetTitle>
         </SheetHeader>
@@ -125,8 +155,13 @@ interface AddTransactionDialogBodyProps {
   defaultDate?: string;
 }
 
-function AddTransactionDialogBody({ onOpenChange, defaultType, defaultDate }: AddTransactionDialogBodyProps) {
-  const [activeTypeDraft, setActiveTypeDraft] = useState<TransactionType | null>(null);
+function AddTransactionDialogBody({
+  onOpenChange,
+  defaultType,
+  defaultDate,
+}: AddTransactionDialogBodyProps) {
+  const [activeTypeDraft, setActiveTypeDraft] =
+    useState<TransactionType | null>(null);
   const activeType = activeTypeDraft ?? defaultType;
 
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
@@ -145,12 +180,16 @@ function AddTransactionDialogBody({ onOpenChange, defaultType, defaultDate }: Ad
   const [name, setName] = useState("");
   const [dayOfMonth, setDayOfMonth] = useState<number | undefined>(undefined);
 
-  const [expenseState, expenseFormAction] = useActionState(createExpenseAction, initialExpenseState);
-  const [incomeState, incomeFormAction] = useActionState(createIncomeAction, initialIncomeState);
-  const [recurringState, recurringFormAction] = useActionState(
-    createRecurringWrapper,
-    initialFormState,
+  const [expenseState, expenseFormAction, isExpensePending] = useActionState(
+    createExpenseAction,
+    initialExpenseState,
   );
+  const [incomeState, incomeFormAction, isIncomePending] = useActionState(
+    createIncomeAction,
+    initialIncomeState,
+  );
+  const [recurringState, recurringFormAction, isRecurringPending] =
+    useActionState(createRecurringWrapper, initialFormState);
 
   useEffect(() => {
     let cancelled = false;
@@ -213,7 +252,8 @@ function AddTransactionDialogBody({ onOpenChange, defaultType, defaultDate }: Ad
   }
 
   let formAction = recurringFormAction;
-  let errors: Record<string, string[] | undefined> | undefined = recurringState.errors;
+  let errors: Record<string, string[] | undefined> | undefined =
+    recurringState.errors;
   let ctaGradient = "gradient-primary text-brand-fg";
   let ctaLabel = "고정지출";
 
@@ -229,92 +269,126 @@ function AddTransactionDialogBody({ onOpenChange, defaultType, defaultDate }: Ad
     ctaLabel = "수입";
   }
 
+  const isPending = isExpensePending || isIncomePending || isRecurringPending;
+  const missingField = getMissingField({
+    type: activeType,
+    amount,
+    categoryUuid,
+    date,
+    name,
+    dayOfMonth,
+  });
+
   return (
     <form action={formAction} className="flex min-h-0 flex-1 flex-col">
-      <div className="space-y-5 overflow-y-auto min-h-0 flex-1 px-5 py-4 md:p-0">
-        {/* 3 segmented 토글 */}
-        <div className="flex gap-1 bg-bg-muted p-1 rounded-xl">
-          <button
-            type="button"
-            onClick={() => handleTypeChange("expense")}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all",
-              activeType === "expense"
-                ? "gradient-expense text-expense-fg shadow-sm"
-                : "text-fg-muted hover:text-fg",
-            )}
+      <fieldset disabled={isPending} className="contents">
+        <div className="space-y-5 overflow-y-auto min-h-0 flex-1 px-5 py-4 md:p-0">
+          {/* 3 segmented 토글 */}
+          <RadioGroup
+            value={activeType}
+            onValueChange={(value) =>
+              handleTypeChange(value as TransactionType)
+            }
+            aria-label="거래 종류"
+            className="flex gap-1 rounded-xl bg-bg-muted p-1"
           >
-            <TrendingDown className="w-4 h-4" />
-            지출
-          </button>
-          <button
-            type="button"
-            onClick={() => handleTypeChange("income")}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all",
-              activeType === "income"
-                ? "gradient-income text-income-fg shadow-sm"
-                : "text-fg-muted hover:text-fg",
-            )}
-          >
-            <TrendingUp className="w-4 h-4" />
-            수입
-          </button>
-          <button
-            type="button"
-            onClick={() => handleTypeChange("recurring")}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all",
-              activeType === "recurring"
-                ? "gradient-primary text-brand-fg shadow-sm"
-                : "text-fg-muted hover:text-fg",
-            )}
-          >
-            <Repeat className="w-4 h-4" />
-            고정지출
-          </button>
+            <RadioGroupItem
+              value="expense"
+              className={cn(
+                "aspect-auto flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg border-0 py-2 text-sm font-semibold shadow-none transition-all",
+                activeType === "expense"
+                  ? "gradient-expense text-expense-fg shadow-sm"
+                  : "text-fg-muted hover:text-fg",
+              )}
+            >
+              <TrendingDown className="w-4 h-4" />
+              지출
+            </RadioGroupItem>
+            <RadioGroupItem
+              value="income"
+              className={cn(
+                "aspect-auto flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg border-0 py-2 text-sm font-semibold shadow-none transition-all",
+                activeType === "income"
+                  ? "gradient-income text-income-fg shadow-sm"
+                  : "text-fg-muted hover:text-fg",
+              )}
+            >
+              <TrendingUp className="w-4 h-4" />
+              수입
+            </RadioGroupItem>
+            <RadioGroupItem
+              value="recurring"
+              className={cn(
+                "aspect-auto flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg border-0 py-2 text-sm font-semibold shadow-none transition-all",
+                activeType === "recurring"
+                  ? "gradient-primary text-brand-fg shadow-sm"
+                  : "text-fg-muted hover:text-fg",
+              )}
+            >
+              <Repeat className="w-4 h-4" />
+              고정지출
+            </RadioGroupItem>
+          </RadioGroup>
+
+          <TransactionFormFields
+            type={activeType}
+            categories={categories}
+            amount={amount}
+            onAmountChange={setAmount}
+            categoryUuid={categoryUuid}
+            onCategoryChange={setCategoryUuid}
+            description={description}
+            onDescriptionChange={setDescription}
+            excludeFromBudget={excludeFromBudget}
+            onExcludeFromBudgetChange={setExcludeFromBudget}
+            date={date}
+            onDateChange={setDate}
+            name={name}
+            onNameChange={setName}
+            dayOfMonth={dayOfMonth}
+            onDayOfMonthChange={setDayOfMonth}
+            isLoadingCategories={isLoadingCategories}
+            errors={errors}
+          />
+
+          {/* _form 레벨 에러 (recurring wrapper 전용) */}
+          {activeType === "recurring" && recurringState.errors._form && (
+            <p className="text-sm text-expense">
+              {recurringState.errors._form[0]}
+            </p>
+          )}
         </div>
-
-        <TransactionFormFields
-          type={activeType}
-          categories={categories}
-          amount={amount}
-          onAmountChange={setAmount}
-          categoryUuid={categoryUuid}
-          onCategoryChange={setCategoryUuid}
-          description={description}
-          onDescriptionChange={setDescription}
-          excludeFromBudget={excludeFromBudget}
-          onExcludeFromBudgetChange={setExcludeFromBudget}
-          date={date}
-          onDateChange={setDate}
-          name={name}
-          onNameChange={setName}
-          dayOfMonth={dayOfMonth}
-          onDayOfMonthChange={setDayOfMonth}
-          isLoadingCategories={isLoadingCategories}
-          errors={errors}
-        />
-
-        {/* _form 레벨 에러 (recurring wrapper 전용) */}
-        {activeType === "recurring" && recurringState.errors._form && (
-          <p className="text-sm text-expense">{recurringState.errors._form[0]}</p>
-        )}
-
-      </div>
-      <div className="sticky bottom-0 shrink-0 bg-bg-elev px-5 pt-4 safe-area-pb md:px-0">
-        <div className="flex gap-2 pb-4">
-          <Button type="button" variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
-            취소
-          </Button>
-          <SubmitButton
-            className={cn("flex-1 hover:opacity-90", ctaGradient)}
-            pendingText="추가 중..."
-          >
-            {ctaLabel} 추가
-          </SubmitButton>
+        <div className="sticky bottom-0 shrink-0 bg-bg-elev px-5 pt-4 safe-area-pb md:static md:px-0">
+          {missingField && (
+            <p
+              id="transaction-form-missing-field"
+              className="mb-2 text-xs text-fg-muted"
+            >
+              {MISSING_FIELD_MESSAGE[missingField]}
+            </p>
+          )}
+          <div className="flex gap-2 pb-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={() => onOpenChange(false)}
+            >
+              취소
+            </Button>
+            <SubmitButton
+              disabled={missingField !== null}
+              aria-describedby={
+                missingField ? "transaction-form-missing-field" : undefined
+              }
+              className={cn("flex-1 hover:opacity-90", ctaGradient)}
+              pendingText="추가 중..."
+            >
+              {ctaLabel} 추가
+            </SubmitButton>
+          </div>
         </div>
-      </div>
+      </fieldset>
     </form>
   );
 }
