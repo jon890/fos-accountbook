@@ -9,10 +9,13 @@ test("알림 목록을 표시한다", async ({ page }) => {
 
 test("세션이 없으면 알림 화면을 열 수 없다", async ({ browser }) => {
   const context = await browser.newContext();
-  const page = await context.newPage();
 
-  await page.goto("/notifications");
-  await expect(page).toHaveURL(/\/(?:$|auth\/signin)/);
+  try {
+    const page = await context.newPage();
 
-  await context.close();
+    await page.goto("/notifications");
+    await expect(page).toHaveURL(/\/(?:$|auth\/signin)/);
+  } finally {
+    await context.close();
+  }
 });

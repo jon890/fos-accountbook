@@ -70,6 +70,9 @@ jsdom 은 레이아웃을 계산하지 않아 Jest 로는 폭별 여백을 확�
 - devDependencies 에 `@playwright/test` 를 더한다(`pnpm add -D @playwright/test`). `frontend/pnpm-lock.yaml` 이 함께 바뀐다.
 - scripts 에 `"test:browser": "playwright test --config browser/playwright.config.ts"` 를 더한다.
 - `frontend/jest.config.js` 의 `testPathIgnorePatterns` 에 `"<rootDir>/browser/"` 를 더한다.
+- `modulePathIgnorePatterns`에 `"<rootDir>/.next/"`를 더한다.
+  브라우저 검사가 생성한 `.next/standalone/package.json`을 Jest가 읽으면
+  원본 package와 이름이 같아 haste-map 충돌이 나므로 빌드 결과를 모듈 검색에서 제외한다.
 - `frontend/.gitignore` 에 Playwright 결과 디렉터리(`/test-results`, `/playwright-report`, `/blob-report`)를 더한다. 이미 있으면 그대로 둔다.
 
 ### 2. 설정과 웹 서버 (`frontend/browser/settings.ts`, `frontend/browser/playwright.config.ts`, `frontend/browser/web-server.mjs`)
@@ -121,11 +124,13 @@ pnpm exec tsc --noEmit
 pnpm test
 pnpm test:browser browser/categories.spec.ts browser/notifications.spec.ts
 pnpm test:browser
+pnpm test
 ```
 
 기대값:
 
 - `pnpm test` 는 기존 Jest 테스트만 돌고 통과한다. 출력에 `browser/` 의 파일이 없다.
+- 브라우저 검사로 standalone을 생성한 뒤에도 `pnpm test`가 haste-map 이름 충돌 경고 없이 통과한다.
 - `pnpm test:browser` 는 4개 테스트를 `mobile` 과 `desktop` 에서 돌려 8건 모두 통과한다.
 - `main` 의 `padding-left` 단언을 일부러 `13px` 로 바꾸면 `mobile` 에서 실패한다. 확인한 뒤 되돌린다.
 
