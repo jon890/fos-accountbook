@@ -359,7 +359,7 @@ function EditTransactionDialogBody({
         )}
 
       </div>
-      <div className="sticky bottom-0 shrink-0 bg-bg-elev px-5 pt-4 pb-[env(safe-area-inset-bottom)] md:px-0">
+      <div className="sticky bottom-0 shrink-0 bg-bg-elev px-5 pt-4 safe-area-pb md:px-0">
         <div className="flex gap-2 pb-4">
           {type !== "recurring" && (
             <Button

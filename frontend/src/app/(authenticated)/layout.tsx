@@ -11,7 +11,7 @@ import { TimeZoneProvider } from "@/lib/client/timezone-context";
 import { auth } from "@/lib/server/auth";
 import { getSelectedFamilyUuid } from "@/lib/server/auth/auth-helpers";
 import { redirect } from "next/navigation";
-import { ReactNode } from "react";
+import { ReactNode, Suspense } from "react";
 
 interface AuthenticatedLayoutProps {
   children: ReactNode;
@@ -33,11 +33,13 @@ export default async function AuthenticatedLayout({
       <div className="min-h-screen bg-bg">
         <Header session={session} selectedFamilyUuid={selectedFamilyUuid} />
 
-        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 md:py-6 pb-20 md:pb-24">
+        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-3 md:pt-6 pb-[calc(4rem+env(safe-area-inset-bottom))]">
           {children}
         </main>
 
-        <BottomNavigation />
+        <Suspense fallback={null}>
+          <BottomNavigation />
+        </Suspense>
       </div>
     </TimeZoneProvider>
   );

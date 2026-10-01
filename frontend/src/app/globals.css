@@ -334,3 +334,6 @@
     border-radius: var(--skel-r, 8px);
   }
 }
+@utility safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom);
+}

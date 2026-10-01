@@ -12,12 +12,13 @@
 import { Header } from "@/components/layout/Header";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { Session } from "next-auth";
 
 // Next.js 의존성 모킹
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
+  usePathname: jest.fn(),
 }));
 
 // Server Action 모킹
@@ -48,6 +49,7 @@ jest.mock("@/components/notifications/NotificationBell", () => ({
 
 const mockRouter = {
   push: jest.fn(),
+  back: jest.fn(),
   refresh: jest.fn(),
 };
 
@@ -66,6 +68,7 @@ const createMockSession = (overrides?: Partial<Session>): Session => ({
 describe("Header", () => {
   beforeEach(() => {
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
+    jest.mocked(usePathname).mockReturnValue("/calendar");
   });
 
   afterEach(() => {
@@ -85,6 +88,40 @@ describe("Header", () => {
     await waitFor(() => {
       expect(screen.getByTestId("family-selector")).toBeInTheDocument();
     });
+  });
+
+  it.each(["/categories", "/categories/new", "/budget", "/notifications", "/settings/profile", "/invite/token"])("하위 화면 %s에 뒤로 가기를 표시한다", (pathname) => {
+    jest.mocked(usePathname).mockReturnValue(pathname);
+    render(<Header session={createMockSession()} selectedFamilyUuid={null} />);
+    expect(screen.getByRole("button", { name: "뒤로 가기" })).toBeInTheDocument();
+    expect(screen.queryByText("우리집 가계부")).not.toBeInTheDocument();
+  });
+
+  it("이전 기록이 없으면 전체 메뉴로 이동한다", async () => {
+    jest.mocked(usePathname).mockReturnValue("/categories");
+    const historyLength = jest.spyOn(window.history, "length", "get").mockReturnValue(1);
+    render(<Header session={createMockSession()} selectedFamilyUuid={null} />);
+    await userEvent.setup().click(screen.getByRole("button", { name: "뒤로 가기" }));
+    expect(mockRouter.push).toHaveBeenCalledWith("/menu");
+    expect(mockRouter.back).not.toHaveBeenCalled();
+    historyLength.mockRestore();
+  });
+
+  it("이전 기록이 있으면 뒤로 이동한다", async () => {
+    jest.mocked(usePathname).mockReturnValue("/categories");
+    const historyLength = jest.spyOn(window.history, "length", "get").mockReturnValue(2);
+    render(<Header session={createMockSession()} selectedFamilyUuid={null} />);
+    await userEvent.setup().click(screen.getByRole("button", { name: "뒤로 가기" }));
+    expect(mockRouter.back).toHaveBeenCalled();
+    expect(mockRouter.push).not.toHaveBeenCalled();
+    historyLength.mockRestore();
+  });
+
+  it.each(["/calendar", "/menu"])("%s에 로고를 표시한다", (pathname) => {
+    jest.mocked(usePathname).mockReturnValue(pathname);
+    render(<Header session={createMockSession()} selectedFamilyUuid={null} />);
+    expect(screen.getByRole("link", { name: "우리집 가계부" })).toHaveAttribute("href", "/calendar");
+    expect(screen.queryByRole("button", { name: "뒤로 가기" })).not.toBeInTheDocument();
   });
 
   it("로고를 클릭하면 달력으로 이동한다", async () => {

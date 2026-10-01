@@ -215,13 +215,6 @@ export function SettingsPageClient({
                     {family.expenseCount || 0}건
                   </p>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => router.push(`/families/${family.uuid}`)}
-                >
-                  관리
-                </Button>
               </div>
             ))}
           </div>

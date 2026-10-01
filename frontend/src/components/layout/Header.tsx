@@ -12,9 +12,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { LogOut, User, Users, Wallet } from "lucide-react";
+import { ArrowLeft, LogOut, User, Users, Wallet } from "lucide-react";
 import { Session } from "next-auth";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { signOutAction } from "@/actions/auth/signout-action";
@@ -27,6 +27,14 @@ interface HeaderProps {
   session: Session;
   selectedFamilyUuid: string | null;
 }
+
+const backButtonPaths = [
+  "/categories",
+  "/budget",
+  "/notifications",
+  "/settings",
+  "/invite",
+];
 
 // TODO: SSR에서 훅 순서 불일치를 막기 위해 헤더 하위 클라이언트 위젯들을 클라이언트 전용으로 로딩.
 // 추후 서버에서 필요한 데이터를 주입해 SSR/CSR 트리를 일치시키는 방향으로 개선 검토.
@@ -48,6 +56,18 @@ const NotificationBell = dynamic(
 
 export function Header({ session, selectedFamilyUuid }: HeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const showBackButton = backButtonPaths.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`)
+  );
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/menu");
+    }
+  };
   const [familySheetOpen, setFamilySheetOpen] = useState(false);
   const [sheetFamilies, setSheetFamilies] = useState<Family[]>([]);
 
@@ -66,17 +86,28 @@ export function Header({ session, selectedFamilyUuid }: HeaderProps) {
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-bg-elev/95 border-b border-border shadow-sm">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14 md:h-16">
-            <Link
-              href="/calendar"
-              className="flex items-center space-x-2 md:space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
-            >
-              <div className="w-8 h-8 md:w-10 md:h-10 bg-brand-500 rounded-xl flex items-center justify-center">
-                <Wallet className="w-4 h-4 md:w-5 md:h-5 text-brand-fg" />
-              </div>
-              <h1 className="text-base md:text-xl font-bold text-fg tracking-tight">
-                우리집 가계부
-              </h1>
-            </Link>
+            {showBackButton ? (
+              <Button
+                variant="ghost"
+                aria-label="뒤로 가기"
+                onClick={handleBack}
+                className="size-11 p-0"
+              >
+                <ArrowLeft className="size-6" />
+              </Button>
+            ) : (
+              <Link
+                href="/calendar"
+                className="flex items-center space-x-2 md:space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
+              >
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-brand-500 rounded-xl flex items-center justify-center">
+                  <Wallet className="w-4 h-4 md:w-5 md:h-5 text-brand-fg" />
+                </div>
+                <h1 className="text-base md:text-xl font-bold text-fg tracking-tight">
+                  우리집 가계부
+                </h1>
+              </Link>
+            )}
 
             <div className="flex items-center space-x-1.5 md:space-x-3">
               <div className="hidden md:block">

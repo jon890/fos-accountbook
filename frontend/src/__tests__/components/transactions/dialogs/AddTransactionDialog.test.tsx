@@ -90,7 +90,7 @@ describe("AddTransactionDialog", () => {
     expect(scrollIntoView).toHaveBeenCalledWith({ block: "center" });
     const submit = screen.getByRole("button", { name: "지출 추가" });
     const footer = submit.closest(".sticky");
-    expect(footer).toHaveClass("bottom-0", "pb-[env(safe-area-inset-bottom)]");
+    expect(footer).toHaveClass("bottom-0", "safe-area-pb");
     expect(footer?.previousElementSibling).toHaveClass("overflow-y-auto", "min-h-0");
     expect(document.querySelector('[data-slot="sheet-content"]')).toHaveClass("h-[100dvh]");
   });
