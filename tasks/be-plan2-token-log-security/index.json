@@ -1,0 +1,13 @@
+{
+  "name": "be-plan2-token-log-security",
+  "description": "운영 로그에서 토큰과 본문을 빼고, access 와 refresh 토큰을 typ 클레임으로 구분하고, 삭제된 사용자의 연동 토큰을 막는다",
+  "status": "pending",
+  "created_at": "2026-10-01",
+  "total_phases": 3,
+  "current_phase": 1,
+  "phases": [
+    { "number": 1, "file": "phase-01.md", "execution_profile": "standard" },
+    { "number": 2, "file": "phase-02.md", "execution_profile": "standard" },
+    { "number": 3, "file": "phase-03.md", "execution_profile": "fast" }
+  ]
+}
