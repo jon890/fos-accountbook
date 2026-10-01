@@ -33,6 +33,36 @@ beforeEach(() => {
 });
 
 describe("달력 월 조회", () => {
+  it.each([
+    [1000, 1000, 0],
+    [1001, 1000, 1],
+    [1000, 1001, 1],
+    [1500, 2000, 2],
+  ])("지출 %s건과 수입 %s건의 조회 한도 초과만 경고한다", async (expenseCount, incomeCount, warnings) => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      mockGet.mockResolvedValueOnce(daily);
+      mockGet.mockResolvedValueOnce({ items: [calendarExpense()], totalElements: expenseCount });
+      mockGet.mockResolvedValueOnce({ items: [calendarIncome()], totalElements: incomeCount });
+      const result = await getCalendarMonth("family-1", 2024, 2);
+
+      expect(warn).toHaveBeenCalledTimes(warnings);
+      if (expenseCount > 1000) {
+        expect(warn).toHaveBeenCalledWith("[calendar] 월 거래 목록 조회 한도 초과", {
+          type: "expense", year: 2024, month: 2, totalElements: expenseCount, loadedItems: 1, limit: 1000,
+        });
+      }
+      if (incomeCount > 1000) {
+        expect(warn).toHaveBeenCalledWith("[calendar] 월 거래 목록 조회 한도 초과", {
+          type: "income", year: 2024, month: 2, totalElements: incomeCount, loadedItems: 1, limit: 1000,
+        });
+      }
+      expect(result.expenses).toHaveLength(1);
+      expect(result.incomes).toHaveLength(1);
+    } finally {
+      warn.mockRestore();
+    }
+  });
   it("다섯 경로를 조회하고 윤년 말일과 모든 금액을 변환한다", async () => {
     const result = await getCalendarMonth("family-1", 2024, 2);
     expect(mockGet.mock.calls.map(([path]) => path).sort()).toEqual([

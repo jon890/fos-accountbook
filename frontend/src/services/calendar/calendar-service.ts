@@ -6,6 +6,9 @@ import type { CalendarMonth } from "@/types/calendar";
 import type { DailyStatsWithMembers, MemberAmount } from "@/types/dashboard";
 import type { Expense } from "@/types/expense";
 import type { Income } from "@/types/income";
+import type { PaginationResponse } from "@/types/common";
+
+const MONTH_TRANSACTION_LIMIT = 1000;
 
 type ApiMemberAmount = Omit<MemberAmount, "amount"> & { amount: string | number };
 type ApiDailyStats = Omit<DailyStatsWithMembers,
@@ -35,20 +38,37 @@ export async function getCalendarMonth(
   const firstOfMonth = new Date(year, month - 1, 1);
   const startDate = format(firstOfMonth, "yyyy-MM-dd");
   const endDate = format(endOfMonth(firstOfMonth), "yyyy-MM-dd");
-  const range = `startDate=${startDate}&endDate=${endDate}&size=1000`;
+  const range = `startDate=${startDate}&endDate=${endDate}&size=${MONTH_TRANSACTION_LIMIT}`;
   const [daily, expenses, incomes, members, categories] = await Promise.all([
     serverApiGet<ApiDailyStats>(
       `/families/${familyUuid}/dashboard/daily-stats?year=${year}&month=${month}`
     ),
-    serverApiGet<{ items: ApiTransaction<Expense>[] }>(
+    serverApiGet<PaginationResponse<ApiTransaction<Expense>>>(
       `/families/${familyUuid}/expenses?${range}`
     ),
-    serverApiGet<{ items: ApiTransaction<Income>[] }>(
+    serverApiGet<PaginationResponse<ApiTransaction<Income>>>(
       `/families/${familyUuid}/incomes?${range}`
     ),
     getFamilyMembers(familyUuid),
     getCachedFamilyCategories(familyUuid),
   ]);
+  const lists = [
+    { type: "expense", response: expenses },
+    { type: "income", response: incomes },
+  ];
+  for (const { type, response } of lists) {
+    if (response.totalElements > MONTH_TRANSACTION_LIMIT) {
+      console.warn("[calendar] 월 거래 목록 조회 한도 초과", {
+        type,
+        year,
+        month,
+        totalElements: response.totalElements,
+        loadedItems: response.items.length,
+        limit: MONTH_TRANSACTION_LIMIT,
+      });
+    }
+  }
+
   const categoryMap = new Map(categories.map((category) => [category.uuid, {
     uuid: category.uuid,
     name: category.name,
