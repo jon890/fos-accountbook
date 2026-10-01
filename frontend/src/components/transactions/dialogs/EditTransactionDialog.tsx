@@ -246,7 +246,7 @@ function EditTransactionDialogBody({
   let formAction = recurringFormAction;
   let isUpdating = isRecurringPending;
   let errors: Record<string, string[] | undefined> | undefined = recurringState.errors;
-  let ctaGradient = "gradient-budget text-brand-fg";
+  let ctaGradient = "gradient-primary text-brand-fg";
   let ctaLabel = "고정지출";
 
   if (type === "expense") {
@@ -364,7 +364,7 @@ function EditTransactionDialogBody({
             className={cn(
               "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all",
               type === "recurring"
-                ? "gradient-budget text-brand-fg shadow-sm"
+                ? "gradient-primary text-brand-fg shadow-sm"
                 : "text-fg-muted opacity-40 cursor-not-allowed",
             )}
           >

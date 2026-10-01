@@ -99,7 +99,7 @@ export function AddTransactionDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-[720px] bg-bg-elev">
           <DialogHeader>
-            <DialogTitle className="sr-only">거래 추가</DialogTitle>
+            <DialogTitle>거래 추가</DialogTitle>
           </DialogHeader>
           {body}
         </DialogContent>
@@ -212,7 +212,7 @@ function AddTransactionDialogBody({ onOpenChange, defaultType, defaultDate }: Ad
 
   let formAction = recurringFormAction;
   let errors: Record<string, string[] | undefined> | undefined = recurringState.errors;
-  let ctaGradient = "gradient-budget text-brand-fg";
+  let ctaGradient = "gradient-primary text-brand-fg";
   let ctaLabel = "고정지출";
 
   if (activeType === "expense") {
@@ -264,7 +264,7 @@ function AddTransactionDialogBody({ onOpenChange, defaultType, defaultDate }: Ad
             className={cn(
               "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all",
               activeType === "recurring"
-                ? "gradient-budget text-brand-fg shadow-sm"
+                ? "gradient-primary text-brand-fg shadow-sm"
                 : "text-fg-muted hover:text-fg",
             )}
           >

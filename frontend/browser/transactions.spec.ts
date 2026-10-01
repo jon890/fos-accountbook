@@ -50,7 +50,7 @@ test("빈 지출과 수입 목록은 하단 가운데 추가 버튼 안내와 �
       page.getByRole("main").getByText("아래 가운데 + 버튼으로 거래를 추가해 보세요."),
     ).toBeVisible();
 
-    await page.getByRole("button", { name: "지출 추가" }).click();
+    await page.getByRole("button", { name: "거래 추가" }).click();
     await expect(page.getByRole("heading", { name: "거래 추가" })).toBeVisible();
     await page.keyboard.press("Escape");
   }
@@ -80,7 +80,7 @@ test("내역 탭은 추가 버튼 없이 하단 추가 시트를 연다", async 
     await expect(page.getByRole("button", { name: "수입 추가" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "고정지출 추가" })).toHaveCount(0);
 
-    await page.getByRole("button", { name: "지출 추가" }).click();
+    await page.getByRole("button", { name: "거래 추가" }).click();
     await expect(page.getByRole("heading", { name: "거래 추가" })).toBeVisible();
     await page.keyboard.press("Escape");
   }
