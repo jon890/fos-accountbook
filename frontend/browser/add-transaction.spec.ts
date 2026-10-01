@@ -27,10 +27,10 @@ test("다크 테마에서 거래 추가 표면과 고정지출 강조를 표시�
     await expect(page.getByRole("heading", { name: "거래 추가" })).toBeVisible();
   }
 
-  const recurringTypeButton = page.getByRole("button", { name: "고정지출", exact: true });
-  await recurringTypeButton.click();
-  await expect(recurringTypeButton).toHaveClass(/gradient-primary/);
-  await expect(recurringTypeButton).toHaveClass(/text-brand-fg/);
+  const recurringTypeRadio = page.getByRole("radio", { name: "고정지출", exact: true });
+  await recurringTypeRadio.click();
+  await expect(recurringTypeRadio).toHaveClass(/gradient-primary/);
+  await expect(recurringTypeRadio).toHaveClass(/text-brand-fg/);
 
   const submitButton = page.getByRole("button", { name: "고정지출 추가" });
   await expect(submitButton).toHaveClass(/gradient-primary/);

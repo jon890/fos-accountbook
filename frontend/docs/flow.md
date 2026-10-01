@@ -89,7 +89,7 @@
             │   ├─ [expense/income 일 때] Date input (type="date", default: defaultDate ?? 오늘) + 「오늘」「어제」 칩
             │   └─ [recurring 일 때]  Name input + DayOfMonth (1~28, 비우면 빈 칸 유지)
             │
-            ├─ 저장 버튼 위 안내: 첫 번째로 빠진 값 (금액, 카테고리, 이름, 결제일). 빠진 값이 있으면 버튼 비활성
+            ├─ 저장 버튼 위 안내: 첫 번째로 빠진 값 (금액, 카테고리, 날짜 또는 이름, 결제일). 빠진 값이 있으면 버튼 비활성
             │
             └─ 저장 (요청 중 fieldset disabled) → type 분기
                     ├─ expense  → createExpenseAction()         → POST /families/{uuid}/expenses

@@ -53,6 +53,17 @@ import type { Expense, UpdateExpenseFormState } from "@/types/expense";
 import type { Income } from "@/types/income";
 import type { RecurringExpense } from "@/types/recurring-expense";
 
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+Object.defineProperty(global, "ResizeObserver", {
+  writable: true,
+  value: ResizeObserverMock,
+});
+
 const mockGetCategories = getFamilyCategoriesAction as jest.MockedFunction<
   typeof getFamilyCategoriesAction
 >;
@@ -168,6 +179,9 @@ describe("EditTransactionDialog", () => {
     try {
       await user.click(await screen.findByRole("button", { name: `${label} 수정` }));
       await waitFor(() => expect(updateAction).toHaveBeenCalled());
+      expect(screen.getByRole("spinbutton", { name: "금액 직접 입력" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "취소" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "수정 중..." })).toBeDisabled();
       const deleteButton = screen.getByRole("button", { name: "삭제" });
       expect(deleteButton).toBeDisabled();
       await user.click(deleteButton);
@@ -401,8 +415,8 @@ describe("EditTransactionDialog", () => {
         expect(screen.getByRole("button", { name: /지출 수정/ })).toBeInTheDocument();
       });
 
-      const incomeToggle = screen.getByRole("button", { name: /^수입$/ });
-      const recurringToggle = screen.getByRole("button", { name: /^고정지출$/ });
+      const incomeToggle = screen.getByRole("radio", { name: "수입" });
+      const recurringToggle = screen.getByRole("radio", { name: "고정지출" });
       expect(incomeToggle).toBeDisabled();
       expect(recurringToggle).toBeDisabled();
     });
@@ -422,8 +436,8 @@ describe("EditTransactionDialog", () => {
         expect(screen.getByRole("button", { name: /수입 수정/ })).toBeInTheDocument();
       });
 
-      const expenseToggle = screen.getByRole("button", { name: /^지출$/ });
-      const recurringToggle = screen.getByRole("button", { name: /^고정지출$/ });
+      const expenseToggle = screen.getByRole("radio", { name: "지출" });
+      const recurringToggle = screen.getByRole("radio", { name: "고정지출" });
       expect(expenseToggle).toBeDisabled();
       expect(recurringToggle).toBeDisabled();
     });
@@ -442,8 +456,8 @@ describe("EditTransactionDialog", () => {
         expect(screen.getByRole("button", { name: /고정지출 수정/ })).toBeInTheDocument();
       });
 
-      const expenseToggle = screen.getByRole("button", { name: /^지출$/ });
-      const incomeToggle = screen.getByRole("button", { name: /^수입$/ });
+      const expenseToggle = screen.getByRole("radio", { name: "지출" });
+      const incomeToggle = screen.getByRole("radio", { name: "수입" });
       expect(expenseToggle).toBeDisabled();
       expect(incomeToggle).toBeDisabled();
     });
