@@ -27,10 +27,13 @@
 - 예산 화면의 정상 상태 색은 대시보드 예산 카드와 같게 `gradient-primary text-brand-fg` 로 맞춘다. 초과 상태의 `gradient-expense text-expense-fg` 는 그대로 둔다.
 - 그라디언트 카드 위 진행 막대는 트랙 `--color-hero-track`, 채움 `--color-hero-fill` 을 쓴다. `Progress` 의 채움 색은 `[&_[data-slot=progress-indicator]]:bg-[var(--color-hero-fill)]` 처럼 호출부에서 덮어쓴다. `progress.tsx` 기본값은 다른 화면이 쓰므로 바꾸지 않는다.
 - 고정지출 목록 카드는 다른 목록 카드처럼 `bg-bg-elev border border-border` 로 둔다.
+- 공용 `gradient-primary`의 라이트 첫 정지점 L을 `0.720`에서 `0.650`으로 낮추고 Chroma `0.130`, Hue `257`은 유지한다. Chromium에서 밝은 글자 대비가 `2.383:1`에서 `3.112:1`로 개선됨을 확인했다. 다른 사용처는 개별 수정하지 않고 기존 브라우저 테스트로 확인한다. 이 보정은 코디네이터가 승인했다.
 
 ## 작업 항목
 
 ### 1. `BudgetClient.tsx` 아이콘 상자, 「예산 설정」 버튼, 예산 현황 카드를 `gradient-primary` 로
+
+`globals.css`의 라이트 `gradient-primary` 첫 정지점 L 보정도 함께 적용한다. 커밋 본문에 대비 실측을 기록한다.
 
 ### 2. `BudgetClient.tsx` 예산 현황 카드의 진행 막대를 hero 트랙과 채움으로
 
@@ -63,3 +66,4 @@ pnpm test:browser browser/dark-mode.spec.ts
 | `frontend/src/components/recurring-expense/RecurringExpenseList.tsx` | 수정 |
 | `frontend/browser/dark-mode.spec.ts` | 수정 |
 | `frontend/browser/fake-backend.mjs` | 수정 |
+| `frontend/src/app/globals.css` | 수정 |
