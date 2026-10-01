@@ -26,6 +26,7 @@
 ## 의도 메모
 
 - 종류를 바꾸면 고른 카테고리를 비운다. 새 종류의 첫 카테고리를 자동으로 고르지 않는다.
+- 선택 상태를 소유하는 `AddTransactionDialog.handleTypeChange`에서 선택을 비우고, 실제 종류 전환 상호작용 테스트로 확인한다. 공용 필드는 종류별 목록 필터링을 담당한다.
 - 관리 화면은 「지출」, 「수입」 두 탭(기존 `ui/segmented-toggle` 이나 탭 컴포넌트)으로 나눈다. 카테고리 추가는 지금 탭의 종류로 만든다. 수정 창에서는 종류를 바꾸지 않는다(ADR-B23).
 - `frontend/docs/data-schema.md` 의 카테고리 타입 절에 `type` 을 더한다.
 
@@ -48,6 +49,7 @@
 ### 5. 이 phase 를 검증하는 테스트
 
 - Jest: `frontend/src/__tests__/components/transactions/TransactionFormFields.test.tsx`(신규): 수입이면 수입 카테고리만, 지출이면 지출 카테고리만 보인다. 종류를 바꾸면 선택이 비워진다.
+- Jest: `frontend/src/__tests__/components/transactions/AddTransactionDialog.test.tsx`(신규): 카테고리를 고른 뒤 거래 종류를 전환하면 선택이 비워지고 새 종류의 첫 카테고리가 자동 선택되지 않는다.
 - Jest: `frontend/src/__tests__/actions/category/create-category-action.test.ts`(신규): `type` 을 백엔드 요청에 넘기는 케이스, 인증 실패, 가족 미선택.
 - 브라우저: `frontend/browser/categories.spec.ts` 에 수입 탭을 누르면 수입 카테고리만 보이는 케이스.
 
@@ -80,8 +82,12 @@ pnpm test:browser
 | `frontend/src/app/(authenticated)/categories/_components/CategoryPageClient.tsx` | 수정 |
 | `frontend/src/app/(authenticated)/categories/_components/CategoryList.tsx` | 수정 |
 | `frontend/src/app/(authenticated)/categories/_components/AddCategoryDialog.tsx` | 수정 |
+| `frontend/src/app/(authenticated)/categories/_components/EditCategoryDialog.tsx` | 수정 |
+| `frontend/src/__tests__/**/*.ts` | 수정 |
+| `frontend/src/__tests__/**/*.tsx` | 수정 |
 | `frontend/docs/data-schema.md` | 수정 |
 | `frontend/browser/fake-backend.mjs` | 수정 |
 | `frontend/browser/categories.spec.ts` | 수정 |
 | `frontend/src/__tests__/components/transactions/TransactionFormFields.test.tsx` | 신규 |
+| `frontend/src/__tests__/components/transactions/AddTransactionDialog.test.tsx` | 신규 |
 | `frontend/src/__tests__/actions/category/create-category-action.test.ts` | 신규 |

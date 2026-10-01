@@ -29,10 +29,10 @@
 마이그레이션 순서(ADR-B23):
 
 1. `ALTER TABLE categories ADD COLUMN type VARCHAR(20) NOT NULL DEFAULT 'EXPENSE'`.
-2. 수입에만 쓰이고(ACTIVE 수입이 있고) 지출과 반복 지출에 쓰이지 않는 카테고리를 `INCOME` 으로.
-3. ACTIVE 가족마다 수입 카테고리 「급여」, 「부수입」, 「용돈」, 「기타 수입」 을 이름이 겹치지 않을 때만 만든다. 「기타 수입」 은 `is_default = TRUE`, `type = 'INCOME'`.
+2. 수입에만 쓰이고(ACTIVE 수입이 있고) 지출과 반복 지출 참조가 전혀 없는 카테고리를 `INCOME` 으로. 기존 지출 기본 「미분류」는 이 분류에서 제외한다.
+3. ACTIVE 가족마다 수입 카테고리 「급여」, 「부수입」, 「용돈」, 「기타 수입」 을 같은 종류의 ACTIVE 이름이 겹치지 않을 때만 만든다. 「기타 수입」 은 `is_default = TRUE`, `type = 'INCOME'`.
    이미 같은 이름의 `INCOME` 카테고리가 있으면 새로 만들지 않고, 그 가족에 기본 수입 카테고리가 없으면 「기타 수입」 을 기본으로 지정한다.
-4. 지출과 수입 양쪽에 쓰인 `EXPENSE` 카테고리를 가리키는 수입을 그 가족의 「기타 수입」 으로 옮긴다.
+4. 분류 뒤 `EXPENSE` 카테고리를 가리키는 모든 수입(삭제 이력 포함)을 그 가족의 「기타 수입」 으로 옮긴다.
 5. 기존 「미분류」 기본 카테고리는 `EXPENSE` 그대로 둔다.
 
 - 마이그레이션은 한 번만 돈다. 실행 전후 건수를 확인하는 SQL 을 완료 보고에 적어, 운영 배포 때 사람이 같은 확인을 할 수 있게 한다.
@@ -40,6 +40,9 @@
 - `CreateCategoryRequest.type` 은 필수가 아니고 없으면 `EXPENSE` 다(지금 프론트와 외부 연동이 깨지지 않게). `UpdateCategoryRequest` 로는 종류를 바꾸지 않는다. 쓰임이 있는 카테고리의 종류를 바꾸면 기존 거래가 어긋난다.
 - 기본 카테고리 조회는 종류를 받는다(`getDefaultCategoryByFamily(familyUuid, type)`). 기존 호출은 `EXPENSE` 로 바꾼다.
 - 새 가족 생성은 지출 기본 세트와 함께 수입 네 개를 만든다.
+- 이름 중복 검사는 가족, 종류, 이름으로 한다. 지출과 수입에서 같은 이름을 허용하고 같은 종류 안의 중복은 거부한다. 생성과 수정, 리포지토리 조회를 함께 바꾸고 DB 유일 제약 유무를 확인한다.
+- 기존 지출 기본 카테고리는 이름이 변경됐어도 분류에서 제외한다. 외부 생성 요청과 수정 요청에는 `isDefault`를 노출하지 않고 `type` 변경도 허용하지 않는다. 가족 초기화가 종류별 기본을 하나만 생성하며 마이그레이션도 기본이 없는 경우에만 기본을 지정한다. 배포 전후 SQL로 ACTIVE 가족의 종류별 ACTIVE 기본 개수가 정확히 1인지 검사한다.
+- 삭제된 카테고리나 삭제된 가족에 관한 참조도 테스트하며, 수입 기본 생성은 ACTIVE 가족에 한정한다. ACTIVE 가족의 기존 수입 참조는 누락 없이 이관한다.
 
 ## 작업 항목
 
@@ -48,6 +51,7 @@
 ### 2. 엔티티, enum, DTO, 리포지토리의 종류 칸
 
 - 새 enum `backend/src/main/java/com/bifos/accountbook/category/domain/value/CategoryType.java`.
+- 자동 적용 변환기 `backend/src/main/java/com/bifos/accountbook/category/domain/converter/CategoryTypeConverter.java`.
 - `Category`, `CategoryResponse`, `CreateCategoryRequest`, `CategoryInfo` 에 `type`. 리포지토리 기본 카테고리 조회에 종류 인자.
 
 ### 3. 기본 카테고리 생성과 조회
@@ -56,7 +60,7 @@
 
 ### 4. 이 phase 를 검증하는 테스트
 
-- 마이그레이션: `backend/src/test/java/com/bifos/accountbook/category/infra/CategoryTypeMigrationTest.java`(신규). 마이그레이션 직전 버전까지 적용한 DB 에 수입 전용, 지출 전용, 양쪽 카테고리를 넣고 이 마이그레이션을 적용한 뒤 종류, 수입 기본 카테고리, 수입 이관을 단언한다. Flyway 의 `target` 을 써서 단계별로 적용한다. 테스트 픽스처 방식이 맞지 않으면 SQL 을 직접 실행하는 통합 테스트로 둔다.
+- 마이그레이션: `backend/src/test/java/com/bifos/accountbook/category/infra/CategoryTypeMigrationTest.java`(신규). 독립 H2(MySQL 모드) DB에 Flyway `target`으로 직전 버전까지 적용한 뒤 데이터를 SQL로 넣고 최신 버전으로 마이그레이션한다. 수입 전용, 지출 전용, 혼합, 수입만 쓰는 미분류 기본, 지출 이름 충돌, 기존 수입 기본 재사용, 삭제 이력, ACTIVE 가족 범위를 단언한다. 정상 경로와 같은 종류 이름 중복 거부도 테스트한다.
 - 컨트롤러: `backend/src/test/java/com/bifos/accountbook/category/presentation/controller/CategoryControllerTest.java` 에 `type` 응답과 `type` 없는 생성 요청이 `EXPENSE` 가 되는 케이스.
 - 가족 생성 뒤 수입 카테고리 네 개와 기본 두 개(지출, 수입)가 생기는 케이스(`backend/src/test/java/com/bifos/accountbook/family/` 의 기존 가족 생성 테스트에 더한다).
 
@@ -77,6 +81,7 @@
 |---|---|
 | `backend/src/main/resources/db/migration/V20261001_1200__add_category_type.sql` | 신규 |
 | `backend/src/main/java/com/bifos/accountbook/category/domain/value/CategoryType.java` | 신규 |
+| `backend/src/main/java/com/bifos/accountbook/category/domain/converter/CategoryTypeConverter.java` | 신규 |
 | `backend/src/main/java/com/bifos/accountbook/category/domain/entity/Category.java` | 수정 |
 | `backend/src/main/java/com/bifos/accountbook/category/domain/repository/CategoryRepository.java` | 수정 |
 | `backend/src/main/java/com/bifos/accountbook/category/infra/repository/**` | 수정 |
