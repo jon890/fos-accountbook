@@ -7,6 +7,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.bifos.accountbook.apitoken.application.dto.CreateApiTokenRequest;
+import com.bifos.accountbook.apitoken.application.dto.CreatedApiTokenResponse;
+import com.bifos.accountbook.apitoken.application.service.ApiTokenService;
+import com.bifos.accountbook.apitoken.domain.entity.ApiToken;
+import com.bifos.accountbook.apitoken.infra.repository.jpa.ApiTokenJpaRepository;
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.expense.application.dto.CreateExpenseRequest;
 import com.bifos.accountbook.expense.domain.entity.Expense;
@@ -15,6 +20,9 @@ import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.income.application.dto.CreateIncomeRequest;
 import com.bifos.accountbook.income.domain.entity.Income;
 import com.bifos.accountbook.income.domain.repository.IncomeRepository;
+import com.bifos.accountbook.notification.domain.entity.Notification;
+import com.bifos.accountbook.notification.domain.repository.NotificationRepository;
+import com.bifos.accountbook.notification.domain.value.NotificationType;
 import com.bifos.accountbook.recurring.application.service.RecurringExpenseScheduler;
 import com.bifos.accountbook.recurring.presentation.dto.CreateRecurringExpenseRequest;
 import com.bifos.accountbook.recurring.presentation.dto.UpdateRecurringExpenseRequest;
@@ -37,7 +45,7 @@ import org.springframework.http.MediaType;
 @Import(BusinessClockIntegrationTest.FixedClockConfig.class)
 class BusinessClockIntegrationTest extends AbstractControllerTest {
 
-  private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
+  private static final ZoneId UTC = ZoneId.of("UTC");
   private static final LocalDateTime BUSINESS_NOW = LocalDateTime.of(2026, 4, 1, 1, 0);
 
   @TestConfiguration
@@ -46,7 +54,7 @@ class BusinessClockIntegrationTest extends AbstractControllerTest {
     @Bean
     @Primary
     Clock fixedClock() {
-      return Clock.fixed(Instant.parse("2026-03-31T16:00:00Z"), SEOUL);
+      return Clock.fixed(Instant.parse("2026-03-31T16:00:00Z"), UTC);
     }
   }
 
@@ -58,6 +66,15 @@ class BusinessClockIntegrationTest extends AbstractControllerTest {
 
   @Autowired
   private IncomeRepository incomeRepository;
+
+  @Autowired
+  private NotificationRepository notificationRepository;
+
+  @Autowired
+  private ApiTokenService apiTokenService;
+
+  @Autowired
+  private ApiTokenJpaRepository apiTokenJpaRepository;
 
   @Test
   void appliesFixedBusinessClockToRecurringTransactionsAndDashboard() throws Exception {
@@ -81,6 +98,11 @@ class BusinessClockIntegrationTest extends AbstractControllerTest {
     String recurringUuid = objectMapper.readTree(recurringResponse).path("data").path("uuid").asText();
 
     recurringExpenseScheduler.generateRecurringExpenses();
+
+    assertThat(notificationRepository.findByFamilyAndType(
+        family.getUuid(), NotificationType.RECURRING_EXPENSE_CREATED))
+        .extracting(Notification::getYearMonth)
+        .containsExactly("2026-04");
 
     mockMvc.perform(put("/api/v1/families/{familyUuid}/recurring-expenses/{uuid}",
             familyUuid, recurringUuid)
@@ -173,5 +195,32 @@ class BusinessClockIntegrationTest extends AbstractControllerTest {
         .andExpect(jsonPath("$.data.month").value(3))
         .andExpect(jsonPath("$.data.monthlyExpense").value(400))
         .andExpect(jsonPath("$.data.monthlyIncome").value(500));
+  }
+
+  @Test
+  void preservesUtcTimestampsForApiTokenUsageAndRevocation() throws Exception {
+    User user = fixtures.getDefaultUser();
+    Family family = fixtures.getDefaultFamily();
+    CreatedApiTokenResponse issued = apiTokenService.issue(
+        user.getUuid(), new CreateApiTokenRequest("시간대 회귀 검증"));
+
+    mockMvc.perform(get("/api/v1/families/{familyUuid}/expenses", family.getUuid().getValue())
+            .header("Authorization", "Bearer " + issued.getToken()))
+        .andExpect(status().isOk());
+
+    ApiToken usedToken = storedToken(issued.getUuid());
+    assertThat(usedToken.getLastUsedAt()).isEqualTo(LocalDateTime.of(2026, 3, 31, 16, 0));
+
+    apiTokenService.revoke(user.getUuid(), CustomUuid.from(issued.getUuid()));
+
+    ApiToken revokedToken = storedToken(issued.getUuid());
+    assertThat(revokedToken.getRevokedAt()).isEqualTo(LocalDateTime.of(2026, 3, 31, 16, 0));
+  }
+
+  private ApiToken storedToken(String tokenUuid) {
+    return apiTokenJpaRepository.findAll().stream()
+        .filter(token -> token.getUuid().getValue().equals(tokenUuid))
+        .findFirst()
+        .orElseThrow();
   }
 }

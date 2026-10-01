@@ -3,6 +3,7 @@ package com.bifos.accountbook.recurring.application.service;
 import com.bifos.accountbook.recurring.application.event.RecurringExpenseCreatedEvent;
 import com.bifos.accountbook.recurring.domain.entity.RecurringExpense;
 import com.bifos.accountbook.recurring.domain.repository.RecurringExpenseRepository;
+import com.bifos.accountbook.shared.utils.BusinessTime;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -30,7 +31,7 @@ public class RecurringExpenseScheduler {
 
   @Scheduled(cron = "0 0 1 * * ?", zone = "Asia/Seoul")
   public void generateRecurringExpenses() {
-    LocalDate today = LocalDate.now(clock);
+    LocalDate today = LocalDate.now(clock.withZone(BusinessTime.ZONE));
     int dayOfMonth = today.getDayOfMonth();
     String yearMonth = today.format(YEAR_MONTH_FORMATTER);
 

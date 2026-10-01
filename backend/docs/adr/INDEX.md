@@ -25,4 +25,4 @@
 | [ADR-B18](ADR-B18-agent-integration-token.md) | 외부 에이전트 연동 토큰 | accepted |
 | [ADR-B19](ADR-B19-jwt-token-type-claim.md) | access token 과 refresh token 을 typ 클레임으로 구분한다 | accepted |
 | [ADR-B20](ADR-B20-log-body-policy.md) | 운영 로그에 요청과 응답 본문을 남기지 않는다 | accepted |
-| [ADR-B21](ADR-B21-business-date-asia-seoul.md) | 업무 날짜 판정은 Asia/Seoul Clock 으로 하고 JVM 기본 시간대는 바꾸지 않는다 | accepted |
+| [ADR-B21](ADR-B21-business-date-asia-seoul.md) | 업무 날짜 판정은 Asia/Seoul로 하고 기본 Clock은 유지한다 | accepted |

@@ -53,7 +53,7 @@ ExpenseService.create()
 RecurringExpense 템플릿 저장 (status=ACTIVE)
 
         ┌──────────────────────────────┐
-        │  매일 새벽 1시 (스케줄러)       │
+        │  매일 KST 새벽 1시 (스케줄러)   │
         │  RecurringExpenseScheduler    │
         └──────────┬───────────────────┘
                    │

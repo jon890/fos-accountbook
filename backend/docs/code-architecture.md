@@ -168,7 +168,7 @@ public void handle(ExpenseCreatedEvent event) { ... }
 @RequiredArgsConstructor
 public class RecurringExpenseScheduler {
 
-  @Scheduled(cron = "0 0 1 * * ?")  // 매일 새벽 1시
+  @Scheduled(cron = "0 0 1 * * ?", zone = "Asia/Seoul")  // 매일 KST 새벽 1시
   public void generateRecurringExpenses() {
     // 1. 오늘 day_of_month인 ACTIVE 템플릿 조회
     // 2. 별도 RecurringExpenseGenerator 빈에서 템플릿마다 트랜잭션으로 Expense 생성
@@ -191,13 +191,13 @@ public Clock clock() {
     return Clock.systemDefaultZone();
 }
 
-// Scheduler: LocalDate.now(clock) 사용
+// Scheduler: 업무 날짜에만 Asia/Seoul 적용
 @RequiredArgsConstructor
 public class RecurringExpenseScheduler {
     private final Clock clock;
 
     public void generateRecurringExpenses() {
-        LocalDate today = LocalDate.now(clock);
+        LocalDate today = LocalDate.now(clock.withZone(BusinessTime.ZONE));
         // ...
     }
 }

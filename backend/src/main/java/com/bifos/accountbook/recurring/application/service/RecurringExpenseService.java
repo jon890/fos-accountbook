@@ -11,6 +11,7 @@ import com.bifos.accountbook.recurring.domain.entity.RecurringExpense;
 import com.bifos.accountbook.category.domain.repository.CategoryRepository;
 import com.bifos.accountbook.recurring.domain.repository.RecurringExpenseRepository;
 import com.bifos.accountbook.shared.value.CustomUuid;
+import com.bifos.accountbook.shared.utils.BusinessTime;
 import com.bifos.accountbook.shared.aop.FamilyUuid;
 import com.bifos.accountbook.shared.aop.UserUuid;
 import com.bifos.accountbook.shared.aop.ValidateFamilyAccess;
@@ -63,7 +64,8 @@ public class RecurringExpenseService {
 
     entity = recurringExpenseRepository.save(entity);
 
-    String currentYearMonth = LocalDate.now(clock).format(YEAR_MONTH_FORMATTER);
+    String currentYearMonth = LocalDate.now(clock.withZone(BusinessTime.ZONE))
+        .format(YEAR_MONTH_FORMATTER);
     boolean generated = recurringExpenseRepository
         .existsByRecurringExpenseUuidAndYearMonth(
             entity.getUuid().getValue(), currentYearMonth);
@@ -90,7 +92,7 @@ public class RecurringExpenseService {
 
     String targetYearMonth = yearMonth != null
         ? yearMonth
-        : LocalDate.now(clock).format(YEAR_MONTH_FORMATTER);
+        : LocalDate.now(clock.withZone(BusinessTime.ZONE)).format(YEAR_MONTH_FORMATTER);
 
     return entities.stream()
         .map(entity -> {
@@ -138,7 +140,8 @@ public class RecurringExpenseService {
 
     entity.update(dto.getCategoryUuid(), dto.getName(), dto.getAmount(), dto.getDayOfMonth());
 
-    String currentYearMonth = LocalDate.now(clock).format(YEAR_MONTH_FORMATTER);
+    String currentYearMonth = LocalDate.now(clock.withZone(BusinessTime.ZONE))
+        .format(YEAR_MONTH_FORMATTER);
     boolean generated = recurringExpenseRepository
         .existsByRecurringExpenseUuidAndYearMonth(
             entity.getUuid().getValue(), currentYearMonth);

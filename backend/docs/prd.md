@@ -65,7 +65,7 @@
 
 - 템플릿 등록 (이름, 금액, 매월 N일)
 - day_of_month: 1~28만 허용 (월말 불일치 방지)
-- 매일 새벽 1시 스케줄러 → 해당일 템플릿의 Expense 자동 생성
+- 매일 KST 새벽 1시 스케줄러 → 해당일 템플릿의 Expense 자동 생성
 - 멱등성: `(recurring_expense_uuid, year_month)` UNIQUE constraint
 - 수정 시 즉시 전체 반영 (ADR-B13)
 

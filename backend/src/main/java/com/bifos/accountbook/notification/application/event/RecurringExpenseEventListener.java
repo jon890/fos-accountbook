@@ -6,6 +6,7 @@ import com.bifos.accountbook.family.domain.repository.FamilyMemberRepository;
 import com.bifos.accountbook.notification.domain.entity.Notification;
 import com.bifos.accountbook.notification.domain.repository.NotificationRepository;
 import com.bifos.accountbook.shared.value.CustomUuid;
+import com.bifos.accountbook.shared.utils.BusinessTime;
 import com.bifos.accountbook.notification.domain.value.NotificationType;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -37,7 +38,8 @@ public class RecurringExpenseEventListener {
   public void handleRecurringExpenseCreated(RecurringExpenseCreatedEvent event) {
     try {
       CustomUuid familyUuid = CustomUuid.from(event.familyUuid());
-      String yearMonth = LocalDate.now(clock).format(YEAR_MONTH_FORMATTER);
+      String yearMonth = LocalDate.now(clock.withZone(BusinessTime.ZONE))
+          .format(YEAR_MONTH_FORMATTER);
       List<FamilyMember> activeMembers = familyMemberRepository.findAllActiveByFamilyUuid(familyUuid);
 
       if (activeMembers.isEmpty()) {

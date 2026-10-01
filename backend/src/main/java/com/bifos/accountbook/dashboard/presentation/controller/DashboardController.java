@@ -13,6 +13,7 @@ import com.bifos.accountbook.shared.dto.ApiSuccessResponse;
 import com.bifos.accountbook.shared.auth.LoginUserDto;
 import com.bifos.accountbook.shared.exception.BusinessException;
 import com.bifos.accountbook.shared.exception.ErrorCode;
+import com.bifos.accountbook.shared.utils.BusinessTime;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -71,7 +72,7 @@ public class DashboardController {
       @RequestParam(required = false) Integer month) {
 
     // 기본값: 현재 연도/월
-    LocalDate now = LocalDate.now(clock);
+    LocalDate now = LocalDate.now(clock.withZone(BusinessTime.ZONE));
     int targetYear = year != null ? year : now.getYear();
     int targetMonth = month != null ? month : now.getMonthValue();
 

@@ -37,6 +37,7 @@ Claude Code가 항상 따라야 할 규칙과 참조 문서 포인터.
 | 외부 에이전트 연동 토큰 | ADR-B18 — 사용자별 토큰과 허용 경로 |
 | JWT 발급과 검증 | ADR-B19 — access 와 refresh 를 `typ` 클레임으로 구분, `typ` 없는 토큰 거부 |
 | 요청 응답 로깅, 예외 로그 | ADR-B20 — INFO 에 본문을 남기지 않고 인증 경로 본문은 DEBUG 에서도 생략 |
+| 업무 날짜, Clock 또는 스케줄러 시간대 변경 | ADR-B21 — 업무 날짜는 Asia/Seoul, 기본 Clock과 감사 시각은 JVM 기준 유지 |
 
 ---
 

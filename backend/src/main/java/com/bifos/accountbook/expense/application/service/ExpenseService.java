@@ -21,6 +21,7 @@ import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.shared.aop.FamilyUuid;
 import com.bifos.accountbook.shared.aop.UserUuid;
 import com.bifos.accountbook.shared.aop.ValidateFamilyAccess;
+import com.bifos.accountbook.shared.utils.BusinessTime;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -95,7 +96,9 @@ public class ExpenseService {
         categoryCustomUuid,
         user.getUuid(),
         request.getDescription(),
-        request.getDate() != null ? request.getDate() : LocalDateTime.now(clock)
+        request.getDate() != null
+            ? request.getDate()
+            : LocalDateTime.now(clock.withZone(BusinessTime.ZONE))
     );
 
     // 예산 제외 플래그 설정

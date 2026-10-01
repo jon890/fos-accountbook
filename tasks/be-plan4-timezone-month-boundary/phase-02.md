@@ -1,4 +1,4 @@
-# Phase 02. 업무 날짜 판정을 Asia/Seoul Clock 으로 통일한다
+# Phase 02. 업무 날짜 판정을 Asia/Seoul로 통일한다
 
 **Execution profile**: standard
 
@@ -28,24 +28,25 @@
 
 - JVM 기본 시간대(`TZ`, `-Duser.timezone`)를 바꾸지 않는다. 감사 시각과 저장된 값이 섞여 틀어진다(ADR-B21 대안 기각).
 - `DashboardController`에 Clock을 직접 주입하고 기본 연월 계산에 사용한다.
-- 지출과 수입의 기본 날짜는 `LocalDateTime.now(clock)` 이다. KST 벽시계 시각이 저장된다.
+- 기본 Clock 빈은 `Clock.systemDefaultZone()`을 유지한다. 공통 상수 `BusinessTime.ZONE`을 Asia/Seoul로 선언하고 업무 날짜만 `clock.withZone(BusinessTime.ZONE)`으로 계산한다. 지출과 수입의 기본 날짜는 KST 벽시계 시각이다.
 
 ## 작업 항목
 
 ### 1. `ClockConfig` 와 스케줄러 cron 의 zone
 
-- `Clock.system(ZoneId.of("Asia/Seoul"))`.
+- `ClockConfig`는 `Clock.systemDefaultZone()`을 유지한다. `shared/utils/BusinessTime.java`에 Asia/Seoul ZoneId 상수를 둔다.
 - `@Scheduled(cron = "0 0 1 * * ?", zone = "Asia/Seoul")`.
 
 ### 2. 업무 날짜를 Clock 으로 정하기
 
-- 위 「코드에서 확인한 사실」 의 `RecurringExpenseService` 세 곳, `DashboardController.getMonthlyStats`, `ExpenseService` 와 `IncomeService` 의 기본 날짜를 Clock 기준으로 바꾼다.
+- 위 「코드에서 확인한 사실」 의 `RecurringExpenseService` 세 곳, `DashboardController.getMonthlyStats`, `ExpenseService` 와 `IncomeService` 의 기본 날짜, `RecurringExpenseScheduler`의 오늘, `RecurringExpenseEventListener`의 알림 연월을 `clock.withZone(BusinessTime.ZONE)` 기준으로 바꾼다.
 
 ### 3. 이 phase 를 검증하는 테스트
 
-- `backend/src/test/java/com/bifos/accountbook/config/BusinessClockIntegrationTest.java`를 추가한다. `@Primary Clock`을 UTC 2026-03-31T16:00:00Z, Asia/Seoul로 고정한다. 반복 지출 update의 이번 달 생성 여부와 getAll의 연월 기본값이 `2026-04`를 사용하는지 저장 상태와 응답으로 검증한다. create는 새 UUID에 생성 기록이 없어 항상 false를 반환하므로 정상 생성과 false를 검증하고, 날짜 분기는 코드의 Clock 사용을 확인한다.
+- `backend/src/test/java/com/bifos/accountbook/config/BusinessClockIntegrationTest.java`를 추가한다. `@Primary Clock`을 UTC 2026-03-31T16:00:00Z, UTC zone으로 고정한다. 반복 지출 update의 이번 달 생성 여부와 getAll의 연월 기본값, 반복 지출 알림이 `2026-04`를 사용하는지 저장 상태와 응답으로 검증한다. create는 새 UUID에 생성 기록이 없어 항상 false를 반환하므로 정상 생성과 false를 검증하고, 날짜 분기는 코드의 Clock 사용을 확인한다.
 - 같은 고정 Clock에서 날짜 없이 지출과 수입을 만들면 2026-04-01 01:00이고, 대시보드 기본 연월 조회가 4월 금액을 반환하는지 검증한다. 명시적으로 전달한 날짜와 연월은 그대로 사용하는지도 확인한다.
-- `backend/src/test/java/com/bifos/accountbook/config/ClockConfigTest.java`에서 production Clock의 zone이 Asia/Seoul인지 단언한다.
+- `backend/src/test/java/com/bifos/accountbook/config/ClockConfigTest.java`에서 production Clock의 zone이 JVM 기본 시간대인지 단언한다.
+- 같은 UTC 고정 Clock에서 API 토큰의 last_used_at과 revoked_at이 2026-03-31 16:00으로 저장되는 회귀 테스트를 추가한다. 토큰 서비스와 인증 필터 코드는 바꾸지 않는다.
 - 스케줄러 cron zone 은 애너테이션 값이라 리플렉션으로 `zone` 이 `Asia/Seoul` 인지 단언하는 단위 테스트를 둔다.
 
 ## 검증
@@ -72,3 +73,5 @@
 | `backend/src/test/java/com/bifos/accountbook/config/BusinessClockIntegrationTest.java` | 신규 |
 | `backend/src/test/java/com/bifos/accountbook/config/ClockConfigTest.java` | 신규 |
 | `backend/src/test/java/com/bifos/accountbook/recurring/application/service/RecurringExpenseSchedulerTest.java` | 수정 |
+| `backend/src/main/java/com/bifos/accountbook/shared/utils/BusinessTime.java` | 신규 |
+| `backend/src/main/java/com/bifos/accountbook/notification/application/event/RecurringExpenseEventListener.java` | 수정 |
