@@ -81,13 +81,12 @@ git grep -ln 'QuickActions\|RecentActivity\|CalendarView' -- src   # 결과 없�
 | `frontend/src/components/dashboard/QuickActions.tsx` | 삭제 |
 | `frontend/src/components/dashboard/CalendarView.tsx` | 삭제 |
 | `frontend/src/components/dashboard/DashboardHeader.tsx` | 삭제 |
-| `frontend/src/components/dashboard/skeleton/**` | 삭제 |
+| `frontend/src/components/dashboard/skeleton/DashboardContentSkeleton.tsx` | 삭제 |
+| `frontend/src/components/dashboard/skeleton/DashboardHeaderSkeleton.tsx` | 삭제 |
+| `frontend/src/components/dashboard/skeleton/StatsHeroSkeleton.tsx` | 삭제 |
 | `frontend/src/components/dashboard/InviteFamilyDialog.tsx` | 삭제 |
 | `frontend/src/components/families/InviteFamilyDialog.tsx` | 신규 |
 | `frontend/src/actions/dashboard/get-recent-expenses-action.ts` | 삭제 |
-| `frontend/src/app/(authenticated)/settings/_components/SettingsPageClient.tsx` | 수정 |
-| `frontend/src/components/families/FamilySelector.tsx` | 수정 |
-| `frontend/src/app/(authenticated)/menu/page.tsx` | 수정 |
 | `frontend/src/app/(authenticated)/menu/_components/MenuPageClient.tsx` | 수정 |
 | `frontend/src/__tests__/app/analytics/page.test.tsx` | 신규 |
 | `frontend/src/__tests__/app/dashboard/page.test.tsx` | 신규 |
@@ -113,3 +112,4 @@ git grep -ln 'QuickActions\|RecentActivity\|CalendarView' -- src   # 결과 없�
 | `frontend/src/__tests__/app/authenticated-status-pages.test.tsx` | 신규 |
 | `frontend/docs/adr.md` | 수정 |
 | `frontend/src/__tests__/components/families/InviteFamilyDialog.test.tsx` | 신규 |
+| `frontend/src/__tests__/app/menu/page.test.tsx` | 수정 |
