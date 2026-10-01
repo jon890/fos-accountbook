@@ -23,12 +23,12 @@ describe("TransactionsPageClient", () => {
     expect(content).toHaveClass("opacity-60", "pointer-events-none");
   });
 
-  it("주소 전환 중 탭과 필터, 검색 입력을 비활성화한다", () => {
+  it("주소 전환 중 탭과 필터는 비활성화하고 검색 입력은 받는다", () => {
     jest.mocked(useNavigationPending).mockReturnValue(true);
     render(<TransactionsPageClient categories={[]} activeTab="expenses" searchParams={{}} expenseListContent={null} incomeListContent={null} recurringListContent={null} />);
 
     expect(screen.getByRole("button", { name: "수입" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "이번달" })).toBeDisabled();
-    expect(screen.getByRole("textbox", { name: "거래 내역 검색" })).toBeDisabled();
+    expect(screen.getByRole("textbox", { name: "거래 내역 검색" })).toBeEnabled();
   });
 });

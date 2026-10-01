@@ -45,19 +45,19 @@ export function TransactionsPageClient({
 
       {/* 필터 + 검색 (반복지출 탭에서는 숨김) */}
       {activeTab !== "recurring" && (
-        <fieldset disabled={isNavigationPending} className="flex min-w-0 items-start gap-3">
-          <div className="flex-1 min-w-0">
+        <div className="flex min-w-0 items-start gap-3">
+          <fieldset disabled={isNavigationPending} className="flex-1 min-w-0">
             <FilterChips
               categories={categories}
               defaultStartDate={searchParams.startDate}
               defaultEndDate={searchParams.endDate}
             />
-          </div>
-          {/* 모바일: 검색 아이콘, 데스크톱: 240px 검색 input */}
+          </fieldset>
+          {/* 모바일: 검색 아이콘, 데스크톱: 240px 검색 input. 대기 중에도 입력을 받는다 */}
           <div className="shrink-0 pt-0.5">
             <SearchBar />
           </div>
-        </fieldset>
+        </div>
       )}
 
       {/* 내역 목록 */}

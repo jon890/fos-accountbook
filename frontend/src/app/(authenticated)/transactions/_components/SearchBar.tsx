@@ -1,31 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useAppRouter, useNavigationPending } from "@/lib/client/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/client/utils";
 
 export function SearchBar() {
   const router = useAppRouter();
-  const isNavigationPending = useNavigationPending();
   const searchParams = useSearchParams();
   const [value, setValue] = useState(searchParams.get("q") ?? "");
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isNavigationPendingRef = useRef(isNavigationPending);
-
-  useEffect(() => {
-    isNavigationPendingRef.current = isNavigationPending;
-  }, [isNavigationPending]);
-
+  // 검색 칸은 전환 대기 중에도 입력을 받는다. 막으면 디바운스 뒤 포커스가 빠지고
+  // 이어서 친 글자가 버려진다. 대기 표시는 결과 영역의 aria-busy 와 흐림이 맡는다 (ADR-F39).
   const pushQ = useCallback(
     (q: string) => {
-      if (isNavigationPendingRef.current) {
-        return;
-      }
-
       const params = new URLSearchParams(searchParams.toString());
       if (q) {
         params.set("q", q);
@@ -39,10 +30,6 @@ export function SearchBar() {
   );
 
   const handleChange = (newValue: string) => {
-    if (isNavigationPending) {
-      return;
-    }
-
     setValue(newValue);
     if (timerRef.current) clearTimeout(timerRef.current);
     // 300ms 디바운스: 마지막 입력 후 300ms 경과 시 URL 갱신
@@ -50,10 +37,6 @@ export function SearchBar() {
   };
 
   const clear = () => {
-    if (isNavigationPending) {
-      return;
-    }
-
     setValue("");
     if (timerRef.current) clearTimeout(timerRef.current);
     pushQ("");
@@ -78,12 +61,10 @@ export function SearchBar() {
           onChange={(e) => handleChange(e.target.value)}
           className={inputClass}
           aria-label="거래 내역 검색"
-          disabled={isNavigationPending}
         />
         {value && (
           <button
             onClick={clear}
-            disabled={isNavigationPending}
             className="absolute right-2.5 text-fg-muted hover:text-fg"
             aria-label="검색어 지우기"
           >
@@ -110,12 +91,10 @@ export function SearchBar() {
                 onChange={(e) => handleChange(e.target.value)}
                 className={cn(inputClass, "w-full")}
                 aria-label="거래 내역 검색"
-                disabled={isNavigationPending}
               />
             </div>
             <button
               onClick={clear}
-              disabled={isNavigationPending}
               className="shrink-0 p-1 text-fg-muted hover:text-fg"
               aria-label="검색 닫기"
             >
@@ -125,7 +104,6 @@ export function SearchBar() {
         ) : (
           <button
             onClick={() => setIsMobileOpen(true)}
-            disabled={isNavigationPending}
             className="p-2 text-fg-muted hover:text-fg"
             aria-label="검색 열기"
           >

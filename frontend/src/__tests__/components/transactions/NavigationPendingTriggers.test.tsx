@@ -34,21 +34,20 @@ describe("내역 화면 주소 전환 트리거", () => {
     expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it("대기 중으로 바뀐 뒤 남아 있는 검색 디바운스는 주소를 바꾸지 않는다", () => {
+  it("대기 중에도 검색 입력을 받고 디바운스 뒤 마지막 검색어로 주소를 바꾼다", () => {
     jest.useFakeTimers();
-    const view = render(<SearchBar />);
-
-    fireEvent.change(screen.getByRole("textbox", { name: "거래 내역 검색" }), {
-      target: { value: "점심" },
-    });
-
     isNavigationPending = true;
-    view.rerender(<SearchBar />);
+    render(<SearchBar />);
+
+    const input = screen.getByRole("textbox", { name: "거래 내역 검색" });
+    expect(input).toBeEnabled();
+    fireEvent.change(input, { target: { value: "점심" } });
     act(() => {
       jest.advanceTimersByTime(300);
     });
 
-    expect(mockReplace).not.toHaveBeenCalled();
+    expect(input).toHaveValue("점심");
+    expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining("q=%EC%A0%90%EC%8B%AC"));
   });
 
   it("대기 중에는 포털의 금액 범위 적용을 추가로 호출하지 않는다", () => {
