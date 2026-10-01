@@ -87,3 +87,78 @@ test("빈 카테고리 상태의 폭별 여백과 아이콘 크기를 표시한�
   expect(await iconCircle.evaluate((element) => getComputedStyle(element).width)).toBe(expected.iconCircle);
   expect(await icon.evaluate((element) => getComputedStyle(element).width)).toBe(expected.icon);
 });
+
+test("카테고리의 바깥 여백을 폭별로 표시한다", async ({ page }, testInfo) => {
+  await page.goto("/categories");
+
+  const firstCard = page.locator('[data-slot="card"]').first();
+  await expect(firstCard).toBeVisible();
+  const firstCardBox = await firstCard.boundingBox();
+  if (!firstCardBox) {
+    throw new Error("Category card bounding box is unavailable");
+  }
+
+  if (testInfo.project.name === "mobile") {
+    expect(firstCardBox.x).toBe(12);
+  } else {
+    const mainPaddingLeft = await page.locator("main").evaluate((element) =>
+      Number.parseFloat(getComputedStyle(element).paddingLeft),
+    );
+    expect(firstCardBox.x).toBe(192);
+    expect(firstCardBox.x).toBeGreaterThanOrEqual(mainPaddingLeft);
+  }
+});
+
+test("클라이언트 탐색 중 알림의 바깥 여백을 표시한다", async ({ page, request }, testInfo) => {
+  const isMobile = testInfo.project.name === "mobile";
+  const expectedOuterX = isMobile ? 12 : 304;
+  const expectedListX = isMobile ? 12 : 328;
+
+  const holdResponse = await request.post(`${BACKEND_BASE_URL}/__test/notifications-delay`, {
+    data: { hold: true },
+  });
+  expect(holdResponse.ok()).toBeTruthy();
+
+  await page.route("**/notifications**", async (route) => {
+    const prefetchHeader = await route.request().headerValue("next-router-prefetch");
+    if (prefetchHeader) {
+      await route.abort();
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto("/menu");
+  await expect(page.getByRole("link", { name: "알림", exact: true })).toBeVisible();
+
+  await page.getByRole("link", { name: "알림", exact: true }).click();
+
+  const notificationsLoading = page.locator("main > div").filter({
+    has: page.locator(".ab-skel"),
+  });
+  await expect(notificationsLoading).toBeVisible();
+  const loadingBox = await notificationsLoading.boundingBox();
+  if (!loadingBox) {
+    throw new Error("Notifications loading bounding box is unavailable");
+  }
+  expect(loadingBox.x).toBe(expectedOuterX);
+
+  const releaseResponse = await request.post(`${BACKEND_BASE_URL}/__test/notifications-delay`, {
+    data: { hold: false },
+  });
+  expect(releaseResponse.ok()).toBeTruthy();
+
+  const notificationList = page.locator(".divide-y.divide-border.rounded-xl");
+  await expect(notificationList).toBeVisible();
+  const notificationsClient = notificationList.locator("..");
+  const notificationsClientBox = await notificationsClient.boundingBox();
+  if (!notificationsClientBox) {
+    throw new Error("Notifications client bounding box is unavailable");
+  }
+  expect(notificationsClientBox.x).toBe(expectedOuterX);
+  const notificationListBox = await notificationList.boundingBox();
+  if (!notificationListBox) {
+    throw new Error("Notifications list bounding box is unavailable");
+  }
+  expect(notificationListBox.x).toBe(expectedListX);
+});

@@ -119,8 +119,8 @@ export function FamilySelector({
   }
 
   return (
-    <div className="min-h-screen py-8 app-background">
-      <div className="max-w-2xl mx-auto px-4">
+    <div className="min-h-screen py-4 md:py-8 app-background">
+      <div className="max-w-2xl mx-auto px-0 md:px-4">
         <div className="text-center mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex-1" />

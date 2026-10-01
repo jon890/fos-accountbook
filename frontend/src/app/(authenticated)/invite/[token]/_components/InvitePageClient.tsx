@@ -71,7 +71,7 @@ export function InvitePageClient({
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-5 bg-bg">
+    <div className="min-h-screen flex items-center justify-center md:p-5 bg-bg">
       <Card className="max-w-md w-full bg-bg-elev border-border shadow-default">
         <CardHeader className="text-center pb-4 pt-6 md:pt-8">
           {inviterName ? (

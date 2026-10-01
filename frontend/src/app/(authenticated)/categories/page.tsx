@@ -28,7 +28,7 @@ export default async function CategoriesPage() {
     : null;
 
   return (
-    <div className="container mx-auto py-6 px-4 max-w-4xl space-y-6">
+    <div className="mx-auto max-w-4xl space-y-4 md:space-y-6">
       <CategoriesHero
         familyName={familyInfo?.name ?? null}
         categoryCount={categories.length}

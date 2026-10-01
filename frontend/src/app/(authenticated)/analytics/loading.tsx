@@ -2,7 +2,7 @@ import { Skel } from "@/components/loading/Skel";
 
 export default function AnalyticsLoading() {
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+    <div className="max-w-2xl mx-auto space-y-4">
       {/* Period 토글 */}
       <div className="flex gap-2 justify-center">
         {[72, 72, 72].map((w, i) => (

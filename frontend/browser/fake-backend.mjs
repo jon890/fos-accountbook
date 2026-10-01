@@ -4,6 +4,8 @@ import { BACKEND_PORT, FAMILY_UUID } from "./settings.ts";
 const createdAt = "2026-01-01T00:00:00.000Z";
 const unhandledRequests = [];
 let categoriesAreEmpty = false;
+let notificationsAreHeld = false;
+let notificationHold;
 
 const family = {
   uuid: FAMILY_UUID,
@@ -89,6 +91,7 @@ const server = createServer(async (request, response) => {
   if (method === "POST" && pathname === "/__test/reset") {
     unhandledRequests.length = 0;
     categoriesAreEmpty = false;
+    setNotificationsHeld(false);
     sendJson(response, 200, { success: true });
     return;
   }
@@ -99,6 +102,16 @@ const server = createServer(async (request, response) => {
       return;
     }
     categoriesAreEmpty = body.empty;
+    sendJson(response, 200, { success: true });
+    return;
+  }
+  if (method === "POST" && pathname === "/__test/notifications-delay") {
+    const body = await readJson(request);
+    if (typeof body?.hold !== "boolean") {
+      sendJson(response, 400, { success: false, message: "Expected a hold boolean" });
+      return;
+    }
+    setNotificationsHeld(body.hold);
     sendJson(response, 200, { success: true });
     return;
   }
@@ -119,6 +132,7 @@ const server = createServer(async (request, response) => {
     return;
   }
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/notifications`) {
+    await waitForNotifications();
     sendJson(response, 200, { success: true, data: { notifications, unreadCount: 1, totalCount: notifications.length } });
     return;
   }
@@ -127,6 +141,26 @@ const server = createServer(async (request, response) => {
   unhandledRequests.push(requestName);
   sendJson(response, 404, { success: false, message: `Unsupported test backend path: ${requestName}` });
 });
+
+function setNotificationsHeld(hold) {
+  notificationsAreHeld = hold;
+  if (hold && !notificationHold) {
+    let release;
+    const promise = new Promise((resolve) => {
+      release = resolve;
+    });
+    notificationHold = { promise, release };
+  }
+  if (!hold && notificationHold) {
+    notificationHold.release();
+    notificationHold = undefined;
+  }
+}
+
+async function waitForNotifications() {
+  if (!notificationsAreHeld) return;
+  await notificationHold.promise;
+}
 
 async function readJson(request) {
   let body = "";

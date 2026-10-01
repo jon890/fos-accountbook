@@ -59,7 +59,7 @@ export function NotificationsClient({
   };
 
   return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto">
+    <div className="md:p-6 max-w-2xl mx-auto">
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-fg">알림</h1>
