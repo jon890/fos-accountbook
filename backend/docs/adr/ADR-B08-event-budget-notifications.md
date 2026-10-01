@@ -10,7 +10,7 @@
 
 **알림 타입**: `BUDGET_50_EXCEEDED` (50% 초과) | `BUDGET_80_EXCEEDED` (80% 초과) | `BUDGET_100_EXCEEDED` (100% 초과) | `RECURRING_EXPENSE_CREATED` (반복 지출 자동 생성)
 
-**중복 방지**: `familyUuid + type + yearMonth` 기준으로 알림 중복 체크. 가족의 모든 활성 구성원에게 각각 알림 생성
+**중복 방지**: `(familyUuid, userUuid, type, yearMonth)` 기준으로 알림 중복 체크. 가족의 ACTIVE 구성원마다 수신자 UUID 를 채워 알림 생성
 
 ---
 
