@@ -3,8 +3,8 @@
  * @jest-environment jsdom
  */
 
-jest.mock("next/navigation", () => ({
-  useRouter: jest.fn(() => ({
+jest.mock("@/lib/client/navigation", () => ({
+  useAppRouter: jest.fn(() => ({
     push: jest.fn(),
     refresh: jest.fn(),
   })),
@@ -22,7 +22,7 @@ jest.mock("sonner", () => ({
 import { InvitePageClient } from "@/app/(authenticated)/invite/[token]/_components/InvitePageClient";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { acceptInvitationAction } from "@/actions/invitation/accept-invitation-action";
 
 const baseProps = {
@@ -34,7 +34,10 @@ const baseProps = {
 describe("InvitePageClient", () => {
   it("초대를 수락하면 달력으로 이동한다", async () => {
     const push = jest.fn();
-    jest.mocked(useRouter).mockReturnValue({ push, refresh: jest.fn() } as unknown as ReturnType<typeof useRouter>);
+    jest.mocked(useAppRouter).mockReturnValue({
+      push,
+      refresh: jest.fn(),
+    } as unknown as ReturnType<typeof useAppRouter>);
     jest.mocked(acceptInvitationAction).mockResolvedValue({ success: true, data: undefined });
     render(<InvitePageClient {...baseProps} />);
 

@@ -12,7 +12,9 @@ jest.mock("next/navigation", () => ({
   redirect: jest.fn((url: string) => {
     throw new Error(`redirect:${url}`);
   }),
-  useRouter: () => ({ push: mockPush }),
+}));
+jest.mock("@/lib/client/navigation", () => ({
+  useAppRouter: () => ({ push: mockPush }),
 }));
 jest.mock("@/lib/server/auth", () => ({ auth: jest.fn() }));
 jest.mock("@/actions/family/get-families-action", () => ({ getFamiliesAction: jest.fn() }));

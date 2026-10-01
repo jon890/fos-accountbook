@@ -3,7 +3,7 @@
 import { selectFamilyAction } from "@/actions/family/select-family-action";
 import { useSessionRefresh } from "@/lib/client/use-session-refresh";
 import type { Family } from "@/types/family";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { toast } from "sonner";
 
 interface FamilySelectorListProps {
@@ -18,7 +18,7 @@ export function FamilySelectorList({
   selectedFamilyUuid,
   onSelected,
 }: FamilySelectorListProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const { refreshSession } = useSessionRefresh();
 
   const handleSelect = async (familyUuid: string) => {

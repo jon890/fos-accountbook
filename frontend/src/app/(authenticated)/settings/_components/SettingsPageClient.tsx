@@ -14,7 +14,7 @@ import { useSessionRefresh } from "@/lib/client/use-session-refresh";
 import type { ApiToken } from "@/types/api-token";
 import type { Family } from "@/types/family";
 import { Check, Edit2, KeyRound, Users, Wallet } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -33,7 +33,7 @@ export function SettingsPageClient({
   userEmail,
   apiTokens,
 }: SettingsPageClientProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const { refreshSession } = useSessionRefresh();
   const [selectedFamily, setSelectedFamily] = useState<string>("");
   const [currentDefaultFamily, setCurrentDefaultFamily] = useState<string>(

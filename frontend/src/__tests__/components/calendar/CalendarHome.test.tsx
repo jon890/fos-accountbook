@@ -11,8 +11,10 @@ const mockPush = jest.fn();
 const mockEditLoadError = jest.fn();
 const mockSearchParams = jest.fn();
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mockPush }),
   useSearchParams: () => mockSearchParams(),
+}));
+jest.mock("@/lib/client/navigation", () => ({
+  useAppRouter: () => ({ push: mockPush }),
 }));
 jest.mock("@/actions/calendar/get-calendar-month-action", () => ({ getCalendarMonthAction: jest.fn() }));
 jest.mock("@/lib/server/auth", () => ({ auth: async () => ({ user: { profile: { defaultFamilyUuid: "family-1", timezone: "Asia/Seoul" } } }) }));

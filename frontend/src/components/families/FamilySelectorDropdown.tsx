@@ -13,11 +13,11 @@ import {
 import { useSessionRefresh } from "@/lib/client/use-session-refresh";
 import type { Family } from "@/types/family";
 import { Users } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { useEffect, useState } from "react";
 
 export function FamilySelectorDropdown() {
-  const router = useRouter();
+  const router = useAppRouter();
   const { refreshSession } = useSessionRefresh();
   const [families, setFamilies] = useState<Family[]>([]);
   const [selectedFamily, setSelectedFamily] = useState<string>("");

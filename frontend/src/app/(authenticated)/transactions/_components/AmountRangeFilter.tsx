@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/client/utils";
 import {
@@ -32,7 +33,7 @@ const chipDefault = "border-border bg-bg-elev text-fg-muted hover:text-fg";
 const chipActive = "border-brand-300 bg-brand-50 text-brand-700";
 
 export function AmountRangeFilter() {
-  const router = useRouter();
+  const router = useAppRouter();
   const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
 

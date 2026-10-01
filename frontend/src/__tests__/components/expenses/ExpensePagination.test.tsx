@@ -6,16 +6,19 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ExpensePagination } from "@/components/expenses/list/ExpensePagination";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
+import { useSearchParams } from "next/navigation";
 
 // Mock next/navigation
 jest.mock("next/navigation", () => ({
-  useRouter: jest.fn(),
   useSearchParams: jest.fn(),
+}));
+jest.mock("@/lib/client/navigation", () => ({
+  useAppRouter: jest.fn(),
 }));
 
 const mockPush = jest.fn();
-const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
+const mockUseAppRouter = useAppRouter as jest.MockedFunction<typeof useAppRouter>;
 const mockUseSearchParams = useSearchParams as jest.MockedFunction<
   typeof useSearchParams
 >;
@@ -30,7 +33,8 @@ describe("ExpensePagination", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseRouter.mockReturnValue({
+    mockUseAppRouter.mockReturnValue({
+      isPending: false,
       push: mockPush,
       replace: jest.fn(),
       refresh: jest.fn(),
@@ -38,7 +42,7 @@ describe("ExpensePagination", () => {
       forward: jest.fn(),
       prefetch: jest.fn(),
       bfcacheId: "test-bfcache-id",
-    } as ReturnType<typeof useRouter>);
+    } as ReturnType<typeof useAppRouter>);
 
     // 기본 searchParams 모킹 (빈 쿼리스트링)
     mockUseSearchParams.mockReturnValue({
@@ -271,4 +275,3 @@ describe("ExpensePagination", () => {
     });
   });
 });
-

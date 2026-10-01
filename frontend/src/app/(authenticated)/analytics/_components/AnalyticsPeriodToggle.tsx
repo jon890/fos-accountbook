@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import type { AnalyticsPeriod } from "@/types/analytics";
 
@@ -16,7 +17,7 @@ interface AnalyticsPeriodToggleProps {
 }
 
 export function AnalyticsPeriodToggle({ period }: AnalyticsPeriodToggleProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const searchParams = useSearchParams();
 
   const handleChange = (next: AnalyticsPeriod) => {

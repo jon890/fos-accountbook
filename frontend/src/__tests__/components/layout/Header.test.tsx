@@ -12,13 +12,16 @@
 import { Header } from "@/components/layout/Header";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { usePathname, useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
+import { usePathname } from "next/navigation";
 import type { Session } from "next-auth";
 
 // Next.js 의존성 모킹
 jest.mock("next/navigation", () => ({
-  useRouter: jest.fn(),
   usePathname: jest.fn(),
+}));
+jest.mock("@/lib/client/navigation", () => ({
+  useAppRouter: jest.fn(),
 }));
 
 // Server Action 모킹
@@ -67,7 +70,7 @@ const createMockSession = (overrides?: Partial<Session>): Session => ({
 
 describe("Header", () => {
   beforeEach(() => {
-    (useRouter as jest.Mock).mockReturnValue(mockRouter);
+    (useAppRouter as jest.Mock).mockReturnValue(mockRouter);
     jest.mocked(usePathname).mockReturnValue("/calendar");
   });
 

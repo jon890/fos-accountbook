@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { Button } from "@/components/ui/button";
 
 interface PaginationInfo {
@@ -15,7 +16,7 @@ interface ExpensePaginationProps {
 }
 
 export function ExpensePagination({ pagination }: ExpensePaginationProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const searchParams = useSearchParams();
 
   if (pagination.totalPages <= 1) {

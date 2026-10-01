@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -36,7 +36,7 @@ export function InvitePageClient({
   inviterAvatarUrl,
   memberCount,
 }: InvitePageClientProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const [isAccepting, setIsAccepting] = useState(false);
   // 렌더마다 Date.now() 를 부르면 다시 그릴 때 값이 바뀐다. 화면을 연 시각으로 고정한다
   const [openedAt] = useState(() => Date.now());

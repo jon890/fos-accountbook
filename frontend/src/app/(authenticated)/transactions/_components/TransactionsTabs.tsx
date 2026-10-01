@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/client/utils";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 
 type TabType = "expenses" | "incomes" | "recurring";
 
@@ -17,7 +18,7 @@ interface TransactionsTabsProps {
 }
 
 export function TransactionsTabs({ activeTab, onChange }: TransactionsTabsProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const searchParams = useSearchParams();
 
   const handleTabChange = (tab: TabType) => {

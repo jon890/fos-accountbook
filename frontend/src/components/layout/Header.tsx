@@ -14,7 +14,8 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ArrowLeft, LogOut, User, Users, Wallet } from "lucide-react";
 import { Session } from "next-auth";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { signOutAction } from "@/actions/auth/signout-action";
@@ -55,7 +56,7 @@ const NotificationBell = dynamic(
 );
 
 export function Header({ session, selectedFamilyUuid }: HeaderProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const pathname = usePathname();
   const showBackButton = backButtonPaths.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`)

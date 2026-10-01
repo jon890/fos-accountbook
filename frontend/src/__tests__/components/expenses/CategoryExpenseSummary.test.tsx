@@ -1,16 +1,19 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CategoryExpenseSummary } from "@/components/expenses/summary/CategoryExpenseSummary";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
+import { useSearchParams } from "next/navigation";
 import type { CategoryExpenseSummaryResponse } from "@/types/expense";
 
 jest.mock("next/navigation", () => ({
-  useRouter: jest.fn(),
   useSearchParams: jest.fn(),
+}));
+jest.mock("@/lib/client/navigation", () => ({
+  useAppRouter: jest.fn(),
 }));
 
 const mockPush = jest.fn();
-const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
+const mockUseAppRouter = useAppRouter as jest.MockedFunction<typeof useAppRouter>;
 const mockUseSearchParams = useSearchParams as jest.MockedFunction<
   typeof useSearchParams
 >;
@@ -30,7 +33,8 @@ const summary: CategoryExpenseSummaryResponse = {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockUseRouter.mockReturnValue({
+  mockUseAppRouter.mockReturnValue({
+    isPending: false,
     push: mockPush,
     replace: jest.fn(),
     refresh: jest.fn(),
@@ -38,7 +42,7 @@ beforeEach(() => {
     forward: jest.fn(),
     prefetch: jest.fn(),
     bfcacheId: "test-bfcache-id",
-  } as ReturnType<typeof useRouter>);
+  } as ReturnType<typeof useAppRouter>);
   mockUseSearchParams.mockReturnValue(
     new URLSearchParams() as unknown as ReturnType<typeof useSearchParams>,
   );

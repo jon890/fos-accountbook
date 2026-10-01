@@ -8,7 +8,7 @@ import { cn } from "@/lib/client/utils";
 import { formatCurrency } from "@/lib/utils/format";
 import type { CategoryBreakdownItem } from "@/types/dashboard";
 import { AlertTriangle, PiggyBank, Settings } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { BudgetCategoryBars } from "./BudgetCategoryBars";
 import { BudgetCumulativeLine } from "./BudgetCumulativeLine";
 
@@ -33,7 +33,7 @@ export function BudgetClient({
   dailyExpenses,
   categoryItems,
 }: BudgetClientProps) {
-  const router = useRouter();
+  const router = useAppRouter();
 
   const isBudgetExceeded = remainingBudget < 0;
   const hasBudget = budget > 0;

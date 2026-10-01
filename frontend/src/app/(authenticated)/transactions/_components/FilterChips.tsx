@@ -8,7 +8,8 @@ import {
 } from "@/lib/utils/date-timezone";
 import { useTimeZone } from "@/lib/client/timezone-context";
 import type { CategoryResponse } from "@/types/category";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AmountRangeFilter } from "@/app/(authenticated)/transactions/_components/AmountRangeFilter";
@@ -41,7 +42,7 @@ export function FilterChips({
   defaultStartDate,
   defaultEndDate,
 }: FilterChipsProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const searchParams = useSearchParams();
   const { timezone } = useTimeZone();
 

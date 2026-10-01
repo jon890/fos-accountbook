@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { AddTransactionDialog } from "@/components/transactions/dialogs/AddTransactionDialog";
 import { EditTransactionDialog } from "@/components/transactions/dialogs/EditTransactionDialog";
 import { buildMemberColorMap } from "@/lib/utils/member-color";
@@ -23,7 +24,7 @@ export function CalendarHome(props: CalendarHomeProps) {
 }
 
 function CalendarMonthContent({ data, initialDate, today, familyUuid }: CalendarHomeProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const urlDate = useSearchParams().get("date");
   const [dateDraft, setDateDraft] = useState<string | null>(null);
   const [previousInitialDate, setPreviousInitialDate] = useState(initialDate);

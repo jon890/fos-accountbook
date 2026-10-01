@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { toast } from "sonner";
 import { CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ export function NotificationsClient({
   notifications,
   filter,
 }: NotificationsClientProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const [localNotifications, setLocalNotifications] =
     useState<Notification[]>(notifications);
   const [markingAllRead, setMarkingAllRead] = useState(false);

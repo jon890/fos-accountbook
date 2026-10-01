@@ -3,7 +3,7 @@
 import { setDefaultFamilyAction } from "@/actions/user/set-default-family-action";
 import { useSessionRefresh } from "@/lib/client/use-session-refresh";
 import type { Family } from "@/types/family";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { FamilySelector } from "./FamilySelector";
 
 /**
@@ -11,7 +11,7 @@ import { FamilySelector } from "./FamilySelector";
  * FamilySelector가 직접 가족 목록을 페칭하므로 별도 prop이 필요 없음
  */
 export function FamilySelectorPage() {
-  const router = useRouter();
+  const router = useAppRouter();
   const { refreshSession } = useSessionRefresh();
 
   const handleFamilySelect = async (family: Family) => {

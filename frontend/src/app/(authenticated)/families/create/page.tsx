@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { useSessionRefresh } from "@/lib/client/use-session-refresh";
 import { Users } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -29,7 +29,7 @@ export default function CreateFamilyPage() {
   const [familyName, setFamilyName] = useState("");
   const [familyType, setFamilyType] = useState<FamilyType>("family");
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const router = useAppRouter();
   const { refreshSession } = useSessionRefresh();
 
   const handleSubmit = async (e: React.FormEvent) => {
