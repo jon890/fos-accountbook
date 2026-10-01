@@ -19,6 +19,24 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
   },
+  {
+    files: ["src/**/*.{js,jsx,ts,tsx}"],
+    ignores: ["src/lib/client/navigation.tsx", "src/__tests__/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "next/navigation",
+              importNames: ["useRouter"],
+              message: "useAppRouter(@/lib/client/navigation) 를 쓴다 (ADR-F39)",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ];
 
 export default eslintConfig;

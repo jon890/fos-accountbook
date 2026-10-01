@@ -4,6 +4,7 @@ import { TransactionsTabs } from "@/app/(authenticated)/transactions/_components
 import { FilterChips } from "@/app/(authenticated)/transactions/_components/FilterChips";
 import { SearchBar } from "@/app/(authenticated)/transactions/_components/SearchBar";
 import type { CategoryResponse } from "@/types/category";
+import { useNavigationPending } from "@/lib/client/navigation";
 import { ReactNode } from "react";
 
 type TabType = "expenses" | "incomes" | "recurring";
@@ -34,23 +35,25 @@ export function TransactionsPageClient({
   incomeListContent,
   recurringListContent,
 }: TransactionsPageClientProps) {
+  const isNavigationPending = useNavigationPending();
+
   return (
     <div className="space-y-4">
-      <div>
+      <fieldset disabled={isNavigationPending} className="min-w-0">
         <TransactionsTabs activeTab={activeTab} />
-      </div>
+      </fieldset>
 
       {/* 필터 + 검색 (반복지출 탭에서는 숨김) */}
       {activeTab !== "recurring" && (
-        <div className="flex items-start gap-3">
-          <div className="flex-1 min-w-0">
+        <div className="flex min-w-0 items-start gap-3">
+          <fieldset disabled={isNavigationPending} className="flex-1 min-w-0">
             <FilterChips
               categories={categories}
               defaultStartDate={searchParams.startDate}
               defaultEndDate={searchParams.endDate}
             />
-          </div>
-          {/* 모바일: 검색 아이콘, 데스크톱: 240px 검색 input */}
+          </fieldset>
+          {/* 모바일: 검색 아이콘, 데스크톱: 240px 검색 input. 대기 중에도 입력을 받는다 */}
           <div className="shrink-0 pt-0.5">
             <SearchBar />
           </div>
@@ -58,7 +61,10 @@ export function TransactionsPageClient({
       )}
 
       {/* 내역 목록 */}
-      <div>
+      <div
+        aria-busy={isNavigationPending}
+        className={`transition-opacity ${isNavigationPending ? "pointer-events-none opacity-60" : ""}`}
+      >
         {activeTab === "expenses"
           ? expenseListContent
           : activeTab === "incomes"

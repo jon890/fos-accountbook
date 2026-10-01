@@ -14,8 +14,8 @@ import { Label } from "@/components/ui/label";
 import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { useSessionRefresh } from "@/lib/client/use-session-refresh";
 import { Users } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useAppRouter } from "@/lib/client/navigation";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 const FAMILY_TYPE_OPTIONS = [
@@ -28,9 +28,10 @@ type FamilyType = "personal" | "family";
 export default function CreateFamilyPage() {
   const [familyName, setFamilyName] = useState("");
   const [familyType, setFamilyType] = useState<FamilyType>("family");
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const [isLoading, startCreateTransition] = useTransition();
+  const router = useAppRouter();
   const { refreshSession } = useSessionRefresh();
+  const isPending = isLoading || router.isPending;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,31 +41,29 @@ export default function CreateFamilyPage() {
       return;
     }
 
-    setIsLoading(true);
-
-    try {
-      const result = await createFamilyAction({
+    startCreateTransition(async () => {
+      try {
+        const result = await createFamilyAction({
         name: familyName.trim(),
         description: familyType === "personal" ? "개인 가계부" : undefined,
-      });
+        });
 
-      if (result.success) {
-        await refreshSession();
-        toast.success("가족이 성공적으로 생성되었습니다!");
-        router.push("/calendar");
-      } else {
+        if (result.success) {
+          await refreshSession();
+          toast.success("가족이 성공적으로 생성되었습니다!");
+          router.push("/calendar");
+          return;
+        }
+
         toast.error(result.error.message);
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "가족 생성 중 오류가 발생했습니다. 다시 시도해주세요."
+        );
       }
-    } catch (error) {
-      console.error("Family creation error:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "가족 생성 중 오류가 발생했습니다. 다시 시도해주세요."
-      );
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   return (
@@ -93,7 +92,7 @@ export default function CreateFamilyPage() {
                     options={FAMILY_TYPE_OPTIONS}
                     value={familyType}
                     onChange={(v) => setFamilyType(v)}
-                    disabled={isLoading}
+                    disabled={isPending}
                     ariaLabel="가족 타입 선택"
                   />
                 </div>
@@ -115,7 +114,7 @@ export default function CreateFamilyPage() {
                   value={familyName}
                   onChange={(e) => setFamilyName(e.target.value)}
                   className="h-12"
-                  disabled={isLoading}
+                  disabled={isPending}
                 />
               </div>
 
@@ -123,9 +122,9 @@ export default function CreateFamilyPage() {
               <Button
                 type="submit"
                 className="w-full h-12 bg-brand-500 hover:bg-brand-600 text-brand-fg"
-                disabled={isLoading}
+                disabled={isPending}
               >
-                {isLoading ? (
+                {isPending ? (
                   <div className="flex items-center justify-center">
                     <div className="w-4 h-4 border-2 border-brand-fg border-t-transparent rounded-full animate-spin mr-2" />
                     생성 중...

@@ -447,6 +447,11 @@ App Router 의 segment 경계에서 일관 표시:
 - **Error** (`src/app/error.tsx`, `src/app/global-error.tsx`, `src/app/(authenticated)/error.tsx`): 88px expense/10 원형 배경, AlertCircle, "문제가 발생했어요" 문구와 다시 시도 또는 홈으로 버튼을 표시한다. 디버그 박스는 개발 환경에서만 보인다.
 - **Loading** (`src/app/(authenticated)/{calendar,transactions,analytics,*}/loading.tsx`): 페이지 구조에 맞춘 `Skel`을 표시한다. `globals.css`의 `ab-shimmer` 애니메이션과 `.ab-skel` 클래스를 재사용한다.
 
+- **전환 대기** (ADR-F39): 다른 화면으로 가는 링크는 `loading.tsx` 스켈레톤이 바로 뜬다. 클라이언트에서 `useAppRouter` 의 `push`, `replace`, `refresh` 를 호출하면 150ms 뒤 화면 맨 위에 진행 막대가 뜬다. `back` 은 history 이동의 완료 시점을 알 수 없어 제외한다.
+  - 같은 화면에서 주소 값만 바꾸는 전환(내역 탭, 필터, 검색, 쪽 넘김, 카테고리 요약 행, 달력 월 이동, 분석 기간)은 바뀔 영역이 `aria-busy="true"` 와 흐림으로 대기를 보인다.
+  - 서버 액션 뒤 이동하는 버튼(가족 선택, 가족 전환, 가족 만들기, 초대 수락)은 이동이 끝날 때까지 비활성이고 진행 표시를 유지한다.
+  - 헤더의 가족 전환 시트는 누르면 바로 열리고, 목록을 받는 동안 행 스켈레톤을 보인다.
+
 `error.tsx` 는 모두 `"use client"` 첫 줄 필수 (App Router 규약). `loading.tsx` 는 Server Component OK.
 
 ---

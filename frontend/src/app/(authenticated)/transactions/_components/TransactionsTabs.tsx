@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/client/utils";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useAppRouter, useNavigationPending } from "@/lib/client/navigation";
 
 type TabType = "expenses" | "incomes" | "recurring";
 
@@ -17,10 +18,15 @@ interface TransactionsTabsProps {
 }
 
 export function TransactionsTabs({ activeTab, onChange }: TransactionsTabsProps) {
-  const router = useRouter();
+  const router = useAppRouter();
+  const isNavigationPending = useNavigationPending();
   const searchParams = useSearchParams();
 
   const handleTabChange = (tab: TabType) => {
+    if (isNavigationPending) {
+      return;
+    }
+
     if (onChange) {
       onChange(tab);
       return;
@@ -42,6 +48,7 @@ export function TransactionsTabs({ activeTab, onChange }: TransactionsTabsProps)
           key={tab.id}
           role="tab"
           aria-selected={activeTab === tab.id}
+          disabled={isNavigationPending}
           onClick={() => handleTabChange(tab.id)}
           className={cn(
             "flex-1 text-center py-2 text-sm font-semibold rounded-sm transition-all duration-150",

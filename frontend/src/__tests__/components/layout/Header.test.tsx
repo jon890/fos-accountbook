@@ -12,13 +12,18 @@
 import { Header } from "@/components/layout/Header";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { usePathname, useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
+import { usePathname } from "next/navigation";
 import type { Session } from "next-auth";
+import { getFamiliesAction } from "@/actions/family/get-families-action";
+import { toast } from "sonner";
 
 // Next.js 의존성 모킹
 jest.mock("next/navigation", () => ({
-  useRouter: jest.fn(),
   usePathname: jest.fn(),
+}));
+jest.mock("@/lib/client/navigation", () => ({
+  useAppRouter: jest.fn(),
 }));
 
 // Server Action 모킹
@@ -38,8 +43,10 @@ jest.mock("@/components/families/FamilySelectorList", () => ({
 }));
 
 jest.mock("@/actions/family/get-families-action", () => ({
-  getFamiliesAction: jest.fn(() => Promise.resolve({ success: true, data: [] })),
+  getFamiliesAction: jest.fn(),
 }));
+
+jest.mock("sonner", () => ({ toast: { error: jest.fn() } }));
 
 jest.mock("@/components/notifications/NotificationBell", () => ({
   NotificationBell: ({ familyUuid }: { familyUuid: string }) => (
@@ -67,8 +74,9 @@ const createMockSession = (overrides?: Partial<Session>): Session => ({
 
 describe("Header", () => {
   beforeEach(() => {
-    (useRouter as jest.Mock).mockReturnValue(mockRouter);
+    (useAppRouter as jest.Mock).mockReturnValue(mockRouter);
     jest.mocked(usePathname).mockReturnValue("/calendar");
+    jest.mocked(getFamiliesAction).mockResolvedValue({ success: true, data: [] });
   });
 
   afterEach(() => {
@@ -303,6 +311,42 @@ describe("Header", () => {
       const familySelectorWrapper = familySelector.parentElement;
       expect(familySelectorWrapper).toHaveClass("hidden");
       expect(familySelectorWrapper).toHaveClass("md:block");
+    });
+  });
+
+  it("가족 전환을 누르면 조회가 끝나기 전에 시트와 세 줄 스켈레톤을 표시한다", async () => {
+    let resolveFamilies!: (value: { success: true; data: [] }) => void;
+    jest.mocked(getFamiliesAction).mockReturnValue(
+      new Promise((resolve) => {
+        resolveFamilies = resolve;
+      }),
+    );
+    const user = userEvent.setup();
+    render(<Header session={createMockSession()} selectedFamilyUuid={null} />);
+
+    await user.click(screen.getByText("홍").closest("button") as HTMLButtonElement);
+    await user.click(screen.getByText("가족 전환"));
+
+    expect(screen.getByRole("heading", { name: "가족 전환" })).toBeInTheDocument();
+    expect(screen.getByLabelText("가족 목록을 불러오는 중").querySelectorAll(".ab-skel")).toHaveLength(3);
+
+    resolveFamilies({ success: true, data: [] });
+  });
+
+  it("가족 목록 조회 실패 시 시트를 닫고 오류 토스트를 표시한다", async () => {
+    jest.mocked(getFamiliesAction).mockResolvedValue({
+      success: false,
+      error: { code: "F001", message: "조회 실패" },
+    });
+    const user = userEvent.setup();
+    render(<Header session={createMockSession()} selectedFamilyUuid={null} />);
+
+    await user.click(screen.getByText("홍").closest("button") as HTMLButtonElement);
+    await user.click(screen.getByText("가족 전환"));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("heading", { name: "가족 전환" })).not.toBeInTheDocument();
+      expect(toast.error).toHaveBeenCalledWith("가족 목록을 불러오지 못했습니다.");
     });
   });
 });

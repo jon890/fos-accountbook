@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useAppRouter, useNavigationPending } from "@/lib/client/navigation";
 import { AddTransactionDialog } from "@/components/transactions/dialogs/AddTransactionDialog";
 import { EditTransactionDialog } from "@/components/transactions/dialogs/EditTransactionDialog";
 import { buildMemberColorMap } from "@/lib/utils/member-color";
@@ -23,7 +24,8 @@ export function CalendarHome(props: CalendarHomeProps) {
 }
 
 function CalendarMonthContent({ data, initialDate, today, familyUuid }: CalendarHomeProps) {
-  const router = useRouter();
+  const router = useAppRouter();
+  const isNavigationPending = useNavigationPending();
   const urlDate = useSearchParams().get("date");
   const [dateDraft, setDateDraft] = useState<string | null>(null);
   const [previousInitialDate, setPreviousInitialDate] = useState(initialDate);
@@ -68,6 +70,10 @@ function CalendarMonthContent({ data, initialDate, today, familyUuid }: Calendar
   }
 
   function moveMonth(direction: -1 | 1) {
+    if (isNavigationPending) {
+      return;
+    }
+
     const nextMonth = new Date(Date.UTC(data.year, data.month - 1 + direction, 1));
     const year = nextMonth.getUTCFullYear();
     if (year < 2000 || year > 2100) {
@@ -79,26 +85,36 @@ function CalendarMonthContent({ data, initialDate, today, familyUuid }: Calendar
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <MonthHeader year={data.year} month={data.month} onMove={moveMonth} />
-      <MemberTotals daily={data.daily} colors={colors} />
-      <CalendarGrid
+      <MonthHeader
         year={data.year}
         month={data.month}
-        dailyStats={data.daily.dailyStats}
-        colors={colors}
-        selectedDate={selectedDate}
-        today={today}
-        onSelect={selectDate}
+        onMove={moveMonth}
+        isNavigationPending={isNavigationPending}
       />
-      <DayTransactionList
-        selectedDate={selectedDate}
-        expenseTotal={expenseTotal}
-        expenses={data.expenses}
-        incomes={data.incomes}
-        colors={colors}
-        onAdd={() => setAddOpen(true)}
-        onEdit={setEditing}
-      />
+      <MemberTotals daily={data.daily} colors={colors} />
+      <div
+        aria-busy={isNavigationPending}
+        className={`space-y-4 transition-opacity ${isNavigationPending ? "pointer-events-none opacity-60" : ""}`}
+      >
+        <CalendarGrid
+          year={data.year}
+          month={data.month}
+          dailyStats={data.daily.dailyStats}
+          colors={colors}
+          selectedDate={selectedDate}
+          today={today}
+          onSelect={selectDate}
+        />
+        <DayTransactionList
+          selectedDate={selectedDate}
+          expenseTotal={expenseTotal}
+          expenses={data.expenses}
+          incomes={data.incomes}
+          colors={colors}
+          onAdd={() => setAddOpen(true)}
+          onEdit={setEditing}
+        />
+      </div>
       <AddTransactionDialog open={addOpen} onOpenChange={setAddOpen} defaultDate={selectedDate} />
       {editing && editingTransaction && (
         <EditTransactionDialog
