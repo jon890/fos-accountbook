@@ -146,7 +146,7 @@ export function BudgetClient({
       {hasBudget && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
           <Card className="bg-bg-elev border-border rounded-xl">
-            <CardContent className="p-4">
+            <CardContent className="p-4 md:p-4">
               <p className="text-xs text-fg-muted mb-1">일 평균 지출</p>
               <p className="num text-xl md:text-2xl font-bold text-fg">
                 {formatCurrency(dailyAverage)}
@@ -156,7 +156,7 @@ export function BudgetClient({
           </Card>
 
           <Card className="bg-bg-elev border-border rounded-xl">
-            <CardContent className="p-4">
+            <CardContent className="p-4 md:p-4">
               <p className="text-xs text-fg-muted mb-1">남은 일수</p>
               <p className="num text-xl md:text-2xl font-bold text-fg">
                 {daysRemaining}일
@@ -166,7 +166,7 @@ export function BudgetClient({
           </Card>
 
           <Card className="bg-bg-elev border-border rounded-xl">
-            <CardContent className="p-4">
+            <CardContent className="p-4 md:p-4">
               <p className="text-xs text-fg-muted mb-1">권장 일 예산</p>
               <p className="num text-xl md:text-2xl font-bold text-fg">
                 {formatCurrency(recommendedDailyBudget)}
