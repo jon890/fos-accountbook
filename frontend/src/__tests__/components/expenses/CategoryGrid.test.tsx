@@ -6,6 +6,7 @@ function makeCategory(uuid: string, name: string, icon = "📦"): CategoryRespon
   return {
     uuid,
     familyUuid: "fam-1",
+    type: "EXPENSE",
     name,
     icon,
     createdAt: "2026-05-01T00:00:00Z",

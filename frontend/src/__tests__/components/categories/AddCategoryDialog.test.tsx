@@ -31,6 +31,7 @@ describe("AddCategoryDialog", () => {
         open={true}
         onOpenChange={mockOnOpenChange}
         familyUuid={familyUuid}
+        type="EXPENSE"
         onSuccess={mockOnSuccess}
       />
     );
@@ -51,6 +52,7 @@ describe("AddCategoryDialog", () => {
         open={true}
         onOpenChange={mockOnOpenChange}
         familyUuid={familyUuid}
+        type="EXPENSE"
         onSuccess={mockOnSuccess}
       />
     );
@@ -82,6 +84,7 @@ describe("AddCategoryDialog", () => {
         open={true}
         onOpenChange={mockOnOpenChange}
         familyUuid={familyUuid}
+        type="EXPENSE"
         onSuccess={mockOnSuccess}
       />
     );

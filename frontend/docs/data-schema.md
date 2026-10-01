@@ -1,4 +1,4 @@
-# Data Schema — fos-accountbook (프론트엔드 타입)
+# Data Schema: fos-accountbook 프론트엔드 타입
 
 > **소유권**: DB 스키마·API 스펙의 canonical 소스는 `backend/`.
 > → [`backend/docs/data-schema.md`](../../backend/docs/data-schema.md) 참고
@@ -106,6 +106,7 @@ interface FamilyMemberSummary {
 interface Category {
   uuid: string;
   familyUuid: string;
+  type: "EXPENSE" | "INCOME";
   name: string;
   color?: string; // #RRGGBB(기존 값, 기본 카테고리) 또는 oklch(L C H)(팔레트에서 고른 값)
   icon?: string; // 이모지 또는 아이콘 이름
@@ -117,6 +118,7 @@ interface Category {
 
 // Zod 스키마 (Server Action 입력 검증)
 const createCategorySchema = z.object({
+  type: z.enum(["EXPENSE", "INCOME"]),
   name: z.string().trim().min(1, "이름은 필수입니다"),
   color: z.string().optional(),
   icon: z.string().optional(),

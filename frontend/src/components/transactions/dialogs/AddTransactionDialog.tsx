@@ -205,6 +205,7 @@ function AddTransactionDialogBody({ onOpenChange, defaultType, defaultDate }: Ad
   // 선택 날짜와 공용 입력은 유지하고 고정지출 전용 입력만 초기화한다.
   function handleTypeChange(type: TransactionType) {
     setActiveTypeDraft(type);
+    setCategoryUuid(null);
     // recurring ↔ expense/income 전환 시 전용 필드 초기화
     setName("");
     setDayOfMonth(undefined);

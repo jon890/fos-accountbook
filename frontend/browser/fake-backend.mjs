@@ -22,6 +22,7 @@ const categories = [
   {
     uuid: "33333333-3333-3333-3333-333333333331",
     familyUuid: FAMILY_UUID,
+    type: "EXPENSE",
     name: "식비",
     icon: "utensils",
     color: "oklch(0.560 0.140 35)",
@@ -31,6 +32,7 @@ const categories = [
   {
     uuid: "33333333-3333-3333-3333-333333333332",
     familyUuid: FAMILY_UUID,
+    type: "EXPENSE",
     name: "교통",
     icon: "bus",
     color: "oklch(0.540 0.130 230)",
@@ -40,9 +42,20 @@ const categories = [
   {
     uuid: "33333333-3333-3333-3333-333333333333",
     familyUuid: FAMILY_UUID,
+    type: "EXPENSE",
     name: "생활",
     icon: "house",
     color: "oklch(0.510 0.110 188)",
+    createdAt,
+    updatedAt: createdAt,
+  },
+  {
+    uuid: "33333333-3333-3333-3333-333333333334",
+    familyUuid: FAMILY_UUID,
+    type: "INCOME",
+    name: "급여",
+    icon: "wallet",
+    color: "oklch(0.650 0.140 145)",
     createdAt,
     updatedAt: createdAt,
   },

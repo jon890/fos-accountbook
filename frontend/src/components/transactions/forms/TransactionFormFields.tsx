@@ -52,6 +52,10 @@ export function TransactionFormFields({
 }: TransactionFormFieldsProps) {
   const isRecurring = type === "recurring";
   const isDesktop = useMediaQuery("(min-width: 768px)");
+  const categoryType = type === "income" ? "INCOME" : "EXPENSE";
+  const filteredCategories = categories.filter(
+    (category) => category.type === categoryType,
+  );
 
   function handleFocus(event: FocusEvent<HTMLDivElement>) {
     if (!isDesktop && event.target instanceof HTMLInputElement) {
@@ -78,7 +82,7 @@ export function TransactionFormFields({
           </div>
         ) : (
           <CategoryGrid
-            categories={categories}
+            categories={filteredCategories}
             selectedUuid={categoryUuid}
             onSelect={onCategoryChange}
           />

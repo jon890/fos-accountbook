@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import type { CategoryResponse } from "@/types/category";
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -28,6 +29,9 @@ export function CategoryPageClient({
     }
   }, [hasInitialError]);
   const [categories, setCategories] = useState(initialCategories);
+  const [categoryType, setCategoryType] = useState<"EXPENSE" | "INCOME">(
+    "EXPENSE",
+  );
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] =
@@ -54,9 +58,22 @@ export function CategoryPageClient({
     setEditDialogOpen(true);
   };
 
+  const displayedCategories = categories.filter(
+    (category) => category.type === categoryType,
+  );
+
   return (
     <>
-      <div className="flex justify-end mb-4">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <SegmentedToggle
+          options={[
+            { key: "EXPENSE", label: "지출" },
+            { key: "INCOME", label: "수입" },
+          ]}
+          value={categoryType}
+          onChange={setCategoryType}
+          ariaLabel="카테고리 종류 선택"
+        />
         <Button onClick={() => setAddDialogOpen(true)}>
           <Plus className="w-4 h-4 mr-2" />
           카테고리 추가
@@ -64,7 +81,7 @@ export function CategoryPageClient({
       </div>
 
       <CategoryList
-        categories={categories}
+        categories={displayedCategories}
         onEdit={handleEditClick}
         onDelete={handleCategoryDeleted}
       />
@@ -73,6 +90,7 @@ export function CategoryPageClient({
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
         familyUuid={familyUuid}
+        type={categoryType}
         onSuccess={handleCategoryAdded}
       />
 

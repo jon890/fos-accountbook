@@ -44,6 +44,7 @@ const mockResponse: GetRecurringExpensesResponse = {
       category: {
         uuid: "category-1",
         familyUuid: "family-1",
+        type: "EXPENSE",
         name: "식비",
         icon: "🍔",
         createdAt: "2026-01-01T00:00:00Z",
