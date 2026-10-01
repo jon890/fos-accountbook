@@ -69,18 +69,9 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
     StringBuilder sb = new StringBuilder();
     sb.append("[REQ] ").append(method).append(" ").append(fullUrl);
 
-    String authHeader = request.getHeader("Authorization");
-    if (authHeader != null) {
-      sb.append(" | Auth: ").append(maskAuthorization(authHeader));
-    }
-
-    String sessionToken = extractSessionToken(request.getCookies());
-    if (sessionToken != null) {
-      sb.append(" | Session: ").append(maskToken(sessionToken));
-    }
-
     log.info("{}", sb);
-    logDebugBody("[REQ]", request.getRequestURI(), request.getContentAsByteArray());
+    logDebugRequestCredentials(request);
+    logDebugBody("[REQ]", method, request.getRequestURI(), request.getContentAsByteArray());
   }
 
   private String extractSessionToken(Cookie[] cookies) {
@@ -107,15 +98,31 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
     sb.append(" → ").append(status).append(" (").append(duration).append("ms)");
 
     log.info("{}", sb);
-    logDebugBody("[RES]", request.getRequestURI(), response.getContentAsByteArray());
+    logDebugBody("[RES]", method, request.getRequestURI(), response.getContentAsByteArray());
   }
 
-  private void logDebugBody(String logType, String requestUri, byte[] content) {
+  private void logDebugRequestCredentials(ContentCachingRequestWrapper request) {
     if (!log.isDebugEnabled()) {
       return;
     }
 
-    if (isBodyExcludedPath(requestUri)) {
+    String authHeader = request.getHeader("Authorization");
+    if (authHeader != null) {
+      log.debug("[REQ] Auth: {}", maskAuthorization(authHeader));
+    }
+
+    String sessionToken = extractSessionToken(request.getCookies());
+    if (sessionToken != null) {
+      log.debug("[REQ] Session: {}", maskToken(sessionToken));
+    }
+  }
+
+  private void logDebugBody(String logType, String method, String requestUri, byte[] content) {
+    if (!log.isDebugEnabled()) {
+      return;
+    }
+
+    if (isBodyExcludedPath(method, requestUri)) {
       log.debug("{} Body: (인증 경로라 생략)", logType);
       return;
     }
@@ -126,8 +133,9 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
     }
   }
 
-  private boolean isBodyExcludedPath(String requestUri) {
-    return requestUri.startsWith(AUTH_PATH_PREFIX) || API_TOKEN_ISSUE_PATH.equals(requestUri);
+  private boolean isBodyExcludedPath(String method, String requestUri) {
+    return requestUri.startsWith(AUTH_PATH_PREFIX)
+        || ("POST".equals(method) && API_TOKEN_ISSUE_PATH.equals(requestUri));
   }
 
   private String maskRequestTarget(HttpServletRequest request) {

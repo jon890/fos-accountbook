@@ -6,6 +6,7 @@ import com.bifos.accountbook.config.security.JwtAuthenticationFilter;
 import com.bifos.accountbook.shared.dto.ApiErrorResponse;
 import com.bifos.accountbook.shared.exception.ErrorCode;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -84,7 +85,7 @@ public class SecurityConfig {
   private void writeInvalidTokenResponse(String requestUri, jakarta.servlet.http.HttpServletResponse response)
       throws IOException {
     response.setStatus(ErrorCode.INVALID_TOKEN.getStatusCode());
-    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+    response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=" + StandardCharsets.UTF_8.name());
     response.getWriter().write(
         jsonMapper.writeValueAsString(ApiErrorResponse.of(ErrorCode.INVALID_TOKEN, requestUri)));
   }

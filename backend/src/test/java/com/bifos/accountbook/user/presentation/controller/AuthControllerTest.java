@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.bifos.accountbook.config.security.JwtProperties;
 import com.bifos.accountbook.config.security.JwtTokenProvider;
@@ -12,12 +13,19 @@ import com.bifos.accountbook.shared.AbstractControllerTest;
 import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.user.presentation.dto.SocialLoginRequest;
 import io.jsonwebtoken.Jwts;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.ExceptionTranslationFilter;
 
 @DisplayName("인증 컨트롤러 통합 테스트")
 class AuthControllerTest extends AbstractControllerTest {
@@ -29,6 +37,9 @@ class AuthControllerTest extends AbstractControllerTest {
 
   @Autowired
   private JwtTokenProvider jwtTokenProvider;
+
+  @Autowired
+  private SecurityFilterChain securityFilterChain;
 
   private final SocialLoginRequest request =
       new SocialLoginRequest("google", "google-123", "user@example.com", "사용자", null);
@@ -47,6 +58,16 @@ class AuthControllerTest extends AbstractControllerTest {
 
   private String refreshRequest(String refreshToken) throws Exception {
     return objectMapper.writeValueAsString(Map.of("refreshToken", refreshToken));
+  }
+
+  private AuthenticationEntryPoint authenticationEntryPoint() {
+    return securityFilterChain.getFilters()
+                              .stream()
+                              .filter(ExceptionTranslationFilter.class::isInstance)
+                              .map(ExceptionTranslationFilter.class::cast)
+                              .findFirst()
+                              .orElseThrow(() -> new AssertionError("ExceptionTranslationFilter가 없다"))
+                              .getAuthenticationEntryPoint();
   }
 
   @Test
@@ -142,5 +163,22 @@ class AuthControllerTest extends AbstractControllerTest {
                         .header("Authorization", "Bearer invalid.jwt.token"))
            .andExpect(status().isUnauthorized())
            .andExpect(jsonPath("$.code").value("A002"));
+  }
+
+  @Test
+  @DisplayName("인증 실패 응답은 UTF-8 JSON 형식의 401 A002를 반환한다")
+  void authenticationEntryPoint_WritesUtf8InvalidTokenResponse() throws Exception {
+    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/families");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+
+    authenticationEntryPoint().commence(
+        request, response, new InsufficientAuthenticationException("인증 정보가 없습니다"));
+
+    String body = new String(response.getContentAsByteArray(), StandardCharsets.UTF_8);
+
+    assertThat(response.getStatus()).isEqualTo(401);
+    assertThat(response.getCharacterEncoding()).isEqualTo(StandardCharsets.UTF_8.name());
+    assertThat(objectMapper.readTree(body).get("code").asText()).isEqualTo("A002");
+    assertThat(body).contains("유효하지 않은 토큰입니다");
   }
 }

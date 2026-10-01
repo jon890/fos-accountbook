@@ -7,6 +7,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.Cookie;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -26,9 +27,9 @@ class RequestResponseLoggingFilterTest {
     FilterLogCapture capture = new FilterLogCapture(Level.INFO);
 
     try {
-      runFilter(capture.filter(), "/api/v1/invitations/token/secret-invitation", "email=user@example.com",
+      runFilter(capture.filter(), "POST", "/api/v1/invitations/token/secret-invitation", "email=user@example.com",
                 requestBody, responseBody);
-      runFilter(capture.filter(), "/api/v1/auth/refresh", null,
+      runFilter(capture.filter(), "POST", "/api/v1/auth/refresh", null,
                 "{\"refreshToken\":\"secret-refresh\"}", authResponseBody);
 
       List<String> messages = capture.messages();
@@ -39,6 +40,8 @@ class RequestResponseLoggingFilterTest {
       assertThat(messages).noneMatch(message -> message.contains("secret-invitation"));
       assertThat(messages).noneMatch(message -> message.contains("user@example.com"));
       assertThat(messages).noneMatch(message -> message.contains("short-token"));
+      assertThat(messages).noneMatch(message -> message.contains("Auth:"));
+      assertThat(messages).noneMatch(message -> message.contains("Session:"));
       assertThat(messages).anyMatch(message -> message.contains("[RES] POST ")
           && message.contains("/api/v1/invitations/token/***?email=***")
           && message.contains("→ 200"));
@@ -55,14 +58,19 @@ class RequestResponseLoggingFilterTest {
     String refreshResponseBody = "{\"accessToken\":\"secret-access\"}";
     String apiTokenRequestBody = "{\"name\":\"bank-link\"}";
     String apiTokenResponseBody = "{\"token\":\"secret-api-token\"}";
+    String apiTokenListResponseBody = "{\"items\":[\"visible-at-debug\"]}";
     FilterLogCapture capture = new FilterLogCapture(Level.DEBUG);
 
     try {
-      runFilter(capture.filter(), "/api/v1/expenses", null, generalRequestBody, generalResponseBody);
-      runFilter(capture.filter(), "/api/v1/auth/refresh", null, refreshRequestBody, refreshResponseBody);
-      runFilter(capture.filter(), "/api/v1/users/me/api-tokens", null,
+      runFilter(capture.filter(), "POST", "/api/v1/expenses", null,
+                generalRequestBody, generalResponseBody);
+      runFilter(capture.filter(), "POST", "/api/v1/auth/refresh", null,
+                refreshRequestBody, refreshResponseBody);
+      runFilter(capture.filter(), "POST", "/api/v1/users/me/api-tokens", null,
                 apiTokenRequestBody, apiTokenResponseBody);
-      runFilter(capture.filter(), "/api/v1/invitations/token/secret-invitation", "email=user@example.com",
+      runFilter(capture.filter(), "GET", "/api/v1/users/me/api-tokens", null,
+                "", apiTokenListResponseBody);
+      runFilter(capture.filter(), "POST", "/api/v1/invitations/token/secret-invitation", "email=user@example.com",
                 "", "");
 
       List<String> messages = capture.messages();
@@ -73,21 +81,26 @@ class RequestResponseLoggingFilterTest {
       assertThat(messages).noneMatch(message -> message.contains(refreshResponseBody));
       assertThat(messages).noneMatch(message -> message.contains(apiTokenRequestBody));
       assertThat(messages).noneMatch(message -> message.contains(apiTokenResponseBody));
+      assertThat(messages).anyMatch(message -> message.contains(apiTokenListResponseBody));
       assertThat(messages).noneMatch(message -> message.contains("secret-invitation"));
       assertThat(messages).noneMatch(message -> message.contains("user@example.com"));
+      assertThat(messages).noneMatch(message -> message.contains("session-token-value-1234567890"));
       assertThat(messages).anyMatch(message -> message.contains("인증 경로라 생략"));
+      assertThat(messages).anyMatch(message -> message.contains("[REQ] Auth: ***"));
+      assertThat(messages).anyMatch(message -> message.contains("[REQ] Session: session-to***1234567890"));
       assertThat(messages).anyMatch(message -> message.contains("/api/v1/invitations/token/***?email=***"));
     } finally {
       capture.close();
     }
   }
 
-  private void runFilter(RequestResponseLoggingFilter filter, String uri, String query, String requestBody,
-                         String responseBody) throws Exception {
-    MockHttpServletRequest request = new MockHttpServletRequest("POST", uri);
+  private void runFilter(RequestResponseLoggingFilter filter, String method, String uri, String query,
+                         String requestBody, String responseBody) throws Exception {
+    MockHttpServletRequest request = new MockHttpServletRequest(method, uri);
     request.setQueryString(query);
     request.setContent(requestBody.getBytes(StandardCharsets.UTF_8));
     request.addHeader("Authorization", "short-token");
+    request.setCookies(new Cookie("session-token", "session-token-value-1234567890"));
 
     MockHttpServletResponse response = new MockHttpServletResponse();
     FilterChain chain = (servletRequest, servletResponse) -> {
