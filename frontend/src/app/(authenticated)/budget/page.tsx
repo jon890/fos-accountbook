@@ -19,7 +19,7 @@ export default async function BudgetPage() {
     redirect("/");
   }
 
-  const { year, month } = getDatePartsInTimezone(session.user.profile?.timezone);
+  const { year, month, day } = getDatePartsInTimezone(session.user.profile?.timezone);
 
   const [statsResult, dailyResult, breakdownResult] = await Promise.all([
     getDashboardStatsAction(),
@@ -53,6 +53,7 @@ export default async function BudgetPage() {
       remainingBudget={stats.remainingBudget}
       year={stats.year}
       month={stats.month}
+      day={day}
       dailyExpenses={daily}
       categoryItems={breakdown.items}
     />

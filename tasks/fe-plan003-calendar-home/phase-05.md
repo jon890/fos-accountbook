@@ -64,7 +64,7 @@
 
 ```bash
 # cwd: <repo root>
-cd frontend && pnpm test src/__tests__/app/analytics/page.test.tsx src/__tests__/app/dashboard/page.test.tsx src/__tests__/app/budget/page.test.tsx src/__tests__/app/authenticated-status-pages.test.tsx src/__tests__/components/families/InviteFamilyDialog.test.tsx src/__tests__/services/dashboard/getDashboardStats.test.ts src/__tests__/actions/dashboard/current-month-actions.test.ts src/__tests__/actions/recurring-expense
+cd frontend && pnpm test src/__tests__/app/analytics/page.test.tsx src/__tests__/app/dashboard/page.test.tsx src/__tests__/app/budget/page.test.tsx src/__tests__/app/authenticated-status-pages.test.tsx src/__tests__/components/families/InviteFamilyDialog.test.tsx src/__tests__/services/dashboard/getDashboardStats.test.ts src/__tests__/services/dashboard/getMonthlyDailyStats.test.ts src/__tests__/actions/dashboard/get-monthly-daily-stats-action.test.ts src/__tests__/actions/dashboard/current-month-actions.test.ts src/__tests__/actions/recurring-expense
 pnpm lint && pnpm test
 pnpm exec tsc --noEmit
 git grep -ln 'QuickActions\|RecentActivity\|CalendarView' -- src   # 결과 없음
@@ -103,6 +103,9 @@ git grep -ln 'QuickActions\|RecentActivity\|CalendarView' -- src   # 결과 없�
 | `frontend/src/actions/analytics/get-category-breakdown-with-delta-action.ts` | 수정 |
 | `frontend/src/actions/analytics/get-monthly-trend-action.ts` | 수정 |
 | `frontend/src/app/(authenticated)/budget/page.tsx` | 수정 |
+| `frontend/src/app/(authenticated)/budget/_components/BudgetClient.tsx` | 수정 |
+| `frontend/src/__tests__/services/dashboard/getMonthlyDailyStats.test.ts` | 수정 |
+| `frontend/src/__tests__/actions/dashboard/get-monthly-daily-stats-action.test.ts` | 신규 |
 | `frontend/src/__tests__/services/dashboard/getDashboardStats.test.ts` | 신규 |
 | `frontend/src/__tests__/actions/dashboard/current-month-actions.test.ts` | 신규 |
 | `frontend/src/__tests__/app/budget/page.test.tsx` | 신규 |

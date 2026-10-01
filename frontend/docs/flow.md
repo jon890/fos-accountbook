@@ -114,6 +114,7 @@ ADR-F21 에 따라 모든 진입점(달력의 「이 날짜에 추가」, Bottom
 
 가족 구성원이면 누가 등록했든 수정하고 삭제할 수 있다. 등록자만 허용하는 제한은 두지 않는다.
 내역 목록의 기존 삭제 버튼은 그대로 둔다.
+수정 창이 열린 동안에는 서버 조회 결과가 갱신돼도 작성 중인 폼 값을 유지한다. 창을 닫고 다시 열면 최신 거래 값으로 초기화한다. 수정 요청 중에는 같은 거래의 삭제를 막는다.
 
 ---
 
@@ -133,9 +134,9 @@ ADR-F21 에 따라 모든 진입점(달력의 「이 날짜에 추가」, Bottom
     │
     └─ CalendarHome ("use client")
             ├─ MonthHeader: ‹ 2026년 9월 ›  (월 이동 = URL month 변경, 서버 다시 조회)
-            ├─ MemberTotals: 구성원별 이번 달 지출 (색 점 + 이름 + 금액), 가족 합계
-            ├─ CalendarGrid: 7열. 칸마다 날짜, 구성원별 지출 한 줄씩(색 점 + 줄인 금액)
-            │       └─ 날짜 탭 → 선택 날짜 변경 (클라이언트 상태 + history.replaceState, 서버 호출 없음)
+            ├─ MemberTotals: 구성원별 이번 달 지출 (색 점, 이름, 금액), 가족 합계
+            ├─ CalendarGrid: 7열. 칸마다 날짜, 구성원별 지출 한 줄씩(색 점과 줄인 금액)
+            │       └─ 날짜 탭 → 선택 날짜 변경 (클라이언트 상태와 history.replaceState, 서버 호출 없음)
             └─ DayTransactionList: 선택 날짜의 지출과 수입 (등록자 색 점, 카테고리, 메모, 금액)
                     ├─ 항목 탭 → EditTransactionDialog (「4. 지출·수입 수정/삭제 플로우」)
                     └─ 「이 날짜에 추가」 → AddTransactionDialog(defaultDate = 선택 날짜)
@@ -143,6 +144,7 @@ ADR-F21 에 따라 모든 진입점(달력의 「이 날짜에 추가」, Bottom
 
 - 구성원 색은 가입 순서로 정한다. 첫 구성원 `member-1`, 다음 `member-2` 순서이고 네 가지 색을 돌려 쓴다. 토큰은 `globals.css` 의 `--color-member-{1..4}`.
 - 칸의 금액 표기: 1만 이상은 `3.2만`, 1천 이상은 `9.8천`, 그 밖은 숫자 그대로. 글자는 11px 이상.
+- 칸에는 지출이 큰 구성원 두 명을 표시하고, 나머지는 `+N`으로 줄인다. 버튼의 접근성 이름에는 모든 구성원의 이름과 지출을 담는다.
 - 구성원 목록에서 찾지 못한 `userUuid`(가족을 떠난 사람)는 회색 점과 「이전 구성원」 으로 표시한다.
 - 빈 상태: 그 달 거래가 없으면 달력은 그대로 두고 날짜 목록에 「이 날 기록이 없어요」 와 추가 버튼을 둔다.
 - 실패: 네 호출 중 하나라도 실패하면 `(authenticated)/error.tsx` 로 간다. 401 은 ADR-F26 에 따라 로그인으로 보낸다.
@@ -417,7 +419,7 @@ App Router 의 segment 경계에서 일관 표시:
 
 - **Empty** (`src/components/empty/EmptyState.tsx`): 거래 0건 등 — 96px brand-50 round + inbox 아이콘 + 제목/부제 + (선택) CTA + (선택) 팁 박스
 - **Error** (`src/app/error.tsx` + `src/app/global-error.tsx` + `src/app/(authenticated)/error.tsx`): 88px expense/10 round + AlertCircle + "문제가 발생했어요" + DEV ONLY 디버그 박스 (production 숨김) + 다시 시도 / 홈으로
-- **Loading** (`src/app/(authenticated)/{calendar,transactions,analytics,*}/loading.tsx`): `Skel` shimmer (ab-shimmer keyframe + .ab-skel class in globals.css) — 페이지별 구조 매치
+- **Loading** (`src/app/(authenticated)/{calendar,transactions,analytics,*}/loading.tsx`): 페이지 구조에 맞춘 `Skel`을 표시한다. `globals.css`의 `ab-shimmer` 애니메이션과 `.ab-skel` 클래스를 재사용한다.
 
 `error.tsx` 는 모두 `"use client"` 첫 줄 필수 (App Router 규약). `loading.tsx` 는 Server Component OK.
 

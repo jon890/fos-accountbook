@@ -32,24 +32,16 @@ export async function getMonthlyDailyStats(
   year: number,
   month: number,
 ): Promise<DailyTransactionSummary[]> {
-  try {
-    const result = await serverApiGet<{
-      dailyStats: DailyTransactionSummary[];
-    }>(
-      `/families/${familyUuid}/dashboard/daily-stats?year=${year}&month=${month}`,
-    );
-    return result.dailyStats.map(({ date, income, expense }) => ({
-      date,
-      income,
-      expense,
-    }));
-  } catch (error) {
-    if (error instanceof ServerApiError && error.status === 401) {
-      throw error;
-    }
-
-    return [];
-  }
+  const result = await serverApiGet<{
+    dailyStats: DailyTransactionSummary[];
+  }>(
+    `/families/${familyUuid}/dashboard/daily-stats?year=${year}&month=${month}`,
+  );
+  return result.dailyStats.map(({ date, income, expense }) => ({
+    date,
+    income,
+    expense,
+  }));
 }
 
 interface CategoryBreakdownResponse {

@@ -18,6 +18,7 @@ interface BudgetClientProps {
   remainingBudget: number;
   year: number;
   month: number;
+  day: number;
   dailyExpenses: { date: string; income: number; expense: number }[];
   categoryItems: CategoryBreakdownItem[];
 }
@@ -28,6 +29,7 @@ export function BudgetClient({
   remainingBudget,
   year,
   month,
+  day,
   dailyExpenses,
   categoryItems,
 }: BudgetClientProps) {
@@ -44,9 +46,8 @@ export function BudgetClient({
     ? Math.max(Math.round((remainingBudget / budget) * 100), 0)
     : 0;
 
-  const today = new Date();
   const daysInMonth = new Date(year, month, 0).getDate();
-  const dayOfMonth = today.getDate();
+  const dayOfMonth = day;
   const daysRemaining = Math.max(daysInMonth - dayOfMonth, 0);
 
   const dailyAverage =

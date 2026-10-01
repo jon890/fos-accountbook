@@ -32,7 +32,7 @@ jest.mock("@/hooks/useMediaQuery", () => ({
 
 jest.mock("react", () => ({
   ...jest.requireActual("react"),
-  useActionState: jest.fn((action, initialState) => [initialState, action]),
+  useActionState: jest.fn(jest.requireActual("react").useActionState),
 }));
 
 import { getFamilyCategoriesAction } from "@/actions/category/get-categories-action";
@@ -45,8 +45,8 @@ import { deleteIncomeAction } from "@/actions/income/delete-income-action";
 import { toast } from "sonner";
 import { ActionError } from "@/lib/errors";
 import userEvent from "@testing-library/user-event";
-import { render, screen, waitFor, within } from "@testing-library/react";
-import type { Expense } from "@/types/expense";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import type { Expense, UpdateExpenseFormState } from "@/types/expense";
 import type { Income } from "@/types/income";
 import type { RecurringExpense } from "@/types/recurring-expense";
 
@@ -115,12 +115,138 @@ const mockRecurring: RecurringExpense = {
   updatedAt: "2024-01-01T00:00:00Z",
 };
 
+function createDeferredUpdate() {
+  let resolve!: (state: UpdateExpenseFormState) => void;
+  const promise = new Promise<UpdateExpenseFormState>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+
+  return { promise, resolve };
+}
+
 describe("EditTransactionDialog", () => {
   const onOpenChange = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetCategories.mockResolvedValue({ success: true, data: mockCategories });
+  });
+
+  it.each(["expense", "income"] as const)("%s 수정 응답을 기다리는 동안 삭제 확인을 열지 않는다", async (type) => {
+    const user = userEvent.setup();
+    const transaction = type === "expense" ? mockExpense : mockIncome;
+    const updateAction = type === "expense" ? mockUpdateExpense : mockUpdateIncome;
+    const deleteAction = type === "expense" ? deleteExpenseAction : deleteIncomeAction;
+    const label = type === "expense" ? "지출" : "수입";
+    const update = createDeferredUpdate();
+    updateAction.mockReturnValueOnce(update.promise);
+    render(
+      <EditTransactionDialog open onOpenChange={onOpenChange} type={type} transaction={transaction} />,
+    );
+
+    try {
+      await user.click(await screen.findByRole("button", { name: `${label} 수정` }));
+      await waitFor(() => expect(updateAction).toHaveBeenCalled());
+      const deleteButton = screen.getByRole("button", { name: "삭제" });
+      expect(deleteButton).toBeDisabled();
+      await user.click(deleteButton);
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+      expect(deleteAction).not.toHaveBeenCalled();
+      expect(onOpenChange).not.toHaveBeenCalled();
+    } finally {
+      await act(async () => {
+        update.resolve({ success: false, message: "수정 실패", errors: {} });
+        await update.promise;
+      });
+    }
+
+    expect(screen.getByRole("button", { name: "삭제" })).toBeEnabled();
+    expect(toast.error).toHaveBeenCalledWith("수정 실패");
+  });
+
+  it.each(["expense", "income"] as const)("%s 삭제 확인이 열린 상태에서도 수정 응답을 기다리는 동안 삭제를 실행하지 않는다", async (type) => {
+    const user = userEvent.setup();
+    const transaction = type === "expense" ? mockExpense : mockIncome;
+    const updateAction = type === "expense" ? mockUpdateExpense : mockUpdateIncome;
+    const deleteAction = type === "expense" ? deleteExpenseAction : deleteIncomeAction;
+    const label = type === "expense" ? "지출" : "수입";
+    const update = createDeferredUpdate();
+    updateAction.mockReturnValueOnce(update.promise);
+    jest.mocked(deleteAction).mockResolvedValueOnce({ success: true, data: undefined });
+    render(
+      <EditTransactionDialog open onOpenChange={onOpenChange} type={type} transaction={transaction} />,
+    );
+
+    const submitButton = await screen.findByRole("button", { name: `${label} 수정` });
+    const form = submitButton.closest("form");
+    expect(form).not.toBeNull();
+    await user.click(screen.getByRole("button", { name: "삭제" }));
+    const confirmation = within(screen.getByRole("alertdialog"));
+
+    try {
+      // 확인 창이 먼저 열린 뒤 수정 요청이 시작되는 순서를 재현한다.
+      fireEvent.submit(form!);
+      await waitFor(() => expect(updateAction).toHaveBeenCalled());
+      const confirmDeleteButton = confirmation.getByRole("button", { name: "삭제" });
+      expect(confirmDeleteButton).toBeDisabled();
+      await user.click(confirmDeleteButton);
+      expect(deleteAction).not.toHaveBeenCalled();
+      expect(onOpenChange).not.toHaveBeenCalled();
+    } finally {
+      await act(async () => {
+        update.resolve({ success: false, message: "수정 실패", errors: {} });
+        await update.promise;
+      });
+    }
+
+    const confirmDeleteButton = confirmation.getByRole("button", { name: "삭제" });
+    expect(confirmDeleteButton).toBeEnabled();
+    await user.click(confirmDeleteButton);
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(deleteAction).toHaveBeenCalledWith(transaction.familyUuid, transaction.uuid);
+  });
+
+  it.each(["expense", "income"] as const)("%s 서버 거래값이 갱신되어도 작성 중인 값을 유지하고 다시 열면 최신 값으로 초기화한다", async (type) => {
+    const user = userEvent.setup();
+    const transaction = type === "expense" ? mockExpense : mockIncome;
+    const latestTransaction = {
+      ...transaction,
+      amount: 42000,
+      description: "서버에서 갱신한 메모",
+      date: "2024-01-20T00:00:00Z",
+    };
+    const { rerender } = render(
+      <EditTransactionDialog open onOpenChange={onOpenChange} type={type} transaction={transaction} />,
+    );
+
+    const amountInput = await screen.findByRole("spinbutton", { name: "금액 직접 입력" });
+    await user.clear(amountInput);
+    await user.type(amountInput, "23000");
+    const descriptionInput = screen.getByLabelText("메모");
+    await user.clear(descriptionInput);
+    await user.type(descriptionInput, "작성 중인 메모");
+    fireEvent.change(screen.getByLabelText(/날짜/), { target: { value: "2024-01-18" } });
+
+    rerender(
+      <EditTransactionDialog open onOpenChange={onOpenChange} type={type} transaction={latestTransaction} />,
+    );
+    expect(screen.getByRole("spinbutton", { name: "금액 직접 입력" })).toHaveValue(23000);
+    expect(screen.getByLabelText("메모")).toHaveValue("작성 중인 메모");
+    expect(screen.getByLabelText(/날짜/)).toHaveValue("2024-01-18");
+
+    await user.click(screen.getByRole("button", { name: "취소" }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    rerender(
+      <EditTransactionDialog open={false} onOpenChange={onOpenChange} type={type} transaction={latestTransaction} />,
+    );
+    expect(screen.queryByLabelText("메모")).not.toBeInTheDocument();
+    rerender(
+      <EditTransactionDialog open onOpenChange={onOpenChange} type={type} transaction={latestTransaction} />,
+    );
+
+    expect(await screen.findByRole("spinbutton", { name: "금액 직접 입력" })).toHaveValue(42000);
+    expect(screen.getByLabelText("메모")).toHaveValue("서버에서 갱신한 메모");
+    expect(screen.getByLabelText(/날짜/)).toHaveValue("2024-01-20");
   });
 
   it.each(["expense", "income"] as const)("%s 삭제 성공 시 가족과 거래를 전달하고 수정 창을 닫는다", async (type) => {

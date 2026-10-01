@@ -175,9 +175,15 @@ function EditTransactionDialogBody({
   const [name, setName] = useState(recurring?.name ?? "");
   const [dayOfMonth, setDayOfMonth] = useState<number | undefined>(recurring?.dayOfMonth);
 
-  const [expenseState, expenseFormAction] = useActionState(updateExpenseAction, initialExpenseState);
-  const [incomeState, incomeFormAction] = useActionState(updateIncomeAction, initialIncomeState);
-  const [recurringState, recurringFormAction] = useActionState(
+  const [expenseState, expenseFormAction, isExpensePending] = useActionState(
+    updateExpenseAction,
+    initialExpenseState,
+  );
+  const [incomeState, incomeFormAction, isIncomePending] = useActionState(
+    updateIncomeAction,
+    initialIncomeState,
+  );
+  const [recurringState, recurringFormAction, isRecurringPending] = useActionState(
     updateRecurringWrapper,
     initialFormState,
   );
@@ -234,24 +240,30 @@ function EditTransactionDialogBody({
   }, [recurringState, onOpenChange]);
 
   let formAction = recurringFormAction;
+  let isUpdating = isRecurringPending;
   let errors: Record<string, string[] | undefined> | undefined = recurringState.errors;
   let ctaGradient = "gradient-budget text-brand-fg";
   let ctaLabel = "고정지출";
 
   if (type === "expense") {
     formAction = expenseFormAction;
+    isUpdating = isExpensePending;
     errors = expenseState.errors;
     ctaGradient = "gradient-expense text-expense-fg";
     ctaLabel = "지출";
   } else if (type === "income") {
     formAction = incomeFormAction;
+    isUpdating = isIncomePending;
     errors = incomeState.errors;
     ctaGradient = "gradient-income text-income-fg";
     ctaLabel = "수입";
   }
 
   async function handleDelete() {
-    if (type === "recurring" || isDeleting) return;
+    if (type === "recurring" || isDeleting || isUpdating) {
+      return;
+    }
+
     setIsDeleting(true);
 
     try {
@@ -366,7 +378,7 @@ function EditTransactionDialogBody({
               type="button"
               variant="ghost"
               className="text-expense"
-              disabled={isDeleting}
+              disabled={isDeleting || isUpdating}
               onClick={() => setDeleteOpen(true)}
             >
               삭제
@@ -400,7 +412,7 @@ function EditTransactionDialogBody({
             <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
             <AlertDialogAction
               className={buttonVariants({ variant: "destructive" })}
-              disabled={isDeleting}
+              disabled={isDeleting || isUpdating}
               onClick={(event) => {
                 event.preventDefault();
                 void handleDelete();

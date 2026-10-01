@@ -141,3 +141,21 @@ it("로그인하지 않았으면 조회 전에 로그인으로 보낸다", async
   await expect(AnalyticsPage({ searchParams: Promise.resolve({}) })).rejects.toThrow("redirect:/auth/signin");
   expect(getDashboardStatsAction).not.toHaveBeenCalled();
 });
+
+it.each(["A001", "A002"] as const)("앞선 일반 오류보다 뒤의 인증 오류 %s를 먼저 처리한다", async (code) => {
+  jest.mocked(getDashboardStatsAction).mockResolvedValue({
+    success: false,
+    error: { code: "C001", message: "통계 조회 실패" },
+  });
+  jest.mocked(getRecurringExpensesTotalAction).mockResolvedValue({
+    success: false,
+    error: { code, message: "로그인 필요" },
+  });
+
+  await expect(AnalyticsPage({ searchParams: Promise.resolve({}) })).rejects.toThrow(
+    "redirect:/auth/signin?error=auth",
+  );
+  expect(redirect).toHaveBeenCalledWith(
+    `/auth/signin?error=auth&message=${encodeURIComponent("로그인 필요")}`,
+  );
+});

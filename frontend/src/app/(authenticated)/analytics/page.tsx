@@ -38,10 +38,6 @@ function getAnalyticsData<T>(result: ActionResult<T>): T {
     return result.data;
   }
 
-  const isAuthError = result.error.code === "A001" || result.error.code === "A002";
-  if (isAuthError) {
-    handleActionError(result);
-  }
   throw new Error(result.error.message);
 }
 
@@ -72,6 +68,23 @@ export default async function AnalyticsPage({
     getMonthlyTrendAction(period, year, month),
     getRecurringExpensesTotalAction(),
   ]);
+
+  const results: ActionResult<unknown>[] = [
+    statsResult,
+    dailyResult,
+    expensesResult,
+    breakdownResult,
+    trendResult,
+    recurringResult,
+  ];
+  for (const result of results) {
+    if (result.success) continue;
+
+    const isAuthError = result.error.code === "A001" || result.error.code === "A002";
+    if (isAuthError) {
+      handleActionError(result);
+    }
+  }
 
   const stats = getAnalyticsData(statsResult);
   const daily = getAnalyticsData(dailyResult);
