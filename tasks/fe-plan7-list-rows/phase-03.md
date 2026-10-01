@@ -39,6 +39,7 @@
 ### 3. 탭 줄의 「+ 지출 추가」, 반복 목록 아래와 `RecurringTabContent` 의 추가 버튼 제거
 
 - `TransactionsPageClient`의 추가 전용 `ExpenseTabContent`, `IncomeTabContent`, `RecurringTabContent` 렌더링을 모두 제거한다. 다른 사용처가 없는 컴포넌트 파일은 삭제한다. 수입 탭의 「수입 추가」도 제거한다. 빈 목록은 하단 가운데 추가 버튼을 안내하고 그 버튼은 계속 동작해야 한다. 달력의 선택 날짜 추가 버튼은 이번 범위 밖이다.
+- `TransactionsPageClient`의 `familyUuid` prop 선언과 구조 분해를 삭제하고, `transactions/page.tsx`에서 해당 prop 전달만 제거한다. 페이지 내부의 목록 조회용 `familyUuid`는 유지한다.
 
 ### 4. 이 phase 를 검증하는 테스트
 
@@ -74,6 +75,7 @@ pnpm test:browser
 | `frontend/src/app/(authenticated)/transactions/_components/ExpenseTabContent.tsx` | 삭제 |
 | `frontend/src/app/(authenticated)/transactions/_components/IncomeTabContent.tsx` | 삭제 |
 | `frontend/src/app/(authenticated)/transactions/_components/TransactionsPageClient.tsx` | 수정 |
+| `frontend/src/app/(authenticated)/transactions/page.tsx` | 수정 |
 | `frontend/src/__tests__/components/transactions/dialogs/EditTransactionDialog.test.tsx` | 수정 |
 | `frontend/browser/fake-backend.mjs` | 수정 |
 | `frontend/browser/transactions.spec.ts` | 수정 |
