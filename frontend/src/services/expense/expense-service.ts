@@ -13,6 +13,7 @@ export async function createExpense(
     description?: string;
     categoryId: string;
     date?: string;
+    excludeFromBudget?: boolean;
   }
 ): Promise<void> {
   const requestBody: CreateExpenseRequest = {
@@ -21,6 +22,9 @@ export async function createExpense(
     description: data.description,
     date: data.date ? new Date(data.date).toISOString() : new Date().toISOString(),
   };
+  if (data.excludeFromBudget !== undefined) {
+    requestBody.excludeFromBudget = data.excludeFromBudget;
+  }
   await serverApiPost<void>(`/families/${familyUuid}/expenses`, requestBody);
 }
 
@@ -59,6 +63,7 @@ export async function updateExpense(
     description?: string;
     categoryId?: string;
     date?: string;
+    excludeFromBudget?: boolean;
   }
 ): Promise<void> {
   const updateData: {
@@ -66,12 +71,14 @@ export async function updateExpense(
     amount?: number;
     description?: string;
     date?: string;
+    excludeFromBudget?: boolean;
   } = {};
 
   if (data.categoryId) updateData.categoryUuid = data.categoryId;
   if (data.amount !== undefined) updateData.amount = data.amount;
   if (data.description !== undefined) updateData.description = data.description;
   if (data.date) updateData.date = new Date(data.date).toISOString();
+  if (data.excludeFromBudget !== undefined) updateData.excludeFromBudget = data.excludeFromBudget;
 
   await serverApiPut<void>(`/families/${familyUuid}/expenses/${expenseUuid}`, updateData);
 }

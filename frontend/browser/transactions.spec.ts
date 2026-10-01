@@ -5,14 +5,19 @@ test("지출 행은 작성자와 날짜 링크를 보이고 한 번 눌러 수�
   await page.goto("/transactions");
 
   const row = page.getByRole("button", { name: /점심 식사/ });
+  const categoryExcludedRow = page.getByRole("button", { name: /버스 요금/ });
+  const regularExpenseRow = page.getByRole("button", { name: /세탁 세제/ });
   await expect(row).toContainText("식비");
   await expect(row).toContainText("민지");
   await expect(row.getByText("삭제", { exact: true })).toHaveCount(0);
+  await expect(categoryExcludedRow).toContainText("예산 제외");
+  await expect(regularExpenseRow.getByText("예산 제외", { exact: true })).toHaveCount(0);
 
   const details = row.locator("p.text-xs.text-fg-muted");
   const categoryDetail = details.locator(":scope > span").nth(0);
   const creatorDetail = details.locator(":scope > span").nth(1);
   const timeDetail = details.locator(":scope > span").nth(2);
+  const budgetExcludedDetail = details.locator(":scope > span").nth(3);
   await expect(details).toHaveCount(1);
 
   const dateLink = page.locator('a[href^="/calendar?month="][href*="&date="]').first();
@@ -22,7 +27,8 @@ test("지출 행은 작성자와 날짜 링크를 보이고 한 번 눌러 수�
     await expect(categoryDetail).toBeVisible();
     await expect(creatorDetail).toBeVisible();
     await expect(timeDetail).toBeVisible();
-    await expect(details).toHaveText(/^식비 · 민지 · \d{2}:\d{2}$/);
+    await expect(budgetExcludedDetail).toBeVisible();
+    await expect(details).toHaveText(/^식비 · 민지 · \d{2}:\d{2} · 예산 제외$/);
 
     const rowBox = await row.boundingBox();
     expect(rowBox?.height).toBeGreaterThanOrEqual(56);
@@ -31,7 +37,8 @@ test("지출 행은 작성자와 날짜 링크를 보이고 한 번 눌러 수�
     await expect(categoryDetail).toBeHidden();
     await expect(creatorDetail).toBeHidden();
     await expect(timeDetail).toBeVisible();
-    expect(await details.innerText()).toMatch(/^\d{2}:\d{2}$/);
+    await expect(budgetExcludedDetail).toBeVisible();
+    expect(await details.innerText()).toMatch(/^\d{2}:\d{2} · 예산 제외$/);
   }
 
   await row.click();
@@ -50,7 +57,7 @@ test("빈 지출과 수입 목록은 하단 가운데 추가 버튼 안내와 �
       page.getByRole("main").getByText("아래 가운데 + 버튼으로 거래를 추가해 보세요."),
     ).toBeVisible();
 
-    await page.getByRole("button", { name: "지출 추가" }).click();
+    await page.getByRole("button", { name: "거래 추가" }).click();
     await expect(page.getByRole("heading", { name: "거래 추가" })).toBeVisible();
     await page.keyboard.press("Escape");
   }
@@ -80,7 +87,7 @@ test("내역 탭은 추가 버튼 없이 하단 추가 시트를 연다", async 
     await expect(page.getByRole("button", { name: "수입 추가" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "고정지출 추가" })).toHaveCount(0);
 
-    await page.getByRole("button", { name: "지출 추가" }).click();
+    await page.getByRole("button", { name: "거래 추가" }).click();
     await expect(page.getByRole("heading", { name: "거래 추가" })).toBeVisible();
     await page.keyboard.press("Escape");
   }

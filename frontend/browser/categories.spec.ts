@@ -19,6 +19,13 @@ test("수입 탭에는 수입 카테고리만 표시한다", async ({ page }) =>
   }
 });
 
+test("모바일에서도 예산 제외 카테고리의 글자를 표시한다", async ({ page }) => {
+  await page.goto("/categories");
+
+  const excludedCategory = page.locator('[data-slot="card"]', { hasText: "교통" });
+  await expect(excludedCategory.getByText("예산 제외", { exact: true })).toBeVisible();
+});
+
 test("폭별 주 콘텐츠 여백을 표시한다", async ({ page }, testInfo) => {
   await page.goto("/categories");
 

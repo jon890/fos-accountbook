@@ -24,7 +24,7 @@ beforeEach(() => {
     if (path.includes("daily-stats")) return daily;
     if (path.endsWith("members")) return [{ userUuid: "user-1", name: "이름" }];
     if (path.endsWith("categories")) return [
-      { uuid: "category-1", name: "식비", icon: "🍚" },
+      { uuid: "category-1", name: "식비", icon: "🍚", excludeFromBudget: true },
       { uuid: "category-2", name: "급여", icon: "💰" },
     ];
     const transaction = path.includes("expenses") ? calendarExpense() : calendarIncome();
@@ -78,8 +78,8 @@ describe("달력 월 조회", () => {
       totalIncome: 12000, totalExpense: 5000,
       memberExpenseTotals: [{ userUuid: "user-1", amount: 5000 }],
     });
-    expect(result.expenses[0]).toEqual({ ...calendarExpense(), amount: 2000, category: { uuid: "category-1", name: "식비", icon: "🍚", color: "" } });
-    expect(result.incomes[0]).toEqual({ ...calendarIncome(), amount: 2000, category: { uuid: "category-2", name: "급여", icon: "💰", color: "" } });
+    expect(result.expenses[0]).toEqual({ ...calendarExpense(), amount: 2000, category: { uuid: "category-1", name: "식비", icon: "🍚", color: "", excludeFromBudget: true } });
+    expect(result.incomes[0]).toEqual({ ...calendarIncome(), amount: 2000, category: { uuid: "category-2", name: "급여", icon: "💰", color: "", excludeFromBudget: false } });
     expect(result.members).toEqual([{ userUuid: "user-1", name: "이름" }]);
   });
 

@@ -71,4 +71,10 @@ describe("CategoryGrid", () => {
       expect(btn).toBeDisabled();
     });
   });
+
+  it("예산 제외 카테고리의 접근 이름에 예산 제외를 포함한다", () => {
+    const excludedCategory = { ...makeCategory("excluded", "비상금"), excludeFromBudget: true };
+    render(<CategoryGrid categories={[excludedCategory]} selectedUuid={null} onSelect={() => {}} />);
+    expect(screen.getByRole("radio", { name: "비상금 예산 제외" })).toBeInTheDocument();
+  });
 });

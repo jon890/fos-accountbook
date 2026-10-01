@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AmountInput } from "@/components/expenses/forms/AmountInput";
 import { CategoryGrid } from "@/components/expenses/forms/CategoryGrid";
+import { Switch } from "@/components/ui/switch";
 import type { CategoryResponse } from "@/types/category";
 import type { TransactionType } from "@/types/transaction";
 import type { FocusEvent } from "react";
@@ -19,6 +20,8 @@ interface TransactionFormFieldsProps {
   onCategoryChange: (uuid: string | null) => void;
   description: string;
   onDescriptionChange: (s: string) => void;
+  excludeFromBudget?: boolean;
+  onExcludeFromBudgetChange?: (value: boolean) => void;
   // expense/income 만
   date?: string;
   onDateChange?: (s: string) => void;
@@ -41,6 +44,8 @@ export function TransactionFormFields({
   onCategoryChange,
   description,
   onDescriptionChange,
+  excludeFromBudget = false,
+  onExcludeFromBudgetChange,
   date,
   onDateChange,
   name,
@@ -51,6 +56,9 @@ export function TransactionFormFields({
   errors,
 }: TransactionFormFieldsProps) {
   const isRecurring = type === "recurring";
+  const isExpense = type === "expense";
+  const selectedCategory = categories.find((category) => category.uuid === categoryUuid);
+  const isCategoryExcluded = selectedCategory?.excludeFromBudget === true;
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const categoryType = type === "income" ? "INCOME" : "EXPENSE";
   const filteredCategories = categories.filter(
@@ -96,6 +104,26 @@ export function TransactionFormFields({
         {errors?.categoryId && <p className="text-sm text-expense">{errors.categoryId[0]}</p>}
         {errors?.categoryUuid && <p className="text-sm text-expense">{errors.categoryUuid[0]}</p>}
       </div>
+
+      {isExpense && (
+        <div className="space-y-1">
+          <div className="flex min-h-11 items-center justify-between gap-4">
+            <Label htmlFor="excludeFromBudget">예산에서 제외</Label>
+            <Switch
+              id="excludeFromBudget"
+              checked={isCategoryExcluded || excludeFromBudget}
+              disabled={isCategoryExcluded}
+              onClick={() => onExcludeFromBudgetChange?.(!excludeFromBudget)}
+            />
+          </div>
+          <input
+            type="hidden"
+            name="excludeFromBudget"
+            value={String(excludeFromBudget)}
+          />
+          {isCategoryExcluded && <p className="text-xs text-fg-subtle">이 카테고리는 예산에서 제외돼요</p>}
+        </div>
+      )}
 
       {/* recurring 전용: 이름 + 결제일 */}
       {isRecurring && (

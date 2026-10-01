@@ -36,7 +36,7 @@ it("네 링크와 추가 버튼을 표시하고 현재 탭을 알린다", () => 
     expect(screen.getByRole("link", { name })).toHaveAttribute("href", href);
   }
   expect(screen.getByRole("link", { name: "달력" })).toHaveAttribute("aria-current", "page");
-  expect(screen.getByRole("button", { name: "지출 추가" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "거래 추가" })).toBeInTheDocument();
 });
 
 it.each([["/transactions", "내역"], ["/transactions/detail", "내역"], ["/expenses/detail", "내역"], ["/analytics/month", "분석"], ["/menu", "전체"]])("%s에서 %s 탭이 활성화된다", (pathname, name) => {
@@ -55,7 +55,7 @@ it.each(["/families/create", "/families/select", "/invite/token"])("%s에서 탭
 it("달력의 선택일을 FAB 다이얼로그에 전달하고 URL 변경도 반영한다", async () => {
   (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams("date=2026-09-14"));
   const { rerender } = render(<BottomNavigation />);
-  await userEvent.setup().click(screen.getByRole("button", { name: "지출 추가" }));
+  await userEvent.setup().click(screen.getByRole("button", { name: "거래 추가" }));
   expect(screen.getByRole("dialog")).toHaveTextContent("2026-09-14");
   (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams("date=2026-09-15"));
   rerender(<BottomNavigation />);
@@ -65,7 +65,7 @@ it("달력의 선택일을 FAB 다이얼로그에 전달하고 URL 변경도 반
 it.each(["/calendar", "/menu"])("선택일이 없는 %s에서는 오늘을 기본값으로 쓴다", async (pathname) => {
   jest.mocked(usePathname).mockReturnValue(pathname);
   render(<BottomNavigation />);
-  await userEvent.setup().click(screen.getByRole("button", { name: "지출 추가" }));
+  await userEvent.setup().click(screen.getByRole("button", { name: "거래 추가" }));
   expect(screen.getByRole("dialog")).toHaveTextContent("오늘");
 });
 
@@ -73,6 +73,6 @@ it("다른 화면에서는 date 쿼리가 있어도 오늘을 쓴다", async () 
   jest.mocked(usePathname).mockReturnValue("/transactions");
   (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams("date=2026-09-14"));
   render(<BottomNavigation />);
-  await userEvent.setup().click(screen.getByRole("button", { name: "지출 추가" }));
+  await userEvent.setup().click(screen.getByRole("button", { name: "거래 추가" }));
   expect(screen.getByRole("dialog")).toHaveTextContent("오늘");
 });

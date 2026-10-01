@@ -64,7 +64,7 @@ export function CategoryItem({
                   className="text-[10px] px-1.5 py-0 h-5 gap-1 text-fg-muted w-fit whitespace-nowrap shrink-0"
                 >
                   <EyeOff className="w-3 h-3" />
-                  <span className="hidden md:inline">예산 제외</span>
+                  <span>예산 제외</span>
                 </Badge>
               )}
             </div>

@@ -27,6 +27,7 @@ const categories = [
     name: "식비",
     icon: "utensils",
     color: "oklch(0.560 0.140 35)",
+    excludeFromBudget: false,
     createdAt,
     updatedAt: createdAt,
   },
@@ -37,6 +38,7 @@ const categories = [
     name: "교통",
     icon: "bus",
     color: "oklch(0.540 0.130 230)",
+    excludeFromBudget: true,
     createdAt,
     updatedAt: createdAt,
   },
@@ -47,6 +49,7 @@ const categories = [
     name: "생활",
     icon: "house",
     color: "oklch(0.510 0.110 188)",
+    excludeFromBudget: false,
     createdAt,
     updatedAt: createdAt,
   },
@@ -130,6 +133,31 @@ const transactions = {
     amount: 12500,
     description: "점심 식사",
     date: "2026-10-01T12:30:00.000Z",
+    excludeFromBudget: true,
+    createdAt,
+    updatedAt: createdAt,
+  }, {
+    uuid: "55555555-5555-5555-5555-555555555554",
+    familyUuid: FAMILY_UUID,
+    userUuid: members[0].userUuid,
+    categoryUuid: categories[1].uuid,
+    category: null,
+    amount: 1400,
+    description: "버스 요금",
+    date: "2026-10-01T08:30:00.000Z",
+    excludeFromBudget: false,
+    createdAt,
+    updatedAt: createdAt,
+  }, {
+    uuid: "55555555-5555-5555-5555-555555555555",
+    familyUuid: FAMILY_UUID,
+    userUuid: members[0].userUuid,
+    categoryUuid: categories[2].uuid,
+    category: null,
+    amount: 2300,
+    description: "세탁 세제",
+    date: "2026-10-01T18:00:00.000Z",
+    excludeFromBudget: false,
     createdAt,
     updatedAt: createdAt,
   }],
@@ -245,12 +273,31 @@ const server = createServer(async (request, response) => {
     sendJson(response, 200, { success: true, data: members });
     return;
   }
+  if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/dashboard/daily-stats`) {
+    sendJson(response, 200, {
+      success: true,
+      data: {
+        year: 2026,
+        month: 10,
+        dailyStats: [{
+          date: "2026-10-01",
+          income: 3000000,
+          expense: 16200,
+          memberExpenses: [{ userUuid: members[0].userUuid, amount: 16200 }],
+        }],
+        totalIncome: 3000000,
+        totalExpense: 16200,
+        memberExpenseTotals: [{ userUuid: members[0].userUuid, amount: 16200 }],
+      },
+    });
+    return;
+  }
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/expenses`) {
     sendJson(response, 200, {
       success: true,
       data: {
         items: transactionsAreEmpty ? [] : transactions.expenses,
-        totalElements: transactionsAreEmpty ? 0 : 1,
+        totalElements: transactionsAreEmpty ? 0 : transactions.expenses.length,
         totalPages: 1,
         currentPage: 0,
       },

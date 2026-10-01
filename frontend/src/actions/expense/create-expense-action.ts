@@ -20,6 +20,7 @@ const createExpenseSchema = z.object({
   description: z.string().optional(),
   categoryId: z.string().min(1, "카테고리를 선택해주세요"),
   date: z.string().optional(),
+  excludeFromBudget: z.boolean().optional(),
 });
 
 export async function createExpenseAction(
@@ -39,6 +40,10 @@ export async function createExpenseAction(
       description: formData.get("description")?.toString(),
       categoryId: formData.get("categoryId")?.toString(),
       date: formData.get("date")?.toString(),
+      excludeFromBudget:
+        formData.has("excludeFromBudget")
+          ? formData.get("excludeFromBudget") === "true"
+          : undefined,
     };
 
     const validatedFields = createExpenseSchema.safeParse(rawData);
@@ -50,7 +55,17 @@ export async function createExpenseAction(
       };
     }
 
-    await createExpense(familyUuid, validatedFields.data);
+    const expenseData = {
+      amount: validatedFields.data.amount,
+      description: validatedFields.data.description,
+      categoryId: validatedFields.data.categoryId,
+      date: validatedFields.data.date,
+      ...(validatedFields.data.excludeFromBudget === undefined
+        ? {}
+        : { excludeFromBudget: validatedFields.data.excludeFromBudget }),
+    };
+
+    await createExpense(familyUuid, expenseData);
 
     revalidateTransactionPaths();
 

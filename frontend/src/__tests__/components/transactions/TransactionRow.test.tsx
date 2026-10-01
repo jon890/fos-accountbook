@@ -41,6 +41,22 @@ describe("TransactionRow", () => {
     expect(onEdit).toHaveBeenCalledTimes(1);
   });
 
+  it("예산 제외 지출의 보조 줄에만 예산 제외를 표시한다", () => {
+    const { rerender } = render(
+      <TransactionRow variant="compact" tx={{ ...transaction, excludeFromBudget: true }} />
+    );
+
+    expect(
+      screen.getByText(
+        (_, element) => element?.tagName === "P" && element.textContent === "식비 · 아내 · 12:30 · 예산 제외"
+      )
+    ).toBeInTheDocument();
+
+    rerender(<TransactionRow variant="compact" tx={transaction} />);
+
+    expect(screen.queryByText("예산 제외")).not.toBeInTheDocument();
+  });
+
   it("날짜 없이 metadata와 상태 배지를 렌더링해도 시각을 만들지 않는다", () => {
     render(
       <TransactionRow
