@@ -50,6 +50,27 @@ public class DashboardRepositoryImpl implements DashboardRepository {
       LocalDateTime startDate,
       LocalDateTime endDate) {
 
+    return getCategoryExpenseStatsWithEndDateCondition(
+        familyUuid, categoryUuid, startDate, dateLoe(QExpense.expense, endDate));
+  }
+
+  @Override
+  public List<CategoryExpenseProjection> getCategoryExpenseStatsBefore(
+      CustomUuid familyUuid,
+      CustomUuid categoryUuid,
+      LocalDateTime startDate,
+      LocalDateTime endDate) {
+
+    return getCategoryExpenseStatsWithEndDateCondition(
+        familyUuid, categoryUuid, startDate, dateLt(QExpense.expense, endDate));
+  }
+
+  private List<CategoryExpenseProjection> getCategoryExpenseStatsWithEndDateCondition(
+      CustomUuid familyUuid,
+      CustomUuid categoryUuid,
+      LocalDateTime startDate,
+      BooleanExpression endDateCondition) {
+
     QExpense expense = QExpense.expense;
     QCategory category = QCategory.category;
 
@@ -72,7 +93,7 @@ public class DashboardRepositoryImpl implements DashboardRepository {
             expense.status.eq(ExpenseStatus.ACTIVE),
             categoryUuidEq(expense, categoryUuid),
             dateGoe(expense, startDate),
-            dateLoe(expense, endDate)
+            endDateCondition
         )
         .groupBy(expense.categoryUuid, category.name, category.icon, category.color)
         .orderBy(expense.amount.sum().desc())
@@ -155,6 +176,14 @@ public class DashboardRepositoryImpl implements DashboardRepository {
    */
   private BooleanExpression dateLoe(QExpense expense, LocalDateTime endDate) {
     return endDate != null ? expense.date.loe(endDate) : null;
+  }
+
+  /**
+   * 종료 날짜 동적 조건 (< endDate)
+   * null이면 조건 미적용
+   */
+  private BooleanExpression dateLt(QExpense expense, LocalDateTime endDate) {
+    return endDate != null ? expense.date.lt(endDate) : null;
   }
 
   /**
@@ -321,4 +350,3 @@ public class DashboardRepositoryImpl implements DashboardRepository {
     return amountByDay;
   }
 }
-

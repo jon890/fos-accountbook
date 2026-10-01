@@ -189,7 +189,7 @@ public class DashboardService {
     LocalDateTime startOfNextMonth = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
 
     List<CategoryExpenseProjection> currentProjections =
-        dashboardRepository.getCategoryExpenseStats(familyUuid, null, startOfMonth, startOfNextMonth);
+        dashboardRepository.getCategoryExpenseStatsBefore(familyUuid, null, startOfMonth, startOfNextMonth);
 
     BigDecimal totalExpense = currentProjections.stream()
                                                 .map(CategoryExpenseProjection::totalAmount)
@@ -202,7 +202,7 @@ public class DashboardService {
       LocalDateTime prevStartOfNext = yearMonth.atDay(1).atStartOfDay();
 
       List<CategoryExpenseProjection> prevProjections =
-          dashboardRepository.getCategoryExpenseStats(familyUuid, null, prevStart, prevStartOfNext);
+          dashboardRepository.getCategoryExpenseStatsBefore(familyUuid, null, prevStart, prevStartOfNext);
 
       for (CategoryExpenseProjection p : prevProjections) {
         prevAmountByCategory.put(p.categoryUuid(), p.totalAmount());
