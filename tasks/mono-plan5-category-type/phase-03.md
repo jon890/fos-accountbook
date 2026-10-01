@@ -49,7 +49,7 @@
 ### 5. 이 phase 를 검증하는 테스트
 
 - Jest: `frontend/src/__tests__/components/transactions/TransactionFormFields.test.tsx`(신규): 수입이면 수입 카테고리만, 지출이면 지출 카테고리만 보인다. 종류를 바꾸면 선택이 비워진다.
-- Jest: `frontend/src/__tests__/components/transactions/AddTransactionDialog.test.tsx`(신규): 카테고리를 고른 뒤 거래 종류를 전환하면 선택이 비워지고 새 종류의 첫 카테고리가 자동 선택되지 않는다.
+- Jest: `frontend/src/__tests__/components/transactions/dialogs/AddTransactionDialog.test.tsx`(기존 파일 수정): 카테고리를 고른 뒤 거래 종류를 전환하면 선택이 비워지고 새 종류의 첫 카테고리가 자동 선택되지 않는다.
 - Jest: `frontend/src/__tests__/actions/category/create-category-action.test.ts`(신규): `type` 을 백엔드 요청에 넘기는 케이스, 인증 실패, 가족 미선택.
 - 브라우저: `frontend/browser/categories.spec.ts` 에 수입 탭을 누르면 수입 카테고리만 보이는 케이스.
 
@@ -89,5 +89,5 @@ pnpm test:browser
 | `frontend/browser/fake-backend.mjs` | 수정 |
 | `frontend/browser/categories.spec.ts` | 수정 |
 | `frontend/src/__tests__/components/transactions/TransactionFormFields.test.tsx` | 신규 |
-| `frontend/src/__tests__/components/transactions/AddTransactionDialog.test.tsx` | 신규 |
+| `frontend/src/__tests__/components/transactions/dialogs/AddTransactionDialog.test.tsx` | 수정 |
 | `frontend/src/__tests__/actions/category/create-category-action.test.ts` | 신규 |
