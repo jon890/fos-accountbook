@@ -4,6 +4,7 @@ import { BACKEND_PORT, FAMILY_UUID } from "./settings.ts";
 const createdAt = "2026-01-01T00:00:00.000Z";
 const unhandledRequests = [];
 let categoriesAreEmpty = false;
+let transactionsAreEmpty = false;
 let notificationsAreHeld = false;
 let notificationHold;
 
@@ -96,7 +97,7 @@ const transactions = {
     familyUuid: FAMILY_UUID,
     userUuid: members[0].userUuid,
     categoryUuid: categories[0].uuid,
-    category: { ...categories[0], icon: "🍜" },
+    category: null,
     amount: 12500,
     description: "점심 식사",
     date: "2026-10-01T12:30:00.000Z",
@@ -164,6 +165,7 @@ const server = createServer(async (request, response) => {
   if (method === "POST" && pathname === "/__test/reset") {
     unhandledRequests.length = 0;
     categoriesAreEmpty = false;
+    transactionsAreEmpty = false;
     setNotificationsHeld(false);
     sendJson(response, 200, { success: true });
     return;
@@ -175,6 +177,16 @@ const server = createServer(async (request, response) => {
       return;
     }
     categoriesAreEmpty = body.empty;
+    sendJson(response, 200, { success: true });
+    return;
+  }
+  if (method === "POST" && pathname === "/__test/transactions") {
+    const body = await readJson(request);
+    if (typeof body?.empty !== "boolean") {
+      sendJson(response, 400, { success: false, message: "Expected an empty boolean" });
+      return;
+    }
+    transactionsAreEmpty = body.empty;
     sendJson(response, 200, { success: true });
     return;
   }
@@ -207,14 +219,24 @@ const server = createServer(async (request, response) => {
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/expenses`) {
     sendJson(response, 200, {
       success: true,
-      data: { items: transactions.expenses, totalElements: 1, totalPages: 1, currentPage: 0 },
+      data: {
+        items: transactionsAreEmpty ? [] : transactions.expenses,
+        totalElements: transactionsAreEmpty ? 0 : 1,
+        totalPages: 1,
+        currentPage: 0,
+      },
     });
     return;
   }
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/incomes`) {
     sendJson(response, 200, {
       success: true,
-      data: { items: transactions.incomes, totalElements: 1, totalPages: 1, currentPage: 0 },
+      data: {
+        items: transactionsAreEmpty ? [] : transactions.incomes,
+        totalElements: transactionsAreEmpty ? 0 : 1,
+        totalPages: 1,
+        currentPage: 0,
+      },
     });
     return;
   }

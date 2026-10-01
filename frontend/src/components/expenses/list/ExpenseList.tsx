@@ -1,6 +1,7 @@
 import { getExpensesAction } from "@/actions/expense/get-expenses-action";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/empty/EmptyState";
+import type { CategoryResponse } from "@/types/category";
 import type { FamilyMemberSummary } from "@/types/family";
 import { Inbox } from "lucide-react";
 import { ExpenseListClient } from "./ExpenseListClient";
@@ -8,6 +9,7 @@ import { ExpensePagination } from "./ExpensePagination";
 
 interface ExpenseListProps {
   familyId: string;
+  categories: CategoryResponse[];
   members: FamilyMemberSummary[];
   categoryId?: string;
   startDate?: string;
@@ -21,6 +23,7 @@ interface ExpenseListProps {
 
 export async function ExpenseList({
   familyId,
+  categories,
   members,
   categoryId,
   startDate,
@@ -67,7 +70,7 @@ export async function ExpenseList({
       <EmptyState
         icon={Inbox}
         title="아직 거래가 없어요"
-        description={"지출이나 수입을 추가하면\n여기에 표시돼요."}
+        description={"지출이나 수입을 추가하면\n여기에 표시돼요.\n아래 가운데 + 버튼으로 거래를 추가해 보세요."}
         tip={{
           title: "팁",
           body: "가족 누구나 입력할 수 있어요. 카드 청구서 도착 전에\n그때 그때 짧게 적어두면 편해요.",
@@ -80,6 +83,7 @@ export async function ExpenseList({
     <div className="space-y-3 md:space-y-4">
       <ExpenseListClient
         expenses={expenses}
+        categories={categories}
         familyUuid={familyId}
         members={members}
       />

@@ -47,6 +47,7 @@
 - 브라우저: `frontend/browser/transactions.spec.ts` 에 반복 탭 케이스. 가짜 백엔드에 반복 지출 목록 경로를 더한다. 반복 행을 누르면 「고정지출 수정」 시트가 열린다. 화면에 「+ 지출 추가」, 「고정지출 추가」 버튼이 없다.
 - 지출, 수입, 반복 탭에서 추가 버튼이 제거됐고 하단 `aria-label="지출 추가"` 버튼으로 추가 시트가 열리는지 확인한다. CODE-4부터 CODE-6까지 해당 항목을 점검한다.
 - 반복 탭의 행에 「매월 N일」과 「이번 달 반영됨」이 보이는지 단언한다.
+- 지출과 수입의 빈 목록도 하단 가운데 `+` 버튼을 안내하며, 가짜 백엔드의 빈 목록 응답으로 안내와 추가 시트 열기를 검증한다.
 
 ## 검증
 
@@ -70,6 +71,8 @@ pnpm test:browser
 |---|---|
 | `frontend/src/components/recurring-expense/RecurringExpenseItem.tsx` | 수정 |
 | `frontend/src/components/recurring-expense/RecurringExpenseList.tsx` | 수정 |
+| `frontend/src/components/expenses/list/ExpenseList.tsx` | 수정 |
+| `frontend/src/components/incomes/list/IncomeList.tsx` | 수정 |
 | `frontend/src/components/transactions/dialogs/EditTransactionDialog.tsx` | 수정 |
 | `frontend/src/app/(authenticated)/transactions/_components/RecurringTabContent.tsx` | 삭제 |
 | `frontend/src/app/(authenticated)/transactions/_components/ExpenseTabContent.tsx` | 삭제 |

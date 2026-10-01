@@ -1,9 +1,11 @@
 import { expect, test } from "./fixtures";
+import { BACKEND_BASE_URL } from "./settings";
 
 test("지출 행은 작성자와 날짜 링크를 보이고 한 번 눌러 수정 시트를 연다", async ({ page }, testInfo) => {
   await page.goto("/transactions");
 
   const row = page.getByRole("button", { name: /점심 식사/ });
+  await expect(row).toContainText("식비");
   await expect(row).toContainText("민지");
   await expect(row.getByText("삭제", { exact: true })).toHaveCount(0);
 
@@ -18,6 +20,24 @@ test("지출 행은 작성자와 날짜 링크를 보이고 한 번 눌러 수�
 
   await row.click();
   await expect(page.getByRole("heading", { name: "지출 수정" })).toBeVisible();
+});
+
+test("빈 지출과 수입 목록은 하단 가운데 추가 버튼 안내와 추가 시트를 표시한다", async ({ page, request }) => {
+  const response = await request.post(`${BACKEND_BASE_URL}/__test/transactions`, {
+    data: { empty: true },
+  });
+  expect(response.ok()).toBe(true);
+
+  for (const tab of ["expenses", "incomes"]) {
+    await page.goto(`/transactions?tab=${tab}`);
+    await expect(
+      page.getByRole("main").getByText("아래 가운데 + 버튼으로 거래를 추가해 보세요."),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "지출 추가" }).click();
+    await expect(page.getByRole("heading", { name: "거래 추가" })).toBeVisible();
+    await page.keyboard.press("Escape");
+  }
 });
 
 test("수입 행을 누르면 수입 수정 시트가 열린다", async ({ page }) => {

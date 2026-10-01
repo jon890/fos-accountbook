@@ -5,22 +5,26 @@ import { EditTransactionDialog } from "@/components/transactions/dialogs/EditTra
 import { TransactionRow } from "@/components/transactions/TransactionRow";
 import { buildMemberColorMap, getMemberColor } from "@/lib/utils/member-color";
 import { groupTransactionsWithTotal } from "@/services/transaction/transaction-service";
+import type { CategoryResponse } from "@/types/category";
 import type { Expense } from "@/types/expense";
 import type { FamilyMemberSummary } from "@/types/family";
 import { useState } from "react";
 
 interface ExpenseListClientProps {
   expenses: Expense[];
+  categories: CategoryResponse[];
   familyUuid: string;
   members: FamilyMemberSummary[];
 }
 
 export function ExpenseListClient({
   expenses,
+  categories,
   familyUuid,
   members,
 }: ExpenseListClientProps) {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const categoriesByUuid = new Map(categories.map((category) => [category.uuid, category]));
   const memberColors = buildMemberColorMap(members);
   const groups = groupTransactionsWithTotal(expenses);
 
@@ -32,12 +36,22 @@ export function ExpenseListClient({
             key={group.dateKey}
             group={group}
             renderItem={(expense) => {
+              const category = categoriesByUuid.get(expense.categoryUuid);
+              const transactionCategory = category
+                ? {
+                    uuid: category.uuid,
+                    name: category.name,
+                    icon: category.icon ?? "💸",
+                    color: category.color,
+                  }
+                : expense.category;
               const member = getMemberColor(memberColors, expense.userUuid);
               return (
                 <div key={expense.uuid} className="px-3 md:px-4">
                   <TransactionRow
                     tx={{
                       ...expense,
+                      category: transactionCategory,
                       createdBy: { name: member.label, colorClass: member.bgClass },
                     }}
                     variant="full"

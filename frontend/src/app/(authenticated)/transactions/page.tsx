@@ -140,6 +140,7 @@ export default async function TransactionsPage({
             >
               <ExpenseList
                 familyId={familyUuid}
+                categories={categories}
                 members={members}
                 categoryId={resolvedSearchParams.categoryId}
                 startDate={startDate}

@@ -1,4 +1,4 @@
-# Flow — fos-accountbook 사용자 흐름
+# fos-accountbook 사용자 흐름
 
 ## 1. 최초 사용자 온보딩
 
@@ -68,8 +68,8 @@
 
 ## 3. 거래 등록 플로우 (plan014 통합)
 
-ADR-F21 에 따라 모든 진입점(달력의 「이 날짜에 추가」, BottomNav FAB, Transactions 의 지출·수입·고정지출 탭, Settings 고정지출)이 동일한 `AddTransactionDialog` 를 부른다.
-진입점은 `defaultType` 과 `defaultDate` 를 넘긴다. 달력 화면의 FAB 와 「이 날짜에 추가」 는 선택한 날짜를, 나머지는 오늘을 넘긴다.
+달력의 「이 날짜에 추가」와 하단 탭 가운데 추가 버튼이 동일한 `AddTransactionDialog`를 부른다(ADR-F21, ADR-F37).
+달력의 추가 버튼은 선택한 날짜를 넘긴다. 하단 탭 가운데 버튼은 지출을 기본으로 열며, 달력에서는 선택 날짜를, 그 밖에서는 오늘을 사용한다. 두 진입점 모두 시트 안에서 거래 종류를 바꿀 수 있다.
 
 ```
 [진입점: defaultType, defaultDate 만 다름]
@@ -102,7 +102,7 @@ ADR-F21 에 따라 모든 진입점(달력의 「이 날짜에 추가」, Bottom
 ## 4. 지출·수입 수정/삭제 플로우
 
 ```
-[달력 날짜 목록의 항목 탭] 또는 [내역 목록의 수정 버튼]
+[달력 날짜 목록 또는 내역 목록의 행 탭]
     │
     └─ EditTransactionDialog (type 잠금, 기존 값 pre-fill, 모바일 Sheet bottom)
             ├─ 저장 → updateExpenseAction() / updateIncomeAction()
@@ -113,7 +113,7 @@ ADR-F21 에 따라 모든 진입점(달력의 「이 날짜에 추가」, Bottom
 ```
 
 가족 구성원이면 누가 등록했든 수정하고 삭제할 수 있다. 등록자만 허용하는 제한은 두지 않는다.
-내역 목록의 기존 삭제 버튼은 그대로 둔다.
+행 안에는 수정이나 삭제 버튼을 두지 않는다. 삭제는 수정 시트 안의 확인창에서만 수행한다.
 수정 창이 열린 동안에는 서버 조회 결과가 갱신돼도 작성 중인 폼 값을 유지한다. 창을 닫고 다시 열면 최신 거래 값으로 초기화한다. 수정 요청 중에는 같은 거래의 삭제를 막는다.
 
 ---
@@ -161,21 +161,26 @@ ADR-F21 에 따라 모든 진입점(달력의 「이 날짜에 추가」, Bottom
 
 ```
 [page.tsx (server) — searchParams { tab, categoryId, startDate, endDate, page, q, amountMin, amountMax }]
+    ├─ getFamilyMembersAction() → 선택된 가족 구성원 → 목록 Client의 작성자 이름과 색 점
     ├─ TransactionsTabs (segmented role=tablist, bg-bg-muted / bg-bg-elev)
     ├─ FilterChips (카테고리 / 기간 / AmountRangeFilter / SearchBar)
     │     ├─ SearchBar (300ms debounce, ?q= URL 동기화, 모바일 expand)
     │     └─ AmountRangeFilter (Popover, amountMin/Max URL param)
     └─ ExpenseListClient / IncomeListClient / RecurringExpenseList (tab 별)
-            └─ DateGroupSection<T> (날짜 헤더 + 합계, formatDateHeader 사용)
-                    └─ TransactionRow variant=compact (모바일) / variant=full (md: 5-col grid 44/1fr/110/28/140)
+            └─ DateGroupSection<T> (날짜 링크와 거래 종류별 합계, 반복 목록은 날짜 그룹 없이 표시)
+                    └─ TransactionRow (설명, 카테고리·작성자·시각, 금액)
+                            └─ 행 탭 → EditTransactionDialog
 ```
 
-helper: `services/transaction/transaction-service.ts` 의 `groupTransactionsWithTotal` (groupByDate wrap + 합계). `applyClientFilters` 는 amountMin/Max/q post-filter (현재 미사용 — 후속 plan 에서 wiring).
+`services/transaction/transaction-service.ts`의 `groupTransactionsWithTotal`은 날짜별로 묶고 합계를 계산한다. `applyClientFilters`의 금액과 검색어 필터는 현재 사용하지 않는다.
 
 page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 탭을 바꾸면 URL 이 바뀌고 서버가 그 탭만 다시 그린다.
 세 탭을 모두 slot props 로 넘기면 RSC 가 보이지 않는 탭까지 렌더링해 조회가 매번 세 배로 나간다.
 시간대는 세션의 `session.user.profile.timezone` 을 쓰고 프로필 API 를 따로 부르지 않는다.
 검색어와 금액 필터는 백엔드 지출·수입 목록 API 가 받지 않아 아직 적용되지 않는다(`prd.md` 「후속 검토」).
+날짜 머리를 누르면 해당 날짜를 선택한 달력으로 이동한다. 지출은 지출 색, 수입은 수입 색과 `+` 부호로 표시한다.
+구성원 조회의 인증 오류는 로그인으로 이동하고, 일반 조회 실패는 페이지에 오류 메시지를 표시한다.
+내역 화면의 추가 진입은 하단 탭 가운데 버튼 하나다. 현재 탭과 관계없이 지출을 기본으로 열며, 시트에서 수입이나 고정지출로 바꿀 수 있다.
 
 ---
 
@@ -311,8 +316,8 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 ```
 [거래내역 > 고정지출 탭]
     │
-    └─ "+ 고정지출 추가" 버튼
-            └─ AddTransactionDialog (defaultType=recurring) 열림
+    └─ 하단 탭 가운데 추가 버튼
+            └─ AddTransactionDialog 열림 → 고정지출 종류 선택
                     ├─ 이름 (필수)
                     ├─ 카테고리 선택 (드롭다운)
                     ├─ 금액 입력 (숫자)
@@ -340,9 +345,9 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
                             ├─ 이달 합계 카드: "이번달 고정비 OOO원"
                             │
                             └─ 템플릿 목록 (day_of_month 오름차순)
-                                    ├─ ✓ 아이콘 — generatedThisMonth=true (생성 완료)
-                                    ├─ ○ 아이콘 — generatedThisMonth=false (예정)
-                                    └─ 항목 클릭 → 아코디언 펼침 (수정/삭제 버튼)
+                                    ├─ TransactionRow: 이름, 카테고리와 매월 N일, 금액
+                                    ├─ generatedThisMonth=true → 「이번 달 반영됨」 배지
+                                    └─ 항목 클릭 → EditTransactionDialog
 ```
 
 ---
@@ -350,16 +355,15 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 ## 12. 반복 지출 수정/삭제
 
 ```
-[RecurringExpenseItem 아코디언]
+[반복 지출 공용 행 탭 → EditTransactionDialog]
     │
-    ├─ 수정 버튼 클릭
-    │   └─ EditTransactionDialog (type=recurring, 잠금) 열림 (기존 값 pre-fill)
+    ├─ 수정 시트 (type=recurring, 잠금, 기존 값 pre-fill)
     │           └─ 수정 후 저장 → updateRecurringExpenseAction()
     │                   └─ PUT /families/{uuid}/recurring-expenses/{uuid}
     │                           └─ "다음 스케줄부터 반영됩니다" toast
     │                           └─ revalidatePath("/transactions")
     │
-    └─ 삭제 버튼 클릭
+    └─ 시트의 종료 버튼 클릭
             └─ AlertDialog: "고정지출을 종료하시겠어요? 기존 등록된 지출은 유지됩니다."
                     └─ 확인 → deleteRecurringExpenseAction()
                             └─ DELETE /families/{uuid}/recurring-expenses/{uuid} (ENDED)
@@ -391,7 +395,7 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 
 ## 14-1. Header / TopBar 구조 (plan019)
 
-`src/components/layout/Header.tsx` 가 `(authenticated)/layout.tsx` 의 sticky top bar — 전 인증 페이지에 일관 표시.
+`src/components/layout/Header.tsx`는 `(authenticated)/layout.tsx`의 sticky top bar로, 모든 인증 페이지에 표시한다.
 
 ```
 [Header sticky top-0 z-50 backdrop-blur-xl bg-bg-elev/95 border-b border-border]
@@ -414,7 +418,7 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 - `border-border` (하드 회색 폐기)
 - `ring-brand-100` Avatar (`ring-blue-100` 폐기)
 - `text-fg-muted` 보조 텍스트 (`text-muted-foreground` 폐기)
-- `text-brand-fg` 로고 아이콘 + AvatarFallback (`text-white` 폐기, ADR-F23)
+- 로고 아이콘과 AvatarFallback은 `text-brand-fg`를 쓴다(`text-white` 폐기, ADR-F23).
 
 ---
 
@@ -422,8 +426,8 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 
 App Router 의 segment 경계에서 일관 표시:
 
-- **Empty** (`src/components/empty/EmptyState.tsx`): 거래 0건 등 — 96px brand-50 round + inbox 아이콘 + 제목/부제 + (선택) CTA + (선택) 팁 박스
-- **Error** (`src/app/error.tsx` + `src/app/global-error.tsx` + `src/app/(authenticated)/error.tsx`): 88px expense/10 round + AlertCircle + "문제가 발생했어요" + DEV ONLY 디버그 박스 (production 숨김) + 다시 시도 / 홈으로
+- **Empty** (`src/components/empty/EmptyState.tsx`): 거래가 없을 때 96px brand-50 원형 배경, inbox 아이콘, 제목과 부제를 표시한다. CTA와 팁 박스는 선택적으로 둔다.
+- **Error** (`src/app/error.tsx`, `src/app/global-error.tsx`, `src/app/(authenticated)/error.tsx`): 88px expense/10 원형 배경, AlertCircle, "문제가 발생했어요" 문구와 다시 시도 또는 홈으로 버튼을 표시한다. 디버그 박스는 개발 환경에서만 보인다.
 - **Loading** (`src/app/(authenticated)/{calendar,transactions,analytics,*}/loading.tsx`): 페이지 구조에 맞춘 `Skel`을 표시한다. `globals.css`의 `ab-shimmer` 애니메이션과 `.ab-skel` 클래스를 재사용한다.
 
 `error.tsx` 는 모두 `"use client"` 첫 줄 필수 (App Router 규약). `loading.tsx` 는 Server Component OK.
@@ -442,9 +446,9 @@ App Router 의 segment 경계에서 일관 표시:
 
 라우팅:
 - `src/app/not-found.tsx` (전역, public 라우트용)
-- `src/app/(authenticated)/not-found.tsx` (Header 보존 + StatusCard 404)
+- `src/app/(authenticated)/not-found.tsx`는 Header를 유지하고 StatusCard 404를 표시한다.
 - `src/app/(authenticated)/forbidden.tsx` (Next.js 16 `forbidden()` 호출 시) — status=403
-- 500 은 기존 `error.tsx` (plan012) 가 자동 처리 + 동일 StatusCard 사용
+- 500은 기존 `error.tsx`가 자동 처리하며 같은 StatusCard를 사용한다.
 
 ---
 
@@ -465,13 +469,13 @@ Dashboard BudgetHeroCard 의 확장 전용 페이지. 분석은 /analytics, 예�
                     └─ BudgetCategoryBars (수평 bar top 5 + 예산 대비 % + ↑많음 라벨)
 ```
 
-예산 0 시: EmptyState 카드 + "예산 설정하기" → /settings 로. 라인 차트 + 카테고리 bar 자체 미렌더.
+예산이 0이면 EmptyState 카드와 /settings로 가는 "예산 설정하기"를 표시한다. 라인 차트와 카테고리 bar는 렌더링하지 않는다.
 
 ---
 
 ## 14-4. Toast / AlertDialog 시각 시스템 (plan020)
 
-sonner Toaster + Radix AlertDialog 의 색 토큰을 plan001 OKLCH 시스템 (ADR-F24) 으로 통일.
+sonner Toaster와 Radix AlertDialog의 색 토큰은 OKLCH 시스템을 따른다(ADR-F24).
 
 ```
 Toast 타입 매핑 (richColors OFF — 토큰 직접):
@@ -488,13 +492,13 @@ AlertDialog:
     Action    기본=brand / 파괴적 호출처는 variant="destructive" (= expense)
 ```
 
-파괴적 AlertDialog 호출처 (4): `DeleteExpenseDialog` / `IncomeItem` 삭제 / `RecurringExpenseItem` 삭제 / `DeleteCategoryDialog`. 각 `<AlertDialogAction>` 에 destructive variant 명시.
+거래 삭제와 반복 지출 종료의 확인창은 `EditTransactionDialog`가 갖고, 카테고리 삭제는 `DeleteCategoryDialog`가 갖는다. 각 `<AlertDialogAction>`에 destructive variant를 명시한다.
 
 ---
 
 ## 14-5. /categories 페이지 구조 (plan024)
 
-Teal 리디자인 + 인라인 style 제거 + Empty state 일관화.
+Teal 디자인을 적용하고 인라인 style을 제거하며 빈 상태 표시를 통일한다.
 
 ```
 [/categories (server)]
@@ -518,7 +522,7 @@ Teal 리디자인 + 인라인 style 제거 + Empty state 일관화.
 
 핵심 변경:
 - CategoriesHero 신설 — settings/budget Hero 패턴 일관
-- `style={{ backgroundColor, color }}` 인라인 → `style={{ '--cat-color': color } as CSSProperties}` + Tailwind arbitrary class
+- 인라인 `style={{ backgroundColor, color }}` 대신 `style={{ '--cat-color': color } as CSSProperties}`와 Tailwind arbitrary class를 사용한다.
 - 색 코드 oklch 문자열 노출 제거 (dot 미리보기만)
 - 사용 통계 (이번 달 지출 금액) — 별도 plan 후보
 
