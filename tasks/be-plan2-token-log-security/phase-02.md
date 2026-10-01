@@ -58,6 +58,7 @@ refresh token 으로 API 를 부르거나 access token 으로 토큰을 갱신�
   - access token 을 주면 401.
   - 보호 경로(예: GET `/api/v1/families`)를 refresh token 으로 부르면 401.
   - 인증 없음과 잘못된 JWT 의 기존 403 기대값을 401 과 코드 A002 검증으로 바꾼다.
+- `DashboardControllerTest.getDailyStats_UnauthorizedFamily` 는 먼저 fixture 사용자로 인증을 설정한다. 기존 테스트는 사용자 생성 없이 요청해 익명 접근만 검증했다. 인증된 사용자가 다른 가족에 접근하면 403 인 권한 계약을 유지하고 단언한다.
 - 기존 테스트가 직접 만든 JWT 로 인증하는 곳이 있으면 `typ` 을 넣게 고친다(`git grep -n "Jwts.builder" backend/src/test` 로 찾는다). 소셜 로그인 서명 토큰은 그대로 둔다.
 
 ## 검증
@@ -83,3 +84,4 @@ refresh token 으로 API 를 부르거나 access token 으로 토큰을 갱신�
 | `backend/src/main/java/com/bifos/accountbook/user/application/service/AuthService.java` | 수정 |
 | `backend/src/test/java/com/bifos/accountbook/config/security/JwtTokenProviderTest.java` | 수정 |
 | `backend/src/test/java/com/bifos/accountbook/user/presentation/controller/AuthControllerTest.java` | 수정 |
+| `backend/src/test/java/com/bifos/accountbook/dashboard/presentation/controller/DashboardControllerTest.java` | 수정 |
