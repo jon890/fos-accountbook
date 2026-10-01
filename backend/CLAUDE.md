@@ -2,19 +2,6 @@
 
 Claude Code가 항상 따라야 할 규칙과 참조 문서 포인터.
 
-## 핵심 워크플로우 스킬
-
-| 시점 | 스킬 | 트리거 |
-|---|---|---|
-| 새 기능/변경 설계 | `/planning` | "/planning", "계획 세워보자", "설계해보자" |
-| plan 실행 (Agent Teams) | `/build-with-teams` | "plan{N} 실행", "구현해줘" — 코드 구현은 항상 이 스킬, 가시적 협업, 4~5명 에이전트 파이프라인 |
-| docs 정리 | `/docs-check` | docs/ 검증, plan 완료 후 주기적 |
-| PR 리뷰 반영 | `/review-fix` | "리뷰 댓글 반영" |
-
-`/planning` → docs 갱신 → task 생성 → `/build-with-teams` 실행 흐름이 표준.
-
----
-
 ## 컨텍스트 문서
 
 > **원칙**: 기술적 의사결정과 전략적 가이드라인은 `docs/`가 source of truth. CLAUDE.md와 docs 내용이 다르면 **docs가 우선**.
@@ -44,22 +31,16 @@ Claude Code가 항상 따라야 할 규칙과 참조 문서 포인터.
 | QueryDSL 동적 쿼리 추가 | ADR-B10 — 동적 쿼리 패턴 |
 | 새 엔드포인트 경로 설계 | ADR-B11 — API 버전 관리 전략 |
 | 반복 지출 스케줄/수정 | ADR-B12, ADR-B13 — `@Scheduled`, 즉시 전체 반영 정책 |
-| CI/PR 리뷰 워크플로 변경 | ADR-B14 — CI 코드 리뷰 워크플로 설계 |
 | Flyway 마이그레이션 작성 | ADR-B15 — SQL 백틱 컨벤션 (예약어 이스케이프) |
 | 패키지/도메인 구조 변경 | ADR-B16 — 도메인 기반 패키지 리팩토링 |
+| 소셜 로그인 서명 검증 | ADR-B17 — 프론트엔드 서버 서명 필수 |
+| 외부 에이전트 연동 토큰 | ADR-B18 — 사용자별 토큰과 허용 경로 |
 
 ---
 
 ## 기술 스택
 
-- **Language**: Java 21
-- **Framework**: Spring Boot 4
-- **Build**: Gradle (Kotlin DSL + Version Catalog). 라이브러리 버전은 `gradle/libs.versions.toml`, Gradle 버전은 `gradle/wrapper/gradle-wrapper.properties` 가 정한다
-- **DB**: MySQL 8.4 (prod/local), H2 in-memory (test)
-- **ORM**: Spring Data JPA + QueryDSL 5.1
-- **Security**: Spring Security + JWT (jjwt 0.13)
-- **Migration**: Flyway
-- **Docs**: SpringDoc OpenAPI (Swagger UI)
+`test` 프로파일은 H2(MySQL 모드)를 사용한다.
 
 ---
 
@@ -79,7 +60,7 @@ Claude Code가 항상 따라야 할 규칙과 참조 문서 포인터.
 ./gradlew checkstyleMain checkstyleTest --no-daemon
 
 # 통합 검증 (CI 와 동일)
-./gradlew checkstyleMain checkstyleTest test build -x integrationTest --no-daemon
+./gradlew checkstyleMain checkstyleTest test build --no-daemon
 
 # 로컬 MySQL 실행 (Docker)
 docker compose -f docker/compose.yml up -d
@@ -98,14 +79,15 @@ docker compose -f docker/compose.yml up -d
 
 ```
 com.bifos.accountbook/
-├── shared/                 공통 (auth, aop, dto, exception, filter, utils, value)
+├── shared/                 공통 (auth, aop, converter, dto, exception, filter, utils, value)
 ├── user/ family/ category/ expense/ income/ recurring/
-├── invitation/ notification/ dashboard/
+├── invitation/ notification/ dashboard/ apitoken/
 │                           각 도메인 내부 presentation/ application/ domain/ infra/
 └── config/                 Spring 설정 (캐시, 보안, CORS, Security)
 ```
 
-각 도메인 내부는 `presentation → application → domain → infra` 단방향 의존성. 상위 레이어는 하위 레이어를 직접 참조하지 않으며, Controller는 Repository를 직접 주입받지 않는다.
+각 도메인 내부 의존성은 `presentation → application → domain ← infra` 이다.
+infra 는 domain 인터페이스를 구현한다. Controller 는 Repository 를 직접 주입받지 않는다.
 
 상세 구조·레이어 책임은 `docs/code-architecture.md` 참조.
 
@@ -134,9 +116,12 @@ PUT    /families/{familyUuid}/categories/{categoryUuid}
 DELETE /families/{familyUuid}/categories/{categoryUuid}
 ```
 
+Deprecated legacy 경로(Category, Notification 컨트롤러)와 `/users/me/api-tokens` 는 위 URL 규칙의 예외다.
+
 ### Repository 패턴
 
-`domain/repository/`에 인터페이스 선언 → `infra/persistence/repository/impl/`에 JPA/QueryDSL 구현체.
+`{domain}/domain/repository/` 에 인터페이스를 선언하고 `{domain}/infra/repository/impl/` 에 JPA/QueryDSL 구현체를 둔다.
+Spring Data 인터페이스는 `{domain}/infra/repository/jpa/` 에 둔다.
 
 ```java
 // domain - 인터페이스만
@@ -152,20 +137,15 @@ public class CategoryRepositoryImpl implements CategoryRepository { ... }
 
 ### CustomUuid
 
-모든 도메인 식별자는 `CustomUuid` 값 객체 사용. `@PathVariable CustomUuid familyUuid` 로 컨트롤러에서 자동 변환됨.
+모든 도메인 식별자는 `CustomUuid` 값 객체를 사용하며, 컨트롤러의 `@PathVariable CustomUuid familyUuid` 로 자동 변환한다.
 
 ### 공통 응답
 
-```java
-return ResponseEntity.ok(ApiSuccessResponse.of(data));
-return ResponseEntity.ok(ApiSuccessResponse.of("메시지", data));
-```
+`ApiSuccessResponse.of(data)` 또는 `ApiSuccessResponse.of("메시지", data)` 로 응답한다.
 
 ### 에러 처리
 
-`BusinessException(ErrorCode.XXX)` 사용. `ErrorCode`에 HTTP 상태코드 정의됨:
-
-- `ACCESS_DENIED` (403), `NOT_FAMILY_MEMBER` (403), `CATEGORY_NOT_FOUND` (404) 등
+`BusinessException(ErrorCode.XXX)` 를 사용하며 HTTP 상태 코드는 `ErrorCode` 가 정한다.
 
 ### 이벤트 기반 사이드이펙트
 
@@ -183,11 +163,17 @@ public void handleExpenseCreated(ExpenseCreatedEvent event) {
 }
 ```
 
-`Notification` 엔티티: 예산 50%/80%/100% 초과 시 생성됨 (`BUDGET_50_EXCEEDED`, `BUDGET_80_EXCEEDED`, `BUDGET_100_EXCEEDED`). `is_read`, `year_month` 컬럼으로 중복 방지.
+`Notification` 은 예산 50%/80%/100% 초과 시 생성된다(`BUDGET_50_EXCEEDED`, `BUDGET_80_EXCEEDED`, `BUDGET_100_EXCEEDED`).
+`(family_uuid, type, alert_month)` 기준으로 중복을 확인한다(`V9__create_notifications_table.sql`).
+
+AFTER_COMMIT 리스너에서 DB 에 쓰려면 `@Transactional(propagation = REQUIRES_NEW)` 가 필요하다(`BudgetAlertService`).
+`@TransactionalEventListener` 는 트랜잭션 밖에서 발행한 이벤트를 기본값으로 버린다. 트랜잭션 안에서 발행하거나 `fallbackExecution = true` 를 준다.
 
 ### 캐시 무효화
 
-같은 클래스 내에서 `@CacheEvict` 메서드를 자기 호출하면 AOP 프록시를 우회하므로 `CacheManager` 를 직접 사용한다. `createCategory()` 처럼 외부에서 호출되는 메서드는 `@CacheEvict` 어노테이션 사용 가능.
+같은 클래스 안의 호출에는 `@Transactional`, `@Cacheable`, `@CacheEvict`, `@ValidateFamilyAccess` 가 적용되지 않는다.
+로직을 별도 빈으로 옮기거나 `TransactionTemplate` 을 쓴다. 캐시 무효화는 `CacheManager` 를 직접 사용할 수도 있다.
+`createCategory()` 처럼 외부에서 호출되는 메서드는 `@CacheEvict` 를 사용할 수 있다.
 
 ---
 
@@ -212,8 +198,6 @@ public void handleExpenseCreated(ExpenseCreatedEvent event) {
 
 ### 코드 스타일 (Google Java Style + Naver Convention)
 
-- 들여쓰기: 2 spaces, 연속 들여쓰기: 4 spaces
-- 메서드 체이닝: `.` 은 새 줄의 시작에 위치
 - `import java.util.*` 같은 와일드카드 import 금지 (static import 제외)
 - 한국어 발음 표기 식별자 금지 (`jibun` ❌, `address` ✅)
 - Checkstyle: `config/checkstyle/google_checks.xml` 기준 빌드 시 자동 검사
@@ -232,17 +216,19 @@ class SomeControllerTest extends AbstractControllerTest {
 
     @Test
     void someTest() throws Exception {
-        User user = fixtures.getDefaultUser();
+        fixtures.getDefaultUser();
         Family family = fixtures.getDefaultFamily();
-        Category category = fixtures.categories.category(family).name("식비").build();
+        fixtures.categories.category(family).name("식비").build();
 
-        mockMvc.perform(get("/api/v1/families/{familyUuid}/categories", family.getUuid().getValue())
-                   .header("X-User-UUID", user.getUuid().getValue()))
-               .andExpect(status().isOk())
-               .andExpect(jsonPath("$.success").value(true));
+        mockMvc.perform(
+                get("/api/v1/families/{familyUuid}/categories", family.getUuid().getValue()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true));
     }
 }
 ```
+
+`fixtures.getDefaultUser()` 가 SecurityContext 를 설정해 그 사용자로 인증된다.
 
 `AbstractControllerTest` 제공: `mockMvc`, `objectMapper`, `fixtures`, DB 자동 정리
 
@@ -261,7 +247,7 @@ class SomeServiceTest extends TestFixturesSupport {
 - **`@Transactional` 테스트 사용 금지** — 실제 커밋 여부 검증을 위해
 - **Service/Repository 모킹 금지** — 외부 API만 모킹
 - DB: H2 in-memory (`test` 프로파일)
-- DB 정리: `DatabaseCleanupListener` 또는 `DatabaseCleanupExtension`
+- DB 정리: `@FosSpringBootTest` 가 붙이는 `DatabaseCleanupListener`
 
 ---
 
@@ -272,7 +258,7 @@ class SomeServiceTest extends TestFixturesSupport {
 - UUID 컬럼: `VARCHAR(36)` + UNIQUE 인덱스
 - **스키마 변경은 반드시 Flyway 마이그레이션으로만**
 - **기존 적용 마이그레이션 수정 절대 금지** (checksum 충돌)
-- 새 V 파일은 타임스탬프 기반 (`V20260418_1200__...`) — 사전식 정렬이 기존 적용분보다 항상 뒤
+- 새 V 파일은 타임스탬프 기반(`V20260418_1200__...`)으로 만든다. Flyway 가 버전을 숫자로 비교한다.
 
 **주요 도메인 개념**:
 
@@ -283,61 +269,5 @@ class SomeServiceTest extends TestFixturesSupport {
 
 ## 금지사항
 
-- `System.out.println` 프로덕션 코드에 남기지 않기 — `Logger` (Slf4j) 사용
-- `@Data` 어노테이션 금지 — Entity 연관관계 무한루프 위험
-- Service/Repository 모킹 금지 — 외부 API 만 모킹
-- 와일드카드 import 금지 (`import java.util.*` 등, static import 제외)
-- 한국어 발음 표기 식별자 금지 (`jibun`, `gajok` 등)
-- `@Transactional` 테스트 사용 금지 — 실제 커밋 여부 검증 못 함
-- Controller 에서 `@Entity` 직접 반환 금지 — Response DTO + `static from(Entity)` 강제
-- 같은 클래스 내 `@CacheEvict`/`@Transactional` 자기 호출 금지 — AOP 프록시 우회됨. `CacheManager` 직접 사용
-
----
-
-## 문서 작성 원칙
-
-- **AI 에이전트 컨텍스트 효율** — docs 는 AI 에이전트를 위한 것. 컨텍스트를 낭비하지 않도록 간결하게
-- **반복·중복 제거** — 같은 내용을 두 문서에 쓰지 않는다
-- **의사결정 의도 보존** — "왜 이렇게 했는가" 반드시 기록
-- **구현 세부사항은 코드에, docs 에는 "무엇을·왜" 만** — ADR 에 코드 스니펫/파일 경로 나열 금지
-
----
-
-## Git & PR Conventions
-
-Task 작업 규칙과 브랜치, PR 규칙은 루트 `CLAUDE.md` 를 따른다.
-
-### Commit & Push 절차
-
-1. **Safety precheck** — `git status --porcelain`, `git diff`, `git diff --staged` 로 변경 확인. `.env`, `*.pem`, `id_rsa`, `credentials.*`, `secrets.*` 같은 위험 파일 포함 여부 확인. 의심되면 즉시 멈추고 확인
-2. **로컬 검증** — Checkstyle + test 실행 (문서만 변경이면 생략 가능)
-3. **Staging 계획** — 작은 단일 목적 commit 선호 (concern 별 분리: feature/test/docs/config)
-4. **사용자 명시 승인** — staged 파일 + commit 메시지 + 실행 명령을 한 번에 보여주고 승인 받은 후에만 실행
-5. **Commit + Push** — `-u origin <branch>` (tracking 없으면)
-6. **PR 생성** — 별도 결정 필요한 경우만 (작업 브랜치라면 자동, main/master 직접 push 는 차단)
-
-**Hard rules**:
-- 사용자 명시 승인 없이 commit/push 금지
-- `--force` / `--force-with-lease` 는 명시 요청 시만
-- `--no-verify` (hook skip) 는 명시 요청 시만
-- 시크릿 / 빌드 산출물 commit 금지
-
----
-
-## PR 체크리스트
-
-1. Entity 에 `@Data` 어노테이션 없는가?
-2. Controller 가 `@Entity` 를 직접 반환하지 않는가? (Response DTO + `static from` 사용)
-3. Service 의 쓰기 메서드에 `@Transactional` 명시했는가?
-4. 가족 리소스 엔드포인트에 `familyUuid` 가 URL 에 포함되어 있는가? (소유권 검증)
-5. 같은 클래스 내 AOP 자기 호출 (`@CacheEvict`/`@Transactional`) 우회 없는가?
-6. 새 Flyway 마이그레이션의 버전이 기존 적용분보다 사전식 정렬상 뒤인가?
-7. Checkstyle 통과 (`./gradlew checkstyleMain checkstyleTest`)?
-8. 와일드카드 import / 한국어 발음 표기 식별자 없는가?
-9. PR 제목이 `type(scope): description` 형식인가?
-
----
-
-## 한 줄 요약 — 매번 작업 시작 전 확인
-
-> **권한 검증 (ADR-B09 AOP), 트랜잭션 경계 (Service write 메서드), Entity 직접 노출 금지 (DTO 변환), Flyway 새 파일 타임스탬프** — 이 4가지가 backend 의 단골 함정.
+- 프로덕션 코드에 `System.out.println` 을 남기지 않는다. Slf4j `Logger` 를 사용한다.
+- Controller 에서 `@Entity` 를 직접 반환하지 않는다. Response DTO 의 `static from(Entity)` 로 변환한다.
