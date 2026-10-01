@@ -17,6 +17,29 @@ interface RovingRadioItemProps {
   onKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => void;
 }
 
+// 위아래 이동은 같은 열을 지킨다. 격자 끝을 넘으면 반대쪽 끝 줄의 같은 열로 간다.
+// 마지막 줄이 덜 찼으면 그 열이 있는 가장 아래 줄로 간다.
+// 항목이 한 줄도 안 차면 WAI-ARIA 라디오 그룹처럼 위는 이전, 아래는 다음 항목이다.
+function getVerticalIndex(currentIndex: number, direction: 1 | -1, valuesLength: number, columns: number): number {
+  if (valuesLength <= columns) {
+    return (currentIndex + direction + valuesLength) % valuesLength;
+  }
+
+  const target = currentIndex + direction * columns;
+  if (target >= 0 && target < valuesLength) {
+    return target;
+  }
+
+  const column = currentIndex % columns;
+  if (direction === 1) {
+    return column;
+  }
+
+  const lastRowStart = Math.floor((valuesLength - 1) / columns) * columns;
+  const lastInColumn = lastRowStart + column;
+  return lastInColumn < valuesLength ? lastInColumn : lastInColumn - columns;
+}
+
 function getNextIndex(currentIndex: number, key: string, valuesLength: number, columns: number): number | null {
   switch (key) {
     case "ArrowLeft":
@@ -24,9 +47,9 @@ function getNextIndex(currentIndex: number, key: string, valuesLength: number, c
     case "ArrowRight":
       return (currentIndex + 1) % valuesLength;
     case "ArrowUp":
-      return ((currentIndex - columns) % valuesLength + valuesLength) % valuesLength;
+      return getVerticalIndex(currentIndex, -1, valuesLength, columns);
     case "ArrowDown":
-      return (currentIndex + columns) % valuesLength;
+      return getVerticalIndex(currentIndex, 1, valuesLength, columns);
     case "Home":
       return 0;
     case "End":

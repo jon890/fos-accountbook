@@ -111,7 +111,7 @@ describe("useRovingRadio", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it("열 수보다 적은 항목에서도 위 방향키로 목록 안의 항목을 선택한다", () => {
+  it("열 수보다 적은 항목에서는 위는 이전, 아래는 다음 항목으로 옮긴다", () => {
     const onChange = jest.fn();
     render(
       <RovingRadioHarness
@@ -123,8 +123,34 @@ describe("useRovingRadio", () => {
     );
 
     fireEvent.keyDown(screen.getByRole("button", { name: "one" }), { key: "ArrowUp" });
+    expect(onChange).toHaveBeenLastCalledWith("three");
+    expect(screen.getByRole("button", { name: "three" })).toHaveFocus();
 
-    expect(onChange).toHaveBeenCalledWith("two");
-    expect(screen.getByRole("button", { name: "two" })).toHaveFocus();
+    fireEvent.keyDown(screen.getByRole("button", { name: "one" }), { key: "ArrowDown" });
+    expect(onChange).toHaveBeenLastCalledWith("two");
+  });
+
+  it("마지막 줄이 덜 찬 격자에서 위아래 이동은 같은 열을 지킨다", () => {
+    const onChange = jest.fn();
+    const values = Array.from({ length: 12 }, (_, index) => `item-${index}`);
+    render(<RovingRadioHarness values={values} selectedValue="item-0" onChange={onChange} columns={5} />);
+
+    const press = (name: string, key: string) =>
+      fireEvent.keyDown(screen.getByRole("button", { name }), { key });
+
+    // 0 → 5 → 10 → (끝을 넘으면 첫 줄 같은 열) 0
+    press("item-0", "ArrowDown");
+    expect(onChange).toHaveBeenLastCalledWith("item-5");
+    press("item-5", "ArrowDown");
+    expect(onChange).toHaveBeenLastCalledWith("item-10");
+    press("item-10", "ArrowDown");
+    expect(onChange).toHaveBeenLastCalledWith("item-0");
+
+    // 1 에서 위로 가면 같은 열의 가장 아래 칸 11
+    press("item-1", "ArrowUp");
+    expect(onChange).toHaveBeenLastCalledWith("item-11");
+    // 3 에서 위로 가면 마지막 줄에 그 열이 없으니 한 줄 위 8
+    press("item-3", "ArrowUp");
+    expect(onChange).toHaveBeenLastCalledWith("item-8");
   });
 });
