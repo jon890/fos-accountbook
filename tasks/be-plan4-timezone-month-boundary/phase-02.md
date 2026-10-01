@@ -43,7 +43,7 @@
 
 ### 3. 이 phase 를 검증하는 테스트
 
-- `backend/src/test/java/com/bifos/accountbook/config/BusinessClockIntegrationTest.java`를 추가한다. `@Primary Clock`을 UTC 2026-03-31T16:00:00Z, Asia/Seoul로 고정한다. 반복 지출 create, update의 이번 달 생성 여부와 getAll의 연월 기본값이 `2026-04`를 사용하는지 저장 상태와 응답으로 검증한다.
+- `backend/src/test/java/com/bifos/accountbook/config/BusinessClockIntegrationTest.java`를 추가한다. `@Primary Clock`을 UTC 2026-03-31T16:00:00Z, Asia/Seoul로 고정한다. 반복 지출 update의 이번 달 생성 여부와 getAll의 연월 기본값이 `2026-04`를 사용하는지 저장 상태와 응답으로 검증한다. create는 새 UUID에 생성 기록이 없어 항상 false를 반환하므로 정상 생성과 false를 검증하고, 날짜 분기는 코드의 Clock 사용을 확인한다.
 - 같은 고정 Clock에서 날짜 없이 지출과 수입을 만들면 2026-04-01 01:00이고, 대시보드 기본 연월 조회가 4월 금액을 반환하는지 검증한다. 명시적으로 전달한 날짜와 연월은 그대로 사용하는지도 확인한다.
 - `backend/src/test/java/com/bifos/accountbook/config/ClockConfigTest.java`에서 production Clock의 zone이 Asia/Seoul인지 단언한다.
 - 스케줄러 cron zone 은 애너테이션 값이라 리플렉션으로 `zone` 이 `Asia/Seoul` 인지 단언하는 단위 테스트를 둔다.
