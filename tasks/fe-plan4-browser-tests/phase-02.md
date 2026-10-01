@@ -31,7 +31,8 @@ PR 마다 브라우저 테스트를 돌려, 화면 배치가 깨진 변경을 �
 - `runs-on: ubuntu-latest`, `defaults.run.working-directory: frontend`.
 - 단계: checkout, pnpm 설정(10.22.0), Node 22 설정(pnpm 캐시, `cache-dependency-path: frontend/pnpm-lock.yaml`), `pnpm install --frozen-lockfile`,
   `pnpm exec playwright install --with-deps chromium`, `pnpm test:browser`.
-- `if: failure()` 일 때 `actions/upload-artifact` 로 Playwright 결과 디렉터리를 올린다. 결과 디렉터리 경로는 phase 01 의 `frontend/browser/playwright.config.ts` 에서 읽어 맞춘다.
+- `if: failure()` 일 때 `actions/upload-artifact` 로 `frontend/test-results`를 올린다.
+  phase 01의 설정 파일 위치에서 `../test-results`를 해석한 `outputDir`과 같은 디렉터리다.
 - action 버전은 같은 파일의 기존 job 이 쓰는 major 버전을 따른다.
 
 ### 2. 이 phase 를 검증하는 기존 브라우저 테스트
@@ -65,8 +66,9 @@ job 존재 검사에 더해 일회성 Python 검증으로 아래 값을 모두 �
 - 설치와 실행 명령은 각각 `pnpm install --frozen-lockfile`,
   `pnpm exec playwright install --with-deps chromium`, `pnpm test:browser`다.
 - artifact 단계는 `if: failure()`를 쓰고 `actions/upload-artifact`를 호출한다.
-  artifact 경로가 `frontend/browser/playwright.config.ts`의 `outputDir`에
-  `frontend/`를 붙인 경로와 같은지 단언한다.
+  artifact 경로는 `frontend/test-results`다.
+  `frontend/browser/playwright.config.ts`의 `outputDir`을 해석한 디렉터리가
+  저장소 root 기준 artifact 경로와 같은지 단언한다.
 
 설정의 실행 명령이나 artifact 경로를 임시로 틀리게 바꿨을 때 검증이 실패하는지 확인하고,
 원래 값으로 되돌린 뒤 검증이 통과하는지 확인한다.

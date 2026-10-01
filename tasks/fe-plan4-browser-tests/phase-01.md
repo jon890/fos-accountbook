@@ -77,6 +77,8 @@ jsdom 은 레이아웃을 계산하지 않아 Jest 로는 폭별 여백을 확�
 - `settings.ts`: 웹 포트(기본 3100), 가짜 백엔드 포트(기본 3101), 테스트용 `AUTH_SECRET`(32자 이상 고정 문자열), 고정 `FAMILY_UUID` 와 `USER_UUID` 를 export 한다. 포트는 `BROWSER_WEB_PORT`, `BROWSER_BACKEND_PORT` 로 바꿀 수 있게 한다.
 - `playwright.config.ts`: `testDir: "."`, `testMatch: "*.spec.ts"`, `workers: 1`, `fullyParallel: false`, `trace: "retain-on-failure"`.
   project 는 `mobile`(390×844)과 `desktop`(1280×900) 둘이고, 둘 다 chromium 이다.
+  `outputDir`은 설정 파일 위치에서 `../test-results`를 해석한 절대 경로로 설정한다.
+  따라서 결과는 저장소 root 기준 `frontend/test-results`에 생긴다.
   `webServer` 는 배열로 두 개를 띄운다: 가짜 백엔드(`node browser/fake-backend.ts` 같은 실행)와 웹 서버(`web-server.ts`).
   웹 서버 env 에 위 「서버 환경 변수」 를 모두 준다. OAuth 값은 임의 문자열이다.
 - `web-server.ts`: `BROWSER_WEB_SERVER` 가 `dev` 면 `pnpm dev --hostname 127.0.0.1 --port <port>` 를 띄운다.
