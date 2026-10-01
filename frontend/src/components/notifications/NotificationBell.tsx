@@ -59,9 +59,10 @@ export function NotificationBell({ familyUuid }: NotificationBellProps) {
         <Button
           variant="ghost"
           size="sm"
+          aria-label={unreadCount > 0 ? `알림, 읽지 않은 알림 ${unreadCount}개` : "알림"}
           className="relative text-fg-muted hover:text-fg h-8 w-8 md:h-9 md:w-9 p-0"
         >
-          <Bell className="w-4 h-4 md:w-5 md:h-5" />
+          <Bell aria-hidden="true" className="w-4 h-4 md:w-5 md:h-5" />
           {unreadCount > 0 && (
             <Badge
               className="absolute -top-1 -right-1 h-4 w-4 md:h-5 md:w-5 p-0 flex items-center justify-center text-[10px] md:text-xs bg-expense text-expense-fg border-0"
