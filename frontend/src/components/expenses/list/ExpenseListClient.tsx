@@ -1,30 +1,31 @@
 "use client";
 
 import { DateGroupSection } from "@/components/transactions/DateGroupSection";
+import { EditTransactionDialog } from "@/components/transactions/dialogs/EditTransactionDialog";
+import { TransactionRow } from "@/components/transactions/TransactionRow";
+import { buildMemberColorMap, getMemberColor } from "@/lib/utils/member-color";
 import { groupTransactionsWithTotal } from "@/services/transaction/transaction-service";
 import type { CategoryResponse } from "@/types/category";
 import type { Expense } from "@/types/expense";
+import type { FamilyMemberSummary } from "@/types/family";
 import { useState } from "react";
-import { DeleteExpenseDialog } from "../dialogs/DeleteExpenseDialog";
-import { EditTransactionDialog } from "@/components/transactions/dialogs/EditTransactionDialog";
-import { ExpenseItem } from "./ExpenseItem";
-import type { ExpenseItemData } from "@/types/expense";
 
 interface ExpenseListClientProps {
   expenses: Expense[];
   categories: CategoryResponse[];
   familyUuid: string;
+  members: FamilyMemberSummary[];
 }
 
 export function ExpenseListClient({
   expenses,
-  categories: initialCategories,
+  categories,
   familyUuid,
+  members,
 }: ExpenseListClientProps) {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
-
-  const categoryMap = new Map(initialCategories.map((cat) => [cat.uuid, cat]));
+  const categoriesByUuid = new Map(categories.map((category) => [category.uuid, category]));
+  const memberColors = buildMemberColorMap(members);
   const groups = groupTransactionsWithTotal(expenses);
 
   return (
@@ -35,24 +36,28 @@ export function ExpenseListClient({
             key={group.dateKey}
             group={group}
             renderItem={(expense) => {
-              const cat = categoryMap.get(expense.categoryUuid);
-              const expenseData: ExpenseItemData = {
-                uuid: expense.uuid,
-                amount: expense.amount,
-                description: expense.description,
-                date: expense.date,
-                categoryUuid: expense.categoryUuid,
-                categoryName: cat?.name || expense.category?.name || "기타",
-                categoryColor: cat?.color || expense.category?.color,
-                categoryIcon: cat?.icon || expense.category?.icon || "💸",
-              };
+              const category = categoriesByUuid.get(expense.categoryUuid);
+              const transactionCategory = category
+                ? {
+                    uuid: category.uuid,
+                    name: category.name,
+                    icon: category.icon ?? "💸",
+                    color: category.color,
+                  }
+                : expense.category;
+              const member = getMemberColor(memberColors, expense.userUuid);
               return (
-                <ExpenseItem
-                  key={expense.uuid}
-                  expense={expenseData}
-                  onEdit={() => setEditingExpense(expense)}
-                  onDelete={() => setDeletingExpense(expense)}
-                />
+                <div key={expense.uuid} className="px-3 md:px-4">
+                  <TransactionRow
+                    tx={{
+                      ...expense,
+                      category: transactionCategory,
+                      createdBy: { name: member.label, colorClass: member.bgClass },
+                    }}
+                    variant="full"
+                    onEdit={() => setEditingExpense(expense)}
+                  />
+                </div>
               );
             }}
           />
@@ -69,21 +74,6 @@ export function ExpenseListClient({
           type="expense"
           transaction={editingExpense}
           familyUuid={familyUuid}
-        />
-      )}
-
-      {deletingExpense && (
-        <DeleteExpenseDialog
-          open={!!deletingExpense}
-          onOpenChange={(open) => {
-            if (!open) setDeletingExpense(null);
-          }}
-          familyUuid={familyUuid}
-          expenseUuid={deletingExpense.uuid}
-          expenseDescription={deletingExpense.description || undefined}
-          onDeleted={() => {
-            setDeletingExpense(null);
-          }}
         />
       )}
     </>

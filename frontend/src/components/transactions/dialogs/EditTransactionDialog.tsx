@@ -14,7 +14,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { updateRecurringExpenseAction } from "@/actions/recurring-expense";
+import {
+  deleteRecurringExpenseAction,
+  updateRecurringExpenseAction,
+} from "@/actions/recurring-expense";
 import { getFamilyCategoriesAction } from "@/actions/category/get-categories-action";
 import { cn } from "@/lib/client/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -35,6 +38,7 @@ import { TransactionFormFields } from "@/components/transactions/forms/Transacti
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useTransactionSheetViewport } from "@/hooks/useTransactionSheetViewport";
 import { toLocalDateInput } from "@/lib/utils/format";
+import type { ActionResult } from "@/lib/errors/action-error";
 import type { UpdateExpenseFormState, Expense } from "@/types/expense";
 import type { UpdateIncomeFormState, Income } from "@/types/income";
 import type { RecurringExpense } from "@/types/recurring-expense";
@@ -259,25 +263,47 @@ function EditTransactionDialogBody({
     ctaLabel = "수입";
   }
 
+  const isRecurringTransaction = type === "recurring";
+  const destructiveActionLabel = isRecurringTransaction ? "종료" : "삭제";
+  const destructivePendingLabel = isRecurringTransaction ? "종료 중..." : "삭제 중...";
+  const destructiveTitle = isRecurringTransaction ? "고정지출 종료" : `${ctaLabel} 삭제`;
+  const destructiveDescription = isRecurringTransaction
+    ? "이 고정지출을 종료하시겠습니까? 기존 등록된 지출은 유지됩니다."
+    : "이 거래를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.";
+
   async function handleDelete() {
-    if (type === "recurring" || isDeleting || isUpdating) {
+    if (isDeleting || isUpdating) {
       return;
     }
 
     setIsDeleting(true);
 
     try {
-      const deleteAction = type === "expense" ? deleteExpenseAction : deleteIncomeAction;
-      const result = await deleteAction(familyUuid ?? transaction.familyUuid, transaction.uuid);
+      let result: ActionResult<void>;
+
+      if (isRecurringTransaction) {
+        result = await deleteRecurringExpenseAction(transaction.uuid);
+      } else if (type === "expense") {
+        result = await deleteExpenseAction(
+          familyUuid ?? transaction.familyUuid,
+          transaction.uuid,
+        );
+      } else {
+        result = await deleteIncomeAction(
+          familyUuid ?? transaction.familyUuid,
+          transaction.uuid,
+        );
+      }
+
       if (result.success) {
-        toast.success(`${ctaLabel}이 삭제되었습니다`);
+        toast.success(isRecurringTransaction ? "고정지출이 종료되었습니다" : `${ctaLabel}이 삭제되었습니다`);
         setDeleteOpen(false);
         onOpenChange(false);
       } else {
         toast.error(result.error.message);
       }
     } catch {
-      toast.error(`${ctaLabel} 삭제에 실패했습니다`);
+      toast.error(isRecurringTransaction ? "고정지출 종료에 실패했습니다" : `${ctaLabel} 삭제에 실패했습니다`);
     } finally {
       setIsDeleting(false);
     }
@@ -373,17 +399,15 @@ function EditTransactionDialogBody({
       </div>
       <div className="sticky bottom-0 shrink-0 bg-bg-elev px-5 pt-4 safe-area-pb md:px-0">
         <div className="flex gap-2 pb-4">
-          {type !== "recurring" && (
-            <Button
-              type="button"
-              variant="ghost"
-              className="text-expense"
-              disabled={isDeleting || isUpdating}
-              onClick={() => setDeleteOpen(true)}
-            >
-              삭제
-            </Button>
-          )}
+          <Button
+            type="button"
+            variant="ghost"
+            className="text-expense"
+            disabled={isDeleting || isUpdating}
+            onClick={() => setDeleteOpen(true)}
+          >
+            {destructiveActionLabel}
+          </Button>
           <Button
             type="button"
             variant="outline"
@@ -405,8 +429,8 @@ function EditTransactionDialogBody({
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{ctaLabel} 삭제</AlertDialogTitle>
-            <AlertDialogDescription>이 거래를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</AlertDialogDescription>
+            <AlertDialogTitle>{destructiveTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{destructiveDescription}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
@@ -418,7 +442,7 @@ function EditTransactionDialogBody({
                 void handleDelete();
               }}
             >
-              {isDeleting ? "삭제 중..." : "삭제"}
+              {isDeleting ? destructivePendingLabel : destructiveActionLabel}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

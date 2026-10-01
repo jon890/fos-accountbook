@@ -15,9 +15,11 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getRecurringExpensesAction } from "@/actions/recurring-expense";
 import { getSelectedFamilyAction } from "@/actions/family/get-selected-family-action";
+import { getFamilyMembersAction } from "@/actions/family/get-family-members-action";
 import { getFamilyCategoriesAction } from "@/actions/category/get-categories-action";
 import { getMonthRange } from "@/lib/utils/date-timezone";
 import { getCachedSession } from "@/lib/server/cache";
+import { getActionDataOrDefault } from "@/lib/server/action-result-handler";
 
 // 쿠키를 사용하므로 동적 렌더링 필요
 export const dynamic = "force-dynamic";
@@ -70,8 +72,22 @@ export default async function TransactionsPage({
   }
   const familyUuid = familyResult.data;
 
+  const shouldFetchMembers = activeTab === "expenses" || activeTab === "incomes";
+  const membersPromise = shouldFetchMembers
+    ? getFamilyMembersAction()
+    : Promise.resolve(null);
+  const categoriesPromise = getFamilyCategoriesAction(familyUuid);
+
+  const [membersResult, categoriesResult] = await Promise.all([
+    membersPromise,
+    categoriesPromise,
+  ]);
+
+  const members = membersResult
+    ? getActionDataOrDefault(membersResult, [])
+    : [];
+
   // 카테고리 목록 조회
-  const categoriesResult = await getFamilyCategoriesAction(familyUuid);
   const categories: CategoryResponse[] = categoriesResult.success
     ? categoriesResult.data
     : [];
@@ -84,7 +100,6 @@ export default async function TransactionsPage({
 
   return (
     <TransactionsPageClient
-      familyUuid={familyUuid}
       categories={categories}
       activeTab={activeTab}
       searchParams={{
@@ -126,6 +141,7 @@ export default async function TransactionsPage({
               <ExpenseList
                 familyId={familyUuid}
                 categories={categories}
+                members={members}
                 categoryId={resolvedSearchParams.categoryId}
                 startDate={startDate}
                 endDate={endDate}
@@ -152,6 +168,7 @@ export default async function TransactionsPage({
           >
             <IncomeList
               familyId={familyUuid}
+              members={members}
               categoryId={resolvedSearchParams.categoryId}
               startDate={startDate}
               endDate={endDate}

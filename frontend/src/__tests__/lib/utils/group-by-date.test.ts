@@ -42,7 +42,7 @@ describe("getDateLabel", () => {
     expect(getDateLabel("2025-01-14")).toBe("어제");
   });
 
-  it("올해 다른 날짜는 M월 d일 형식으로 반환한다", () => {
+  it("올해 다른 날짜는 요일이 포함된 M월 d일 형식으로 반환한다", () => {
     mockIsToday.mockReturnValue(false);
     mockIsYesterday.mockReturnValue(false);
 
@@ -50,14 +50,14 @@ describe("getDateLabel", () => {
     const dateStr = `${currentYear}-03-05`;
     const result = getDateLabel(dateStr);
 
-    expect(result).toBe("3월 5일");
+    expect(result).toMatch(/^3월 5일 \([일월화수목금토]\)$/);
   });
 
-  it("다른 해 날짜는 yyyy년 M월 d일 형식으로 반환한다", () => {
+  it("다른 해 날짜는 요일이 포함된 yyyy년 M월 d일 형식으로 반환한다", () => {
     mockIsToday.mockReturnValue(false);
     mockIsYesterday.mockReturnValue(false);
 
-    expect(getDateLabel("2020-07-20")).toBe("2020년 7월 20일");
+    expect(getDateLabel("2020-07-20")).toBe("2020년 7월 20일 (월)");
   });
 });
 

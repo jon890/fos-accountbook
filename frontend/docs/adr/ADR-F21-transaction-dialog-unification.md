@@ -1,6 +1,7 @@
 # ADR-F21: Add/Edit Transaction 다이얼로그 단일화
 
 **대체된 부분**: 거래 종류 전환 시 날짜를 초기화하던 정책은 [ADR-F32](ADR-F32-calendar-home-monthly-list.md)의 날짜 유지 정책으로 대체한다.
+**대체된 부분**: 내역 화면의 추가 진입 정리는 [ADR-F37](ADR-F37-single-transaction-row.md)로 대체한다.
 나머지 단일 다이얼로그 결정은 유지한다.
 
 - **결정**: 지출/수입/고정지출 3 도메인의 Add 다이얼로그를 단일 `AddTransactionDialog` + 3 segmented 토글 (gradient-expense / gradient-income / gradient-budget) 로 통합. Edit 도 동일 패턴 (`EditTransactionDialog`, type 잠금). 위치: `src/components/transactions/dialogs/`.
@@ -11,5 +12,3 @@
 - **트레이드오프**: 단일 컴포넌트가 3 type conditional 필드 분기 — form complexity ↑ but UX 일관성 ↑. type 전환 시 type-specific 필드 (date vs dayOfMonth+name) 가 mount/unmount 되며 입력 잔존 정책은 "이전 type 의 amount/category/description 은 유지, type-specific 필드만 초기화" 로 명시.
 - **갱신 (2026-09-30)**: 진입점에 달력의 「이 날짜에 추가」 가 더해지고 대시보드 QuickActions 는 빠졌다. 진입점은 `defaultDate` 도 넘긴다. 수정 다이얼로그에 삭제 버튼을 둔다([ADR-F32](ADR-F32-calendar-home-monthly-list.md)).
 - **적용 범위**: `src/components/transactions/dialogs/{Add,Edit}TransactionDialog.tsx`, `src/components/transactions/forms/TransactionFormFields.tsx`, 진입점 갱신, legacy 다이얼로그 6 파일 제거 (Add/EditExpenseDialog, Add/EditIncomeDialog, Add/EditRecurringExpenseSheet).
-
-
