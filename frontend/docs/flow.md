@@ -338,10 +338,11 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
     │
     └─ 하단 탭 가운데 추가 버튼
             └─ AddTransactionDialog 열림 → 고정지출 종류 선택
-                    ├─ 이름 (필수)
-                    ├─ 카테고리 선택 (드롭다운)
-                    ├─ 금액 입력 (숫자)
-                    └─ 매월 N일 (1~28, 숫자 입력 또는 선택)
+                    └─ TransactionFormFields의 공용 입력
+                            ├─ AmountInput: 금액
+                            ├─ CategoryGrid: 카테고리
+                            ├─ 이름 (필수)
+                            └─ 매월 N일 (1~28, 비우면 빈 칸 유지)
                             │
                             └─ 저장 → createRecurringExpenseAction()
                                     ├─ requireAuth()
@@ -350,6 +351,8 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
                                             └─ "내일부터 매월 N일에 자동 등록됩니다" toast
                                             └─ revalidatePath("/transactions")
 ```
+
+금액 입력, 저장 안내와 요청 중 잠금은 「3. 거래 등록 플로우」의 공용 규칙을 따른다.
 
 ---
 

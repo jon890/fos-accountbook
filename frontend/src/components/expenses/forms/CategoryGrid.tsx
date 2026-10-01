@@ -53,7 +53,7 @@ export function CategoryGrid({
           <Button
             key={category.uuid}
             type="button"
-            variant="ghost"
+            variant={null}
             size="default"
             role="radio"
             aria-checked={isSelected}

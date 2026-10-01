@@ -34,7 +34,7 @@ async function computedStyles(locator: Locator) {
   });
 }
 
-test("카드와 다이얼로그의 폭별 안쪽 여백을 표시한다", async ({ page }, testInfo) => {
+test("카드와 카테고리 창의 폭별 안쪽 여백을 표시한다", async ({ page }, testInfo) => {
   const expected = expectedSpacing(testInfo.project.name);
   await page.goto("/categories");
 
@@ -50,9 +50,19 @@ test("카드와 다이얼로그의 폭별 안쪽 여백을 표시한다", async 
   );
 
   await page.getByRole("button", { name: "카테고리 추가" }).click();
-  const dialog = page.locator('[data-slot="dialog-content"]');
-  await expect(dialog).toBeVisible();
-  expect((await computedStyles(dialog)).paddingTop).toBe(expected.dialogPadding);
+  if (testInfo.project.name === "mobile") {
+    const sheet = page.locator('[data-slot="sheet-content"]');
+    await expect(sheet).toBeVisible();
+    expect((await computedStyles(sheet)).paddingTop).toBe("0px");
+
+    const sheetHeader = sheet.locator('[data-slot="sheet-header"]');
+    await expect(sheetHeader).toBeVisible();
+    expect((await computedStyles(sheetHeader)).paddingTop).toBe("16px");
+  } else {
+    const dialog = page.locator('[data-slot="dialog-content"]');
+    await expect(dialog).toBeVisible();
+    expect((await computedStyles(dialog)).paddingTop).toBe(expected.dialogPadding);
+  }
   await page.getByRole("button", { name: "Close" }).click();
 
   await categoryCard.getByRole("button").nth(1).click();
