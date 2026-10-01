@@ -1,4 +1,4 @@
-# User Flow — fos-accountbook-backend
+# fos-accountbook-backend 사용자 흐름
 
 > 핵심 사용자 시나리오별 흐름. API 엔드포인트 목록은 `data-schema.md` 참고.
 
@@ -129,9 +129,14 @@ Access Token 만료 (15분)
     ▼
 POST /auth/refresh  body: { refreshToken }
     │
-    ├─ Refresh Token 유효 → 새 Access + Refresh Token 발급
+    ├─ typ=refresh 이고 유효 → 새 Access + Refresh Token 발급
+    ├─ typ 이 refresh 가 아님 (access token, typ 없는 옛 토큰) → 401 (A002)
     └─ Refresh Token 만료 (7일) → 401 → 재로그인 필요
 ```
+
+API 인증 필터(`JwtAuthenticationFilter`)는 `typ=access` 인 토큰만 인증한다. refresh token 이나 `typ` 없는 토큰은 인증하지 않아 보호 경로에서 401 이 된다([ADR-B19](adr/ADR-B19-jwt-token-type-claim.md)).
+
+보호 경로에서 인증이 없거나 JWT 가 유효하지 않으면 `ApiErrorResponse` 형식의 401(A002)을 반환한다. 인증된 사용자의 권한 부족은 403 을 유지한다.
 
 ---
 
@@ -149,7 +154,7 @@ POST /auth/refresh  body: { refreshToken }
         ▼
     ApiTokenAuthenticationFilter (JWT 필터보다 먼저)
         ├─ fab_ 로 시작하지 않으면 → 다음 필터(JWT)로 넘긴다
-        ├─ 해시로 ACTIVE 토큰을 찾지 못하면 → 401 (A002)
+        ├─ 해시로 ACTIVE 토큰을 찾지 못하거나 토큰 주인이 ACTIVE 사용자가 아니면 → 401 (A002)
         ├─ 허용 목록 밖 경로면 → 403 (A005)
         └─ 통과 → principal = 토큰 주인 userUuid, 권한 API_TOKEN
                   last_used_at 이 5분 넘게 지났으면 갱신

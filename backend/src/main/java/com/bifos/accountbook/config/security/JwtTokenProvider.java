@@ -42,6 +42,7 @@ public class JwtTokenProvider extends AbstractJwtTokenProvider {
 
     final String token = Jwts.builder()
                              .subject(toSubjectConverter().apply(user))
+                             .claim(TOKEN_TYPE_CLAIM, ACCESS_TOKEN_TYPE)
                              .issuedAt(now)
                              .expiration(expiryDate)
                              .signWith(getSigningKey(), getAlgorithm())
@@ -63,10 +64,19 @@ public class JwtTokenProvider extends AbstractJwtTokenProvider {
 
     return Jwts.builder()
                .subject(toSubjectConverter().apply(user))
+               .claim(TOKEN_TYPE_CLAIM, REFRESH_TOKEN_TYPE)
                .issuedAt(now)
                .expiration(expiryDate)
                .signWith(getSigningKey(), getAlgorithm())
                .compact();
+  }
+
+  public boolean validateAccessToken(String token) {
+    return validateToken(token, ACCESS_TOKEN_TYPE);
+  }
+
+  public boolean validateRefreshToken(String token) {
+    return validateToken(token, REFRESH_TOKEN_TYPE);
   }
 
   /**

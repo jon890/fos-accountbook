@@ -3,10 +3,15 @@ package com.bifos.accountbook.config;
 import com.bifos.accountbook.shared.filter.RequestResponseLoggingFilter;
 import com.bifos.accountbook.config.security.ApiTokenAuthenticationFilter;
 import com.bifos.accountbook.config.security.JwtAuthenticationFilter;
+import com.bifos.accountbook.shared.dto.ApiErrorResponse;
+import com.bifos.accountbook.shared.exception.ErrorCode;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -20,6 +25,7 @@ import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import tools.jackson.databind.json.JsonMapper;
 
 @Configuration
 @EnableWebSecurity
@@ -31,6 +37,7 @@ public class SecurityConfig {
   private final ApiTokenAuthenticationFilter apiTokenAuthenticationFilter;
   private final CorsProperties corsProperties;
   private final RequestResponseLoggingFilter requestResponseLoggingFilter;
+  private final JsonMapper jsonMapper;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) {
@@ -44,6 +51,10 @@ public class SecurityConfig {
         // 세션 사용하지 않음 (JWT 사용)
         .sessionManagement(session -> session
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+        .exceptionHandling(exception -> exception
+            .authenticationEntryPoint((request, response, authenticationException) ->
+                writeInvalidTokenResponse(request.getRequestURI(), response)))
 
         // 요청에 대한 인증/인가 설정
         .authorizeHttpRequests(auth -> auth
@@ -71,6 +82,14 @@ public class SecurityConfig {
     return http.build();
   }
 
+  private void writeInvalidTokenResponse(String requestUri, jakarta.servlet.http.HttpServletResponse response)
+      throws IOException {
+    response.setStatus(ErrorCode.INVALID_TOKEN.getStatusCode());
+    response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=" + StandardCharsets.UTF_8.name());
+    response.getWriter().write(
+        jsonMapper.writeValueAsString(ApiErrorResponse.of(ErrorCode.INVALID_TOKEN, requestUri)));
+  }
+
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
@@ -94,4 +113,3 @@ public class SecurityConfig {
     return new BCryptPasswordEncoder();
   }
 }
-

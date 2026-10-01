@@ -55,27 +55,86 @@ class JwtTokenProviderTest {
   }
 
   @Test
-  @DisplayName("다른 키로 서명한 토큰은 예외 없이 false 를 돌려준다")
+  @DisplayName("발급한 access token은 access 검증만 통과한다")
+  void validateAccessToken_ReturnsTrue_OnlyForAccessToken() {
+    User user = User.builder()
+                    .uuid(CustomUuid.generate())
+                    .build();
+
+    AccessToken accessToken = sut.generateToken(user);
+
+    assertThat(sut.validateAccessToken(accessToken.getToken())).isTrue();
+    assertThat(sut.validateRefreshToken(accessToken.getToken())).isFalse();
+  }
+
+  @Test
+  @DisplayName("발급한 refresh token은 refresh 검증만 통과한다")
+  void validateRefreshToken_ReturnsTrue_OnlyForRefreshToken() {
+    User user = User.builder()
+                    .uuid(CustomUuid.generate())
+                    .build();
+
+    String refreshToken = sut.generateRefreshToken(user);
+
+    assertThat(sut.validateAccessToken(refreshToken)).isFalse();
+    assertThat(sut.validateRefreshToken(refreshToken)).isTrue();
+  }
+
+  @Test
+  @DisplayName("다른 키로 서명한 토큰은 두 종류 검증 모두 통과하지 않는다")
   void validateToken_ReturnsFalse_WhenSignedWithOtherKey() {
     String token = Jwts.builder()
                        .subject("someone")
+                       .claim(AbstractJwtTokenProvider.TOKEN_TYPE_CLAIM,
+                              AbstractJwtTokenProvider.ACCESS_TOKEN_TYPE)
                        .expiration(new Date(System.currentTimeMillis() + 60_000))
                        .signWith(Keys.hmacShaKeyFor("other-secret-key-that-is-long-enough-for-hs512-signing-0123456789".getBytes(StandardCharsets.UTF_8)))
                        .compact();
 
-    assertThat(sut.validateToken(token)).isFalse();
+    assertThat(sut.validateAccessToken(token)).isFalse();
+    assertThat(sut.validateRefreshToken(token)).isFalse();
   }
 
   @Test
-  @DisplayName("수신자가 지정된 토큰은 access token 으로 받지 않는다")
+  @DisplayName("수신자가 지정된 토큰은 두 종류 검증 모두 통과하지 않는다")
   void validateToken_ReturnsFalse_WhenAudiencePresent() {
     String token = Jwts.builder()
                        .subject("google:123")
                        .audience().add(SocialLoginAssertionVerifier.AUDIENCE).and()
+                       .claim(AbstractJwtTokenProvider.TOKEN_TYPE_CLAIM,
+                              AbstractJwtTokenProvider.ACCESS_TOKEN_TYPE)
                        .expiration(new Date(System.currentTimeMillis() + 60_000))
                        .signWith(sut.getSigningKey(), sut.getAlgorithm())
                        .compact();
 
-    assertThat(sut.validateToken(token)).isFalse();
+    assertThat(sut.validateAccessToken(token)).isFalse();
+    assertThat(sut.validateRefreshToken(token)).isFalse();
+  }
+
+  @Test
+  @DisplayName("typ 클레임이 없는 옛 토큰은 두 종류 검증 모두 통과하지 않는다")
+  void validateToken_ReturnsFalse_WhenTokenTypeIsMissing() {
+    String token = Jwts.builder()
+                       .subject("someone")
+                       .expiration(new Date(System.currentTimeMillis() + 60_000))
+                       .signWith(sut.getSigningKey(), sut.getAlgorithm())
+                       .compact();
+
+    assertThat(sut.validateAccessToken(token)).isFalse();
+    assertThat(sut.validateRefreshToken(token)).isFalse();
+  }
+
+  @Test
+  @DisplayName("문자열이 아닌 typ 클레임 토큰은 두 종류 검증 모두 통과하지 않는다")
+  void validateToken_ReturnsFalse_WhenTokenTypeIsNotString() {
+    String token = Jwts.builder()
+                       .subject("someone")
+                       .claim(AbstractJwtTokenProvider.TOKEN_TYPE_CLAIM, 1)
+                       .expiration(new Date(System.currentTimeMillis() + 60_000))
+                       .signWith(sut.getSigningKey(), sut.getAlgorithm())
+                       .compact();
+
+    assertThat(sut.validateAccessToken(token)).isFalse();
+    assertThat(sut.validateRefreshToken(token)).isFalse();
   }
 }

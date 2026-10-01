@@ -70,7 +70,7 @@ public class AuthService {
    * Refresh 토큰으로 새 Access 토큰 발급
    */
   public AuthResponse refreshToken(String refreshToken) {
-    if (!jwtTokenProvider.validateToken(refreshToken)) {
+    if (!jwtTokenProvider.validateRefreshToken(refreshToken)) {
       throw new BusinessException(ErrorCode.INVALID_TOKEN, "유효하지 않은 refresh 토큰입니다");
     }
 
