@@ -76,6 +76,25 @@ const notifications = [
   },
 ];
 
+const invitationToken = "55555555-5555-4555-8555-555555555555";
+
+const invitation = {
+  uuid: "66666666-6666-4666-8666-666666666666",
+  familyUuid: FAMILY_UUID,
+  familyName: family.name,
+  token: invitationToken,
+  status: "PENDING",
+  expiresAt: "2099-01-02T00:00:00.000Z",
+  createdAt,
+  isExpired: false,
+  isUsed: false,
+  inviter: {
+    name: "초대자",
+    avatarUrl: null,
+  },
+  memberCount: family.memberCount,
+};
+
 function sendJson(response, status, body) {
   response.writeHead(status, { "Content-Type": "application/json; charset=utf-8" });
   response.end(JSON.stringify(body));
@@ -108,6 +127,10 @@ const server = createServer((request, response) => {
   }
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/notifications`) {
     sendJson(response, 200, { success: true, data: { notifications, unreadCount: 1, totalCount: notifications.length } });
+    return;
+  }
+  if (method === "GET" && pathname === `/api/v1/invitations/token/${invitationToken}`) {
+    sendJson(response, 200, { data: invitation });
     return;
   }
 
