@@ -1,0 +1,13 @@
+{
+  "name": "fe-plan8-budget-exclusion",
+  "description": "등록 화면의 기반을 정리하고, 카테고리와 지출의 예산 제외를 등록 화면과 목록에서 드러내며 지출마다 끄고 켤 수 있게 한다",
+  "status": "pending",
+  "created_at": "2026-10-01",
+  "total_phases": 3,
+  "current_phase": 1,
+  "phases": [
+    { "number": 1, "file": "phase-01.md", "execution_profile": "fast" },
+    { "number": 2, "file": "phase-02.md", "execution_profile": "standard" },
+    { "number": 3, "file": "phase-03.md", "execution_profile": "fast" }
+  ]
+}
