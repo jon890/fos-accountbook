@@ -39,23 +39,17 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 @DisplayName("연동 토큰 인증 필터 통합 테스트")
 class ApiTokenAuthenticationFilterTest extends AbstractControllerTest {
 
-  @Autowired
-  private ApiTokenService apiTokenService;
+  @Autowired private ApiTokenService apiTokenService;
 
-  @Autowired
-  private ApiTokenJpaRepository apiTokenJpaRepository;
+  @Autowired private ApiTokenJpaRepository apiTokenJpaRepository;
 
-  @Autowired
-  private ExpenseJpaRepository expenseJpaRepository;
+  @Autowired private ExpenseJpaRepository expenseJpaRepository;
 
-  @Autowired
-  private FamilyJpaRepository familyJpaRepository;
+  @Autowired private FamilyJpaRepository familyJpaRepository;
 
-  @Autowired
-  private JwtTokenProvider jwtTokenProvider;
+  @Autowired private JwtTokenProvider jwtTokenProvider;
 
-  @Autowired
-  private JdbcTemplate jdbcTemplate;
+  @Autowired private JdbcTemplate jdbcTemplate;
 
   private User userA;
   private Family familyA;
@@ -70,7 +64,8 @@ class ApiTokenAuthenticationFilterTest extends AbstractControllerTest {
     tokenA = apiTokenService.issue(userA.getUuid(), new CreateApiTokenRequest("가계부 봇"));
   }
 
-  private ResultActions perform(MockHttpServletRequestBuilder request, String rawToken) throws Exception {
+  private ResultActions perform(MockHttpServletRequestBuilder request, String rawToken)
+      throws Exception {
     SecurityContextHolder.clearContext();
     return mockMvc.perform(request.header("Authorization", "Bearer " + rawToken));
   }
@@ -81,7 +76,8 @@ class ApiTokenAuthenticationFilterTest extends AbstractControllerTest {
 
   private String createExpenseBody(Category category, String amount) throws Exception {
     return objectMapper.writeValueAsString(
-        new CreateExpenseRequest(category.getUuid().getValue(), new BigDecimal(amount), "점심", null, false));
+        new CreateExpenseRequest(
+            category.getUuid().getValue(), new BigDecimal(amount), "점심", null, false));
   }
 
   private ApiToken storedToken() {
@@ -94,22 +90,30 @@ class ApiTokenAuthenticationFilterTest extends AbstractControllerTest {
   @Test
   @DisplayName("토큰 주인으로 자기 가족의 지출을 등록, 조회, 수정, 삭제한다")
   void ownerCanManageExpenses() throws Exception {
-    String body = perform(post(expensesUrl(familyA))
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(createExpenseBody(categoryA, "12000")), tokenA.getToken())
-        .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.data.amount").value(12000))
-        .andReturn().getResponse().getContentAsString();
+    String body =
+        perform(
+                post(expensesUrl(familyA))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(createExpenseBody(categoryA, "12000")),
+                tokenA.getToken())
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.data.amount").value(12000))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
     String expenseUuid = objectMapper.readTree(body).get("data").get("uuid").asText();
 
     perform(get(expensesUrl(familyA)), tokenA.getToken())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.items[*].uuid").value(hasItem(expenseUuid)));
 
-    perform(put(expensesUrl(familyA) + "/" + expenseUuid)
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(
-            new UpdateExpenseRequest(null, new BigDecimal("15000"), null, null, null))), tokenA.getToken())
+    perform(
+            put(expensesUrl(familyA) + "/" + expenseUuid)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        new UpdateExpenseRequest(null, new BigDecimal("15000"), null, null, null))),
+            tokenA.getToken())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.amount").value(15000));
 
@@ -128,9 +132,11 @@ class ApiTokenAuthenticationFilterTest extends AbstractControllerTest {
     Family familyB = fixtures.families.family().owner(userB).build();
     Category categoryB = fixtures.categories.category(familyB).build();
 
-    perform(post(expensesUrl(familyB))
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(createExpenseBody(categoryB, "5000")), tokenA.getToken())
+    perform(
+            post(expensesUrl(familyB))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(createExpenseBody(categoryB, "5000")),
+            tokenA.getToken())
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value("F003"));
   }
@@ -156,8 +162,7 @@ class ApiTokenAuthenticationFilterTest extends AbstractControllerTest {
   @Test
   @DisplayName("폐기한 토큰으로 부르면 401 A002 이다")
   void revokedTokenIsUnauthorized() throws Exception {
-    perform(get("/api/v1/families"), tokenA.getToken())
-        .andExpect(status().isOk());
+    perform(get("/api/v1/families"), tokenA.getToken()).andExpect(status().isOk());
 
     apiTokenService.revoke(userA.getUuid(), CustomUuid.from(tokenA.getUuid()));
 
@@ -169,10 +174,11 @@ class ApiTokenAuthenticationFilterTest extends AbstractControllerTest {
   @Test
   @DisplayName("삭제된 토큰 주인으로 부르면 401 A002 이다")
   void deletedTokenOwnerIsUnauthorized() throws Exception {
-    int updatedRows = jdbcTemplate.update(
-        "UPDATE users SET status = ? WHERE uuid = ?",
-        UserStatus.DELETED.getCode(),
-        userA.getUuid().getValue());
+    int updatedRows =
+        jdbcTemplate.update(
+            "UPDATE users SET status = ? WHERE uuid = ?",
+            UserStatus.DELETED.getCode(),
+            userA.getUuid().getValue());
 
     assertThat(updatedRows).as("토큰 주인 사용자 상태를 한 행만 변경해야 한다").isEqualTo(1);
 
@@ -196,8 +202,7 @@ class ApiTokenAuthenticationFilterTest extends AbstractControllerTest {
   void firstCallRecordsLastUsedAt() throws Exception {
     assertThat(storedToken().getLastUsedAt()).as("발급 직후에는 사용 시각이 없다").isNull();
 
-    perform(get("/api/v1/families"), tokenA.getToken())
-        .andExpect(status().isOk());
+    perform(get("/api/v1/families"), tokenA.getToken()).andExpect(status().isOk());
 
     assertThat(storedToken().getLastUsedAt()).as("호출 뒤에는 사용 시각이 채워져야 한다").isNotNull();
   }

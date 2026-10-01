@@ -7,10 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 사용자 프로필 응답 DTO
- * Value Object로 immutable하게 관리
- */
+/** 사용자 프로필 응답 DTO Value Object로 immutable하게 관리 */
 @Getter
 @Builder
 @NoArgsConstructor
@@ -25,20 +22,19 @@ public class UserProfileResponse {
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
 
-  /**
-   * Entity → DTO 변환
-   */
+  /** Entity → DTO 변환 */
   public static UserProfileResponse from(UserProfile profile) {
     return UserProfileResponse.builder()
-                              .userUuid(profile.getUserUuid().getValue())
-                              .timezone(profile.getTimezone())
-                              .language(profile.getLanguage())
-                              .currency(profile.getCurrency())
-                              .defaultFamilyUuid(profile.getDefaultFamilyUuid() != null ?
-                                                     profile.getDefaultFamilyUuid().getValue() : null)
-                              .createdAt(profile.getCreatedAt())
-                              .updatedAt(profile.getUpdatedAt())
-                              .build();
+        .userUuid(profile.getUserUuid().getValue())
+        .timezone(profile.getTimezone())
+        .language(profile.getLanguage())
+        .currency(profile.getCurrency())
+        .defaultFamilyUuid(
+            profile.getDefaultFamilyUuid() != null
+                ? profile.getDefaultFamilyUuid().getValue()
+                : null)
+        .createdAt(profile.getCreatedAt())
+        .updatedAt(profile.getUpdatedAt())
+        .build();
   }
 }
-

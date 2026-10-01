@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum ApiTokenStatus implements CodeEnum {
-
   ACTIVE("ACTIVE"),
 
   REVOKED("REVOKED");

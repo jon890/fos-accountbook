@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
  * 테스트용 Fixture 자동 관리를 위한 추상 클래스
  *
  * <h3>사용법:</h3>
+ *
  * <pre>{@code
  * @FosSpringBootTest
  * class MyTest extends TestFixturesSupport {
@@ -24,42 +25,37 @@ import org.springframework.security.core.context.SecurityContextHolder;
  * }</pre>
  *
  * <h3>기능:</h3>
+ *
  * <ul>
- *     <li>{@code @BeforeEach}: fixtures 자동 초기화</li>
- *     <li>{@code @AfterEach}: fixtures 캐시 및 SecurityContext 자동 정리</li>
- *     <li>{@code @FosSpringBootTest}와 함께 사용 권장</li>
+ *   <li>{@code @BeforeEach}: fixtures 자동 초기화
+ *   <li>{@code @AfterEach}: fixtures 캐시 및 SecurityContext 자동 정리
+ *   <li>{@code @FosSpringBootTest}와 함께 사용 권장
  * </ul>
  *
  * <h3>장점:</h3>
+ *
  * <ul>
- *     <li>반복적인 setUp/tearDown 로직 제거</li>
- *     <li>일관된 테스트 패턴</li>
- *     <li>코드 중복 최소화</li>
- *     <li>테스트 격리 보장 (SecurityContext 자동 정리)</li>
+ *   <li>반복적인 setUp/tearDown 로직 제거
+ *   <li>일관된 테스트 패턴
+ *   <li>코드 중복 최소화
+ *   <li>테스트 격리 보장 (SecurityContext 자동 정리)
  * </ul>
  */
 @FosSpringBootTest
 public abstract class TestFixturesSupport {
 
-  @Autowired
-  protected ApplicationContext applicationContext;
+  @Autowired protected ApplicationContext applicationContext;
 
-  /**
-   * 테스트용 Fixture (자동 초기화됨)
-   */
+  /** 테스트용 Fixture (자동 초기화됨) */
   protected TestFixtures fixtures;
 
-  /**
-   * 각 테스트 실행 전 fixtures 자동 초기화
-   */
+  /** 각 테스트 실행 전 fixtures 자동 초기화 */
   @BeforeEach
   void setUpFixtures() {
     fixtures = new TestFixtures(applicationContext);
   }
 
-  /**
-   * 각 테스트 실행 후 fixtures 캐시 및 SecurityContext 자동 정리
-   */
+  /** 각 테스트 실행 후 fixtures 캐시 및 SecurityContext 자동 정리 */
   @AfterEach
   void tearDownFixtures() {
     // SecurityContext 정리 (테스트 격리 보장)

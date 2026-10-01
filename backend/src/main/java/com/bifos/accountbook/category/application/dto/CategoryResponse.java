@@ -1,6 +1,5 @@
 package com.bifos.accountbook.category.application.dto;
 
-import com.bifos.accountbook.category.application.dto.CategoryInfo;
 import com.bifos.accountbook.category.domain.entity.Category;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -25,27 +24,24 @@ public class CategoryResponse {
 
   public static CategoryResponse from(Category category) {
     return CategoryResponse.builder()
-                           .uuid(category.getUuid().getValue())
-                           .familyUuid(category.getFamilyUuid().getValue())
-                           .name(category.getName())
-                           .color(category.getColor())
-                           .icon(category.getIcon())
-                           .excludeFromBudget(category.isExcludeFromBudget())
-                           .createdAt(category.getCreatedAt())
-                           .updatedAt(category.getUpdatedAt())
-                           .build();
+        .uuid(category.getUuid().getValue())
+        .familyUuid(category.getFamilyUuid().getValue())
+        .name(category.getName())
+        .color(category.getColor())
+        .icon(category.getIcon())
+        .excludeFromBudget(category.isExcludeFromBudget())
+        .createdAt(category.getCreatedAt())
+        .updatedAt(category.getUpdatedAt())
+        .build();
   }
 
-  /**
-   * CategoryResponse를 CategoryInfo로 변환
-   * IncomeService, ExpenseService에서 사용됩니다.
-   */
+  /** CategoryResponse를 CategoryInfo로 변환 IncomeService, ExpenseService에서 사용됩니다. */
   public CategoryInfo toCategoryInfo() {
     return CategoryInfo.builder()
-                       .uuid(this.uuid)
-                       .name(this.name)
-                       .color(this.color)
-                       .icon(this.icon)
-                       .build();
+        .uuid(this.uuid)
+        .name(this.name)
+        .color(this.color)
+        .icon(this.icon)
+        .build();
   }
 }

@@ -2,26 +2,24 @@ package com.bifos.accountbook.shared.fixtures;
 
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.expense.domain.entity.Expense;
-import com.bifos.accountbook.family.domain.entity.Family;
-import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.expense.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.expense.domain.value.ExpenseStatus;
+import com.bifos.accountbook.family.domain.entity.Family;
+import com.bifos.accountbook.user.domain.entity.User;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
  * Expense 도메인 테스트 Fixture
  *
- * 지출 생성 및 관리를 담당
+ * <p>지출 생성 및 관리를 담당
  */
 public class ExpenseFixtures {
 
   private final ExpenseRepository expenseRepository;
   private final UserFixtures userFixtures;
 
-  public ExpenseFixtures(
-      ExpenseRepository expenseRepository,
-      UserFixtures userFixtures) {
+  public ExpenseFixtures(ExpenseRepository expenseRepository, UserFixtures userFixtures) {
     this.expenseRepository = expenseRepository;
     this.userFixtures = userFixtures;
   }
@@ -33,16 +31,10 @@ public class ExpenseFixtures {
    * @param category 지출 카테고리
    */
   public ExpenseBuilder expense(Family family, Category category) {
-    return new ExpenseBuilder(
-        expenseRepository,
-        family,
-        category,
-        userFixtures.getDefaultUser());
+    return new ExpenseBuilder(expenseRepository, family, category, userFixtures.getDefaultUser());
   }
 
-  /**
-   * Expense Builder - 지출 생성
-   */
+  /** Expense Builder - 지출 생성 */
   public static class ExpenseBuilder {
     private BigDecimal amount = BigDecimal.valueOf(10000);
     private String description = "Test Expense";
@@ -54,10 +46,7 @@ public class ExpenseFixtures {
     private final Category category;
 
     ExpenseBuilder(
-        ExpenseRepository expenseRepository,
-        Family family,
-        Category category,
-        User defaultUser) {
+        ExpenseRepository expenseRepository, Family family, Category category, User defaultUser) {
       this.expenseRepository = expenseRepository;
       this.family = family;
       this.category = category;
@@ -86,17 +75,17 @@ public class ExpenseFixtures {
 
     public Expense build() {
       // Expense 직접 생성 (@Transactional 없이도 동작)
-      Expense expense = Expense.builder()
-                               .family(family)
-                               .categoryUuid(category.getUuid())
-                               .userUuid(user.getUuid())
-                               .amount(amount)
-                               .description(description)
-                               .date(date)
-                               .status(ExpenseStatus.ACTIVE)
-                               .build();
+      Expense expense =
+          Expense.builder()
+              .family(family)
+              .categoryUuid(category.getUuid())
+              .userUuid(user.getUuid())
+              .amount(amount)
+              .description(description)
+              .date(date)
+              .status(ExpenseStatus.ACTIVE)
+              .build();
       return expenseRepository.save(expense);
     }
   }
 }
-

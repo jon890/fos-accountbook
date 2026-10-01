@@ -29,11 +29,9 @@ class ApiTokenControllerTest extends AbstractControllerTest {
 
   private static final String BASE_URL = "/api/v1/users/me/api-tokens";
 
-  @Autowired
-  private ApiTokenService apiTokenService;
+  @Autowired private ApiTokenService apiTokenService;
 
-  @Autowired
-  private ApiTokenJpaRepository apiTokenJpaRepository;
+  @Autowired private ApiTokenJpaRepository apiTokenJpaRepository;
 
   private User testUser;
 
@@ -43,11 +41,16 @@ class ApiTokenControllerTest extends AbstractControllerTest {
   }
 
   private JsonNode issueToken(String name) throws Exception {
-    String body = mockMvc.perform(post(BASE_URL)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(new CreateApiTokenRequest(name))))
-        .andExpect(status().isCreated())
-        .andReturn().getResponse().getContentAsString();
+    String body =
+        mockMvc
+            .perform(
+                post(BASE_URL)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(new CreateApiTokenRequest(name))))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
     return objectMapper.readTree(body).get("data");
   }
 
@@ -61,9 +64,11 @@ class ApiTokenControllerTest extends AbstractControllerTest {
   @Test
   @DisplayName("연동 토큰을 발급하면 원문을 한 번 돌려주고 DB 에는 해시만 저장한다")
   void issue_ReturnsRawTokenAndStoresHash() throws Exception {
-    mockMvc.perform(post(BASE_URL)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(new CreateApiTokenRequest("가계부 봇"))))
+    mockMvc
+        .perform(
+            post(BASE_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new CreateApiTokenRequest("가계부 봇"))))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.success").value(true))
         .andExpect(jsonPath("$.message").value("연동 토큰을 발급했습니다"))
@@ -88,7 +93,8 @@ class ApiTokenControllerTest extends AbstractControllerTest {
     issueToken("첫 번째");
     issueToken("두 번째");
 
-    mockMvc.perform(get(BASE_URL))
+    mockMvc
+        .perform(get(BASE_URL))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.message").value("연동 토큰 목록을 조회했습니다"))
         .andExpect(jsonPath("$.data.length()").value(2))
@@ -102,11 +108,13 @@ class ApiTokenControllerTest extends AbstractControllerTest {
   void revoke_RemovesFromListAndMarksRevoked() throws Exception {
     String uuid = issueToken("폐기할 토큰").get("uuid").asText();
 
-    mockMvc.perform(delete(BASE_URL + "/{tokenUuid}", uuid))
+    mockMvc
+        .perform(delete(BASE_URL + "/{tokenUuid}", uuid))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.message").value("연동 토큰을 폐기했습니다"));
 
-    mockMvc.perform(get(BASE_URL))
+    mockMvc
+        .perform(get(BASE_URL))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.length()").value(0));
 
@@ -119,11 +127,11 @@ class ApiTokenControllerTest extends AbstractControllerTest {
   @DisplayName("남의 토큰을 폐기하려 하면 없는 토큰과 같은 404 로 답하고 토큰은 그대로 남는다")
   void revoke_OtherUsersToken_ReturnsNotFound() throws Exception {
     User otherUser = fixtures.users.getOtherUser();
-    String otherUuid = apiTokenService
-        .issue(otherUser.getUuid(), new CreateApiTokenRequest("남의 토큰"))
-        .getUuid();
+    String otherUuid =
+        apiTokenService.issue(otherUser.getUuid(), new CreateApiTokenRequest("남의 토큰")).getUuid();
 
-    mockMvc.perform(delete(BASE_URL + "/{tokenUuid}", otherUuid))
+    mockMvc
+        .perform(delete(BASE_URL + "/{tokenUuid}", otherUuid))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("AT001"));
 
@@ -137,9 +145,11 @@ class ApiTokenControllerTest extends AbstractControllerTest {
       issueToken("토큰 " + i);
     }
 
-    mockMvc.perform(post(BASE_URL)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(new CreateApiTokenRequest("토큰 6"))))
+    mockMvc
+        .perform(
+            post(BASE_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new CreateApiTokenRequest("토큰 6"))))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code").value("AT002"));
   }
@@ -147,14 +157,19 @@ class ApiTokenControllerTest extends AbstractControllerTest {
   @Test
   @DisplayName("이름이 비었거나 50자를 넘으면 400 이다")
   void issue_InvalidName_ReturnsBadRequest() throws Exception {
-    mockMvc.perform(post(BASE_URL)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(new CreateApiTokenRequest(""))))
+    mockMvc
+        .perform(
+            post(BASE_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new CreateApiTokenRequest(""))))
         .andExpect(status().isBadRequest());
 
-    mockMvc.perform(post(BASE_URL)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(new CreateApiTokenRequest("가".repeat(51)))))
+    mockMvc
+        .perform(
+            post(BASE_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(new CreateApiTokenRequest("가".repeat(51)))))
         .andExpect(status().isBadRequest());
 
     issueToken("가".repeat(50));

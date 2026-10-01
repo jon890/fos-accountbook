@@ -9,7 +9,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface RecurringExpenseJpaRepository extends JpaRepository<RecurringExpense, Long> {
 
-  @Query("""
+  @Query(
+      """
       SELECT r
       FROM RecurringExpense r
       WHERE r.uuid = :uuid

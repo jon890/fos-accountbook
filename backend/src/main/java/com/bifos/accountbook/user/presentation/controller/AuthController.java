@@ -1,11 +1,11 @@
 package com.bifos.accountbook.user.presentation.controller;
 
+import com.bifos.accountbook.config.security.SocialLoginAssertionVerifier;
+import com.bifos.accountbook.shared.dto.ApiSuccessResponse;
+import com.bifos.accountbook.user.application.service.AuthService;
 import com.bifos.accountbook.user.presentation.dto.AuthResponse;
 import com.bifos.accountbook.user.presentation.dto.RefreshTokenRequest;
-import com.bifos.accountbook.user.application.service.AuthService;
-import com.bifos.accountbook.shared.dto.ApiSuccessResponse;
 import com.bifos.accountbook.user.presentation.dto.SocialLoginRequest;
-import com.bifos.accountbook.config.security.SocialLoginAssertionVerifier;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,17 +34,21 @@ public class AuthController {
   @PostMapping("/social-login")
   public ResponseEntity<ApiSuccessResponse<AuthResponse>> socialLogin(
       @Valid @RequestBody SocialLoginRequest request,
-      @RequestHeader(value = SocialLoginAssertionVerifier.HEADER, required = false) String assertion) {
+      @RequestHeader(value = SocialLoginAssertionVerifier.HEADER, required = false)
+          String assertion) {
     AuthResponse response = authService.socialLogin(request, assertion);
 
     return ResponseEntity.ok(ApiSuccessResponse.of("로그인 성공", response));
   }
 
-  @Operation(summary = "토큰 갱신", description = "Refresh Token을 사용하여 새로운 Access Token과 Refresh Token을 발급합니다.")
+  @Operation(
+      summary = "토큰 갱신",
+      description = "Refresh Token을 사용하여 새로운 Access Token과 Refresh Token을 발급합니다.")
   @ApiResponse(responseCode = "200", description = "토큰 갱신 성공")
   @ApiResponse(responseCode = "401", description = "유효하지 않은 Refresh Token")
   @PostMapping("/refresh")
-  public ResponseEntity<ApiSuccessResponse<AuthResponse>> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+  public ResponseEntity<ApiSuccessResponse<AuthResponse>> refreshToken(
+      @Valid @RequestBody RefreshTokenRequest request) {
     AuthResponse response = authService.refreshToken(request.getRefreshToken());
 
     return ResponseEntity.ok(ApiSuccessResponse.of("토큰이 갱신되었습니다", response));

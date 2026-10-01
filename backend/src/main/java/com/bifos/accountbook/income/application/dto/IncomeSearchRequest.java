@@ -14,35 +14,27 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class IncomeSearchRequest {
 
-  @Builder.Default
-  private int page = 0;
+  @Builder.Default private int page = 0;
 
-  @Builder.Default
-  private int size = 20;
+  @Builder.Default private int size = 20;
 
   private String categoryUuid;
   private LocalDateTime startDate;
   private LocalDateTime endDate;
 
-  public static IncomeSearchRequest withDefaults(Integer page,
-                                                 Integer size,
-                                                 String categoryUuid,
-                                                 String startDate,
-                                                 String endDate) {
+  public static IncomeSearchRequest withDefaults(
+      Integer page, Integer size, String categoryUuid, String startDate, String endDate) {
 
     return IncomeSearchRequest.builder()
-                              .page(page != null ? page : 0)
-                              .size(size != null ? size : 20)
-                              .categoryUuid(categoryUuid)
-                              .startDate(parseDateTime(startDate, true))
-                              .endDate(parseDateTime(endDate, false))
-                              .build();
+        .page(page != null ? page : 0)
+        .size(size != null ? size : 20)
+        .categoryUuid(categoryUuid)
+        .startDate(parseDateTime(startDate, true))
+        .endDate(parseDateTime(endDate, false))
+        .build();
   }
 
-  /**
-   * 날짜 문자열을 LocalDateTime으로 파싱
-   * 날짜만 있는 경우(2025-10-31) 또는 전체 DateTime(2025-10-31T00:00:00) 모두 지원
-   */
+  /** 날짜 문자열을 LocalDateTime으로 파싱 날짜만 있는 경우(2025-10-31) 또는 전체 DateTime(2025-10-31T00:00:00) 모두 지원 */
   private static LocalDateTime parseDateTime(String dateStr, boolean isStartDate) {
     if (dateStr == null || dateStr.isEmpty()) {
       return null;
@@ -63,4 +55,3 @@ public class IncomeSearchRequest {
     }
   }
 }
-

@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum RecurringExpenseStatus implements CodeEnum {
-
   ACTIVE("ACTIVE"),
 
   ENDED("ENDED");

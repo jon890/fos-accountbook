@@ -3,30 +3,24 @@ package com.bifos.accountbook.shared.aop;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
-import com.bifos.accountbook.shared.exception.BusinessException;
-import com.bifos.accountbook.shared.exception.ErrorCode;
+import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.notification.application.service.NotificationService;
 import com.bifos.accountbook.shared.FosSpringBootTest;
 import com.bifos.accountbook.shared.TestFixturesSupport;
-import com.bifos.accountbook.family.domain.entity.Family;
-import com.bifos.accountbook.family.domain.entity.FamilyMember;
-import com.bifos.accountbook.user.domain.entity.User;
+import com.bifos.accountbook.shared.exception.BusinessException;
+import com.bifos.accountbook.shared.exception.ErrorCode;
 import com.bifos.accountbook.shared.value.CustomUuid;
+import com.bifos.accountbook.user.domain.entity.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-/**
- * FamilyAccessAspect 통합 테스트
- * AOP가 Service 메서드 호출 시 권한 검증을 자동으로 수행하는지 테스트
- *
- */
+/** FamilyAccessAspect 통합 테스트 AOP가 Service 메서드 호출 시 권한 검증을 자동으로 수행하는지 테스트 */
 @FosSpringBootTest
 @DisplayName("FamilyAccessAspect 통합 테스트")
 class FamilyAccessAspectTest extends TestFixturesSupport {
 
-  @Autowired
-  private NotificationService notificationService;
+  @Autowired private NotificationService notificationService;
 
   @Test
   @DisplayName("@ValidateFamilyAccess - 가족 멤버인 경우 권한 검증 통과")
@@ -36,9 +30,7 @@ class FamilyAccessAspectTest extends TestFixturesSupport {
     Family family = fixtures.families.family().owner(user).build();
 
     // When & Then: AOP가 자동으로 권한 검증하고 통과해야 함
-    assertDoesNotThrow(() ->
-        notificationService.getUnreadCount(user.getUuid(), family.getUuid())
-    );
+    assertDoesNotThrow(() -> notificationService.getUnreadCount(user.getUuid(), family.getUuid()));
   }
 
   @Test
@@ -49,9 +41,8 @@ class FamilyAccessAspectTest extends TestFixturesSupport {
     Family family = fixtures.getDefaultFamily(); // 다른 사용자가 owner
 
     // When & Then: AOP가 자동으로 권한 검증하고 실패해야 함
-    assertThatThrownBy(() ->
-        notificationService.getUnreadCount(nonMember.getUuid(), family.getUuid())
-    )
+    assertThatThrownBy(
+            () -> notificationService.getUnreadCount(nonMember.getUuid(), family.getUuid()))
         .isInstanceOf(BusinessException.class)
         .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_FAMILY_MEMBER);
   }
@@ -64,9 +55,7 @@ class FamilyAccessAspectTest extends TestFixturesSupport {
     CustomUuid invalidFamilyUuid = CustomUuid.generate();
 
     // When & Then: AOP가 자동으로 권한 검증하고 실패해야 함
-    assertThatThrownBy(() ->
-        notificationService.getUnreadCount(user.getUuid(), invalidFamilyUuid)
-    )
+    assertThatThrownBy(() -> notificationService.getUnreadCount(user.getUuid(), invalidFamilyUuid))
         .isInstanceOf(BusinessException.class)
         .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_FAMILY_MEMBER);
   }
@@ -82,26 +71,19 @@ class FamilyAccessAspectTest extends TestFixturesSupport {
     Family family2 = fixtures.families.family().name("Family 2").owner(user2).build();
 
     // When & Then: user1은 family1에만 접근 가능
-    assertDoesNotThrow(() ->
-        notificationService.getUnreadCount(user1.getUuid(), family1.getUuid())
-    );
+    assertDoesNotThrow(
+        () -> notificationService.getUnreadCount(user1.getUuid(), family1.getUuid()));
 
-    assertThatThrownBy(() ->
-        notificationService.getUnreadCount(user1.getUuid(), family2.getUuid())
-    )
+    assertThatThrownBy(() -> notificationService.getUnreadCount(user1.getUuid(), family2.getUuid()))
         .isInstanceOf(BusinessException.class)
         .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_FAMILY_MEMBER);
 
     // user2는 family2에만 접근 가능
-    assertDoesNotThrow(() ->
-        notificationService.getUnreadCount(user2.getUuid(), family2.getUuid())
-    );
+    assertDoesNotThrow(
+        () -> notificationService.getUnreadCount(user2.getUuid(), family2.getUuid()));
 
-    assertThatThrownBy(() ->
-        notificationService.getUnreadCount(user2.getUuid(), family1.getUuid())
-    )
+    assertThatThrownBy(() -> notificationService.getUnreadCount(user2.getUuid(), family1.getUuid()))
         .isInstanceOf(BusinessException.class)
         .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_FAMILY_MEMBER);
   }
 }
-

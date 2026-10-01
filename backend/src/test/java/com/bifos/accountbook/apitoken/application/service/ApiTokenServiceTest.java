@@ -23,11 +23,9 @@ class ApiTokenServiceTest extends TestFixturesSupport {
 
   private static final LocalDateTime BASE_TIME = LocalDateTime.of(2026, 3, 1, 12, 0, 0);
 
-  @Autowired
-  private ApiTokenService apiTokenService;
+  @Autowired private ApiTokenService apiTokenService;
 
-  @Autowired
-  private ApiTokenJpaRepository apiTokenJpaRepository;
+  @Autowired private ApiTokenJpaRepository apiTokenJpaRepository;
 
   private CustomUuid userUuid;
   private String rawToken;
@@ -44,7 +42,8 @@ class ApiTokenServiceTest extends TestFixturesSupport {
   }
 
   private ApiToken reloadActive() {
-    return apiTokenService.findActive(rawToken)
+    return apiTokenService
+        .findActive(rawToken)
         .orElseThrow(() -> new AssertionError("ACTIVE 토큰을 찾지 못했다"));
   }
 
@@ -79,8 +78,10 @@ class ApiTokenServiceTest extends TestFixturesSupport {
     apiTokenService.revoke(userUuid, CustomUuid.from(tokenUuid));
     apiTokenService.recordUsage(staleToken, BASE_TIME);
 
-    ApiToken stored = apiTokenJpaRepository.findById(staleToken.getId())
-        .orElseThrow(() -> new AssertionError("토큰 행이 없다"));
+    ApiToken stored =
+        apiTokenJpaRepository
+            .findById(staleToken.getId())
+            .orElseThrow(() -> new AssertionError("토큰 행이 없다"));
     assertThat(stored.getStatus()).isEqualTo(ApiTokenStatus.REVOKED);
     assertThat(stored.getLastUsedAt()).isNull();
     assertThat(apiTokenService.findActive(rawToken)).isEmpty();

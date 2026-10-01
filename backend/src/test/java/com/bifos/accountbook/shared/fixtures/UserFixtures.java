@@ -10,7 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 /**
  * User 도메인 테스트 Fixture
  *
- * 사용자 생성 및 SecurityContext 설정을 담당
+ * <p>사용자 생성 및 SecurityContext 설정을 담당
  */
 public class UserFixtures {
 
@@ -26,10 +26,7 @@ public class UserFixtures {
     this.userRepository = userRepository;
   }
 
-  /**
-   * 기본 유저 반환 (lazy initialization)
-   * SecurityContext에 자동으로 설정됨
-   */
+  /** 기본 유저 반환 (lazy initialization) SecurityContext에 자동으로 설정됨 */
   public User getDefaultUser() {
     if (defaultUser == null) {
       defaultUser = user().buildAndSetSecurityContext();
@@ -38,19 +35,14 @@ public class UserFixtures {
   }
 
   /**
-   * 다른 유저 생성 및 반환
-   * 여러 유저가 필요한 테스트에서 사용
-   * 매번 고유한 이메일로 유저를 생성합니다.
-   * SecurityContext에는 설정하지 않습니다.
+   * 다른 유저 생성 및 반환 여러 유저가 필요한 테스트에서 사용 매번 고유한 이메일로 유저를 생성합니다. SecurityContext에는 설정하지 않습니다.
    *
    * @return 생성된 다른 유저
    */
   public User getOtherUser() {
-    String uniqueEmail = "other-" + System.currentTimeMillis() + "-" + System.nanoTime() + "@test.com";
-    User otherUser = user()
-        .email(uniqueEmail)
-        .name("다른 사용자")
-        .build();
+    String uniqueEmail =
+        "other-" + System.currentTimeMillis() + "-" + System.nanoTime() + "@test.com";
+    User otherUser = user().email(uniqueEmail).name("다른 사용자").build();
     otherUsers.add(otherUser);
     return otherUser;
   }
@@ -63,28 +55,21 @@ public class UserFixtures {
   public void setSecurityContext(User user) {
     UsernamePasswordAuthenticationToken authentication =
         new UsernamePasswordAuthenticationToken(user.getUuid().getValue(), null, null);
-    SecurityContextHolder.getContext()
-                         .setAuthentication(authentication);
+    SecurityContextHolder.getContext().setAuthentication(authentication);
   }
 
-  /**
-   * User Builder 시작점
-   */
+  /** User Builder 시작점 */
   public UserBuilder user() {
     return new UserBuilder(userRepository);
   }
 
-  /**
-   * 캐시 초기화
-   */
+  /** 캐시 초기화 */
   public void clear() {
     this.defaultUser = null;
     this.otherUsers.clear();
   }
 
-  /**
-   * User Builder - 사용자 생성
-   */
+  /** User Builder - 사용자 생성 */
   public static class UserBuilder {
     private final UserRepository userRepository;
     private String email = "test@example.com";
@@ -123,16 +108,18 @@ public class UserFixtures {
      */
     public User build() {
       // providerId가 설정되지 않았다면 build() 시점에 생성 (재사용 시 중복 방지)
-      String finalProviderId = providerId != null
-          ? providerId
-          : "test-provider-" + System.currentTimeMillis() + "-" + System.nanoTime();
+      String finalProviderId =
+          providerId != null
+              ? providerId
+              : "test-provider-" + System.currentTimeMillis() + "-" + System.nanoTime();
 
-      User user = User.builder()
-                      .email(email)
-                      .name(name)
-                      .provider(provider)
-                      .providerId(finalProviderId)
-                      .build();
+      User user =
+          User.builder()
+              .email(email)
+              .name(name)
+              .provider(provider)
+              .providerId(finalProviderId)
+              .build();
       return userRepository.save(user);
     }
 
@@ -145,10 +132,8 @@ public class UserFixtures {
       User user = build();
       UsernamePasswordAuthenticationToken authentication =
           new UsernamePasswordAuthenticationToken(user.getUuid().getValue(), null, null);
-      SecurityContextHolder.getContext()
-                           .setAuthentication(authentication);
+      SecurityContextHolder.getContext().setAuthentication(authentication);
       return user;
     }
   }
 }
-

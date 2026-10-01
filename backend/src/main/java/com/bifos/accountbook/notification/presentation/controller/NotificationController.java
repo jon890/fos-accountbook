@@ -3,10 +3,10 @@ package com.bifos.accountbook.notification.presentation.controller;
 import com.bifos.accountbook.notification.application.dto.NotificationListResponse;
 import com.bifos.accountbook.notification.application.dto.NotificationResponse;
 import com.bifos.accountbook.notification.application.service.NotificationService;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.shared.auth.LoginUser;
-import com.bifos.accountbook.shared.dto.ApiSuccessResponse;
 import com.bifos.accountbook.shared.auth.LoginUserDto;
+import com.bifos.accountbook.shared.dto.ApiSuccessResponse;
+import com.bifos.accountbook.shared.value.CustomUuid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -37,9 +37,11 @@ public class NotificationController {
   @ApiResponse(responseCode = "200", description = "조회 성공")
   @ApiResponse(responseCode = "404", description = "가족을 찾을 수 없음")
   @GetMapping("/families/{familyUuid}/notifications")
-  public ResponseEntity<ApiSuccessResponse<NotificationListResponse>> getFamilyNotifications(@LoginUser LoginUserDto loginUser,
-                                                                                             @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid) {
-    NotificationListResponse response = notificationService.getFamilyNotifications(loginUser.userUuid(), familyUuid);
+  public ResponseEntity<ApiSuccessResponse<NotificationListResponse>> getFamilyNotifications(
+      @LoginUser LoginUserDto loginUser,
+      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid) {
+    NotificationListResponse response =
+        notificationService.getFamilyNotifications(loginUser.userUuid(), familyUuid);
     return ResponseEntity.ok(ApiSuccessResponse.of(response));
   }
 
@@ -63,14 +65,17 @@ public class NotificationController {
       @Parameter(description = "알림 UUID") @PathVariable String notificationUuid) {
     log.info("Fetching notification: {} by user: {}", notificationUuid, loginUser.userUuid());
 
-    NotificationResponse response = notificationService.getNotification(
-        loginUser.userUuid(), notificationUuid);
+    NotificationResponse response =
+        notificationService.getNotification(loginUser.userUuid(), notificationUuid);
 
     return ResponseEntity.ok(ApiSuccessResponse.of(response));
   }
 
   @Deprecated
-  @Operation(summary = "[Deprecated] 알림 읽음 처리", description = "⚠️ Deprecated: /families/{familyUuid}/notifications/{notificationUuid}/read 를 사용해주세요.",
+  @Operation(
+      summary = "[Deprecated] 알림 읽음 처리",
+      description =
+          "⚠️ Deprecated: /families/{familyUuid}/notifications/{notificationUuid}/read 를 사용해주세요.",
       deprecated = true)
   @ApiResponse(responseCode = "200", description = "읽음 처리 성공")
   @ApiResponse(responseCode = "403", description = "접근 권한 없음")
@@ -79,11 +84,14 @@ public class NotificationController {
   public ResponseEntity<ApiSuccessResponse<NotificationResponse>> markAsReadLegacy(
       @LoginUser LoginUserDto loginUser,
       @Parameter(description = "알림 UUID") @PathVariable String notificationUuid) {
-    log.info("[Deprecated] Marking notification as read: {} by user: {}", notificationUuid, loginUser.userUuid());
+    log.info(
+        "[Deprecated] Marking notification as read: {} by user: {}",
+        notificationUuid,
+        loginUser.userUuid());
 
     CustomUuid familyUuid = notificationService.resolveNotificationFamilyUuid(notificationUuid);
-    NotificationResponse response = notificationService.markAsRead(
-        loginUser.userUuid(), familyUuid, notificationUuid);
+    NotificationResponse response =
+        notificationService.markAsRead(loginUser.userUuid(), familyUuid, notificationUuid);
 
     return ResponseEntity.ok(ApiSuccessResponse.of("알림을 읽음 처리했습니다", response));
   }
@@ -97,11 +105,14 @@ public class NotificationController {
       @LoginUser LoginUserDto loginUser,
       @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
       @Parameter(description = "알림 UUID") @PathVariable String notificationUuid) {
-    log.info("Marking notification as read: {} by user: {} in family: {}", notificationUuid,
-        loginUser.userUuid(), familyUuid);
+    log.info(
+        "Marking notification as read: {} by user: {} in family: {}",
+        notificationUuid,
+        loginUser.userUuid(),
+        familyUuid);
 
-    NotificationResponse response = notificationService.markAsRead(
-        loginUser.userUuid(), familyUuid, notificationUuid);
+    NotificationResponse response =
+        notificationService.markAsRead(loginUser.userUuid(), familyUuid, notificationUuid);
 
     return ResponseEntity.ok(ApiSuccessResponse.of("알림을 읽음 처리했습니다", response));
   }
@@ -112,7 +123,10 @@ public class NotificationController {
   public ResponseEntity<ApiSuccessResponse<Void>> markAllAsRead(
       @LoginUser LoginUserDto loginUser,
       @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid) {
-    log.info("Marking all notifications as read for family: {} by user: {}", familyUuid.getValue(), loginUser.userUuid());
+    log.info(
+        "Marking all notifications as read for family: {} by user: {}",
+        familyUuid.getValue(),
+        loginUser.userUuid());
 
     notificationService.markAllAsRead(loginUser.userUuid(), familyUuid);
 

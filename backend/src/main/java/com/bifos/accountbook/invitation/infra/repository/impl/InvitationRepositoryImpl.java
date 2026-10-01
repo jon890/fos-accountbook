@@ -2,19 +2,16 @@ package com.bifos.accountbook.invitation.infra.repository.impl;
 
 import com.bifos.accountbook.invitation.domain.entity.Invitation;
 import com.bifos.accountbook.invitation.domain.repository.InvitationRepository;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.invitation.domain.value.InvitationStatus;
 import com.bifos.accountbook.invitation.infra.repository.jpa.InvitationJpaRepository;
+import com.bifos.accountbook.shared.value.CustomUuid;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-/**
- * InvitationRepository 구현체
- * JpaRepository를 내부적으로 사용하여 도메인 인터페이스 구현
- */
+/** InvitationRepository 구현체 JpaRepository를 내부적으로 사용하여 도메인 인터페이스 구현 */
 @Repository
 @RequiredArgsConstructor
 public class InvitationRepositoryImpl implements InvitationRepository {

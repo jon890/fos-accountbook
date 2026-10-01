@@ -1,17 +1,17 @@
 package com.bifos.accountbook.dashboard.infra.repository.impl;
 
 import com.bifos.accountbook.category.domain.entity.QCategory;
-import com.bifos.accountbook.expense.domain.entity.QExpense;
-import com.bifos.accountbook.income.domain.entity.QIncome;
+import com.bifos.accountbook.category.domain.value.CategoryStatus;
 import com.bifos.accountbook.dashboard.domain.repository.DashboardRepository;
 import com.bifos.accountbook.dashboard.domain.repository.projection.MonthlyTrendProjection;
 import com.bifos.accountbook.dashboard.infra.repository.projection.MonthlyTrendProjectionImpl;
+import com.bifos.accountbook.expense.domain.entity.QExpense;
 import com.bifos.accountbook.expense.domain.repository.projection.CategoryExpenseProjection;
-import com.bifos.accountbook.category.domain.value.CategoryStatus;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.expense.domain.value.ExpenseStatus;
-import com.bifos.accountbook.income.domain.value.IncomeStatus;
 import com.bifos.accountbook.expense.infra.repository.projection.CategoryExpenseProjectionImpl;
+import com.bifos.accountbook.income.domain.entity.QIncome;
+import com.bifos.accountbook.income.domain.value.IncomeStatus;
+import com.bifos.accountbook.shared.value.CustomUuid;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -24,12 +24,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-/**
- * 대시보드 통계 Repository 구현체
- * - QueryDSL 기반으로 복잡한 통계 쿼리 실행
- * - 타입 안전한 쿼리 작성
- * - 동적 조건 처리
- */
+/** 대시보드 통계 Repository 구현체 - QueryDSL 기반으로 복잡한 통계 쿼리 실행 - 타입 안전한 쿼리 작성 - 동적 조건 처리 */
 @Repository
 @RequiredArgsConstructor
 public class DashboardRepositoryImpl implements DashboardRepository {
@@ -37,11 +32,8 @@ public class DashboardRepositoryImpl implements DashboardRepository {
   private final JPAQueryFactory queryFactory;
 
   /**
-   * 카테고리별 지출 통계 조회 (QueryDSL)
-   * - LEFT JOIN으로 카테고리 정보 결합
-   * - GROUP BY로 카테고리별 집계
-   * - SUM, COUNT 집계 함수 사용
-   * - 동적 조건 처리 (BooleanExpression)
+   * 카테고리별 지출 통계 조회 (QueryDSL) - LEFT JOIN으로 카테고리 정보 결합 - GROUP BY로 카테고리별 집계 - SUM, COUNT 집계 함수 사용 -
+   * 동적 조건 처리 (BooleanExpression)
    */
   @Override
   public List<CategoryExpenseProjection> getCategoryExpenseStats(
@@ -75,59 +67,56 @@ public class DashboardRepositoryImpl implements DashboardRepository {
     QCategory category = QCategory.category;
 
     // QueryDSL로 카테고리별 통계 조회 (Tuple 사용)
-    List<Tuple> tuples = queryFactory
-        .select(
-            expense.categoryUuid,
-            category.name,
-            category.icon,
-            category.color,
-            expense.amount.sum(),
-            expense.id.count()
-        )
-        .from(expense)
-        .leftJoin(category)
-        .on(expense.categoryUuid.eq(category.uuid)
-                                .and(category.status.eq(CategoryStatus.ACTIVE)))
-        .where(
-            expense.family.uuid.eq(familyUuid),
-            expense.status.eq(ExpenseStatus.ACTIVE),
-            categoryUuidEq(expense, categoryUuid),
-            dateGoe(expense, startDate),
-            endDateCondition
-        )
-        .groupBy(expense.categoryUuid, category.name, category.icon, category.color)
-        .orderBy(expense.amount.sum().desc())
-        .fetch();
+    List<Tuple> tuples =
+        queryFactory
+            .select(
+                expense.categoryUuid,
+                category.name,
+                category.icon,
+                category.color,
+                expense.amount.sum(),
+                expense.id.count())
+            .from(expense)
+            .leftJoin(category)
+            .on(
+                expense
+                    .categoryUuid
+                    .eq(category.uuid)
+                    .and(category.status.eq(CategoryStatus.ACTIVE)))
+            .where(
+                expense.family.uuid.eq(familyUuid),
+                expense.status.eq(ExpenseStatus.ACTIVE),
+                categoryUuidEq(expense, categoryUuid),
+                dateGoe(expense, startDate),
+                endDateCondition)
+            .groupBy(expense.categoryUuid, category.name, category.icon, category.color)
+            .orderBy(expense.amount.sum().desc())
+            .fetch();
 
     // Tuple을 Projection 객체로 변환
     return tuples.stream()
-                 .map(tuple -> {
-                   CustomUuid catUuid = tuple.get(expense.categoryUuid);
-                   String catName = tuple.get(category.name);
-                   String catIcon = tuple.get(category.icon);
-                   String catColor = tuple.get(category.color);
-                   BigDecimal totalAmt = tuple.get(expense.amount.sum());
-                   Long cnt = tuple.get(expense.id.count());
+        .map(
+            tuple -> {
+              CustomUuid catUuid = tuple.get(expense.categoryUuid);
+              String catName = tuple.get(category.name);
+              String catIcon = tuple.get(category.icon);
+              String catColor = tuple.get(category.color);
+              BigDecimal totalAmt = tuple.get(expense.amount.sum());
+              Long cnt = tuple.get(expense.id.count());
 
-                   return new CategoryExpenseProjectionImpl(
-                       catUuid != null ? catUuid.getValue() : "UNKNOWN",
-                       catName != null ? catName : "미분류",
-                       catIcon != null ? catIcon : "❓",
-                       catColor != null ? catColor : "#999999",
-                       totalAmt != null ? totalAmt : BigDecimal.ZERO,
-                       cnt != null ? cnt : 0L
-                   );
-                 })
-                 .map(impl -> (CategoryExpenseProjection) impl)
-                 .toList();
+              return new CategoryExpenseProjectionImpl(
+                  catUuid != null ? catUuid.getValue() : "UNKNOWN",
+                  catName != null ? catName : "미분류",
+                  catIcon != null ? catIcon : "❓",
+                  catColor != null ? catColor : "#999999",
+                  totalAmt != null ? totalAmt : BigDecimal.ZERO,
+                  cnt != null ? cnt : 0L);
+            })
+        .map(impl -> (CategoryExpenseProjection) impl)
+        .toList();
   }
 
-  /**
-   * 전체 지출 합계 조회 (QueryDSL)
-   * - SUM 집계 함수 사용
-   * - 동적 조건 처리
-   * - COALESCE로 null 처리
-   */
+  /** 전체 지출 합계 조회 (QueryDSL) - SUM 집계 함수 사용 - 동적 조건 처리 - COALESCE로 null 처리 */
   @Override
   public BigDecimal getTotalExpenseAmount(
       CustomUuid familyUuid,
@@ -137,135 +126,117 @@ public class DashboardRepositoryImpl implements DashboardRepository {
 
     QExpense expense = QExpense.expense;
 
-    BigDecimal result = queryFactory
-        .select(expense.amount.sum().coalesce(BigDecimal.ZERO))
-        .from(expense)
-        .where(
-            expense.family.uuid.eq(familyUuid),
-            expense.status.eq(ExpenseStatus.ACTIVE),
-            categoryUuidEq(expense, categoryUuid),
-            dateGoe(expense, startDate),
-            dateLoe(expense, endDate)
-        )
-        .fetchOne();
+    BigDecimal result =
+        queryFactory
+            .select(expense.amount.sum().coalesce(BigDecimal.ZERO))
+            .from(expense)
+            .where(
+                expense.family.uuid.eq(familyUuid),
+                expense.status.eq(ExpenseStatus.ACTIVE),
+                categoryUuidEq(expense, categoryUuid),
+                dateGoe(expense, startDate),
+                dateLoe(expense, endDate))
+            .fetchOne();
 
     return result != null ? result : BigDecimal.ZERO;
   }
 
   // ===== 동적 쿼리 조건 메서드 =====
 
-  /**
-   * 카테고리 UUID 동적 조건
-   * null이면 조건 미적용 (전체 카테고리)
-   */
+  /** 카테고리 UUID 동적 조건 null이면 조건 미적용 (전체 카테고리) */
   private BooleanExpression categoryUuidEq(QExpense expense, CustomUuid categoryUuid) {
     return categoryUuid != null ? expense.categoryUuid.eq(categoryUuid) : null;
   }
 
-  /**
-   * 시작 날짜 동적 조건 (>= startDate)
-   * null이면 조건 미적용
-   */
+  /** 시작 날짜 동적 조건 (>= startDate) null이면 조건 미적용 */
   private BooleanExpression dateGoe(QExpense expense, LocalDateTime startDate) {
     return startDate != null ? expense.date.goe(startDate) : null;
   }
 
-  /**
-   * 종료 날짜 동적 조건 (<= endDate)
-   * null이면 조건 미적용
-   */
+  /** 종료 날짜 동적 조건 (<= endDate) null이면 조건 미적용 */
   private BooleanExpression dateLoe(QExpense expense, LocalDateTime endDate) {
     return endDate != null ? expense.date.loe(endDate) : null;
   }
 
-  /**
-   * 종료 날짜 동적 조건 (< endDate)
-   * null이면 조건 미적용
-   */
+  /** 종료 날짜 동적 조건 (< endDate) null이면 조건 미적용 */
   private BooleanExpression dateLt(QExpense expense, LocalDateTime endDate) {
     return endDate != null ? expense.date.lt(endDate) : null;
   }
 
   /**
-   * 특정 월의 지출 합계 조회 (QueryDSL)
-   * - YEAR(date), MONTH(date) 조건 사용
-   * - ACTIVE 상태만 집계
-   * - 예산 제외 플래그가 true인 지출 제외
-   * - 카테고리의 예산 제외 플래그가 true인 지출도 제외
+   * 특정 월의 지출 합계 조회 (QueryDSL) - YEAR(date), MONTH(date) 조건 사용 - ACTIVE 상태만 집계 - 예산 제외 플래그가 true인 지출
+   * 제외 - 카테고리의 예산 제외 플래그가 true인 지출도 제외
    */
   @Override
-  public BigDecimal getMonthlyExpenseAmount(
-      CustomUuid familyUuid,
-      int year,
-      int month) {
+  public BigDecimal getMonthlyExpenseAmount(CustomUuid familyUuid, int year, int month) {
 
     QExpense expense = QExpense.expense;
     QCategory category = QCategory.category;
 
-    BigDecimal result = queryFactory
-        .select(expense.amount.sum().coalesce(BigDecimal.ZERO))
-        .from(expense)
-        .leftJoin(category)
-        .on(expense.categoryUuid.eq(category.uuid)
-                                .and(category.status.eq(CategoryStatus.ACTIVE)))
-        .where(
-            expense.family.uuid.eq(familyUuid),
-            expense.status.eq(ExpenseStatus.ACTIVE),
-            expense.date.year().eq(year),
-            expense.date.month().eq(month),
-            expense.excludeFromBudget.eq(false)
-                                     .and(
-                                         category.excludeFromBudget.isNull()
-                                                                   .or(category.excludeFromBudget.eq(false))
-                                     )
-        )
-        .fetchOne();
+    BigDecimal result =
+        queryFactory
+            .select(expense.amount.sum().coalesce(BigDecimal.ZERO))
+            .from(expense)
+            .leftJoin(category)
+            .on(
+                expense
+                    .categoryUuid
+                    .eq(category.uuid)
+                    .and(category.status.eq(CategoryStatus.ACTIVE)))
+            .where(
+                expense.family.uuid.eq(familyUuid),
+                expense.status.eq(ExpenseStatus.ACTIVE),
+                expense.date.year().eq(year),
+                expense.date.month().eq(month),
+                expense
+                    .excludeFromBudget
+                    .eq(false)
+                    .and(
+                        category
+                            .excludeFromBudget
+                            .isNull()
+                            .or(category.excludeFromBudget.eq(false))))
+            .fetchOne();
 
     return result != null ? result : BigDecimal.ZERO;
   }
 
-  /**
-   * 특정 월의 수입 합계 조회 (QueryDSL)
-   * - YEAR(date), MONTH(date) 조건 사용
-   * - ACTIVE 상태만 집계
-   */
+  /** 특정 월의 수입 합계 조회 (QueryDSL) - YEAR(date), MONTH(date) 조건 사용 - ACTIVE 상태만 집계 */
   @Override
-  public BigDecimal getMonthlyIncomeAmount(
-      CustomUuid familyUuid,
-      int year,
-      int month) {
+  public BigDecimal getMonthlyIncomeAmount(CustomUuid familyUuid, int year, int month) {
 
     QIncome income = QIncome.income;
 
-    BigDecimal result = queryFactory
-        .select(income.amount.sum().coalesce(BigDecimal.ZERO))
-        .from(income)
-        .where(
-            income.family.uuid.eq(familyUuid),
-            income.status.eq(IncomeStatus.ACTIVE),
-            income.date.year().eq(year),
-            income.date.month().eq(month)
-        )
-        .fetchOne();
+    BigDecimal result =
+        queryFactory
+            .select(income.amount.sum().coalesce(BigDecimal.ZERO))
+            .from(income)
+            .where(
+                income.family.uuid.eq(familyUuid),
+                income.status.eq(IncomeStatus.ACTIVE),
+                income.date.year().eq(year),
+                income.date.month().eq(month))
+            .fetchOne();
 
     return result != null ? result : BigDecimal.ZERO;
   }
 
   @Override
-  public Map<Integer, Map<String, BigDecimal>> getDailyExpenseAmountsByMember(CustomUuid familyUuid, int year, int month) {
+  public Map<Integer, Map<String, BigDecimal>> getDailyExpenseAmountsByMember(
+      CustomUuid familyUuid, int year, int month) {
     QExpense expense = QExpense.expense;
 
-    List<Tuple> tuples = queryFactory
-        .select(expense.date.dayOfMonth(), expense.userUuid, expense.amount.sum())
-        .from(expense)
-        .where(
-            expense.family.uuid.eq(familyUuid),
-            expense.status.eq(ExpenseStatus.ACTIVE),
-            expense.date.year().eq(year),
-            expense.date.month().eq(month)
-        )
-        .groupBy(expense.date.dayOfMonth(), expense.userUuid)
-        .fetch();
+    List<Tuple> tuples =
+        queryFactory
+            .select(expense.date.dayOfMonth(), expense.userUuid, expense.amount.sum())
+            .from(expense)
+            .where(
+                expense.family.uuid.eq(familyUuid),
+                expense.status.eq(ExpenseStatus.ACTIVE),
+                expense.date.year().eq(year),
+                expense.date.month().eq(month))
+            .groupBy(expense.date.dayOfMonth(), expense.userUuid)
+            .fetch();
 
     Map<Integer, Map<String, BigDecimal>> amountsByDay = new HashMap<>();
     for (Tuple tuple : tuples) {
@@ -273,65 +244,65 @@ public class DashboardRepositoryImpl implements DashboardRepository {
       CustomUuid userUuid = tuple.get(expense.userUuid);
       BigDecimal amount = tuple.get(expense.amount.sum());
       if (day != null && userUuid != null) {
-        amountsByDay.computeIfAbsent(day, ignored -> new HashMap<>())
-                    .put(userUuid.getValue(), amount != null ? amount : BigDecimal.ZERO);
+        amountsByDay
+            .computeIfAbsent(day, ignored -> new HashMap<>())
+            .put(userUuid.getValue(), amount != null ? amount : BigDecimal.ZERO);
       }
     }
     return amountsByDay;
   }
 
   @Override
-  public Map<Integer, BigDecimal> getDailyIncomeAmounts(CustomUuid familyUuid, int year, int month) {
+  public Map<Integer, BigDecimal> getDailyIncomeAmounts(
+      CustomUuid familyUuid, int year, int month) {
     QIncome income = QIncome.income;
 
-    List<Tuple> tuples = queryFactory
-        .select(income.date.dayOfMonth(), income.amount.sum())
-        .from(income)
-        .where(
-            income.family.uuid.eq(familyUuid),
-            income.status.eq(IncomeStatus.ACTIVE),
-            income.date.year().eq(year),
-            income.date.month().eq(month)
-        )
-        .groupBy(income.date.dayOfMonth())
-        .fetch();
+    List<Tuple> tuples =
+        queryFactory
+            .select(income.date.dayOfMonth(), income.amount.sum())
+            .from(income)
+            .where(
+                income.family.uuid.eq(familyUuid),
+                income.status.eq(IncomeStatus.ACTIVE),
+                income.date.year().eq(year),
+                income.date.month().eq(month))
+            .groupBy(income.date.dayOfMonth())
+            .fetch();
 
     return toAmountByDayMap(tuples, income.date.dayOfMonth(), income.amount.sum());
   }
 
   @Override
   public List<MonthlyTrendProjection> getMonthlyExpenseTrend(
-      CustomUuid familyUuid,
-      LocalDateTime from,
-      LocalDateTime to) {
+      CustomUuid familyUuid, LocalDateTime from, LocalDateTime to) {
 
     QExpense expense = QExpense.expense;
 
-    List<Tuple> tuples = queryFactory
-        .select(expense.date.year(), expense.date.month(), expense.amount.sum())
-        .from(expense)
-        .where(
-            expense.family.uuid.eq(familyUuid),
-            expense.status.eq(ExpenseStatus.ACTIVE),
-            expense.date.goe(from),
-            expense.date.lt(to)
-        )
-        .groupBy(expense.date.year(), expense.date.month())
-        .orderBy(expense.date.year().asc(), expense.date.month().asc())
-        .fetch();
+    List<Tuple> tuples =
+        queryFactory
+            .select(expense.date.year(), expense.date.month(), expense.amount.sum())
+            .from(expense)
+            .where(
+                expense.family.uuid.eq(familyUuid),
+                expense.status.eq(ExpenseStatus.ACTIVE),
+                expense.date.goe(from),
+                expense.date.lt(to))
+            .groupBy(expense.date.year(), expense.date.month())
+            .orderBy(expense.date.year().asc(), expense.date.month().asc())
+            .fetch();
 
     return tuples.stream()
-                 .<MonthlyTrendProjection>map(tuple -> {
-                   Integer year = tuple.get(expense.date.year());
-                   Integer month = tuple.get(expense.date.month());
-                   BigDecimal total = tuple.get(expense.amount.sum());
-                   return new MonthlyTrendProjectionImpl(
-                       year != null ? year : 0,
-                       month != null ? month : 0,
-                       total != null ? total : BigDecimal.ZERO
-                   );
-                 })
-                 .toList();
+        .<MonthlyTrendProjection>map(
+            tuple -> {
+              Integer year = tuple.get(expense.date.year());
+              Integer month = tuple.get(expense.date.month());
+              BigDecimal total = tuple.get(expense.amount.sum());
+              return new MonthlyTrendProjectionImpl(
+                  year != null ? year : 0,
+                  month != null ? month : 0,
+                  total != null ? total : BigDecimal.ZERO);
+            })
+        .toList();
   }
 
   private <T> Map<Integer, BigDecimal> toAmountByDayMap(

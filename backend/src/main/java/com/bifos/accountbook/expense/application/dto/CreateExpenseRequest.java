@@ -28,9 +28,6 @@ public class CreateExpenseRequest {
 
   private LocalDateTime date;
 
-  /**
-   * 예산 계산에서 제외 여부
-   * true인 경우 월별 예산 합계 계산에서 제외됩니다.
-   */
+  /** 예산 계산에서 제외 여부 true인 경우 월별 예산 합계 계산에서 제외됩니다. */
   private Boolean excludeFromBudget;
 }

@@ -1,8 +1,9 @@
 package com.bifos.accountbook.user.domain.converter;
 
-import com.bifos.accountbook.user.domain.value.UserStatus;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import com.bifos.accountbook.user.domain.value.UserStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -115,4 +116,3 @@ class UserStatusConverterTest {
     assertThat(restored).isEqualTo(original);
   }
 }
-

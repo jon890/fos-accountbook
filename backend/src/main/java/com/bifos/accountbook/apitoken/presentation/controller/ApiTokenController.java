@@ -40,18 +40,17 @@ public class ApiTokenController {
   @ApiResponse(responseCode = "400", description = "이름이 올바르지 않거나 발급 한도를 넘음")
   @PostMapping
   public ResponseEntity<ApiSuccessResponse<CreatedApiTokenResponse>> issue(
-      @LoginUser LoginUserDto user,
-      @Valid @RequestBody CreateApiTokenRequest request) {
+      @LoginUser LoginUserDto user, @Valid @RequestBody CreateApiTokenRequest request) {
     CreatedApiTokenResponse response = apiTokenService.issue(user.userUuid(), request);
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
+    return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiSuccessResponse.of("연동 토큰을 발급했습니다", response));
   }
 
   @Operation(summary = "연동 토큰 목록 조회", description = "사용 중인 연동 토큰을 최근 발급 순으로 조회합니다.")
   @ApiResponse(responseCode = "200", description = "조회 성공")
   @GetMapping
-  public ResponseEntity<ApiSuccessResponse<List<ApiTokenResponse>>> list(@LoginUser LoginUserDto user) {
+  public ResponseEntity<ApiSuccessResponse<List<ApiTokenResponse>>> list(
+      @LoginUser LoginUserDto user) {
     List<ApiTokenResponse> response = apiTokenService.list(user.userUuid());
     return ResponseEntity.ok(ApiSuccessResponse.of("연동 토큰 목록을 조회했습니다", response));
   }

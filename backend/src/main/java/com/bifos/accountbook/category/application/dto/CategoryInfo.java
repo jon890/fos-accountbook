@@ -6,10 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 카테고리 기본 정보 DTO
- * 지출/수입 응답에서 nested 구조로 사용
- */
+/** 카테고리 기본 정보 DTO 지출/수입 응답에서 nested 구조로 사용 */
 @Getter
 @Builder
 @NoArgsConstructor
@@ -27,11 +24,10 @@ public class CategoryInfo {
     }
 
     return CategoryInfo.builder()
-                       .uuid(category.getUuid().getValue())
-                       .name(category.getName())
-                       .color(category.getColor())
-                       .icon(category.getIcon())
-                       .build();
+        .uuid(category.getUuid().getValue())
+        .name(category.getName())
+        .color(category.getColor())
+        .icon(category.getIcon())
+        .build();
   }
 }
-

@@ -6,6 +6,5 @@ public final class BusinessTime {
 
   public static final ZoneId ZONE = ZoneId.of("Asia/Seoul");
 
-  private BusinessTime() {
-  }
+  private BusinessTime() {}
 }

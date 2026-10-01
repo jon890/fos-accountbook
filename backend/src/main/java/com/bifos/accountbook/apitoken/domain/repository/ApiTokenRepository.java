@@ -14,15 +14,11 @@ public interface ApiTokenRepository {
 
   Optional<ApiToken> findActiveByUuidAndUserUuid(CustomUuid uuid, CustomUuid userUuid);
 
-  /**
-   * 최근 발급 순으로 돌려준다.
-   */
+  /** 최근 발급 순으로 돌려준다. */
   List<ApiToken> findAllActiveByUserUuid(CustomUuid userUuid);
 
   long countActiveByUserUuid(CustomUuid userUuid);
 
-  /**
-   * ACTIVE 인 토큰만 사용 시각을 갱신한다. 갱신한 행 수를 돌려준다.
-   */
+  /** ACTIVE 인 토큰만 사용 시각을 갱신한다. 갱신한 행 수를 돌려준다. */
   int updateLastUsedAt(Long id, LocalDateTime now);
 }

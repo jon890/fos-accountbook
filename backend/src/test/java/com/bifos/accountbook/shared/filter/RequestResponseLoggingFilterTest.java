@@ -27,10 +27,20 @@ class RequestResponseLoggingFilterTest {
     FilterLogCapture capture = new FilterLogCapture(Level.INFO);
 
     try {
-      runFilter(capture.filter(), "POST", "/api/v1/invitations/token/secret-invitation", "email=user@example.com",
-                requestBody, responseBody);
-      runFilter(capture.filter(), "POST", "/api/v1/auth/refresh", null,
-                "{\"refreshToken\":\"secret-refresh\"}", authResponseBody);
+      runFilter(
+          capture.filter(),
+          "POST",
+          "/api/v1/invitations/token/secret-invitation",
+          "email=user@example.com",
+          requestBody,
+          responseBody);
+      runFilter(
+          capture.filter(),
+          "POST",
+          "/api/v1/auth/refresh",
+          null,
+          "{\"refreshToken\":\"secret-refresh\"}",
+          authResponseBody);
 
       List<String> messages = capture.messages();
 
@@ -42,9 +52,12 @@ class RequestResponseLoggingFilterTest {
       assertThat(messages).noneMatch(message -> message.contains("short-token"));
       assertThat(messages).noneMatch(message -> message.contains("Auth:"));
       assertThat(messages).noneMatch(message -> message.contains("Session:"));
-      assertThat(messages).anyMatch(message -> message.contains("[RES] POST ")
-          && message.contains("/api/v1/invitations/token/***?email=***")
-          && message.contains("→ 200"));
+      assertThat(messages)
+          .anyMatch(
+              message ->
+                  message.contains("[RES] POST ")
+                      && message.contains("/api/v1/invitations/token/***?email=***")
+                      && message.contains("→ 200"));
     } finally {
       capture.close();
     }
@@ -62,16 +75,41 @@ class RequestResponseLoggingFilterTest {
     FilterLogCapture capture = new FilterLogCapture(Level.DEBUG);
 
     try {
-      runFilter(capture.filter(), "POST", "/api/v1/expenses", null,
-                generalRequestBody, generalResponseBody);
-      runFilter(capture.filter(), "POST", "/api/v1/auth/refresh", null,
-                refreshRequestBody, refreshResponseBody);
-      runFilter(capture.filter(), "POST", "/api/v1/users/me/api-tokens", null,
-                apiTokenRequestBody, apiTokenResponseBody);
-      runFilter(capture.filter(), "GET", "/api/v1/users/me/api-tokens", null,
-                "", apiTokenListResponseBody);
-      runFilter(capture.filter(), "POST", "/api/v1/invitations/token/secret-invitation", "email=user@example.com",
-                "", "");
+      runFilter(
+          capture.filter(),
+          "POST",
+          "/api/v1/expenses",
+          null,
+          generalRequestBody,
+          generalResponseBody);
+      runFilter(
+          capture.filter(),
+          "POST",
+          "/api/v1/auth/refresh",
+          null,
+          refreshRequestBody,
+          refreshResponseBody);
+      runFilter(
+          capture.filter(),
+          "POST",
+          "/api/v1/users/me/api-tokens",
+          null,
+          apiTokenRequestBody,
+          apiTokenResponseBody);
+      runFilter(
+          capture.filter(),
+          "GET",
+          "/api/v1/users/me/api-tokens",
+          null,
+          "",
+          apiTokenListResponseBody);
+      runFilter(
+          capture.filter(),
+          "POST",
+          "/api/v1/invitations/token/secret-invitation",
+          "email=user@example.com",
+          "",
+          "");
 
       List<String> messages = capture.messages();
 
@@ -87,15 +125,23 @@ class RequestResponseLoggingFilterTest {
       assertThat(messages).noneMatch(message -> message.contains("session-token-value-1234567890"));
       assertThat(messages).anyMatch(message -> message.contains("인증 경로라 생략"));
       assertThat(messages).anyMatch(message -> message.contains("[REQ] Auth: ***"));
-      assertThat(messages).anyMatch(message -> message.contains("[REQ] Session: session-to***1234567890"));
-      assertThat(messages).anyMatch(message -> message.contains("/api/v1/invitations/token/***?email=***"));
+      assertThat(messages)
+          .anyMatch(message -> message.contains("[REQ] Session: session-to***1234567890"));
+      assertThat(messages)
+          .anyMatch(message -> message.contains("/api/v1/invitations/token/***?email=***"));
     } finally {
       capture.close();
     }
   }
 
-  private void runFilter(RequestResponseLoggingFilter filter, String method, String uri, String query,
-                         String requestBody, String responseBody) throws Exception {
+  private void runFilter(
+      RequestResponseLoggingFilter filter,
+      String method,
+      String uri,
+      String query,
+      String requestBody,
+      String responseBody)
+      throws Exception {
     MockHttpServletRequest request = new MockHttpServletRequest(method, uri);
     request.setQueryString(query);
     request.setContent(requestBody.getBytes(StandardCharsets.UTF_8));
@@ -103,10 +149,11 @@ class RequestResponseLoggingFilterTest {
     request.setCookies(new Cookie("session-token", "session-token-value-1234567890"));
 
     MockHttpServletResponse response = new MockHttpServletResponse();
-    FilterChain chain = (servletRequest, servletResponse) -> {
-      servletRequest.getInputStream().readAllBytes();
-      servletResponse.getOutputStream().write(responseBody.getBytes(StandardCharsets.UTF_8));
-    };
+    FilterChain chain =
+        (servletRequest, servletResponse) -> {
+          servletRequest.getInputStream().readAllBytes();
+          servletResponse.getOutputStream().write(responseBody.getBytes(StandardCharsets.UTF_8));
+        };
 
     filter.doFilter(request, response, chain);
   }

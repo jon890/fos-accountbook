@@ -6,9 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 알림 목록 응답 DTO
- */
+/** 알림 목록 응답 DTO */
 @Getter
 @Builder
 @NoArgsConstructor
@@ -20,13 +18,11 @@ public class NotificationListResponse {
   private Integer totalCount;
 
   public static NotificationListResponse of(
-      List<NotificationResponse> notifications,
-      Long unreadCount) {
+      List<NotificationResponse> notifications, Long unreadCount) {
     return NotificationListResponse.builder()
-                                   .notifications(notifications)
-                                   .unreadCount(unreadCount)
-                                   .totalCount(notifications.size())
-                                   .build();
+        .notifications(notifications)
+        .unreadCount(unreadCount)
+        .totalCount(notifications.size())
+        .build();
   }
 }
-

@@ -1,10 +1,10 @@
 package com.bifos.accountbook.config;
 
-import com.bifos.accountbook.shared.filter.RequestResponseLoggingFilter;
 import com.bifos.accountbook.config.security.ApiTokenAuthenticationFilter;
 import com.bifos.accountbook.config.security.JwtAuthenticationFilter;
 import com.bifos.accountbook.shared.dto.ApiErrorResponse;
 import com.bifos.accountbook.shared.exception.ErrorCode;
+import com.bifos.accountbook.shared.filter.RequestResponseLoggingFilter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
@@ -49,32 +49,40 @@ public class SecurityConfig {
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
         // 세션 사용하지 않음 (JWT 사용)
-        .sessionManagement(session -> session
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-        .exceptionHandling(exception -> exception
-            .authenticationEntryPoint((request, response, authenticationException) ->
-                writeInvalidTokenResponse(request.getRequestURI(), response)))
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .exceptionHandling(
+            exception ->
+                exception.authenticationEntryPoint(
+                    (request, response, authenticationException) ->
+                        writeInvalidTokenResponse(request.getRequestURI(), response)))
 
         // 요청에 대한 인증/인가 설정
-        .authorizeHttpRequests(auth -> auth
-            // Public endpoints (Actuator)
-            .requestMatchers("/actuator/**").permitAll()
+        .authorizeHttpRequests(
+            auth ->
+                auth
+                    // Public endpoints (Actuator)
+                    .requestMatchers("/actuator/**")
+                    .permitAll()
 
-            // Public API endpoints
-            .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
-            .requestMatchers(HttpMethod.GET, "/api/v1/invitations/token/**").permitAll() // 초대장 조회
-            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                    // Public API endpoints
+                    .requestMatchers(HttpMethod.POST, "/api/v1/auth/**")
+                    .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/invitations/token/**")
+                    .permitAll() // 초대장 조회
+                    .requestMatchers(HttpMethod.OPTIONS, "/**")
+                    .permitAll()
 
-            // Swagger UI 및 OpenAPI 문서
-            .requestMatchers(
-                "/v3/api-docs/**",
-                "/swagger-ui/**",
-                "/swagger-ui.html",
-                "/swagger-resources/**",
-                "/webjars/**")
-            .permitAll()
-            .anyRequest().authenticated())
+                    // Swagger UI 및 OpenAPI 문서
+                    .requestMatchers(
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/swagger-resources/**",
+                        "/webjars/**")
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated())
         .addFilterBefore(requestResponseLoggingFilter, SecurityContextHolderFilter.class)
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(apiTokenAuthenticationFilter, JwtAuthenticationFilter.class);
@@ -82,12 +90,16 @@ public class SecurityConfig {
     return http.build();
   }
 
-  private void writeInvalidTokenResponse(String requestUri, jakarta.servlet.http.HttpServletResponse response)
-      throws IOException {
+  private void writeInvalidTokenResponse(
+      String requestUri, jakarta.servlet.http.HttpServletResponse response) throws IOException {
     response.setStatus(ErrorCode.INVALID_TOKEN.getStatusCode());
-    response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=" + StandardCharsets.UTF_8.name());
-    response.getWriter().write(
-        jsonMapper.writeValueAsString(ApiErrorResponse.of(ErrorCode.INVALID_TOKEN, requestUri)));
+    response.setContentType(
+        MediaType.APPLICATION_JSON_VALUE + ";charset=" + StandardCharsets.UTF_8.name());
+    response
+        .getWriter()
+        .write(
+            jsonMapper.writeValueAsString(
+                ApiErrorResponse.of(ErrorCode.INVALID_TOKEN, requestUri)));
   }
 
   @Bean

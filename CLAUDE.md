@@ -47,7 +47,7 @@ API 를 함께 바꾸는 변경은 PR 하나로 낸다.
 
 ```bash
 cd frontend && pnpm tsc --noEmit && pnpm lint && pnpm lint:md && pnpm test
-cd backend && ./gradlew checkstyleMain checkstyleTest test
+cd backend && ./gradlew qualityCheck test
 ```
 
 - 검증 명령을 `&` 로 병렬 실행한 뒤 인자 없는 `wait` 로 기다리지 않는다. 인자 없는 `wait` 는 앞 명령이 실패해도 0 으로 끝난다.
