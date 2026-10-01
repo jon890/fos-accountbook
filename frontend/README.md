@@ -44,7 +44,7 @@ Page (app/) → Action (actions/) → Service (services/) → lib/server/api (ky
 
 ## 환경 변수
 
-`.env.local` 에 둔다. 값의 형식은 `src/lib/env/schemas/server.env.ts` 가 시작할 때 검사한다.
+`.env.local` 에 둔다. 값의 형식은 `src/lib/env/schemas/server.env.schema.ts` 가 시작할 때 검사한다.
 
 ```bash
 AUTH_URL=http://localhost:3000
