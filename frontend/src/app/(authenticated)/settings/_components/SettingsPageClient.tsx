@@ -5,6 +5,7 @@ import { SettingsCard } from "@/components/layout/SettingsCard";
 import { ApiTokenSettingsCard } from "@/components/settings/ApiTokenSettingsCard";
 import { BudgetEditDialog } from "@/components/settings/BudgetEditDialog";
 import { SettingsHero } from "@/components/settings/SettingsHero";
+import { ThemeSettingsCard } from "@/components/settings/ThemeSettingsCard";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -219,6 +220,8 @@ export function SettingsPageClient({
             ))}
           </div>
         </SettingsCard>
+
+        <ThemeSettingsCard />
 
         {/* 외부 연동 */}
         <SettingsCard
