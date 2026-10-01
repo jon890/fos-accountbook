@@ -70,6 +70,10 @@ function CalendarMonthContent({ data, initialDate, today, familyUuid }: Calendar
   }
 
   function moveMonth(direction: -1 | 1) {
+    if (isNavigationPending) {
+      return;
+    }
+
     const nextMonth = new Date(Date.UTC(data.year, data.month - 1 + direction, 1));
     const year = nextMonth.getUTCFullYear();
     if (year < 2000 || year > 2100) {
@@ -81,7 +85,12 @@ function CalendarMonthContent({ data, initialDate, today, familyUuid }: Calendar
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <MonthHeader year={data.year} month={data.month} onMove={moveMonth} />
+      <MonthHeader
+        year={data.year}
+        month={data.month}
+        onMove={moveMonth}
+        isNavigationPending={isNavigationPending}
+      />
       <MemberTotals daily={data.daily} colors={colors} />
       <div
         aria-busy={isNavigationPending}

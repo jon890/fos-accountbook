@@ -32,6 +32,7 @@
 
 - 영역 표시는 `useAppRouter()` 가 돌려주는 `isPending` 이 아니라 전역 대기 상태를 쓴다. 탭과 목록이 다른 컴포넌트라 전환을 일으킨 컴포넌트와 흐려질 영역이 다르다. `frontend/src/lib/client/navigation.tsx` 에 전역 대기 여부를 읽는 `useNavigationPending()` 을 더한다.
 - 흐림은 `opacity-60 transition-opacity` 와 `pointer-events-none` 을 함께 준다. 대기 중 두 번 누르는 것을 막는다.
+- 내역의 탭, 필터, 검색과 달력의 월 이동도 전역 대기 동안 비활성화한다. 포탈로 그려진 필터의 이동 handler도 pending이면 반환한다. 단위 테스트와 느린 응답 브라우저 테스트에서 두 번째 입력이 이동을 추가하지 않는지 확인한다.
 - 액션 뒤 이동 버튼은 액션 시작부터 `isPending` 이 끝날 때까지 비활성이다. `finally` 에서 끄던 상태는 실패할 때만 끈다.
 - 가족 전환 시트는 누르면 바로 열고, 목록을 받는 동안 행 스켈레톤(`Skel`) 세 줄을 보인다. 실패하면 시트를 닫고 지금처럼 토스트를 띄운다.
 
@@ -46,6 +47,8 @@
 `CalendarHome.tsx` 는 달력 격자와 날짜 목록을, 분석은 `frontend/src/app/(authenticated)/analytics/_components/AnalyticsClient.tsx` 의 본문을 감싼다.
 
 ### 3. 가족 선택, 가족 전환, 가족 만들기, 초대 수락 버튼의 대기 유지
+
+데스크톱 `FamilySelectorDropdown`도 선택 액션부터 session 갱신과 refresh 완료까지 비활성과 진행 표시를 유지한다. 액션 실패와 예외 시 기존 선택을 복구하고 실패 토스트를 표시한다. 초기 목록 조회 흐름은 유지한다.
 
 가족 선택은 `FamilySelectorPage` 가 action, session 갱신, 이동을 한 번씩 실행하고 대기 상태를 소유한다. `FamilySelector` 의 중복 action/session 호출을 제거하고 콜백과 pending prop 으로 선택 카드와 생성 버튼을 비활성화하며 진행 표시를 그린다. 자동 선택도 같은 콜백을 사용한다. 실패 시 대기를 해제하고 toast.error("가족 선택에 실패했습니다.") 를 표시한다.
 
@@ -77,10 +80,17 @@ pnpm test src/__tests__/components/layout/Header.test.tsx src/__tests__/componen
 | `frontend/src/lib/client/navigation.tsx` | 수정 |
 | `frontend/src/app/(authenticated)/transactions/_components/TransactionsPageClient.tsx` | 수정 |
 | `frontend/src/components/calendar/CalendarHome.tsx` | 수정 |
+| `frontend/src/components/calendar/MonthHeader.tsx` | 수정 |
+| `frontend/src/app/(authenticated)/transactions/_components/TransactionsTabs.tsx` | 수정 |
+| `frontend/src/app/(authenticated)/transactions/_components/FilterChips.tsx` | 수정 |
+| `frontend/src/app/(authenticated)/transactions/_components/SearchBar.tsx` | 수정 |
+| `frontend/src/app/(authenticated)/transactions/_components/AmountRangeFilter.tsx` | 수정 |
 | `frontend/src/app/(authenticated)/analytics/_components/AnalyticsClient.tsx` | 수정 |
 | `frontend/src/components/families/FamilySelectorPage.tsx` | 수정 |
 | `frontend/src/components/families/FamilySelector.tsx` | 수정 |
 | `frontend/src/components/families/FamilySelectorList.tsx` | 수정 |
+| `frontend/src/components/families/FamilySelectorDropdown.tsx` | 수정 |
+| `frontend/src/__tests__/components/families/FamilySelectorDropdown.test.tsx` | 신규 |
 | `frontend/src/app/(authenticated)/families/create/page.tsx` | 수정 |
 | `frontend/src/app/(authenticated)/invite/[token]/_components/InvitePageClient.tsx` | 수정 |
 | `frontend/src/components/layout/Header.tsx` | 수정 |
@@ -91,4 +101,5 @@ pnpm test src/__tests__/components/layout/Header.test.tsx src/__tests__/componen
 | `frontend/src/__tests__/components/invite/InvitePageClient.test.tsx` | 수정 |
 | `frontend/src/__tests__/components/calendar/CalendarHome.test.tsx` | 수정 |
 | `frontend/src/__tests__/components/transactions/TransactionsPageClient.test.tsx` | 신규 |
+| `frontend/src/__tests__/components/transactions/NavigationPendingTriggers.test.tsx` | 신규 |
 | `frontend/src/__tests__/components/analytics/AnalyticsClient.test.tsx` | 신규 |

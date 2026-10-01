@@ -52,6 +52,19 @@ describe("달력 홈", () => {
     const pendingRegion = container.querySelector('[aria-busy="true"]');
     expect(pendingRegion).toHaveClass("opacity-60", "pointer-events-none");
   });
+
+  it("월 전환 중에는 이전 달과 다음 달 버튼을 비활성화하고 이동을 추가로 호출하지 않는다", async () => {
+    mockNavigationPending.mockReturnValue(true);
+    render(<CalendarHome {...props} />);
+
+    const previousMonthButton = screen.getByRole("button", { name: "이전 달" });
+    const nextMonthButton = screen.getByRole("button", { name: "다음 달" });
+    expect(previousMonthButton).toBeDisabled();
+    expect(nextMonthButton).toBeDisabled();
+
+    await userEvent.setup().click(nextMonthButton);
+    expect(mockPush).not.toHaveBeenCalled();
+  });
   it.each(["/calendar?month=2026-08", "/calendar?month=2026-08&date=invalid"])("초기 URL %s의 날짜를 서버가 선택한 날짜로 맞춘다", (url) => {
     window.history.replaceState({}, "", url);
     render(<CalendarHome {...props} data={calendarMonth({ month: 8 })} initialDate="2026-08-01" />);

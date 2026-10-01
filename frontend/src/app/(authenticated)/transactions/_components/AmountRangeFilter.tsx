@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useAppRouter } from "@/lib/client/navigation";
+import { useAppRouter, useNavigationPending } from "@/lib/client/navigation";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/client/utils";
 import {
@@ -34,6 +34,7 @@ const chipActive = "border-brand-300 bg-brand-50 text-brand-700";
 
 export function AmountRangeFilter() {
   const router = useAppRouter();
+  const isNavigationPending = useNavigationPending();
   const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
 
@@ -49,6 +50,10 @@ export function AmountRangeFilter() {
   const setMaxInput = setMaxDraft;
 
   const apply = () => {
+    if (isNavigationPending) {
+      return;
+    }
+
     const params = new URLSearchParams(searchParams.toString());
     const min = Number(minInput);
     const max = Number(maxInput);
@@ -71,6 +76,10 @@ export function AmountRangeFilter() {
   };
 
   const reset = () => {
+    if (isNavigationPending) {
+      return;
+    }
+
     const params = new URLSearchParams(searchParams.toString());
     params.delete("amountMin");
     params.delete("amountMax");
@@ -87,6 +96,7 @@ export function AmountRangeFilter() {
         <button
           aria-label="금액 범위 필터"
           aria-expanded={open}
+          disabled={isNavigationPending}
           className={cn(chipBase, hasValue ? chipActive : chipDefault)}
         >
           {buildLabel(currentMin, currentMax)}
@@ -105,6 +115,7 @@ export function AmountRangeFilter() {
             className="h-8 text-sm flex-1 min-w-0"
             aria-label="최솟값 금액"
             min={0}
+            disabled={isNavigationPending}
           />
           <span className="text-fg-muted text-xs shrink-0" aria-hidden="true">
             ~
@@ -118,17 +129,20 @@ export function AmountRangeFilter() {
             className="h-8 text-sm flex-1 min-w-0"
             aria-label="최댓값 금액"
             min={0}
+            disabled={isNavigationPending}
           />
         </div>
         <div className="flex gap-2">
           <button
             onClick={reset}
+            disabled={isNavigationPending}
             className="flex-1 py-1.5 text-xs rounded-md border border-border text-fg-muted hover:text-fg transition-colors"
           >
             초기화
           </button>
           <button
             onClick={apply}
+            disabled={isNavigationPending}
             className="flex-1 py-1.5 text-xs rounded-md bg-fg text-bg font-semibold hover:opacity-90 transition-opacity"
           >
             적용

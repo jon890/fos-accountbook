@@ -39,13 +39,13 @@ export function TransactionsPageClient({
 
   return (
     <div className="space-y-4">
-      <div>
+      <fieldset disabled={isNavigationPending} className="min-w-0">
         <TransactionsTabs activeTab={activeTab} />
-      </div>
+      </fieldset>
 
       {/* 필터 + 검색 (반복지출 탭에서는 숨김) */}
       {activeTab !== "recurring" && (
-        <div className="flex items-start gap-3">
+        <fieldset disabled={isNavigationPending} className="flex min-w-0 items-start gap-3">
           <div className="flex-1 min-w-0">
             <FilterChips
               categories={categories}
@@ -57,7 +57,7 @@ export function TransactionsPageClient({
           <div className="shrink-0 pt-0.5">
             <SearchBar />
           </div>
-        </div>
+        </fieldset>
       )}
 
       {/* 내역 목록 */}

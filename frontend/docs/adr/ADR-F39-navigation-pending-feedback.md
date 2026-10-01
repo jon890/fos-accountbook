@@ -16,6 +16,7 @@
   - 화면마다 `useTransition` 을 따로 쓰기: 20개 파일이 각자 대기 상태를 만들고, 새 화면에서 빠뜨려도 막을 수 없다.
   - Suspense 경계에 주소 값을 key 로 주기: 매번 스켈레톤으로 바뀌어 탭을 누를 때마다 화면이 깜빡이고, 이전 내용을 보며 기다릴 수 없다.
 - **결과**:
-  - 얻는 것: 주소를 바꾸는 모든 클라이언트 전환에 같은 표시가 붙는다. 새 코드가 `useRouter` 를 쓰면 lint 가 실패한다.
+  - 얻는 것: `push`, `replace`, `refresh` 로 시작한 클라이언트 전환에 같은 표시가 붙는다. 새 코드가 `useRouter` 를 쓰면 lint 가 실패한다.
   - 감당할 것: `Link` 이동은 이 훅을 거치지 않는다. 링크는 `loading.tsx` 가 바로 뜨므로 따로 표시하지 않는다.
+  - `back` 은 history 이동의 완료 시점을 알 수 없어 대기 표시에서 제외한다.
 - **적용 범위**: `src/lib/client/navigation.tsx`, `src/components/layout/NavigationProgressBar.tsx`, `src/app/providers.tsx`, `eslint.config.mjs`, `useRouter` 를 쓰던 클라이언트 컴포넌트.

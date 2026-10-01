@@ -27,6 +27,8 @@ test("수입 탭 전환 중 진행 막대와 목록 대기 상태를 표시한�
 
     await expect(page.getByRole("progressbar", { name: "화면을 불러오는 중" })).toBeVisible();
     await expect(page.locator('[aria-busy="true"]')).toBeVisible();
+    await expect(page.getByRole("tab", { name: "지출", exact: true })).toBeDisabled();
+    await expect(page.getByRole("tab", { name: "수입", exact: true })).toBeDisabled();
 
     await expect(page).toHaveURL(/\/transactions\?.*tab=incomes/);
     await expect(page.getByRole("tab", { name: "수입", selected: true })).toBeVisible();
@@ -50,6 +52,8 @@ test("다음 달 전환 중 진행 막대와 달력 대기 상태를 표시한�
 
     await expect(page.getByRole("progressbar", { name: "화면을 불러오는 중" })).toBeVisible();
     await expect(page.locator('[aria-busy="true"]')).toBeVisible();
+    await expect(page.getByRole("button", { name: "이전 달" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "다음 달" })).toBeDisabled();
 
     await expect(page).toHaveURL(/\/calendar\?month=2026-11/);
     await expect(page.getByRole("heading", { name: /2026년 11월/ })).toBeVisible();

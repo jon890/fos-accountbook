@@ -9,7 +9,7 @@ import {
 import { useTimeZone } from "@/lib/client/timezone-context";
 import type { CategoryResponse } from "@/types/category";
 import { useSearchParams } from "next/navigation";
-import { useAppRouter } from "@/lib/client/navigation";
+import { useAppRouter, useNavigationPending } from "@/lib/client/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AmountRangeFilter } from "@/app/(authenticated)/transactions/_components/AmountRangeFilter";
@@ -43,6 +43,7 @@ export function FilterChips({
   defaultEndDate,
 }: FilterChipsProps) {
   const router = useAppRouter();
+  const isNavigationPending = useNavigationPending();
   const searchParams = useSearchParams();
   const { timezone } = useTimeZone();
 
@@ -60,6 +61,10 @@ export function FilterChips({
   const selectedCategoryObj = categories.find((c) => c.uuid === selectedCategory);
 
   const navigate = (overrides: Record<string, string | null>) => {
+    if (isNavigationPending) {
+      return;
+    }
+
     const params = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(overrides)) {
       if (value === null) {
@@ -133,6 +138,7 @@ export function FilterChips({
         {/* 기간 chip */}
         <button
           onClick={() => setShowDatePanel((v) => !v)}
+          disabled={isNavigationPending}
           aria-expanded={showDatePanel}
           aria-controls="filter-date-panel"
           aria-label="기간 필터 선택"
@@ -146,6 +152,7 @@ export function FilterChips({
         {/* 기간 빠른 선택 chips */}
         <button
           onClick={() => applyQuickRange("thisMonth")}
+          disabled={isNavigationPending}
           aria-pressed={activeRange === "thisMonth"}
           aria-label="이번달"
           className={cn(chipBase, activeRange === "thisMonth" ? chipActive : chipDefault)}
@@ -154,6 +161,7 @@ export function FilterChips({
         </button>
         <button
           onClick={() => applyQuickRange("3months")}
+          disabled={isNavigationPending}
           aria-pressed={activeRange === "3months"}
           aria-label="3개월"
           className={cn(chipBase, activeRange === "3months" ? chipActive : chipDefault)}
@@ -162,6 +170,7 @@ export function FilterChips({
         </button>
         <button
           onClick={() => applyQuickRange("1year")}
+          disabled={isNavigationPending}
           aria-pressed={activeRange === "1year"}
           aria-label="1년"
           className={cn(chipBase, activeRange === "1year" ? chipActive : chipDefault)}
@@ -176,6 +185,7 @@ export function FilterChips({
         {hasActiveCategory ? (
           <button
             onClick={clearCategory}
+            disabled={isNavigationPending}
             aria-label={`${selectedCategoryObj?.name} 카테고리 필터 해제`}
             className={cn(chipBase, chipActive)}
           >
@@ -185,6 +195,7 @@ export function FilterChips({
         ) : (
           <Select value={selectedCategory} onValueChange={handleCategoryChange}>
             <SelectTrigger
+              disabled={isNavigationPending}
               className={cn(
                 "h-auto text-xs shadow-none shrink-0 min-w-[120px]",
                 "border-border bg-bg-elev text-fg-muted",
@@ -220,6 +231,7 @@ export function FilterChips({
         >
           <Input
             type="date"
+            disabled={isNavigationPending}
             value={customStart}
             onChange={(e) => setCustomStart(e.target.value)}
             aria-label="시작일"
@@ -228,6 +240,7 @@ export function FilterChips({
           <span className="text-fg-muted text-xs shrink-0" aria-hidden="true">-</span>
           <Input
             type="date"
+            disabled={isNavigationPending}
             value={customEnd}
             onChange={(e) => setCustomEnd(e.target.value)}
             aria-label="종료일"
@@ -235,6 +248,7 @@ export function FilterChips({
           />
           <button
             onClick={applyCustomDate}
+            disabled={isNavigationPending}
             aria-label="날짜 범위 적용"
             className="px-3 py-1.5 rounded-lg bg-fg text-bg text-xs font-semibold hover:opacity-90 transition-opacity shrink-0"
           >
