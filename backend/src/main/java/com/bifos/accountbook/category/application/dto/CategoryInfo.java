@@ -1,6 +1,7 @@
 package com.bifos.accountbook.category.application.dto;
 
 import com.bifos.accountbook.category.domain.entity.Category;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,6 +18,7 @@ public class CategoryInfo {
   private String name;
   private String color;
   private String icon;
+  private CategoryType type;
 
   public static CategoryInfo from(Category category) {
     if (category == null) {
@@ -28,6 +30,7 @@ public class CategoryInfo {
         .name(category.getName())
         .color(category.getColor())
         .icon(category.getIcon())
+        .type(category.getType())
         .build();
   }
 }

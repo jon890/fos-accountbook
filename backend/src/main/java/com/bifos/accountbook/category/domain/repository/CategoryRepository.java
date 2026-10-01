@@ -1,6 +1,7 @@
 package com.bifos.accountbook.category.domain.repository;
 
 import com.bifos.accountbook.category.domain.entity.Category;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.shared.value.CustomUuid;
 import java.util.List;
 import java.util.Optional;
@@ -21,10 +22,11 @@ public interface CategoryRepository {
   List<Category> findAllByFamilyUuid(CustomUuid familyUuid);
 
   /** 가족 UUID와 이름으로 카테고리 조회 */
-  Optional<Category> findByFamilyUuidAndName(CustomUuid familyUuid, String name);
+  Optional<Category> findByFamilyUuidAndTypeAndName(
+      CustomUuid familyUuid, CategoryType type, String name);
 
   /** 가족의 기본 카테고리 조회 ('미분류') */
-  Optional<Category> getDefaultCategoryByFamily(CustomUuid familyUuid);
+  Optional<Category> getDefaultCategoryByFamily(CustomUuid familyUuid, CategoryType type);
 
   /** 가족 UUID로 카테고리 개수 조회 (삭제되지 않은) */
   int countByFamilyUuid(CustomUuid familyUuid);

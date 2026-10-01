@@ -3,9 +3,11 @@ package com.bifos.accountbook.category.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.bifos.accountbook.category.application.dto.CreateCategoryRequest;
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.category.domain.repository.CategoryRepository;
 import com.bifos.accountbook.category.domain.value.CategoryStatus;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.expense.domain.entity.Expense;
 import com.bifos.accountbook.expense.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.family.domain.entity.Family;
@@ -29,7 +31,7 @@ class CategoryServiceIntegrationTest extends TestFixturesSupport {
   @Autowired private ExpenseRepository expenseRepository;
 
   @Test
-  @DisplayName("가족 생성 시 기본 카테고리가 생성되며, 그 중 하나는 isDefault=true여야 한다")
+  @DisplayName("가족 생성 시 종류별 기본 카테고리가 하나씩 생성된다")
   void createDefaultCategoriesForFamily() {
     // given
     Family family = fixtures.families.family().build();
@@ -41,11 +43,19 @@ class CategoryServiceIntegrationTest extends TestFixturesSupport {
     List<Category> categories = categoryRepository.findAllByFamilyUuid(family.getUuid());
     assertThat(categories).hasSizeGreaterThan(0);
 
-    long defaultCount = categories.stream().filter(Category::isDefault).count();
-    assertThat(defaultCount).isEqualTo(1);
-
-    Category defaultCategory = categories.stream().filter(Category::isDefault).findFirst().get();
-    assertThat(defaultCategory.getName()).isEqualTo("미분류");
+    assertThat(categories.stream().filter(Category::isDefault)).hasSize(2);
+    assertThat(
+            categories.stream()
+                .filter(category -> category.getType() == CategoryType.EXPENSE)
+                .filter(Category::isDefault)
+                .map(Category::getName))
+        .containsExactly("미분류");
+    assertThat(
+            categories.stream()
+                .filter(category -> category.getType() == CategoryType.INCOME)
+                .filter(Category::isDefault)
+                .map(Category::getName))
+        .containsExactly("기타 수입");
   }
 
   @Test
@@ -57,7 +67,9 @@ class CategoryServiceIntegrationTest extends TestFixturesSupport {
     categoryService.createDefaultCategoriesForFamily(family.getUuid());
 
     Category defaultCategory =
-        categoryRepository.getDefaultCategoryByFamily(family.getUuid()).orElseThrow();
+        categoryRepository
+            .getDefaultCategoryByFamily(family.getUuid(), CategoryType.EXPENSE)
+            .orElseThrow();
 
     // when & then
     assertThatThrownBy(
@@ -102,8 +114,47 @@ class CategoryServiceIntegrationTest extends TestFixturesSupport {
     // 2. 지출의 카테고리가 기본 카테고리로 변경되었는지 확인
     Expense updatedExpense = expenseRepository.findByUuid(expense.getUuid()).orElseThrow();
     Category defaultCategory =
-        categoryRepository.getDefaultCategoryByFamily(family.getUuid()).orElseThrow();
+        categoryRepository
+            .getDefaultCategoryByFamily(family.getUuid(), CategoryType.EXPENSE)
+            .orElseThrow();
 
     assertThat(updatedExpense.getCategoryUuid()).isEqualTo(defaultCategory.getUuid());
+  }
+
+  @Test
+  @DisplayName("같은 가족에서는 종류가 다르면 같은 이름 카테고리를 만들 수 있다")
+  void createCategory_allowsSameNameForDifferentTypes() {
+    User user = fixtures.users.user().buildAndSetSecurityContext();
+    Family family = fixtures.families.family().owner(user).build();
+
+    categoryService.createCategory(
+        user.getUuid(),
+        family.getUuid(),
+        new CreateCategoryRequest("공통", null, null, null, CategoryType.EXPENSE));
+
+    categoryService.createCategory(
+        user.getUuid(),
+        family.getUuid(),
+        new CreateCategoryRequest("공통", null, null, null, CategoryType.INCOME));
+
+    assertThat(categoryRepository.findAllByFamilyUuid(family.getUuid()))
+        .extracting(Category::getType)
+        .contains(CategoryType.EXPENSE, CategoryType.INCOME);
+  }
+
+  @Test
+  @DisplayName("같은 가족과 종류에서 카테고리 이름이 중복되면 거부한다")
+  void createCategory_rejectsSameNameForSameType() {
+    User user = fixtures.users.user().buildAndSetSecurityContext();
+    Family family = fixtures.families.family().owner(user).build();
+    CreateCategoryRequest request =
+        new CreateCategoryRequest("중복", null, null, null, CategoryType.INCOME);
+    categoryService.createCategory(user.getUuid(), family.getUuid(), request);
+
+    assertThatThrownBy(
+            () -> categoryService.createCategory(user.getUuid(), family.getUuid(), request))
+        .isInstanceOf(BusinessException.class)
+        .extracting("errorCode")
+        .isEqualTo(ErrorCode.CATEGORY_ALREADY_EXISTS);
   }
 }

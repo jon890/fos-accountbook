@@ -2,6 +2,7 @@ package com.bifos.accountbook.category.infra.repository.impl;
 
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.category.domain.repository.CategoryRepository;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.category.infra.repository.jpa.CategoryJpaRepository;
 import com.bifos.accountbook.config.CacheConfig;
 import com.bifos.accountbook.shared.value.CustomUuid;
@@ -52,13 +53,14 @@ public class CategoryRepositoryImpl implements CategoryRepository {
   }
 
   @Override
-  public Optional<Category> findByFamilyUuidAndName(CustomUuid familyUuid, String name) {
-    return jpaRepository.findByFamilyUuidAndName(familyUuid, name);
+  public Optional<Category> findByFamilyUuidAndTypeAndName(
+      CustomUuid familyUuid, CategoryType type, String name) {
+    return jpaRepository.findByFamilyUuidAndTypeAndName(familyUuid, type, name);
   }
 
   @Override
-  public Optional<Category> getDefaultCategoryByFamily(CustomUuid familyUuid) {
-    return jpaRepository.findByFamilyUuidAndIsDefaultTrue(familyUuid);
+  public Optional<Category> getDefaultCategoryByFamily(CustomUuid familyUuid, CategoryType type) {
+    return jpaRepository.findByFamilyUuidAndTypeAndIsDefaultTrue(familyUuid, type);
   }
 
   @Override

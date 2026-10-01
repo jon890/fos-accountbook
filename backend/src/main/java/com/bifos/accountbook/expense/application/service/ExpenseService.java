@@ -3,6 +3,7 @@ package com.bifos.accountbook.expense.application.service;
 import com.bifos.accountbook.category.application.service.CategoryService;
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.category.domain.repository.CategoryRepository;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.expense.application.dto.CreateExpenseRequest;
 import com.bifos.accountbook.expense.application.dto.ExpenseResponse;
 import com.bifos.accountbook.expense.application.dto.ExpenseSearchRequest;
@@ -54,7 +55,7 @@ public class ExpenseService {
     // 기본 카테고리(미분류) 조회 또는 생성
     Category defaultCategory =
         categoryRepository
-            .getDefaultCategoryByFamily(familyUuid)
+            .getDefaultCategoryByFamily(familyUuid, CategoryType.EXPENSE)
             .orElseGet(
                 () -> {
                   log.warn(
@@ -67,6 +68,7 @@ public class ExpenseService {
                           .color("#9ca3af")
                           .icon("📂")
                           .isDefault(true)
+                          .type(CategoryType.EXPENSE)
                           .build();
                   return categoryRepository.save(newDefault);
                 });

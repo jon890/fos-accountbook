@@ -5,6 +5,7 @@ import com.bifos.accountbook.category.application.dto.CreateCategoryRequest;
 import com.bifos.accountbook.category.application.dto.UpdateCategoryRequest;
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.category.domain.repository.CategoryRepository;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.config.CacheConfig;
 import com.bifos.accountbook.expense.application.service.ExpenseService;
 import com.bifos.accountbook.recurring.application.service.RecurringExpenseService;
@@ -52,7 +53,7 @@ public class CategoryService {
 
     // 중복 확인
     categoryRepository
-        .findByFamilyUuidAndName(familyUuid, request.getName())
+        .findByFamilyUuidAndTypeAndName(familyUuid, requestType(request), request.getName())
         .ifPresent(
             c -> {
               throw new BusinessException(ErrorCode.CATEGORY_ALREADY_EXISTS)
@@ -69,6 +70,7 @@ public class CategoryService {
             .icon(request.getIcon())
             .excludeFromBudget(
                 request.getExcludeFromBudget() != null && request.getExcludeFromBudget())
+            .type(requestType(request))
             .build();
 
     category = categoryRepository.save(category);
@@ -213,7 +215,8 @@ public class CategoryService {
     // 이름 변경 시 중복 확인
     if (request.getName() != null && !request.getName().equals(category.getName())) {
       categoryRepository
-          .findByFamilyUuidAndName(category.getFamilyUuid(), request.getName())
+          .findByFamilyUuidAndTypeAndName(
+              category.getFamilyUuid(), category.getType(), request.getName())
           .ifPresent(
               c -> {
                 throw new BusinessException(ErrorCode.CATEGORY_ALREADY_EXISTS)
@@ -304,17 +307,21 @@ public class CategoryService {
   public void createDefaultCategoriesForFamily(CustomUuid familyUuid) {
     List<DefaultCategory> defaultCategories =
         Arrays.asList(
-            new DefaultCategory("미분류", "#9ca3af", "📂", true),
-            new DefaultCategory("식비", "#ef4444", "🍚", false),
-            new DefaultCategory("카페", "#f59e0b", "☕", false),
-            new DefaultCategory("간식", "#ec4899", "🍰", false),
-            new DefaultCategory("생활비", "#10b981", "🏠", false),
-            new DefaultCategory("교통비", "#3b82f6", "🚗", false),
-            new DefaultCategory("쇼핑", "#8b5cf6", "🛍️", false),
-            new DefaultCategory("의료", "#06b6d4", "💊", false),
-            new DefaultCategory("문화생활", "#f43f5e", "🎬", false),
-            new DefaultCategory("교육", "#14b8a6", "📚", false),
-            new DefaultCategory("기타", "#6b7280", "📦", false));
+            new DefaultCategory("미분류", "#9ca3af", "📂", true, CategoryType.EXPENSE),
+            new DefaultCategory("식비", "#ef4444", "🍚", false, CategoryType.EXPENSE),
+            new DefaultCategory("카페", "#f59e0b", "☕", false, CategoryType.EXPENSE),
+            new DefaultCategory("간식", "#ec4899", "🍰", false, CategoryType.EXPENSE),
+            new DefaultCategory("생활비", "#10b981", "🏠", false, CategoryType.EXPENSE),
+            new DefaultCategory("교통비", "#3b82f6", "🚗", false, CategoryType.EXPENSE),
+            new DefaultCategory("쇼핑", "#8b5cf6", "🛍️", false, CategoryType.EXPENSE),
+            new DefaultCategory("의료", "#06b6d4", "💊", false, CategoryType.EXPENSE),
+            new DefaultCategory("문화생활", "#f43f5e", "🎬", false, CategoryType.EXPENSE),
+            new DefaultCategory("교육", "#14b8a6", "📚", false, CategoryType.EXPENSE),
+            new DefaultCategory("기타", "#6b7280", "📦", false, CategoryType.EXPENSE),
+            new DefaultCategory("급여", "#2563eb", "💰", false, CategoryType.INCOME),
+            new DefaultCategory("부수입", "#7c3aed", "💡", false, CategoryType.INCOME),
+            new DefaultCategory("용돈", "#db2777", "🎁", false, CategoryType.INCOME),
+            new DefaultCategory("기타 수입", "#16a34a", "💵", true, CategoryType.INCOME));
 
     for (DefaultCategory defaultCategory : defaultCategories) {
       Category category =
@@ -324,6 +331,7 @@ public class CategoryService {
               .color(defaultCategory.color)
               .icon(defaultCategory.icon)
               .isDefault(defaultCategory.isDefault)
+              .type(defaultCategory.type)
               .build();
 
       categoryRepository.save(category);
@@ -352,12 +360,18 @@ public class CategoryService {
     String color;
     String icon;
     boolean isDefault;
+    CategoryType type;
 
-    DefaultCategory(String name, String color, String icon, boolean isDefault) {
+    DefaultCategory(String name, String color, String icon, boolean isDefault, CategoryType type) {
       this.name = name;
       this.color = color;
       this.icon = icon;
       this.isDefault = isDefault;
+      this.type = type;
     }
+  }
+
+  private CategoryType requestType(CreateCategoryRequest request) {
+    return request.getType() == null ? CategoryType.EXPENSE : request.getType();
   }
 }
