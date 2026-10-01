@@ -136,6 +136,7 @@ interface Expense {
   amount: number; // 백엔드 BigDecimal → 문자열 → Number 변환
   description: string | null;
   date: string; // ISO 8601
+  excludeFromBudget: boolean; // 이 지출만 예산에서 뺀다. 카테고리가 제외면 이 값과 관계없이 제외된다
   createdAt: string;
   updatedAt: string;
 }
@@ -145,6 +146,7 @@ interface CreateExpenseRequest {
   amount: number;
   description?: string;
   date: string; // ISO 8601 (YYYY-MM-DDTHH:mm:ss)
+  excludeFromBudget?: boolean;
 }
 
 interface GetExpensesParams {
