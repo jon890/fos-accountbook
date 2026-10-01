@@ -13,6 +13,7 @@ import com.bifos.accountbook.apitoken.application.service.ApiTokenService;
 import com.bifos.accountbook.apitoken.domain.entity.ApiToken;
 import com.bifos.accountbook.apitoken.infra.repository.jpa.ApiTokenJpaRepository;
 import com.bifos.accountbook.category.domain.entity.Category;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.expense.application.dto.CreateExpenseRequest;
 import com.bifos.accountbook.expense.domain.entity.Expense;
 import com.bifos.accountbook.expense.domain.repository.ExpenseRepository;
@@ -75,6 +76,8 @@ class BusinessClockIntegrationTest extends AbstractControllerTest {
     User user = fixtures.getDefaultUser();
     Family family = fixtures.getDefaultFamily();
     Category category = fixtures.getDefaultCategory();
+    final Category incomeCategory =
+        fixtures.categories.category(family).name("시계 수입").type(CategoryType.INCOME).build();
     String familyUuid = family.getUuid().getValue();
     String userUuid = user.getUuid().getValue();
 
@@ -186,7 +189,7 @@ class BusinessClockIntegrationTest extends AbstractControllerTest {
                     .content(
                         objectMapper.writeValueAsString(
                             CreateIncomeRequest.builder()
-                                .categoryUuid(category.getUuid().getValue())
+                                .categoryUuid(incomeCategory.getUuid().getValue())
                                 .amount(BigDecimal.valueOf(300))
                                 .description("기본 날짜 수입")
                                 .build())))
@@ -208,7 +211,7 @@ class BusinessClockIntegrationTest extends AbstractControllerTest {
                 .content(
                     objectMapper.writeValueAsString(
                         CreateIncomeRequest.builder()
-                            .categoryUuid(category.getUuid().getValue())
+                            .categoryUuid(incomeCategory.getUuid().getValue())
                             .amount(BigDecimal.valueOf(500))
                             .description("명시 날짜 수입")
                             .date(LocalDateTime.of(2026, 3, 15, 10, 0))

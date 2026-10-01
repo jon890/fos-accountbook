@@ -2,6 +2,9 @@ package com.bifos.accountbook.income.application.service;
 
 import com.bifos.accountbook.category.application.dto.CategoryResponse;
 import com.bifos.accountbook.category.application.service.CategoryService;
+import com.bifos.accountbook.category.domain.entity.Category;
+import com.bifos.accountbook.category.domain.repository.CategoryRepository;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.income.application.dto.CreateIncomeRequest;
 import com.bifos.accountbook.income.application.dto.IncomeResponse;
 import com.bifos.accountbook.income.application.dto.IncomeSearchRequest;
@@ -39,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class IncomeService {
 
   private final IncomeRepository incomeRepository;
+  private final CategoryRepository categoryRepository;
   private final CategoryService categoryService; // 카테고리 조회 (캐시 활용)
   private final UserService userService; // 사용자 조회
   private final FamilyValidationService familyValidationService;
@@ -57,7 +61,7 @@ public class IncomeService {
     var family = familyValidationService.validateAndGetFamily(userUuid, familyUuid);
 
     // 카테고리 확인 + 가족 소속 검증 (캐시 활용, DB 조회 없음)
-    categoryService.validateAndFindCached(familyUuid, categoryCustomUuid);
+    categoryService.validateAndFindCached(familyUuid, categoryCustomUuid, CategoryType.INCOME);
 
     // 수입 생성 (ORM 편의 메서드 활용)
     Income income =
@@ -169,7 +173,8 @@ public class IncomeService {
     CustomUuid categoryCustomUuid = null;
     if (request.getCategoryUuid() != null) {
       categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
-      categoryService.validateAndFindCached(income.getFamilyUuid(), categoryCustomUuid);
+      categoryService.validateAndFindCached(
+          income.getFamilyUuid(), categoryCustomUuid, CategoryType.INCOME);
     }
 
     // 수입 정보 업데이트
@@ -199,5 +204,16 @@ public class IncomeService {
     familyValidationService.validateFamilyAccess(userUuid, income.getFamilyUuid());
 
     income.delete();
+  }
+
+  /** 특정 카테고리의 수입 이력 전체를 가족의 수입 기본 카테고리로 옮긴다. */
+  @Transactional
+  public void moveIncomesToDefaultCategory(CustomUuid familyUuid, CustomUuid oldCategoryUuid) {
+    Category defaultCategory =
+        categoryRepository
+            .getDefaultCategoryByFamily(familyUuid, CategoryType.INCOME)
+            .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
+
+    incomeRepository.moveIncomes(oldCategoryUuid, defaultCategory.getUuid());
   }
 }

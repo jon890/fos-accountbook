@@ -51,7 +51,7 @@ public class RecurringExpenseService {
 
     CustomUuid categoryCustomUuid = CustomUuid.from(dto.getCategoryUuid());
     CategoryResponse categoryResponse =
-        categoryService.validateAndFindCached(familyUuid, categoryCustomUuid);
+        categoryService.validateAndFindCached(familyUuid, categoryCustomUuid, CategoryType.EXPENSE);
 
     RecurringExpense entity =
         RecurringExpense.builder()
@@ -136,7 +136,7 @@ public class RecurringExpenseService {
 
     if (dto.getCategoryUuid() != null) {
       CustomUuid categoryCustomUuid = CustomUuid.from(dto.getCategoryUuid());
-      categoryService.validateAndFindCached(familyUuid, categoryCustomUuid);
+      categoryService.validateAndFindCached(familyUuid, categoryCustomUuid, CategoryType.EXPENSE);
     }
 
     entity.update(dto.getCategoryUuid(), dto.getName(), dto.getAmount(), dto.getDayOfMonth());

@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.bifos.accountbook.category.domain.entity.Category;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.income.application.dto.CreateIncomeRequest;
 import com.bifos.accountbook.income.application.dto.IncomeResponse;
@@ -42,7 +43,14 @@ class IncomeControllerTest extends AbstractControllerTest {
     User user = fixtures.getDefaultUser();
     Family family = fixtures.getDefaultFamily();
     Category category =
-        fixtures.categories.category(family).name("급여").color("#00FF00").icon("💰").build();
+        fixtures
+            .categories
+            .category(family)
+            .name("급여")
+            .color("#00FF00")
+            .icon("💰")
+            .type(CategoryType.INCOME)
+            .build();
 
     CreateIncomeRequest request =
         CreateIncomeRequest.builder()
@@ -219,6 +227,51 @@ class IncomeControllerTest extends AbstractControllerTest {
     Income updatedIncome = incomeRepository.findByUuid(income.getUuid()).orElseThrow();
     assertThat(updatedIncome.getAmount()).isEqualByComparingTo(BigDecimal.valueOf(3500000));
     assertThat(updatedIncome.getDescription()).isEqualTo("월급 (인상)");
+  }
+
+  @Test
+  @DisplayName("지출 카테고리로 수입을 생성하면 CT005를 반환한다")
+  void createIncome_FailsWhenCategoryTypeIsExpense() throws Exception {
+    Family family = fixtures.getDefaultFamily();
+    Category expenseCategory = fixtures.getDefaultCategory();
+    CreateIncomeRequest request =
+        CreateIncomeRequest.builder()
+            .categoryUuid(expenseCategory.getUuid().getValue())
+            .amount(BigDecimal.valueOf(3000000))
+            .description("잘못된 카테고리 수입")
+            .build();
+
+    mockMvc
+        .perform(
+            post("/api/v1/families/{familyUuid}/incomes", family.getUuid().getValue())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("CT005"));
+  }
+
+  @Test
+  @DisplayName("지출 카테고리로 수입을 수정하면 CT005를 반환한다")
+  void updateIncome_FailsWhenCategoryTypeIsExpense() throws Exception {
+    Family family = fixtures.getDefaultFamily();
+    Category incomeCategory =
+        fixtures.categories.category(family).name("수입 수정용").type(CategoryType.INCOME).build();
+    Income income = fixtures.incomes.income(family, incomeCategory).build();
+    UpdateIncomeRequest request =
+        UpdateIncomeRequest.builder()
+            .categoryUuid(fixtures.getDefaultCategory().getUuid().getValue())
+            .build();
+
+    mockMvc
+        .perform(
+            put(
+                    "/api/v1/families/{familyUuid}/incomes/{incomeUuid}",
+                    family.getUuid().getValue(),
+                    income.getUuid().getValue())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("CT005"));
   }
 
   @Test

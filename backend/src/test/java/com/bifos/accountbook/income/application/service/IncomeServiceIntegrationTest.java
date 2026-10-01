@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.category.domain.repository.CategoryRepository;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.family.application.dto.CreateFamilyRequest;
 import com.bifos.accountbook.family.application.dto.FamilyResponse;
 import com.bifos.accountbook.family.application.service.FamilyService;
@@ -61,13 +62,34 @@ class IncomeServiceIntegrationTest extends TestFixturesSupport {
 
     // 테스트용 수입 카테고리 생성
     salaryCategory =
-        fixtures.categories.category(testFamily).name("월급").color("#4ade80").icon("💰").build();
+        fixtures
+            .categories
+            .category(testFamily)
+            .name("월급")
+            .color("#4ade80")
+            .icon("💰")
+            .type(CategoryType.INCOME)
+            .build();
 
     bonusCategory =
-        fixtures.categories.category(testFamily).name("보너스").color("#fbbf24").icon("🎁").build();
+        fixtures
+            .categories
+            .category(testFamily)
+            .name("보너스")
+            .color("#fbbf24")
+            .icon("🎁")
+            .type(CategoryType.INCOME)
+            .build();
 
     sideJobCategory =
-        fixtures.categories.category(testFamily).name("부업").color("#60a5fa").icon("💼").build();
+        fixtures
+            .categories
+            .category(testFamily)
+            .name("부업")
+            .color("#60a5fa")
+            .icon("💼")
+            .type(CategoryType.INCOME)
+            .build();
 
     // 테스트 수입 데이터 생성
     createTestIncomes();

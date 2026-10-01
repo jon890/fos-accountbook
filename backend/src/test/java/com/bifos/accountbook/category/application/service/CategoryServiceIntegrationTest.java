@@ -11,6 +11,11 @@ import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.expense.domain.entity.Expense;
 import com.bifos.accountbook.expense.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.family.domain.entity.Family;
+import com.bifos.accountbook.income.domain.entity.Income;
+import com.bifos.accountbook.income.domain.repository.IncomeRepository;
+import com.bifos.accountbook.income.domain.value.IncomeStatus;
+import com.bifos.accountbook.recurring.domain.entity.RecurringExpense;
+import com.bifos.accountbook.recurring.domain.repository.RecurringExpenseRepository;
 import com.bifos.accountbook.shared.TestFixturesSupport;
 import com.bifos.accountbook.shared.exception.BusinessException;
 import com.bifos.accountbook.shared.exception.ErrorCode;
@@ -29,6 +34,10 @@ class CategoryServiceIntegrationTest extends TestFixturesSupport {
   @Autowired private CategoryRepository categoryRepository;
 
   @Autowired private ExpenseRepository expenseRepository;
+
+  @Autowired private IncomeRepository incomeRepository;
+
+  @Autowired private RecurringExpenseRepository recurringExpenseRepository;
 
   @Test
   @DisplayName("가족 생성 시 종류별 기본 카테고리가 하나씩 생성된다")
@@ -119,6 +128,59 @@ class CategoryServiceIntegrationTest extends TestFixturesSupport {
             .orElseThrow();
 
     assertThat(updatedExpense.getCategoryUuid()).isEqualTo(defaultCategory.getUuid());
+  }
+
+  @Test
+  @DisplayName("지출 카테고리 삭제 시 활성 반복 지출은 미분류로 이동한다")
+  void deleteExpenseCategoryMovesActiveRecurringExpensesToExpenseDefault() {
+    User user = fixtures.users.user().buildAndSetSecurityContext();
+    Family family = fixtures.families.family().owner(user).build();
+    categoryService.createDefaultCategoriesForFamily(family.getUuid());
+    Category expenseCategory = fixtures.categories.category(family).name("정기 지출").build();
+    RecurringExpense recurringExpense =
+        fixtures.recurringExpenses.recurringExpense(family, expenseCategory).user(user).build();
+
+    categoryService.deleteCategory(
+        user.getUuid(), family.getUuid(), expenseCategory.getUuid().getValue());
+
+    Category expenseDefault =
+        categoryRepository
+            .getDefaultCategoryByFamily(family.getUuid(), CategoryType.EXPENSE)
+            .orElseThrow();
+    RecurringExpense movedRecurringExpense =
+        recurringExpenseRepository.findActiveByUuid(recurringExpense.getUuid()).orElseThrow();
+    assertThat(movedRecurringExpense.getCategoryUuid())
+        .isEqualTo(expenseDefault.getUuid().getValue());
+  }
+
+  @Test
+  @DisplayName("수입 카테고리 삭제 시 활성 및 삭제 이력이 기타 수입으로 이동한다")
+  void deleteIncomeCategoryMovesAllIncomeHistoryToIncomeDefault() {
+    User user = fixtures.users.user().buildAndSetSecurityContext();
+    Family family = fixtures.families.family().owner(user).build();
+    categoryService.createDefaultCategoriesForFamily(family.getUuid());
+    Category incomeCategory =
+        fixtures.categories.category(family).name("임시 수입").type(CategoryType.INCOME).build();
+    final Income activeIncome = fixtures.incomes.income(family, incomeCategory).user(user).build();
+    Income deletedIncome = fixtures.incomes.income(family, incomeCategory).user(user).build();
+    deletedIncome.delete();
+    incomeRepository.save(deletedIncome);
+
+    categoryService.deleteCategory(
+        user.getUuid(), family.getUuid(), incomeCategory.getUuid().getValue());
+
+    Category incomeDefault =
+        categoryRepository
+            .getDefaultCategoryByFamily(family.getUuid(), CategoryType.INCOME)
+            .orElseThrow();
+    Category deletedCategory =
+        categoryRepository.findByUuid(incomeCategory.getUuid()).orElseThrow();
+    assertThat(deletedCategory.getStatus()).isEqualTo(CategoryStatus.DELETED);
+    assertThat(incomeRepository.findByUuid(activeIncome.getUuid()).orElseThrow().getCategoryUuid())
+        .isEqualTo(incomeDefault.getUuid());
+    Income movedDeletedIncome = incomeRepository.findByUuid(deletedIncome.getUuid()).orElseThrow();
+    assertThat(movedDeletedIncome.getCategoryUuid()).isEqualTo(incomeDefault.getUuid());
+    assertThat(movedDeletedIncome.getStatus()).isEqualTo(IncomeStatus.DELETED);
   }
 
   @Test

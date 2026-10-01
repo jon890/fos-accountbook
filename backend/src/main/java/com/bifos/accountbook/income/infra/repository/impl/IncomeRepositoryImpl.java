@@ -119,6 +119,11 @@ public class IncomeRepositoryImpl implements IncomeRepository {
   }
 
   @Override
+  public void moveIncomes(CustomUuid oldCategoryUuid, CustomUuid newCategoryUuid) {
+    jpaRepository.moveIncomes(oldCategoryUuid, newCategoryUuid);
+  }
+
+  @Override
   public long softDeleteAllByFamilyUuid(CustomUuid familyUuid) {
     QIncome income = QIncome.income;
     return queryFactory

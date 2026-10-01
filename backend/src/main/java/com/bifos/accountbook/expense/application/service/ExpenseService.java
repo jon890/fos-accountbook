@@ -94,7 +94,7 @@ public class ExpenseService {
     var family = familyValidationService.validateAndGetFamily(userUuid, familyUuid);
 
     // 카테고리 확인 + 가족 소속 검증 (캐시 활용, DB 조회 없음)
-    categoryService.validateAndFindCached(familyUuid, categoryCustomUuid);
+    categoryService.validateAndFindCached(familyUuid, categoryCustomUuid, CategoryType.EXPENSE);
 
     // 지출 생성 (ORM 편의 메서드 활용)
     Expense expense =
@@ -233,7 +233,8 @@ public class ExpenseService {
     CustomUuid categoryCustomUuid = null;
     if (request.getCategoryUuid() != null) {
       categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
-      categoryService.validateAndFindCached(expense.getFamilyUuid(), categoryCustomUuid);
+      categoryService.validateAndFindCached(
+          expense.getFamilyUuid(), categoryCustomUuid, CategoryType.EXPENSE);
     }
 
     // 이벤트 발행을 위해 기존 금액 저장

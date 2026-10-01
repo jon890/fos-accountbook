@@ -2,6 +2,7 @@ package com.bifos.accountbook.shared.fixtures;
 
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.category.domain.repository.CategoryRepository;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.family.domain.entity.Family;
 
 /**
@@ -57,6 +58,7 @@ public class CategoryFixtures {
     private String name = "Test Category";
     private String color = "#6366f1";
     private String icon = "🏷️";
+    private CategoryType type = CategoryType.EXPENSE;
 
     private final CategoryRepository categoryRepository;
     private final Family family;
@@ -81,6 +83,11 @@ public class CategoryFixtures {
       return this;
     }
 
+    public CategoryBuilder type(CategoryType type) {
+      this.type = type;
+      return this;
+    }
+
     public Category build() {
       Category category =
           Category.builder()
@@ -88,6 +95,7 @@ public class CategoryFixtures {
               .name(name)
               .color(color)
               .icon(icon)
+              .type(type)
               .build();
       return categoryRepository.save(category);
     }

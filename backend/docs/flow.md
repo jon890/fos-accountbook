@@ -87,9 +87,10 @@ DELETE /families/{familyUuid}/categories/{categoryUuid}
     ▼
 CategoryService.deleteCategory()
     ├─ 기본 카테고리 여부 체크 (is_default=true → 삭제 불가)
-    ├─ 기본 카테고리 조회 (이동 대상)
-    ├─ ExpenseService.moveExpensesToDefaultCategory()
-    ├─ RecurringExpenseService.moveRecurringExpensesToDefaultCategory()
+    ├─ 종류별 기본 카테고리 조회 (지출: 미분류, 수입: 기타 수입)
+    ├─ ExpenseService.moveExpensesToDefaultCategory() (삭제 이력 포함)
+    ├─ RecurringExpenseService.moveRecurringExpensesToDefaultCategory() (ACTIVE만)
+    ├─ IncomeService.moveIncomesToDefaultCategory() (삭제 이력 포함)
     └─ Category status → DELETED + 캐시 무효화
 ```
 

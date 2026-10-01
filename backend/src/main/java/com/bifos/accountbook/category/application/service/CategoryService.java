@@ -8,6 +8,7 @@ import com.bifos.accountbook.category.domain.repository.CategoryRepository;
 import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.config.CacheConfig;
 import com.bifos.accountbook.expense.application.service.ExpenseService;
+import com.bifos.accountbook.income.application.service.IncomeService;
 import com.bifos.accountbook.recurring.application.service.RecurringExpenseService;
 import com.bifos.accountbook.shared.aop.FamilyUuid;
 import com.bifos.accountbook.shared.aop.FamilyValidationService;
@@ -35,6 +36,7 @@ public class CategoryService {
   private final CategoryRepository categoryRepository;
   private final ObjectProvider<ExpenseService> expenseServiceProvider;
   private final ObjectProvider<RecurringExpenseService> recurringExpenseServiceProvider;
+  private final ObjectProvider<IncomeService> incomeServiceProvider;
   private final FamilyValidationService familyValidationService; // 가족 검증 로직
   private final CacheManager cacheManager; // 캐시 관리자
 
@@ -137,6 +139,20 @@ public class CategoryService {
       throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 가족의 카테고리가 아닙니다")
           .addParameter("categoryFamilyUuid", category.getFamilyUuid())
           .addParameter("requestFamilyUuid", familyUuid.getValue());
+    }
+
+    return category;
+  }
+
+  /** UUID로 카테고리를 조회하고 가족 소속 및 거래 종류를 검증한다. */
+  public CategoryResponse validateAndFindCached(
+      CustomUuid familyUuid, CustomUuid categoryUuid, CategoryType expectedType) {
+    CategoryResponse category = validateAndFindCached(familyUuid, categoryUuid);
+
+    if (category.getType() != expectedType) {
+      throw new BusinessException(ErrorCode.CATEGORY_TYPE_MISMATCH)
+          .addParameter("categoryType", category.getType().name())
+          .addParameter("expectedCategoryType", expectedType.name());
     }
 
     return category;
@@ -279,15 +295,21 @@ public class CategoryService {
           .addParameter("categoryUuid", categoryUuid);
     }
 
-    // 삭제되는 카테고리의 지출들을 기본 카테고리로 이동 (ExpenseService에 위임)
-    expenseServiceProvider
-        .getObject()
-        .moveExpensesToDefaultCategory(category.getFamilyUuid(), category.getUuid());
+    if (category.getType() == CategoryType.EXPENSE) {
+      // 삭제되는 카테고리의 지출들을 기본 카테고리로 이동 (ExpenseService에 위임)
+      expenseServiceProvider
+          .getObject()
+          .moveExpensesToDefaultCategory(category.getFamilyUuid(), category.getUuid());
 
-    // 삭제되는 카테고리의 반복 지출도 기본 카테고리로 이동
-    recurringExpenseServiceProvider
-        .getObject()
-        .moveRecurringExpensesToDefaultCategory(category.getFamilyUuid(), category.getUuid());
+      // 삭제되는 카테고리의 반복 지출도 기본 카테고리로 이동
+      recurringExpenseServiceProvider
+          .getObject()
+          .moveRecurringExpensesToDefaultCategory(category.getFamilyUuid(), category.getUuid());
+    } else {
+      incomeServiceProvider
+          .getObject()
+          .moveIncomesToDefaultCategory(category.getFamilyUuid(), category.getUuid());
+    }
 
     category.delete();
 
