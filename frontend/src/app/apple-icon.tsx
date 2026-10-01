@@ -21,7 +21,7 @@ export default async function AppleIcon() {
         style={{
           alignItems: "center",
           background: brandColorHex,
-          color: "white",
+          color: "#ffffff",
           display: "flex",
           fontSize: 104,
           fontWeight: 700,

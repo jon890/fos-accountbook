@@ -22,7 +22,7 @@ export default async function OpenGraphImage() {
         style={{
           alignItems: "center",
           background: brandColorHex,
-          color: "white",
+          color: "#ffffff",
           display: "flex",
           flexDirection: "column",
           height: "100%",

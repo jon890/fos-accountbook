@@ -21,7 +21,7 @@ export default async function Icon() {
         style={{
           alignItems: "center",
           background: brandColorHex,
-          color: "white",
+          color: "#ffffff",
           display: "flex",
           fontSize: 288,
           fontWeight: 700,
