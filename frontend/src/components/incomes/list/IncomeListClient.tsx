@@ -7,7 +7,8 @@ import { buildMemberColorMap, getMemberColor } from "@/lib/utils/member-color";
 import { groupTransactionsWithTotal } from "@/services/transaction/transaction-service";
 import type { Income } from "@/types/income";
 import type { FamilyMemberSummary } from "@/types/family";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { useState } from "react";
 
 interface IncomeListClientProps {
@@ -25,7 +26,7 @@ export function IncomeListClient({
   currentPage,
   members,
 }: IncomeListClientProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const searchParams = useSearchParams();
   const [editingIncome, setEditingIncome] = useState<Income | null>(null);
   const memberColors = buildMemberColorMap(members);

@@ -12,16 +12,19 @@ import {
 } from "@/components/ui/select";
 import { useSessionRefresh } from "@/lib/client/use-session-refresh";
 import type { Family } from "@/types/family";
-import { Users } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Loader2, Users } from "lucide-react";
+import { useAppRouter } from "@/lib/client/navigation";
+import { toast } from "sonner";
+import { useEffect, useState, useTransition } from "react";
 
 export function FamilySelectorDropdown() {
-  const router = useRouter();
+  const router = useAppRouter();
   const { refreshSession } = useSessionRefresh();
   const [families, setFamilies] = useState<Family[]>([]);
   const [selectedFamily, setSelectedFamily] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [isSelecting, startSelectTransition] = useTransition();
+  const isPending = isSelecting || router.isPending;
 
   // effect 에서 부르므로 상태는 Promise 콜백 안에서만 바꾼다. loading 의 초기값은 true 다
   const loadInitialData = () =>
@@ -63,23 +66,32 @@ export function FamilySelectorDropdown() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleFamilyChange = async (familyUuid: string) => {
-    setSelectedFamily(familyUuid);
+  const handleFamilyChange = (familyUuid: string) => {
+    const previousFamilyUuid = selectedFamily;
 
-    // Server Action을 통해 쿠키에 저장
-    const result = await selectFamilyAction(familyUuid);
+    startSelectTransition(async () => {
+      setSelectedFamily(familyUuid);
 
-    if (result.success) {
-      // 세션 갱신 (프로필의 defaultFamilyUuid가 변경됨)
-      await refreshSession();
-      // 페이지 새로고침하여 선택된 가족의 데이터 표시
-      router.refresh();
-    } else {
-      console.error("Failed to select family:", result.error.message);
-      // 실패 시 이전 선택으로 롤백
-      setLoading(true);
-      loadInitialData();
-    }
+      try {
+        // Server Action을 통해 쿠키에 저장
+        const result = await selectFamilyAction(familyUuid);
+        if (!result.success) {
+          setSelectedFamily(previousFamilyUuid);
+          toast.error("가족 전환에 실패했습니다.");
+          return;
+        }
+
+        // 세션 갱신 (프로필의 defaultFamilyUuid가 변경됨)
+        await refreshSession();
+        // 페이지 새로고침하여 선택된 가족의 데이터 표시
+        startSelectTransition(() => {
+          router.refresh();
+        });
+      } catch {
+        setSelectedFamily(previousFamilyUuid);
+        toast.error("가족 전환에 실패했습니다.");
+      }
+    });
   };
 
   if (loading) {
@@ -93,10 +105,26 @@ export function FamilySelectorDropdown() {
   }
 
   return (
-    <Select value={selectedFamily} onValueChange={handleFamilyChange}>
-      <SelectTrigger className="w-32 md:w-40 h-8 md:h-9 text-xs md:text-sm">
-        <Users className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-        <SelectValue placeholder="가족 선택" />
+    <Select
+      value={selectedFamily}
+      onValueChange={handleFamilyChange}
+      disabled={isPending}
+    >
+      <SelectTrigger
+        className="w-32 md:w-40 h-8 md:h-9 text-xs md:text-sm"
+        aria-label={isPending ? "가족 전환 중" : "가족 선택"}
+      >
+        {isPending ? (
+          <span className="inline-flex items-center gap-1">
+            <Loader2 className="size-3 animate-spin md:size-4" />
+            전환 중...
+          </span>
+        ) : (
+          <>
+            <Users className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+            <SelectValue placeholder="가족 선택" />
+          </>
+        )}
       </SelectTrigger>
       <SelectContent>
         {families.map((family) => (

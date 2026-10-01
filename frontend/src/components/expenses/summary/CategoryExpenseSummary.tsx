@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/client/utils";
 import type { CategoryExpenseSummaryResponse } from "@/types/expense";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { useState, type CSSProperties } from "react";
 
 interface CategoryExpenseSummaryProps {
@@ -23,7 +24,7 @@ export function CategoryExpenseSummary({
   summary,
 }: CategoryExpenseSummaryProps) {
   const { totalExpense, categoryStats } = summary;
-  const router = useRouter();
+  const router = useAppRouter();
   const searchParams = useSearchParams();
   const [showAll, setShowAll] = useState(false);
 

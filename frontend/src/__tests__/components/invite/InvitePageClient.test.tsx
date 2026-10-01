@@ -3,27 +3,20 @@
  * @jest-environment jsdom
  */
 
-jest.mock("next/navigation", () => ({
-  useRouter: jest.fn(() => ({
-    push: jest.fn(),
-    refresh: jest.fn(),
-  })),
-}));
+jest.mock("@/lib/client/navigation", () => ({ useAppRouter: jest.fn() }));
 jest.mock("@/actions/invitation/accept-invitation-action", () => ({
   acceptInvitationAction: jest.fn(),
 }));
 jest.mock("sonner", () => ({
-  toast: {
-    success: jest.fn(),
-    error: jest.fn(),
-  },
+  toast: { success: jest.fn(), error: jest.fn() },
 }));
 
-import { InvitePageClient } from "@/app/(authenticated)/invite/[token]/_components/InvitePageClient";
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { useRouter } from "next/navigation";
 import { acceptInvitationAction } from "@/actions/invitation/accept-invitation-action";
+import { InvitePageClient } from "@/app/(authenticated)/invite/[token]/_components/InvitePageClient";
+import { useAppRouter } from "@/lib/client/navigation";
+import { act, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { toast } from "sonner";
 
 const baseProps = {
   token: "token-1",
@@ -32,17 +25,69 @@ const baseProps = {
 };
 
 describe("InvitePageClient", () => {
-  it("초대를 수락하면 달력으로 이동한다", async () => {
-    const push = jest.fn();
-    jest.mocked(useRouter).mockReturnValue({ push, refresh: jest.fn() } as unknown as ReturnType<typeof useRouter>);
-    jest.mocked(acceptInvitationAction).mockResolvedValue({ success: true, data: undefined });
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("초대 수락 action부터 navigation 완료까지 양쪽 버튼을 비활성화하고 진행 표시를 유지한다", async () => {
+    const router = createRouter();
+    jest.mocked(useAppRouter).mockReturnValue(router);
+
+    let resolveAction!: (
+      value: Awaited<ReturnType<typeof acceptInvitationAction>>,
+    ) => void;
+    jest.mocked(acceptInvitationAction).mockReturnValue(
+      new Promise((resolve) => {
+        resolveAction = resolve;
+      }),
+    );
+
+    const view = render(<InvitePageClient {...baseProps} />);
+
+    await userEvent.setup().click(
+      screen.getByRole("button", { name: "초대 수락하기" }),
+    );
+
+    expect(screen.getByRole("button", { name: "수락 중..." })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "거절하기" })).toBeDisabled();
+
+    router.isPending = true;
+    view.rerender(<InvitePageClient {...baseProps} />);
+
+    await act(async () => {
+      resolveAction({ success: true, data: undefined });
+    });
+
+    expect(acceptInvitationAction).toHaveBeenCalledWith(baseProps.token);
+    expect(acceptInvitationAction).toHaveBeenCalledTimes(1);
+    expect(router.push).toHaveBeenCalledWith("/calendar");
+    expect(screen.getByRole("button", { name: "수락 중..." })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "거절하기" })).toBeDisabled();
+
+    router.isPending = false;
+    view.rerender(<InvitePageClient {...baseProps} />);
+
+    expect(screen.getByRole("button", { name: "초대 수락하기" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "거절하기" })).toBeEnabled();
+  });
+
+  it("수락 action이 예외를 던지면 버튼을 다시 활성화하고 오류를 표시한다", async () => {
+    jest.mocked(useAppRouter).mockReturnValue(createRouter());
+    jest.mocked(acceptInvitationAction).mockRejectedValue(new Error("실패"));
     render(<InvitePageClient {...baseProps} />);
 
-    await userEvent.setup().click(screen.getByRole("button", { name: "초대 수락하기" }));
+    await userEvent.setup().click(
+      screen.getByRole("button", { name: "초대 수락하기" }),
+    );
 
-    expect(push).toHaveBeenCalledWith("/calendar");
+    expect(
+      await screen.findByRole("button", { name: "초대 수락하기" }),
+    ).toBeEnabled();
+    expect(toast.error).toHaveBeenCalledWith("초대 수락 중 오류가 발생했습니다");
   });
+
   it("초대자와 멤버 수가 있으면 초대자 이름, 멤버 수, 아바타 첫 글자를 보인다", () => {
+    jest.mocked(useAppRouter).mockReturnValue(createRouter());
     render(
       <InvitePageClient {...baseProps} inviterName="홍길동" memberCount={2} />,
     );
@@ -55,6 +100,7 @@ describe("InvitePageClient", () => {
   });
 
   it("두 값이 없으면 기존 문구를 보이고 멤버 줄을 숨긴다", () => {
+    jest.mocked(useAppRouter).mockReturnValue(createRouter());
     render(<InvitePageClient {...baseProps} />);
 
     expect(
@@ -64,8 +110,22 @@ describe("InvitePageClient", () => {
   });
 
   it("멤버 수가 0 이어도 멤버 줄을 보인다", () => {
+    jest.mocked(useAppRouter).mockReturnValue(createRouter());
     render(<InvitePageClient {...baseProps} memberCount={0} />);
 
     expect(screen.getByText("현재 0명")).toBeInTheDocument();
   });
 });
+
+function createRouter(): ReturnType<typeof useAppRouter> {
+  return {
+    push: jest.fn(),
+    replace: jest.fn(),
+    refresh: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    prefetch: jest.fn(),
+    bfcacheId: "",
+    isPending: false,
+  };
+}

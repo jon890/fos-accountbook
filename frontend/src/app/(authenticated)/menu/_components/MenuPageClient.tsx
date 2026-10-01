@@ -17,7 +17,7 @@ import {
   Wallet,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -58,7 +58,7 @@ export function MenuPageClient({
   userName,
   selectedFamilyUuid,
 }: MenuPageClientProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const [familySheetOpen, setFamilySheetOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [families, setFamilies] = useState<Family[]>([]);

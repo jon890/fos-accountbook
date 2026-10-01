@@ -16,7 +16,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -41,7 +41,7 @@ export function BudgetEditDialog({
   familyName,
   currentBudget,
 }: BudgetEditDialogProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [value, setValue] = useState(currentBudget.toString());
   const [isSaving, setIsSaving] = useState(false);

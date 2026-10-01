@@ -385,12 +385,25 @@
     animation: float 3s ease-in-out infinite;
   }
 
+  .animate-navigation-progress {
+    animation: navigation-progress 1s ease-in-out infinite;
+  }
+
   @keyframes float {
     0%, 100% {
       transform: translateY(0);
     }
     50% {
       transform: translateY(-8px);
+    }
+  }
+
+  @keyframes navigation-progress {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(300%);
     }
   }
 
@@ -413,6 +426,13 @@
     width: var(--skel-w, 100%);
     height: var(--skel-h, 12px);
     border-radius: var(--skel-r, 8px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-navigation-progress {
+      animation: none;
+      transform: translateX(100%);
+    }
   }
 }
 @utility safe-area-pb {
