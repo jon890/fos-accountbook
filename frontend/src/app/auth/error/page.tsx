@@ -1,6 +1,14 @@
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
+import type { Metadata } from "next";
 import { AuthCenterCard } from "@/components/auth/AuthCenterCard";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function AuthErrorPage({
   searchParams,
