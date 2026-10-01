@@ -597,7 +597,7 @@ Teal 리디자인 + 인라인 style 제거 + Empty state 일관화.
 
 [/menu] 전체 메뉴 (Server Component, 목록형)
     ├─ 가계부: 카테고리 → /categories, 예산 → /budget, 고정지출 → /transactions?tab=recurring
-    ├─ 가족: 가족 전환(Sheet), 구성원 초대(InviteFamilyDialog), 가족 설정 → /settings
+    ├─ 가족: 가족 전환(Sheet), 구성원 초대(InviteFamilyDialog)
     ├─ 알림 → /notifications
     └─ 설정 → /settings (프로필, 기본 가족, 예산, 외부 연동)
 ```

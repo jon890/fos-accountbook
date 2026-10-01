@@ -14,7 +14,6 @@ import {
   Repeat,
   Settings,
   UserPlus,
-  Users,
   Wallet,
 } from "lucide-react";
 import Link from "next/link";
@@ -39,7 +38,7 @@ const groups = [
   },
   {
     title: "가족",
-    items: [{ name: "가족 설정", href: "/settings", icon: Users }],
+    items: [],
   },
   {
     title: "알림",

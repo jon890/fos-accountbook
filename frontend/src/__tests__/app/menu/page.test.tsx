@@ -76,10 +76,9 @@ it("가족과 사용자 이름 및 다섯 주요 화면 링크를 표시한다",
   for (const [name, href] of links) {
     expect(screen.getByRole("link", { name })).toHaveAttribute("href", href);
   }
-  expect(screen.getByRole("link", { name: "가족 설정" })).toHaveAttribute(
-    "href",
-    "/settings"
-  );
+  expect(screen.queryByRole("link", { name: "가족 설정" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "가족 전환" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "구성원 초대" })).toBeInTheDocument();
 });
 
 it("가족 전환 Sheet에 목록과 선택 가족을 전달하고 선택 후 닫는다", async () => {
