@@ -68,8 +68,8 @@ export default function CreateFamilyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg">
-      <div className="max-w-md mx-auto pt-6 md:pt-20">
+    <div className="min-h-screen bg-bg md:p-4">
+      <div className="max-w-md mx-auto md:pt-20">
         <Card className="bg-bg-elev border-border shadow-default">
           <CardHeader className="text-center pt-6 pb-4 md:pt-8">
             <div className="mx-auto mb-3 w-24 h-24 rounded-full gradient-family flex items-center justify-center">

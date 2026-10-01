@@ -2,7 +2,7 @@ import { Skel } from "@/components/loading/Skel";
 
 export default function AuthenticatedLoading() {
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
+    <div className="max-w-2xl mx-auto space-y-4 md:px-4 md:py-6">
       {/* 헤더 */}
       <Skel w="50%" h={22} />
 

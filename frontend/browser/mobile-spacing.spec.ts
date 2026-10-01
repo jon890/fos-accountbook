@@ -106,7 +106,7 @@ test("카테고리의 바깥 여백을 폭별로 표시한다", async ({ page },
     const mainPaddingLeft = await page.locator("main").evaluate((element) =>
       Number.parseFloat(getComputedStyle(element).paddingLeft),
     );
-    expect(firstCardBox.x).toBe(192);
+    expect(firstCardBox.x).toBe(208);
     expect(firstCardBox.x).toBeGreaterThanOrEqual(mainPaddingLeft);
   }
 });
@@ -122,7 +122,10 @@ test("알림 항목과 카테고리 히어로의 폭별 안쪽 여백을 표시�
   );
 
   await page.goto("/categories");
-  const hero = page.locator('[data-slot="card"]', { hasText: "카테고리 관리" });
+  const hero = page
+    .getByRole("main")
+    .locator('[data-slot="card"]', { hasText: "카테고리 관리" });
+  await expect(hero).toHaveCount(1);
   const heroContent = hero.locator(":scope > div");
   await expect(heroContent).toBeVisible();
   expect(await heroContent.evaluate((element) => getComputedStyle(element).paddingLeft)).toBe(

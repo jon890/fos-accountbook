@@ -2,7 +2,7 @@ import { Skel } from "@/components/loading/Skel";
 
 export default function TransactionsLoading() {
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
+    <div className="max-w-2xl mx-auto space-y-4 md:px-4 md:py-6">
       {/* 헤더 + 검색바 */}
       <div className="space-y-3">
         <Skel w="40%" h={22} />

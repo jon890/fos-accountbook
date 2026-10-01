@@ -20,7 +20,7 @@
 | 파일 | 지금 클래스 | 바꿀 값 |
 |---|---|---|
 | `frontend/src/app/(authenticated)/settings/_components/SettingsPageClient.tsx` 74행 | `space-y-6` | `space-y-4 md:space-y-6` |
-| `frontend/src/app/(authenticated)/menu/_components/MenuPageClient.tsx` 92행 | `space-y-6 pb-6` | `space-y-4 md:space-y-6` (`pb-6` 제거) |
+| `frontend/src/app/(authenticated)/menu/_components/MenuPageClient.tsx` 92행 | `space-y-6 pb-6` | `space-y-4 md:space-y-6 md:pb-6` (모바일 바깥 여백만 제거) |
 | `frontend/src/app/(authenticated)/invite/[token]/_components/InvitePageClient.tsx` 101, 103행 | `CardContent space-y-6`, 안쪽 상자 `p-5` | `space-y-4 md:space-y-6`, `p-4 md:p-5` |
 | `frontend/src/app/(authenticated)/families/create/page.tsx` 87, 140행 | `space-y-6`, `mt-6 p-4` | `space-y-4 md:space-y-6`, `mt-4 md:mt-6 p-4` |
 | `frontend/src/components/families/FamilySelector.tsx` 124, 162, 193, 212, 234행 | `mb-8`, `CardContent p-6`, `my-8` | `mb-4 md:mb-8`, `p-4 md:p-6`, `my-4 md:my-8` |

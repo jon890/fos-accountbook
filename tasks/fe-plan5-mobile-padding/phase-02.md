@@ -19,13 +19,13 @@
 
 | 파일 | 지금 클래스 | 바꿀 값 |
 |---|---|---|
-| `frontend/src/app/(authenticated)/categories/page.tsx` 31행 | `container mx-auto py-6 px-4 max-w-4xl space-y-6` | `mx-auto max-w-4xl space-y-4 md:space-y-6` (`container`, `py-6`, `px-4` 제거) |
+| `frontend/src/app/(authenticated)/categories/page.tsx` 31행 | `container mx-auto py-6 px-4 max-w-4xl space-y-6` | `mx-auto max-w-4xl space-y-4 md:space-y-6 md:px-4 md:py-6` (모바일 바깥 여백만 제거) |
 | `frontend/src/app/(authenticated)/notifications/_components/NotificationsClient.tsx` 62행 | `p-4 md:p-6 max-w-2xl mx-auto` | `md:p-6 max-w-2xl mx-auto` |
 | `frontend/src/app/(authenticated)/budget/_components/BudgetClient.tsx` 61행 | `p-4 md:p-6 space-y-4 md:space-y-6` | `md:p-6 space-y-4 md:space-y-6` |
-| `frontend/src/components/families/FamilySelector.tsx` 122-123행 | `min-h-screen py-8` 와 `px-4` | `py-4 md:py-8`, `px-0 md:px-4` |
+| `frontend/src/components/families/FamilySelector.tsx` 122-123행 | `min-h-screen py-8` 와 `px-4` | `md:py-8`, `px-0 md:px-4` |
 | `frontend/src/app/(authenticated)/invite/[token]/_components/InvitePageClient.tsx` 74행 | `min-h-screen p-5` | `md:p-5` 로 모바일 바깥 여백 제거 |
-| `frontend/src/app/(authenticated)/families/create/page.tsx` 71-72행 | 바깥 `min-h-screen p-4`, 안쪽 `pt-20` | 바깥 `p-4` 제거, `pt-6 md:pt-20` |
-| `frontend/src/app/(authenticated)/loading.tsx`, `analytics/loading.tsx`, `budget/loading.tsx`, `transactions/loading.tsx` 5행 | `max-w-2xl mx-auto px-4 py-6` | `max-w-2xl mx-auto` (`px-4 py-6` 제거) |
+| `frontend/src/app/(authenticated)/families/create/page.tsx` 71-72행 | 바깥 `min-h-screen p-4`, 안쪽 `pt-20` | 바깥 `md:p-4`, `md:pt-20` |
+| `frontend/src/app/(authenticated)/loading.tsx`, `analytics/loading.tsx`, `budget/loading.tsx`, `transactions/loading.tsx` 5행 | `max-w-2xl mx-auto px-4 py-6` | `max-w-2xl mx-auto md:px-4 md:py-6` (모바일 바깥 여백만 제거) |
 | `frontend/src/app/(authenticated)/notifications/loading.tsx` 5, 13행 | `p-4 md:p-6`, 항목 `p-4` | 본 화면과 같게 `md:p-6`, 항목 `p-3 md:p-4` |
 | `frontend/src/app/(authenticated)/calendar/loading.tsx` 5행 | `space-y-5` | `space-y-4` (실제 화면과 같게) |
 
@@ -47,7 +47,7 @@
 ### 4. 계획 검토 반영
 
 - 바깥 여백 규칙은 `md` 미만에 적용한다. `md` 이상의 표에 명시한 화면 여백은 유지한다.
-- 카테고리 desktop 카드 위치는 중앙 정렬된 896px 영역의 왼쪽 좌표 192px로 정확히 단언한다. 모바일 알림 loading과 완료 화면 x 좌표는 모두 12px이다.
+- 카테고리 desktop 카드 위치는 중앙 정렬된 896px 영역의 왼쪽 좌표 208px로 정확히 단언한다. 모바일 알림 loading과 완료 화면 x 좌표는 모두 12px이다.
 - 가짜 백엔드에 테스트 전용 알림 응답 지연 설정을 추가한다. `POST /__test/notifications-delay`에 `{hold: true}`를 보내 응답을 보류하고 `{hold: false}`로 해제한다. 응답은 테스트가 명시적으로 해제할 때까지 보류하고 reset에서 해제해 실행 순서 의존을 막는다. 클라이언트 탐색 중 알림 loading과 완료 화면의 바깥 x 좌표를 모바일에서 비교한다. 고정 시간 대기는 쓰지 않는다.
 
 ## 검증
