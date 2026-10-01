@@ -1,0 +1,12 @@
+{
+  "name": "fe-plan6-seo",
+  "description": "서비스 이름과 메타데이터를 정리하고, 링크 미리보기 이미지와 아이콘, robots, sitemap, manifest 를 더한다",
+  "status": "pending",
+  "created_at": "2026-10-01",
+  "total_phases": 2,
+  "current_phase": 1,
+  "phases": [
+    { "number": 1, "file": "phase-01.md", "execution_profile": "fast" },
+    { "number": 2, "file": "phase-02.md", "execution_profile": "standard" }
+  ]
+}
