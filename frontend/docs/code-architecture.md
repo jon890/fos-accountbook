@@ -133,6 +133,11 @@ src/
 
 ---
 
+## 화면 전환
+
+- 클라이언트 이동은 `src/lib/client/navigation.tsx` 의 `useAppRouter` 로 한다. `next/navigation` 의 `useRouter` 직접 사용은 ESLint 가 막는다 (ADR-F39).
+- `NavigationProgressProvider` 가 전역 대기 상태를 갖고 `NavigationProgressBar` 가 그 상태로 상단 진행 막대를 그린다. 둘 다 `src/app/providers.tsx` 에 놓인다.
+
 ## 디자인 토큰 / 테마
 
 - **단일 소스**: `src/app/globals.css` 의 `@theme` 블록. OKLCH 평면 값 (ADR-F13).
