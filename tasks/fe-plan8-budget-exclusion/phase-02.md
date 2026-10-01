@@ -54,6 +54,7 @@
 - Jest `frontend/src/__tests__/services/expense/expense-service.test.ts` 에서 true, false, 누락이 백엔드 요청까지 유지되는지 확인한다.
 - Jest `frontend/src/__tests__/components/expenses/CategoryGrid.test.tsx`: 제외 카테고리 타일의 접근 이름에 「예산 제외」 가 있다.
 - Jest `frontend/src/__tests__/components/transactions/TransactionFormFields.test.tsx`(없으면 신규): 지출일 때만 스위치가 있다. 제외 카테고리를 고르면 스위치가 켜진 채 잠기고 안내 문구가 보인다. 다른 카테고리로 바꾸면 이전 값으로 돌아간다. 수입에는 스위치가 없다.
+- `frontend/src/__tests__/components/transactions/dialogs/EditTransactionDialog.test.tsx` 에서 기존 지출의 `excludeFromBudget=true` 가 스위치 초기값으로 표시되는지 확인한다. 기존 typed 지출 fixture는 필수 boolean을 보존한다.
 
 ## 검증
 
@@ -86,3 +87,5 @@ pnpm test
 | `frontend/src/__tests__/components/expenses/CategoryGrid.test.tsx` | 수정 |
 | `frontend/src/__tests__/components/transactions/TransactionFormFields.test.tsx` | 신규 |
 | `frontend/src/__tests__/services/expense/expense-service.test.ts` | 신규 |
+| `frontend/src/test-fixtures/calendar.ts` | 수정 |
+| `frontend/src/__tests__/components/transactions/dialogs/EditTransactionDialog.test.tsx` | 수정 |
