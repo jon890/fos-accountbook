@@ -12,7 +12,7 @@ export default function AuthenticatedError({
   return (
     <StatusCard
       kind="error"
-      secondaryCta={{ label: "대시보드로", href: "/dashboard" }}
+      secondaryCta={{ label: "홈으로", href: "/calendar" }}
       devMessage={`${error.message}\ndigest=${error.digest ?? "-"}`}
     >
       <ErrorResetButton reset={reset} label="다시 시도" />

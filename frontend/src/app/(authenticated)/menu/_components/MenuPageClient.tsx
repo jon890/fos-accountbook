@@ -1,7 +1,7 @@
 "use client";
 
 import { getFamiliesAction } from "@/actions/family/get-families-action";
-import { InviteFamilyDialog } from "@/components/dashboard/InviteFamilyDialog";
+import { InviteFamilyDialog } from "@/components/families/InviteFamilyDialog";
 import { FamilySelectorList } from "@/components/families/FamilySelectorList";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";

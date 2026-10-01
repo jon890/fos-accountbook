@@ -414,6 +414,10 @@
 <a id="adr-f21"></a>
 
 ## ADR-F21: Add/Edit Transaction 다이얼로그 단일화
+
+**대체된 부분**: 거래 종류 전환 시 날짜를 초기화하던 정책은 [ADR-F32](#adr-f32)의 날짜 유지 정책으로 대체한다.
+나머지 단일 다이얼로그 결정은 유지한다.
+
 - **결정**: 지출/수입/고정지출 3 도메인의 Add 다이얼로그를 단일 `AddTransactionDialog` + 3 segmented 토글 (gradient-expense / gradient-income / gradient-budget) 로 통합. Edit 도 동일 패턴 (`EditTransactionDialog`, type 잠금). 위치: `src/components/transactions/dialogs/`.
 - **맥락**: 같은 "추가" 진입점이 6 곳 (Dashboard QuickActions / BottomNav FAB / Transactions 의 지출·수입·고정지출 탭 / Settings 고정지출) 인데 호출하는 다이얼로그가 셋 (AddExpenseDialog / AddIncomeDialog / AddRecurringExpenseSheet) 으로 분기. 시각·반응형 (Sheet 방향 right vs bottom)·field 구성·legacy 토큰 (`text-destructive`, `text-gray-500`, `text-muted-foreground`) 모두 불일치 → 사용자 인지 부담 + 유지보수 비용.
 - **대안 기각**:
@@ -588,6 +592,10 @@
 - **status**: `accepted`
 - **결정**: 로그인 뒤 첫 화면을 `/calendar` 로 한다. 달을 열 때 일별 합계(`daily-stats`), 그 달 지출과 수입 목록, 구성원 목록을 서버에서 한 번에 받는다.
   날짜를 누르면 받아 둔 목록에서 그날 항목을 골라 보여 주고 서버를 다시 부르지 않는다. 합계는 `daily-stats` 가 주는 값을 쓴다([ADR-F30](#adr-f30) 과 같은 규칙).
+  거래 추가에서 지출, 수입, 고정지출을 전환해도 선택한 날짜를 유지한다.
+  고정지출을 거쳐 돌아올 때도 같은 날짜를 사용하며 이 결정이 [ADR-F21](#adr-f21)의 날짜 초기화 정책을 대체한다.
+  통계, 분석과 예산의 현재 연월과 예산의 남은 일수는 세션 시간대로 계산하며 시간대가 없거나 잘못되면 서울을 사용한다.
+  명시한 조회 연월과 기존 집계 방식은 유지한다.
 - **맥락**: 두 사람이 휴대폰으로 가계부를 쓰며, 서로 무엇을 썼는지 날짜별로 빠르게 비교하는 것이 가장 잦은 동작이다(2026-09-30 사용자 요청).
   기존 첫 화면인 대시보드는 넓은 요약 카드 중심이라 휴대폰에서 이 비교가 어려웠다.
   운영은 한국 휴대폰에서 서버까지 왕복이 0.2초 안팎이라, 날짜를 누를 때마다 서버를 부르면 누를 때마다 기다리게 된다.
@@ -617,4 +625,3 @@
   - 얻는 것: 모든 화면이 하단 탭에서 두 번 안에 닿는다. 국내 금융 앱과 같은 구성이라 익숙하다.
   - 감당할 것: 새 화면을 만들면 `/menu` 목록에 넣어야 한다. 넣지 않으면 다시 들어갈 곳이 없는 화면이 생긴다.
 - **적용 범위**: `src/components/layout/BottomNavigation.tsx`, `src/components/layout/Header.tsx`, `src/app/(authenticated)/menu/`.
-

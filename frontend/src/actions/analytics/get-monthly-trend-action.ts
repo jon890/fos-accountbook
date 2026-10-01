@@ -1,5 +1,6 @@
 "use server";
 
+import { getDatePartsInTimezone } from "@/lib/utils/date-timezone";
 import { z } from "zod";
 import {
   ActionError,
@@ -26,18 +27,18 @@ export async function getMonthlyTrendAction(
   month?: number,
 ): Promise<ActionResult<MonthlyTrend>> {
   try {
-    await requireAuth();
+    const session = await requireAuth();
 
     const familyUuid = await getSelectedFamilyUuid();
     if (!familyUuid) {
       throw ActionError.familyNotSelected();
     }
 
-    const now = new Date();
+    const current = getDatePartsInTimezone(session?.user.profile?.timezone);
     const parsed = schema.parse({
       period,
-      year: year ?? now.getFullYear(),
-      month: month ?? now.getMonth() + 1,
+      year: year ?? current.year,
+      month: month ?? current.month,
     });
 
     const trend = await getMonthlyTrend(familyUuid, parsed.period, parsed.year, parsed.month);

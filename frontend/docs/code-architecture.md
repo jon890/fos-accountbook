@@ -46,7 +46,7 @@ export async function createExpenseAction(
     parsed.data,
   );
 
-  revalidatePath("/dashboard");
+  revalidatePath("/calendar");
   revalidatePath("/transactions");
   return { success: true, data: result };
 }
@@ -66,6 +66,16 @@ page.tsx          (Server) — 데이터 fetch, SEO
 대시보드 분포, 분석 분포와 예산 누적 차트는 기존 Client wrapper 를 유지하고 recharts 를 사용하는 차트 본체만 분리한다.
 wrapper 가 `next/dynamic` 의 `ssr: false` 로 본체를 지연 로드해 recharts 를 초기 동기 번들에서 제외한다.
 다운로드 중에는 차트와 같은 반응형 높이의 자리표시자를 표시해 화면이 밀리지 않게 한다.
+
+`/dashboard` 는 `/analytics` 로 보내는 이전 주소다.
+분석 Page가 예산, 수입과 지출, 고정비 카드를 서버에서 렌더링하고 그 아래에 기존 분석 Client를 둔다.
+초대 다이얼로그는 가족 컴포넌트에 두고 전체 메뉴에서 연다.
+대시보드 분포 컴포넌트는 후속 정리를 위해 유지하지만 현재 화면에서는 사용하지 않는다.
+첫 화면의 구성원 아바타는 비로그인 Landing에서 계속 사용한다.
+
+통계 Action은 세션 시간대를 Service에 전달하고 기존 월별 캐시가 해당 시간대의 현재 연월을 조회한다.
+분석과 예산 Page, 분석 Action의 기본 연월은 공용 시간대 날짜 함수를 사용한다.
+시간대가 없거나 잘못되면 서울을 사용하며 명시한 조회 연월과 백엔드 집계 방식은 유지한다.
 
 ### 에러 처리
 

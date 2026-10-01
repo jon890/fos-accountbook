@@ -93,7 +93,9 @@ ADR-F21 에 따라 모든 진입점(달력의 「이 날짜에 추가」, Bottom
                             └─ revalidatePath → toast 성공 메시지
 ```
 
-type 전환 시: amount / category / description 은 유지, type-specific 필드 (date vs name+dayOfMonth) 만 초기화.
+거래 종류를 바꿔도 금액, 카테고리, 설명과 선택한 날짜를 유지한다.
+고정지출을 거쳐 지출이나 수입으로 돌아와도 날짜는 그대로다.
+고정지출 이름과 결제일은 종류를 바꿀 때 초기화한다.
 
 ---
 
@@ -176,13 +178,17 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 ```
 [page.tsx (server) — searchParams { period: m1|m3|m6|y1 }]
     │
-    └─ Promise.all 5 Action:
+    └─ Promise.all 6 Action:
         ├─ getDashboardStatsAction()                          # /dashboard/stats/monthly
         ├─ getMonthlyDailyStatsAction(year, month)            # /dashboard/daily-stats
         ├─ getExpensesAction({ familyUuid, startDate, endDate, limit: 1000 })  # 지출 상위 5건 표시용
         ├─ getCategoryBreakdownWithDeltaAction(year, month)   # /dashboard/stats/category-breakdown?compareWithPrev=true + 두 달 monthly-trend
-        └─ getMonthlyTrendAction(period, year, month)         # /dashboard/stats/monthly-trend?from&to 한 번
+        ├─ getMonthlyTrendAction(period, year, month)         # /dashboard/stats/monthly-trend?from&to 한 번
+        └─ getRecurringExpensesTotalAction()                 # /recurring-expenses/monthly-total
     │
+    ├─ 예산 카드 → /budget
+    ├─ 이번 달 수입·지출 카드
+    ├─ 이달 고정비 카드 → /transactions?tab=recurring
     └─ AnalyticsClient (use client)
             ├─ AnalyticsPeriodToggle (segmented role=tablist, URL ?period= 단방향)
             ├─ AnalyticsCategoryDonut (172/160px Donut + 중앙 totalDelta ↑/↓)
@@ -198,6 +204,11 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 
 분석 화면 위쪽에는 예전 대시보드의 예산 카드(`BudgetHeroCard`, 누르면 `/budget`), 이번 달 수입·지출(`IncomeExpenseStats`), 고정비 카드(「14」)를 둔다.
 그 아래가 기간 토글과 차트다.
+통계, 분석과 예산의 현재 연월은 세션 프로필의 시간대를 쓴다.
+시간대가 없거나 잘못되면 `Asia/Seoul` 을 쓴다.
+명시한 조회 연월은 바꾸지 않는다.
+예산의 남은 일수도 같은 시간대의 오늘로 계산한다.
+분석 Page의 일반 조회 실패는 오류 화면으로 전달하고 인증 실패는 로그인으로 보낸다.
 
 ---
 
@@ -531,8 +542,7 @@ Teal 리디자인 + 인라인 style 제거 + Empty state 일관화.
                 │       Amount input + 빠른 입력 칩 (+10만/+50만/+100만)
                 │       저장 → updateFamilyAction({ monthlyBudget })
                 │
-                ├─ [내 가족 목록 카드] — 멤버/카테고리/지출 통계
-                │       └─ "관리" → /families/{uuid}
+                ├─ [내 가족 목록 카드]: 구성원 수, 카테고리 수, 지출 수
                 │
                 └─ [외부 연동 카드] ApiTokenSettingsCard — 외부 에이전트가 가계부를 기록할 때 쓰는 토큰 (backend ADR-B18)
                         ├─ 목록: 이름, 앞부분(fab_xxxxxxxx), 발급일, 마지막 사용(없으면 「사용 기록 없음」)
@@ -563,6 +573,8 @@ Teal 리디자인 + 인라인 style 제거 + Empty state 일관화.
                                     └─ 클릭 → /transactions?tab=recurring
 ```
 
+고정지출을 등록, 수정하거나 삭제하면 내역과 분석 화면을 다시 조회한다.
+
 ---
 
 ## 16. 하단 탭과 전체 메뉴
@@ -588,4 +600,3 @@ Teal 리디자인 + 인라인 style 제거 + Empty state 일관화.
 - 하위 화면(`/categories`, `/budget`, `/notifications`, `/settings`, `/invite/*`)은 Header 왼쪽에 뒤로 가기 버튼을 둔다. 누르면 `router.back()`, 이전 기록이 없으면 `/menu` 로 간다.
 - 가족 생성, 선택, 초대 수락 화면(`/families/*`, `/invite/*`)에서는 하단 탭을 숨긴다. 가족이 없을 때 거래를 추가하지 못하게 하기 위해서다.
 - 설정의 가족 「관리」 버튼은 없는 경로(`/families/{uuid}`)를 가리켜 404 가 났다. 버튼을 없애고 가족 정보는 설정 화면 안에서 보여 준다.
-

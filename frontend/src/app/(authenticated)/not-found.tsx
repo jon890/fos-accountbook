@@ -4,7 +4,7 @@ export default function AuthenticatedNotFound() {
   return (
     <StatusCard
       kind="not-found"
-      primaryCta={{ label: "대시보드로", href: "/dashboard" }}
+      primaryCta={{ label: "홈으로", href: "/calendar" }}
     />
   );
 }

@@ -85,7 +85,7 @@ describe("createRecurringExpenseAction", () => {
       dayOfMonth: 15,
     });
     expect(mockRevalidatePath).toHaveBeenCalledWith("/transactions");
-    expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/analytics");
   });
 
   it("dayOfMonth 29 이상이면 Zod 검증 실패", async () => {

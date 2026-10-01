@@ -183,6 +183,10 @@ interface CreateIncomeRequest {
 
 ### Dashboard
 
+이 API의 월 통계는 분석 위쪽 카드와 예산 화면이 사용한다.
+현재 연월은 사용자 시간대로 선택하고 시간대가 없거나 잘못되면 서울을 사용한다.
+공유 일별 조회는 분석과 예산에 날짜, 수입과 지출만 전달하며 달력 홈은 구성원별 합계도 받는다.
+
 ```typescript
 interface DashboardStats {
   monthlyExpense: number;
@@ -223,6 +227,8 @@ interface RecentExpense {
   category: CategoryInfo;
 }
 ```
+
+`RecentExpense` 는 보존된 서비스의 반환 타입이며 현재 화면에서는 사용하지 않는다.
 
 집계 API 의 금액은 JSON 숫자로 오며 `number` 로 받는다.
 카테고리가 삭제되면 `name`, `icon`, `color` 는 null 이다.

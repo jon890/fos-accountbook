@@ -1,3 +1,4 @@
+import { getDatePartsInTimezone } from "@/lib/utils/date-timezone";
 import { serverApiGet } from "@/lib/server/api/client";
 import { ServerApiError } from "@/lib/server/api/types";
 import {
@@ -20,10 +21,9 @@ export interface DailyTransactionSummary {
 
 export async function getDashboardStats(
   familyUuid: string,
+  timezone: string = "Asia/Seoul",
 ): Promise<DashboardStats> {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+  const { year, month } = getDatePartsInTimezone(timezone);
   return getCachedDashboardStats(familyUuid, year, month);
 }
 

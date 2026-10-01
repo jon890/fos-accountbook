@@ -80,6 +80,7 @@ describe("updateRecurringExpenseAction", () => {
       { name: "유튜브 프리미엄", amount: 14900 }
     );
     expect(mockRevalidatePath).toHaveBeenCalledWith("/transactions");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/analytics");
   });
 
   it("uuid 빈 값이면 실패, service 미호출", async () => {

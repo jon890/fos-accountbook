@@ -37,7 +37,7 @@ jest.mock("@/components/families/FamilySelectorList", () => ({
     </div>
   ),
 }));
-jest.mock("@/components/dashboard/InviteFamilyDialog", () => ({
+jest.mock("@/components/families/InviteFamilyDialog", () => ({
   InviteFamilyDialog: ({ open }: { open: boolean }) =>
     open ? <div role="dialog" aria-label="가족 초대" /> : null,
 }));

@@ -10,6 +10,14 @@ import { getCategoryBreakdownWithDeltaAction } from "@/actions/analytics/get-cat
 import { getMonthlyTrendAction } from "@/actions/analytics/get-monthly-trend-action";
 import { getSelectedFamilyUuid } from "@/lib/server/auth/auth-helpers";
 import { auth } from "@/lib/server/auth";
+import { getRecurringExpensesTotalAction } from "@/actions/recurring-expense";
+import { BudgetHeroCard } from "@/components/dashboard/BudgetHeroCard";
+import { IncomeExpenseStats } from "@/components/dashboard/IncomeExpenseStats";
+import { handleActionError } from "@/lib/server/action-result-handler";
+import type { ActionResult } from "@/lib/errors";
+import { getDatePartsInTimezone } from "@/lib/utils/date-timezone";
+import { formatCurrency } from "@/lib/utils/format";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AnalyticsClient } from "./_components/AnalyticsClient";
 
@@ -25,6 +33,18 @@ function parsePeriod(raw: string | undefined): AnalyticsPeriod {
     : "m1";
 }
 
+function getAnalyticsData<T>(result: ActionResult<T>): T {
+  if (result.success) {
+    return result.data;
+  }
+
+  const isAuthError = result.error.code === "A001" || result.error.code === "A002";
+  if (isAuthError) {
+    handleActionError(result);
+  }
+  throw new Error(result.error.message);
+}
+
 export default async function AnalyticsPage({
   searchParams,
 }: {
@@ -38,33 +58,61 @@ export default async function AnalyticsPage({
   const familyUuid = await getSelectedFamilyUuid();
   if (!familyUuid) redirect("/");
 
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+  const { year, month, day } = getDatePartsInTimezone(session.user.profile?.timezone);
 
   const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
   const lastDay = new Date(year, month, 0).getDate();
   const endDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
-  const [statsResult, dailyResult, expensesResult, breakdownResult, trendResult] = await Promise.all([
+  const [statsResult, dailyResult, expensesResult, breakdownResult, trendResult, recurringResult] = await Promise.all([
     getDashboardStatsAction(),
     getMonthlyDailyStatsAction(year, month),
     getExpensesAction({ familyUuid: familyUuid, startDate, endDate, limit: 1000 }),
     getCategoryBreakdownWithDeltaAction(year, month),
     getMonthlyTrendAction(period, year, month),
+    getRecurringExpensesTotalAction(),
   ]);
 
+  const stats = getAnalyticsData(statsResult);
+  const daily = getAnalyticsData(dailyResult);
+  const expenses = getAnalyticsData(expensesResult);
+  const breakdown = getAnalyticsData(breakdownResult);
+  const trend = getAnalyticsData(trendResult);
+  const recurringTotal = getAnalyticsData(recurringResult);
+  const daysRemaining = Math.max(0, lastDay - day);
+
   return (
-    <AnalyticsClient
-      initialYear={year}
-      initialMonth={month}
-      initialStats={statsResult.success ? statsResult.data : null}
-      initialDailyStats={dailyResult.success ? dailyResult.data : []}
-      initialExpenses={expensesResult.success ? expensesResult.data.items : []}
-      familyUuid={familyUuid}
-      period={period}
-      initialBreakdown={breakdownResult.success ? breakdownResult.data : null}
-      initialTrend={trendResult.success ? trendResult.data : null}
-    />
+    <>
+      <Link href="/budget" className="block" aria-label="예산 보기">
+        <BudgetHeroCard
+          remainingBudget={stats.remainingBudget}
+          monthlyExpense={stats.monthlyExpense}
+          budget={stats.budget}
+          daysRemaining={daysRemaining}
+        />
+      </Link>
+      <IncomeExpenseStats
+        monthlyIncome={stats.monthlyIncome}
+        monthlyExpense={stats.monthlyExpense}
+      />
+      <Link
+        href="/transactions?tab=recurring"
+        className="block bg-bg-elev rounded-[var(--radius-lg)] p-4 md:p-6 mb-6 shadow-[var(--shadow-default)]"
+      >
+        <p className="text-sm text-fg-muted">이달 고정비</p>
+        <p className="num text-xl font-bold text-fg">{formatCurrency(recurringTotal)}</p>
+      </Link>
+      <AnalyticsClient
+        initialYear={year}
+        initialMonth={month}
+        initialStats={stats}
+        initialDailyStats={daily}
+        initialExpenses={expenses.items}
+        familyUuid={familyUuid}
+        period={period}
+        initialBreakdown={breakdown}
+        initialTrend={trend}
+      />
+    </>
   );
 }

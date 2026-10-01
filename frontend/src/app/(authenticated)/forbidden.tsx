@@ -4,7 +4,7 @@ export default function AuthenticatedForbidden() {
   return (
     <StatusCard
       kind="forbidden"
-      primaryCta={{ label: "홈으로", href: "/dashboard" }}
+      primaryCta={{ label: "홈으로", href: "/calendar" }}
       secondaryCta={{ label: "로그인 다시 시도", href: "/auth/signin" }}
     />
   );
