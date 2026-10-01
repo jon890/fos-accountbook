@@ -52,12 +52,11 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
 
     try {
       filterChain.doFilter(wrappedRequest, wrappedResponse);
-
+    } finally {
+      // 요청 본문 캐시는 체인 뒤에 채워진다. 예외가 전파돼도 어떤 요청이었는지 남긴다
       long duration = Duration.between(start, Instant.now()).toMillis();
       logRequest(wrappedRequest);
       logResponse(wrappedRequest, wrappedResponse, duration);
-
-    } finally {
       wrappedResponse.copyBodyToResponse();
     }
   }
