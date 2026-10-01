@@ -81,7 +81,7 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
                                                 categoryUuidEq(expense, categoryUuid),
                                                 dateGoe(expense, startDate),
                                                 dateLoe(expense, endDate))
-                                         .orderBy(expense.date.desc())
+                                         .orderBy(expense.date.desc(), expense.id.desc())
                                          .offset(pageable.getOffset())
                                          .limit(pageable.getPageSize())
                                          .fetch();
