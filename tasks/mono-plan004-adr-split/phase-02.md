@@ -7,7 +7,7 @@
 
 `adr.md` 와 `adr.md#adr-…` 를 가리키던 모든 참조를 새 파일로 바꾸고, ADR 을 추가하는 규칙을 「파일 하나와 INDEX 한 줄」 로 바꾼다. 깨진 ADR 링크를 CI 에서 잡는다.
 
-**범위 외**: ADR 본문 내용 수정.
+**범위 외**: ADR 결정 내용 수정. 경로와 링크 치환은 허용한다. ADR-M02 의 옛 파일명 언급은 당시 단일 파일이라는 설명으로 바꾸고 당시 줄 수와 결정 수는 유지한다(코디네이터 승인).
 
 ## 컨텍스트
 
@@ -26,7 +26,7 @@
 
 - 링크 형식: 같은 디렉터리 안은 `ADR-F13-…md`, 다른 디렉터리에서는 상대 경로. 앵커 없이 파일로 연결한다.
 - 문장 속 `ADR-F16` 같은 번호 표기는 링크가 아니면 그대로 둔다.
-- 링크 검사는 저장소 전체 markdown 과 `.github/*.txt` 에서 `adr.md` 문자열이 남지 않았는지, `docs/adr/ADR-` 로 가는 상대 링크의 대상 파일이 있는지 본다. 프론트 CI 는 `frontend/**` 변경에만 돌므로, 검사 스크립트는 루트 `scripts/` 에 두고 세 곳 중 어디가 바뀌어도 도는 새 워크플로 하나를 만든다.
+- 링크 검사는 저장소 전체 markdown 과 `.github/**/*.txt` 에서 `adr.md` 문자열이 남지 않았는지 본다. ADR 파일과 INDEX 상대 링크, 같은 디렉터리 링크와 남은 `#adr-` 앵커도 검사한다. 이동한 ADR 본문의 교차 링크는 새 깊이에 맞춘다.
 
 ## 작업 항목
 
@@ -36,7 +36,7 @@
 
 ### 2. 하네스 규칙
 
-- 두 `planning-overlay.md` 의 docs 컨벤션 표와 ADR 네이밍 절: "ADR 은 `docs/adr/ADR-{F|B}NN-<slug>.md` 새 파일, `docs/adr/INDEX.md` 에 한 줄 추가". 다음 번호 찾기: `ls docs/adr | grep -oE 'ADR-F[0-9]+' | sort -V | tail -1`.
+- 두 `planning-overlay.md` 의 docs 컨벤션 표와 ADR 네이밍 절을 파일 하나와 INDEX 한 줄로 바꾼다. 다음 번호는 프론트에서 `frontend/docs/adr` 의 ADR-F, 백엔드 작업 위치에서 `docs/adr` 의 ADR-B 파일로 찾는다.
 - `.claude/docs-check-overlay.md` 의 목차 대조 명령을 INDEX.md 와 파일 목록 대조로 바꾼다.
 - `CLAUDE.md` 의 저장소 배치 표와 소유 문장, 두 하위 `CLAUDE.md` 의 컨텍스트 문서 표.
 
@@ -47,19 +47,22 @@
 
 ### 4. CI `.github/workflows/docs-ci.yml`
 
-- `**/*.md`, `.github/**`, `.claude/**` 가 바뀐 PR 에서 `python3 scripts/check-adr-links.py` 를 돈다.
+- `**/*.md`, `.github/**`, `.claude/**`, 두 검사 Python 파일이 바뀐 PR 에서 unittest 와 실제 저장소 링크 검사를 실행한다.
 
 ### 5. 검사 스크립트 테스트
 
-- `scripts/test_check_adr_links.py`(표준 `unittest`): 임시 디렉터리에 깨진 링크, 남은 `adr.md`, INDEX 누락 파일을 만들어 각각 종료 코드 1, 정상 구성은 0.
+- `scripts/test_check_adr_links.py`(표준 `unittest`): 임시 디렉터리에 깨진 링크, 남은 `adr.md`, INDEX 누락 파일을 만들어 각각 종료 코드 1, 정상 구성은 0. 같은 디렉터리 ADR 링크, INDEX 링크, 남은 ADR 앵커와 이동한 교차 링크도 검증한다.
 
 ## 검증
+
+각 검사 종료 코드를 따로 확인하고 실패하면 즉시 중단한다. 문자열 검색은 검사 대상인 `*.md` 와 `.github/**/*.txt` 에 한정하고 `tasks/` 는 제외한다.
+grep 의 종료 코드 1은 문자열이 없다는 성공이며, 2 이상은 검사 실행 실패다. Python 검사 코드와 fixture 는 markdown 검사 대상이 아니다.
 
 ```bash
 # cwd: <repo root>
 python3 -m unittest scripts/test_check_adr_links.py
 python3 scripts/check-adr-links.py
-git grep -n "adr\.md" -- ':!tasks'   # 결과 없음
+git grep -n "adr\.md" -- '*.md' '.github/**/*.txt' ':!tasks'   # 결과 없음. 1은 성공, 2 이상은 실패
 cd frontend && pnpm lint:md
 ```
 

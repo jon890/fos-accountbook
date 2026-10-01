@@ -16,8 +16,8 @@
 
 ## 컨텍스트
 
-- 각 ADR 은 `<a id="adr-f16"></a>` 앵커 다음 `## ADR-F16: 제목 (날짜)` 로 시작하고, 다음 앵커 또는 파일 끝에서 끝난다. 백엔드 앞부분(ADR-B01~B16)은 앵커가 없을 수 있다. 제목 줄 `## ADR-` 을 경계로 쓴다.
-- 각 파일 맨 위에는 설명과 `## ADR Index` 목록이 있다. 이 목록은 INDEX.md 로 옮기고 원래 파일은 지운다.
+- 세 원본 모두 `^## ADR-[FBM][0-9]{2}:` 제목 줄을 경계로 쓴다. 앵커가 없는 항목도 있다.
+- 각 파일 맨 위에는 설명과 목차가 있다. 목차 제목은 `## ADR Index` 또는 `## Index` 이다. 목록은 INDEX.md 로 옮기고 원래 파일은 지운다.
 - 목적과 규칙은 `docs/adr.md` 의 ADR-M02 에 있다.
 
 **근거 문서**: `docs/adr.md` 의 ADR-M02
@@ -26,6 +26,7 @@
 
 - 파일 이름: `ADR-F16-category-breakdown-aggregation.md` 처럼 번호 뒤에 영문 소문자 kebab 슬러그. 슬러그는 제목의 뜻을 2~5 단어로 옮긴다. 번호는 원래 두 자리를 그대로 쓴다.
 - 파일 본문: 첫 줄을 `# ADR-F16: 제목 (날짜)` 로 올린다(`##` 를 `#` 로). 앵커 줄은 지운다. 나머지 본문은 그대로다. 본문 안의 제목 레벨(`###` 등)은 한 단계씩 올리지 않는다.
+- ADR 앞의 목차와 앵커는 본문에서 제외한다. ADR 사이 구분선과 빈 줄, 후행 공백은 앞 ADR 본문에 그대로 남긴다.
 - 분리는 일회성 스크립트로 한다. 스크립트는 커밋하지 않는다. 사람이 슬러그를 고른 매핑표(번호 → 슬러그)만 스크립트 입력으로 쓴다.
 - 파일 이름에 한글을 쓰지 않는다. 셸과 링크에서 인코딩 문제가 없게 하기 위해서다.
 
@@ -62,32 +63,10 @@
 
 ## 검증
 
-```bash
-# cwd: <repo root>
-fail=0
-for d in frontend/docs backend/docs docs; do
-  { test ! -e "$d/adr.md" && test -f "$d/adr/INDEX.md"; } || { echo "FAIL $d"; fail=1; }
-  n_idx=$(grep -c '^| \[ADR-' "$d/adr/INDEX.md"); n_files=$(ls "$d"/adr/ADR-*.md | wc -l | tr -d ' ')
-  [ "$n_idx" = "$n_files" ] || { echo "FAIL $d index=$n_idx files=$n_files"; fail=1; }
-done
-test "$fail" = 0
-# 본문 보존: 분리 전 커밋의 adr.md 에서 앵커 줄과 '## ' 제목 레벨을 정규화한 본문과, 분리 후 파일 본문을 번호 순으로 이어 붙인 것을 diff 한다. 결과가 없어야 한다
-python3 - <<'PY'
-import re,subprocess,glob,sys
-base=subprocess.check_output(["git","merge-base","HEAD","origin/main"]).decode().strip()
-bad=0
-for d,p in [("frontend/docs","F"),("backend/docs","B"),("docs","M")]:
-    old=subprocess.check_output(["git","show",f"{base}:{d}/adr.md"]).decode()
-    old=old[old.index(f"## ADR-{p}"):]
-    old=re.sub(r'^<a id="[^"]+"></a>\n','',old,flags=re.M)
-    old=re.sub(r'^---\s*$\n','',old,flags=re.M)
-    new="".join(open(f).read().replace("# ADR-","## ADR-",1) for f in sorted(glob.glob(f"{d}/adr/ADR-*.md")))
-    norm=lambda t:[l.rstrip() for l in t.splitlines() if l.strip()]
-    if norm(old)!=norm(new): print("DIFF",d); bad=1
-sys.exit(bad)
-PY
-cd frontend && pnpm lint:md
-```
+실패한 검사는 즉시 중단한다. 분리 전에 HEAD SHA 를 기록하고, 그 커밋의 세 원본을 임시 디렉터리에 추출한다.
+ADR 제목 경계로 나눈 원본에서 앵커 줄만 제거하고 첫 제목을 `#` 로 바꾼 결과를 새 파일과 번호별로 비교한다.
+빈 줄, 구분선과 후행 공백을 정규화하지 않는다. 원본의 ADR 수, 파일 수와 INDEX 행 수가 모두 같아야 한다.
+비교 스크립트는 임시 디렉터리에만 두고 실행 후 삭제한다. 세 INDEX.md 의 행 수와 파일 수를 확인한 뒤 `cd frontend && pnpm lint:md` 를 실행한다.
 
 ## 변경 파일
 
