@@ -8,6 +8,7 @@ import type { Expense } from "@/types/expense";
 import type { Income } from "@/types/income";
 
 const mockPush = jest.fn();
+const mockEditLoadError = jest.fn();
 jest.mock("next/navigation", () => ({ useRouter: () => ({ push: mockPush }) }));
 jest.mock("@/actions/calendar/get-calendar-month-action", () => ({ getCalendarMonthAction: jest.fn() }));
 jest.mock("@/lib/server/auth", () => ({ auth: async () => ({ user: { profile: { defaultFamilyUuid: "family-1", timezone: "Asia/Seoul" } } }) }));
@@ -15,7 +16,13 @@ jest.mock("@/components/transactions/dialogs/AddTransactionDialog", () => ({
   AddTransactionDialog: ({ open, defaultDate, onOpenChange }: { open: boolean; defaultDate: string; onOpenChange: (open: boolean) => void }) => open ? <div role="dialog" aria-label="추가">{defaultDate}<button onClick={() => onOpenChange(false)}>닫기</button></div> : null,
 }));
 jest.mock("@/components/transactions/dialogs/EditTransactionDialog", () => ({
-  EditTransactionDialog: ({ type, transaction, familyUuid, onOpenChange }: { type: string; transaction: Expense | Income; familyUuid: string; onOpenChange: (open: boolean) => void }) => <div role="dialog" aria-label="수정">{type} {transaction.uuid} {transaction.description} {familyUuid}<button onClick={() => onOpenChange(false)}>닫기</button></div>,
+  EditTransactionDialog: function MockEditDialog({ type, transaction, familyUuid, onOpenChange }: { type: string; transaction: Expense | Income; familyUuid: string; onOpenChange: (open: boolean) => void }) {
+    const { useEffect } = jest.requireActual<typeof import("react")>("react");
+    useEffect(() => {
+      mockEditLoadError();
+    }, [onOpenChange]);
+    return <div role="dialog" aria-label="수정">{type} {transaction.uuid} {transaction.description} {familyUuid}<button onClick={() => onOpenChange(false)}>닫기</button></div>;
+  },
 }));
 
 const data = calendarMonth();
@@ -131,6 +138,9 @@ describe("달력 홈", () => {
     await userEvent.setup().click(screen.getByRole("button", { name: /점심/ }));
     view.rerender(<CalendarHome {...props} data={calendarMonth({ expenses: [calendarExpense({ description: "수정된 점심" })] })} />);
     expect(screen.getByRole("dialog", { name: "수정" })).toHaveTextContent("수정된 점심");
+    expect(mockEditLoadError).toHaveBeenCalledTimes(1);
+    await userEvent.setup().click(screen.getByRole("button", { name: "닫기" }));
+    expect(screen.queryByRole("dialog", { name: "수정" })).not.toBeInTheDocument();
   });
 
   it("구성원 합계는 목록 금액 대신 서버 합계를 가입 순서로 표시한다", () => {

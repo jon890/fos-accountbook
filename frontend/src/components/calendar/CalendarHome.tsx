@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AddTransactionDialog } from "@/components/transactions/dialogs/AddTransactionDialog";
 import { EditTransactionDialog } from "@/components/transactions/dialogs/EditTransactionDialog";
@@ -28,6 +28,11 @@ function CalendarMonthContent({ data, initialDate, today, familyUuid }: Calendar
   const [previousInitialDate, setPreviousInitialDate] = useState(initialDate);
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<CalendarTransaction | null>(null);
+  const handleEditOpenChange = useCallback((open: boolean) => {
+    if (!open) {
+      setEditing(null);
+    }
+  }, []);
 
   if (initialDate !== previousInitialDate) {
     setPreviousInitialDate(initialDate);
@@ -92,11 +97,7 @@ function CalendarMonthContent({ data, initialDate, today, familyUuid }: Calendar
           type={editing.type}
           transaction={editingTransaction}
           familyUuid={familyUuid}
-          onOpenChange={(open) => {
-            if (!open) {
-              setEditing(null);
-            }
-          }}
+          onOpenChange={handleEditOpenChange}
         />
       )}
     </div>
