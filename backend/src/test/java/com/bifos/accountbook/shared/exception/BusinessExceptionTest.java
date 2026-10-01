@@ -1,13 +1,12 @@
 package com.bifos.accountbook.shared.exception;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/**
- * BusinessException 단위 테스트
- */
+/** BusinessException 단위 테스트 */
 @DisplayName("BusinessException 테스트")
 class BusinessExceptionTest {
 
@@ -49,8 +48,7 @@ class BusinessExceptionTest {
     BusinessException exception = new BusinessException(ErrorCode.USER_NOT_FOUND);
 
     // When
-    exception.addParameter("userId", "123")
-             .addParameter("email", "test@example.com");
+    exception.addParameter("userId", "123").addParameter("email", "test@example.com");
 
     // Then
     assertThat(exception.getParameters()).hasSize(2);
@@ -65,8 +63,9 @@ class BusinessExceptionTest {
     BusinessException exception = new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
 
     // When
-    exception.addDebugInfo("query", "SELECT * FROM users")
-             .addDebugInfo("timestamp", "2025-01-01T12:00:00");
+    exception
+        .addDebugInfo("query", "SELECT * FROM users")
+        .addDebugInfo("timestamp", "2025-01-01T12:00:00");
 
     // Then
     assertThat(exception.getDebugInfo()).hasSize(2);
@@ -78,11 +77,12 @@ class BusinessExceptionTest {
   @DisplayName("빌더 패턴으로 예외를 구성할 수 있다")
   void builderPattern() {
     // When
-    BusinessException exception = new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
-        .addParameter("familyId", "family-123")
-        .addParameter("userId", "user-456")
-        .addDebugInfo("requestPath", "/api/families/family-123")
-        .addDebugInfo("method", "GET");
+    BusinessException exception =
+        new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
+            .addParameter("familyId", "family-123")
+            .addParameter("userId", "user-456")
+            .addDebugInfo("requestPath", "/api/families/family-123")
+            .addDebugInfo("method", "GET");
 
     // Then
     assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.FAMILY_NOT_FOUND);
@@ -120,10 +120,8 @@ class BusinessExceptionTest {
   @DisplayName("편의 메서드: invalidInput을 사용할 수 있다")
   void invalidInputConvenienceMethod() {
     // When
-    BusinessException exception = BusinessException.invalidInput(
-        "email",
-        "invalid-email",
-        "이메일 형식이 아닙니다");
+    BusinessException exception =
+        BusinessException.invalidInput("email", "invalid-email", "이메일 형식이 아닙니다");
 
     // Then
     assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
@@ -140,8 +138,8 @@ class BusinessExceptionTest {
     Exception cause = new RuntimeException("Database connection failed");
 
     // When
-    BusinessException exception = new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, cause)
-        .withCause();
+    BusinessException exception =
+        new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, cause).withCause();
 
     // Then
     assertThat(exception.getCause()).isEqualTo(cause);
@@ -155,9 +153,10 @@ class BusinessExceptionTest {
     // Given
     ErrorCode errorCode = ErrorCode.EXPENSE_NOT_FOUND;
     String message = "지출 내역을 찾을 수 없습니다";
-    Map<String, Object> parameters = Map.of(
-        "expenseId", "expense-123",
-        "familyId", "family-456");
+    Map<String, Object> parameters =
+        Map.of(
+            "expenseId", "expense-123",
+            "familyId", "family-456");
 
     // When
     BusinessException exception = new BusinessException(errorCode, message, parameters);
@@ -170,4 +169,3 @@ class BusinessExceptionTest {
     assertThat(exception.getParameters().get("familyId")).isEqualTo("family-456");
   }
 }
-

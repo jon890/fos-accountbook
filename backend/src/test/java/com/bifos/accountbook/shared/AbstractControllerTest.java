@@ -1,6 +1,7 @@
 package com.bifos.accountbook.shared;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
@@ -16,13 +17,15 @@ import org.springframework.web.filter.CharacterEncodingFilter;
  * Presentation Layer 통합 테스트를 위한 추상 클래스
  *
  * <h3>제공되는 기능:</h3>
+ *
  * <ul>
- *     <li>Spring Boot 테스트 컨텍스트 로딩 ({@link FosSpringBootTest})</li>
- *     <li>TestFixtures 자동 초기화 (Fluent API로 테스트 데이터 생성)</li>
- *     <li>데이터베이스 자동 정리 (각 테스트 메서드 후)</li>
+ *   <li>Spring Boot 테스트 컨텍스트 로딩 ({@link FosSpringBootTest})
+ *   <li>TestFixtures 자동 초기화 (Fluent API로 테스트 데이터 생성)
+ *   <li>데이터베이스 자동 정리 (각 테스트 메서드 후)
  * </ul>
  *
  * <h3>사용법:</h3>
+ *
  * <pre>{@code
  * @DisplayName("User API 통합 테스트")
  * class UserControllerTest extends AbstractControllerTest {
@@ -53,10 +56,11 @@ import org.springframework.web.filter.CharacterEncodingFilter;
  * }</pre>
  *
  * <h3>주의사항:</h3>
+ *
  * <ul>
- *     <li>각 테스트 메서드는 독립적으로 실행됩니다 (데이터베이스 자동 정리)</li>
- *     <li>TestFixtures는 각 테스트마다 자동 초기화됩니다</li>
- *     <li>Fluent API로 필요한 테스트 데이터를 체이닝 방식으로 생성하세요</li>
+ *   <li>각 테스트 메서드는 독립적으로 실행됩니다 (데이터베이스 자동 정리)
+ *   <li>TestFixtures는 각 테스트마다 자동 초기화됩니다
+ *   <li>Fluent API로 필요한 테스트 데이터를 체이닝 방식으로 생성하세요
  * </ul>
  *
  * @see TestFixturesSupport
@@ -69,26 +73,27 @@ public abstract class AbstractControllerTest extends TestFixturesSupport {
 
   protected ObjectMapper objectMapper;
 
-  @Autowired
-  private WebApplicationContext context;
-  @Autowired
-  private TransactionTemplate transactionTemplate;
+  @Autowired private WebApplicationContext context;
+  @Autowired private TransactionTemplate transactionTemplate;
 
   @BeforeEach
   void setup() {
-    mockMvc = MockMvcBuilders.webAppContextSetup(context)
-                             .addFilter(new CharacterEncodingFilter("UTF-8", true))
-                             .apply(springSecurity())
-                             .build();
-    objectMapper = new ObjectMapper()
-        .registerModule(new JavaTimeModule())
-        .registerModule(new ParameterNamesModule());
+    mockMvc =
+        MockMvcBuilders.webAppContextSetup(context)
+            .addFilter(new CharacterEncodingFilter("UTF-8", true))
+            .apply(springSecurity())
+            .build();
+    objectMapper =
+        new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .registerModule(new ParameterNamesModule());
   }
 
   public void doTransactionWithoutResult(SimpleFunction func) {
-    transactionTemplate.executeWithoutResult(status -> {
-      func.apply();
-    });
+    transactionTemplate.executeWithoutResult(
+        status -> {
+          func.apply();
+        });
   }
 
   public <T> T doTransaction(TransactionFunction<T> func) {
@@ -105,4 +110,3 @@ public abstract class AbstractControllerTest extends TestFixturesSupport {
     T apply();
   }
 }
-

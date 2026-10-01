@@ -4,9 +4,7 @@ import com.bifos.accountbook.expense.domain.value.ExpenseStatus;
 import com.bifos.accountbook.shared.converter.AbstractCodeEnumConverter;
 import jakarta.persistence.Converter;
 
-/**
- * ExpenseStatus Enum을 DB 코드값으로 변환하는 Converter
- */
+/** ExpenseStatus Enum을 DB 코드값으로 변환하는 Converter */
 @Converter(autoApply = true)
 public class ExpenseStatusConverter extends AbstractCodeEnumConverter<ExpenseStatus> {
 
@@ -14,4 +12,3 @@ public class ExpenseStatusConverter extends AbstractCodeEnumConverter<ExpenseSta
     super(ExpenseStatus.class);
   }
 }
-

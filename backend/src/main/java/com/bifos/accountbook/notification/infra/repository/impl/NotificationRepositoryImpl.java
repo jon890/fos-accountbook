@@ -11,10 +11,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-/**
- * NotificationRepository 구현체
- * JpaRepository를 내부적으로 사용하여 도메인 인터페이스 구현
- */
+/** NotificationRepository 구현체 JpaRepository를 내부적으로 사용하여 도메인 인터페이스 구현 */
 @Repository
 @RequiredArgsConstructor
 public class NotificationRepositoryImpl implements NotificationRepository {
@@ -53,9 +50,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
 
   @Override
   public boolean existsByFamilyTypeAndMonth(
-      CustomUuid familyUuid,
-      NotificationType type,
-      String yearMonth) {
+      CustomUuid familyUuid, NotificationType type, String yearMonth) {
     return jpaRepository.existsByFamilyUuidAndTypeAndYearMonth(familyUuid, type, yearMonth);
   }
 
@@ -84,4 +79,3 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     jpaRepository.deleteByCreatedAtBefore(dateTime);
   }
 }
-

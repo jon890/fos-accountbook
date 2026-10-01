@@ -44,12 +44,10 @@ public class FamilyController {
   @ApiResponse(responseCode = "401", description = "인증 실패")
   @PostMapping
   public ResponseEntity<ApiSuccessResponse<FamilyResponse>> createFamily(
-      @LoginUser LoginUserDto loginUser,
-      @Valid @RequestBody CreateFamilyRequest request) {
+      @LoginUser LoginUserDto loginUser, @Valid @RequestBody CreateFamilyRequest request) {
     FamilyResponse response = familyService.createFamily(loginUser.userUuid(), request);
 
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
+    return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiSuccessResponse.of("가족이 생성되었습니다", response));
   }
 
@@ -84,7 +82,8 @@ public class FamilyController {
   public ResponseEntity<ApiSuccessResponse<List<FamilyMemberResponse>>> getFamilyMembers(
       @LoginUser LoginUserDto loginUser,
       @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid) {
-    List<FamilyMemberResponse> members = familyService.getFamilyMembers(loginUser.userUuid(), familyUuid);
+    List<FamilyMemberResponse> members =
+        familyService.getFamilyMembers(loginUser.userUuid(), familyUuid);
 
     return ResponseEntity.ok(ApiSuccessResponse.of(members));
   }

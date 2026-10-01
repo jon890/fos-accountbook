@@ -4,9 +4,7 @@ import com.bifos.accountbook.income.domain.value.IncomeStatus;
 import com.bifos.accountbook.shared.converter.AbstractCodeEnumConverter;
 import jakarta.persistence.Converter;
 
-/**
- * IncomeStatus Enum을 DB 코드값으로 변환하는 Converter
- */
+/** IncomeStatus Enum을 DB 코드값으로 변환하는 Converter */
 @Converter(autoApply = true)
 public class IncomeStatusConverter extends AbstractCodeEnumConverter<IncomeStatus> {
 
@@ -14,4 +12,3 @@ public class IncomeStatusConverter extends AbstractCodeEnumConverter<IncomeStatu
     super(IncomeStatus.class);
   }
 }
-

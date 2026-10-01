@@ -22,10 +22,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-/**
- * FamilyRepository 구현체
- * JpaRepository를 내부적으로 사용하여 도메인 인터페이스 구현
- */
+/** FamilyRepository 구현체 JpaRepository를 내부적으로 사용하여 도메인 인터페이스 구현 */
 @Repository
 @RequiredArgsConstructor
 public class FamilyRepositoryImpl implements FamilyRepository {
@@ -61,35 +58,42 @@ public class FamilyRepositoryImpl implements FamilyRepository {
     QExpense exp = QExpense.expense;
     QCategory cat = QCategory.category;
 
-    JPQLQuery<Long> memberCountSubQ = JPAExpressions
-        .select(fmc.id.count())
-        .from(fmc)
-        .where(fmc.familyUuid.eq(f.uuid)
-                             .and(fmc.status.eq(FamilyMemberStatus.ACTIVE)));
+    JPQLQuery<Long> memberCountSubQ =
+        JPAExpressions.select(fmc.id.count())
+            .from(fmc)
+            .where(fmc.familyUuid.eq(f.uuid).and(fmc.status.eq(FamilyMemberStatus.ACTIVE)));
 
-    JPQLQuery<Long> expenseCountSubQ = JPAExpressions
-        .select(exp.id.count())
-        .from(exp)
-        .where(exp.familyUuid.eq(f.uuid)
-                              .and(exp.status.eq(ExpenseStatus.ACTIVE)));
+    JPQLQuery<Long> expenseCountSubQ =
+        JPAExpressions.select(exp.id.count())
+            .from(exp)
+            .where(exp.familyUuid.eq(f.uuid).and(exp.status.eq(ExpenseStatus.ACTIVE)));
 
-    JPQLQuery<Long> categoryCountSubQ = JPAExpressions
-        .select(cat.id.count())
-        .from(cat)
-        .where(cat.familyUuid.eq(f.uuid)
-                              .and(cat.status.eq(CategoryStatus.ACTIVE)));
+    JPQLQuery<Long> categoryCountSubQ =
+        JPAExpressions.select(cat.id.count())
+            .from(cat)
+            .where(cat.familyUuid.eq(f.uuid).and(cat.status.eq(CategoryStatus.ACTIVE)));
 
     // Projections.constructor()는 FamilyWithCountsProjection 생성자 파라미터 순서와 일치해야 합니다.
     return queryFactory
-        .select(Projections.constructor(FamilyWithCountsProjection.class,
-            f.uuid, f.name, f.monthlyBudget, f.createdAt, f.updatedAt,
-            memberCountSubQ, expenseCountSubQ, categoryCountSubQ))
+        .select(
+            Projections.constructor(
+                FamilyWithCountsProjection.class,
+                f.uuid,
+                f.name,
+                f.monthlyBudget,
+                f.createdAt,
+                f.updatedAt,
+                memberCountSubQ,
+                expenseCountSubQ,
+                categoryCountSubQ))
         .from(f)
-        .join(fm).on(fm.familyUuid.eq(f.uuid)
-                                  .and(fm.userUuid.eq(userUuid))
-                                  .and(fm.status.eq(FamilyMemberStatus.ACTIVE)))
+        .join(fm)
+        .on(
+            fm.familyUuid
+                .eq(f.uuid)
+                .and(fm.userUuid.eq(userUuid))
+                .and(fm.status.eq(FamilyMemberStatus.ACTIVE)))
         .where(f.status.eq(FamilyStatus.ACTIVE))
         .fetch();
   }
 }
-

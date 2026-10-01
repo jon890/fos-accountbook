@@ -20,6 +20,5 @@ public class DailyStatsResponse {
   private BigDecimal totalIncome;
   private BigDecimal totalExpense;
 
-  @Builder.Default
-  private List<MemberAmount> memberExpenseTotals = new ArrayList<>();
+  @Builder.Default private List<MemberAmount> memberExpenseTotals = new ArrayList<>();
 }

@@ -49,10 +49,10 @@ public class ExpenseController {
       @LoginUser LoginUserDto loginUser,
       @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
       @Valid @RequestBody CreateExpenseRequest request) {
-    ExpenseResponse response = expenseService.createExpense(loginUser.userUuid(), familyUuid, request);
+    ExpenseResponse response =
+        expenseService.createExpense(loginUser.userUuid(), familyUuid, request);
 
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
+    return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiSuccessResponse.of("지출이 등록되었습니다", response));
   }
 
@@ -68,11 +68,11 @@ public class ExpenseController {
       @RequestParam(required = false) String startDate,
       @RequestParam(required = false) String endDate) {
 
-    ExpenseSearchRequest searchRequest = ExpenseSearchRequest.withDefaults(
-        page, size, categoryId, startDate, endDate);
+    ExpenseSearchRequest searchRequest =
+        ExpenseSearchRequest.withDefaults(page, size, categoryId, startDate, endDate);
 
-    Page<ExpenseResponse> expensesPage = expenseService.getFamilyExpenses(
-        loginUser.userUuid(), familyUuid, searchRequest);
+    Page<ExpenseResponse> expensesPage =
+        expenseService.getFamilyExpenses(loginUser.userUuid(), familyUuid, searchRequest);
 
     PaginationResponse<ExpenseResponse> response = PaginationResponse.from(expensesPage);
 
@@ -87,7 +87,8 @@ public class ExpenseController {
       @LoginUser LoginUserDto loginUser,
       @PathVariable CustomUuid familyUuid,
       @PathVariable CustomUuid expenseUuid) {
-    ExpenseResponse expense = expenseService.getExpense(loginUser.userUuid(), familyUuid, expenseUuid);
+    ExpenseResponse expense =
+        expenseService.getExpense(loginUser.userUuid(), familyUuid, expenseUuid);
 
     return ResponseEntity.ok(ApiSuccessResponse.of(expense));
   }
@@ -102,7 +103,8 @@ public class ExpenseController {
       @PathVariable CustomUuid familyUuid,
       @PathVariable CustomUuid expenseUuid,
       @Valid @RequestBody UpdateExpenseRequest request) {
-    ExpenseResponse response = expenseService.updateExpense(loginUser.userUuid(), familyUuid, expenseUuid, request);
+    ExpenseResponse response =
+        expenseService.updateExpense(loginUser.userUuid(), familyUuid, expenseUuid, request);
 
     return ResponseEntity.ok(ApiSuccessResponse.of("지출이 수정되었습니다", response));
   }

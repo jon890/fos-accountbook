@@ -25,12 +25,12 @@ public class FamilyMemberResponse {
   public static FamilyMemberResponse from(FamilyMember member) {
     User user = member.getUser();
     return FamilyMemberResponse.builder()
-                               .userUuid(member.getUserUuid().getValue())
-                               .name(user.getName())
-                               .email(user.getEmail())
-                               .image(user.getImage())
-                               .role(member.getRole())
-                               .joinedAt(member.getJoinedAt())
-                               .build();
+        .userUuid(member.getUserUuid().getValue())
+        .name(user.getName())
+        .email(user.getEmail())
+        .image(user.getImage())
+        .role(member.getRole())
+        .joinedAt(member.getJoinedAt())
+        .build();
   }
 }

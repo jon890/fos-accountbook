@@ -46,8 +46,7 @@ public class User {
   @Column(name = "provider_id", nullable = false, length = 255)
   private String providerId; // OAuth provider account ID
 
-  @Column()
-  private String name;
+  @Column() private String name;
 
   @Column(nullable = false)
   private String email;
@@ -67,16 +66,14 @@ public class User {
   @Column(name = "updatedAt", nullable = false)
   private LocalDateTime updatedAt;
 
-  /**
-   * 사용자 상태
-   * ACTIVE: 활성, DELETED: 삭제됨
-   * UserStatusConverter가 자동으로 코드값으로 변환하여 DB에 저장합니다.
-   */
+  /** 사용자 상태 ACTIVE: 활성, DELETED: 삭제됨 UserStatusConverter가 자동으로 코드값으로 변환하여 DB에 저장합니다. */
   @Column(nullable = false, length = 20)
   @Builder.Default
   private UserStatus status = UserStatus.ACTIVE;
 
-  @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+  @OneToMany(
+      mappedBy = "user",
+      cascade = {CascadeType.PERSIST, CascadeType.MERGE})
   @Builder.Default
   private List<FamilyMember> familyMembers = new ArrayList<>();
 

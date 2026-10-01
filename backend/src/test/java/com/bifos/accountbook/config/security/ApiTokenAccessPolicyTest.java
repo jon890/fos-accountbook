@@ -16,38 +16,34 @@ class ApiTokenAccessPolicyTest {
 
   @ParameterizedTest(name = "{0} {1} 은 허용한다")
   @CsvSource({
-      "GET, /api/v1/families",
-      "GET, /api/v1/families/" + FAMILY + "/categories",
-      "GET, /api/v1/families/" + FAMILY + "/expenses",
-      "POST, /api/v1/families/" + FAMILY + "/expenses",
-      "GET, /api/v1/families/" + FAMILY + "/expenses/" + ITEM,
-      "PUT, /api/v1/families/" + FAMILY + "/expenses/" + ITEM,
-      "DELETE, /api/v1/families/" + FAMILY + "/expenses/" + ITEM,
-      "GET, /api/v1/families/" + FAMILY + "/incomes",
-      "POST, /api/v1/families/" + FAMILY + "/incomes",
-      "GET, /api/v1/families/" + FAMILY + "/incomes/" + ITEM,
-      "PUT, /api/v1/families/" + FAMILY + "/incomes/" + ITEM,
-      "DELETE, /api/v1/families/" + FAMILY + "/incomes/" + ITEM
+    "GET, /api/v1/families",
+    "GET, /api/v1/families/" + FAMILY + "/categories",
+    "GET, /api/v1/families/" + FAMILY + "/expenses",
+    "POST, /api/v1/families/" + FAMILY + "/expenses",
+    "GET, /api/v1/families/" + FAMILY + "/expenses/" + ITEM,
+    "PUT, /api/v1/families/" + FAMILY + "/expenses/" + ITEM,
+    "DELETE, /api/v1/families/" + FAMILY + "/expenses/" + ITEM,
+    "GET, /api/v1/families/" + FAMILY + "/incomes",
+    "POST, /api/v1/families/" + FAMILY + "/incomes",
+    "GET, /api/v1/families/" + FAMILY + "/incomes/" + ITEM,
+    "PUT, /api/v1/families/" + FAMILY + "/incomes/" + ITEM,
+    "DELETE, /api/v1/families/" + FAMILY + "/incomes/" + ITEM
   })
   void allowedRequests(String method, String uri) {
-    assertThat(policy.isAllowed(method, uri))
-        .as("%s %s 는 허용 목록에 있어야 한다", method, uri)
-        .isTrue();
+    assertThat(policy.isAllowed(method, uri)).as("%s %s 는 허용 목록에 있어야 한다", method, uri).isTrue();
   }
 
   @ParameterizedTest(name = "{0} {1} 은 거부한다")
   @CsvSource({
-      "DELETE, /api/v1/families/" + FAMILY,
-      "POST, /api/v1/families",
-      "GET, /api/v1/users/me/api-tokens",
-      "POST, /api/v1/families/" + FAMILY + "/categories",
-      "GET, /api/v1/families/" + FAMILY + "/expenses-extra",
-      "PATCH, /api/v1/families/" + FAMILY + "/expenses/" + ITEM,
-      "GET, /api/v1/families/" + FAMILY + "/dashboard/stats/monthly"
+    "DELETE, /api/v1/families/" + FAMILY,
+    "POST, /api/v1/families",
+    "GET, /api/v1/users/me/api-tokens",
+    "POST, /api/v1/families/" + FAMILY + "/categories",
+    "GET, /api/v1/families/" + FAMILY + "/expenses-extra",
+    "PATCH, /api/v1/families/" + FAMILY + "/expenses/" + ITEM,
+    "GET, /api/v1/families/" + FAMILY + "/dashboard/stats/monthly"
   })
   void deniedRequests(String method, String uri) {
-    assertThat(policy.isAllowed(method, uri))
-        .as("%s %s 는 허용 목록 밖이어야 한다", method, uri)
-        .isFalse();
+    assertThat(policy.isAllowed(method, uri)).as("%s %s 는 허용 목록 밖이어야 한다", method, uri).isFalse();
   }
 }

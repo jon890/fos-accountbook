@@ -50,31 +50,32 @@ public class RecurringExpenseController {
       @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
       @Valid @RequestBody CreateRecurringExpenseRequest request) {
 
-    RecurringExpenseDto.Create createDto = RecurringExpenseDto.Create.builder()
-        .categoryUuid(request.getCategoryUuid())
-        .name(request.getName())
-        .amount(request.getAmount())
-        .dayOfMonth(request.getDayOfMonth())
-        .build();
+    RecurringExpenseDto.Create createDto =
+        RecurringExpenseDto.Create.builder()
+            .categoryUuid(request.getCategoryUuid())
+            .name(request.getName())
+            .amount(request.getAmount())
+            .dayOfMonth(request.getDayOfMonth())
+            .build();
 
     RecurringExpenseDto.Response serviceResponse =
         recurringExpenseService.create(loginUser.userUuid(), familyUuid, createDto);
 
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
-        .body(ApiSuccessResponse.of("반복 지출이 등록되었습니다",
-            RecurringExpenseResponse.from(serviceResponse)));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(
+            ApiSuccessResponse.of(
+                "반복 지출이 등록되었습니다", RecurringExpenseResponse.from(serviceResponse)));
   }
 
-  @Operation(summary = "반복 지출 목록 조회",
+  @Operation(
+      summary = "반복 지출 목록 조회",
       description = "가족의 반복 지출 목록을 조회합니다. month 파라미터로 해당 월 생성 여부를 확인합니다.")
   @ApiResponse(responseCode = "200", description = "조회 성공")
   @GetMapping
   public ResponseEntity<ApiSuccessResponse<GetRecurringExpensesResponse>> getRecurringExpenses(
       @LoginUser LoginUserDto loginUser,
       @PathVariable CustomUuid familyUuid,
-      @Parameter(description = "조회 월 (YYYY-MM)")
-      @RequestParam(required = false) String month) {
+      @Parameter(description = "조회 월 (YYYY-MM)") @RequestParam(required = false) String month) {
 
     List<RecurringExpenseDto.Response> serviceResponses =
         recurringExpenseService.getAll(loginUser.userUuid(), familyUuid, month);
@@ -82,25 +83,23 @@ public class RecurringExpenseController {
     BigDecimal totalMonthlyAmount =
         recurringExpenseService.getMonthlyTotal(loginUser.userUuid(), familyUuid);
 
-    List<RecurringExpenseResponse> items = serviceResponses.stream()
-        .map(RecurringExpenseResponse::from)
-        .collect(Collectors.toList());
+    List<RecurringExpenseResponse> items =
+        serviceResponses.stream().map(RecurringExpenseResponse::from).collect(Collectors.toList());
 
-    GetRecurringExpensesResponse response = GetRecurringExpensesResponse.builder()
-        .totalMonthlyAmount(totalMonthlyAmount)
-        .items(items)
-        .build();
+    GetRecurringExpensesResponse response =
+        GetRecurringExpensesResponse.builder()
+            .totalMonthlyAmount(totalMonthlyAmount)
+            .items(items)
+            .build();
 
     return ResponseEntity.ok(ApiSuccessResponse.of(response));
   }
 
-  @Operation(summary = "반복 지출 월간 총액 조회",
-      description = "활성 상태인 반복 지출의 월간 총액을 조회합니다.")
+  @Operation(summary = "반복 지출 월간 총액 조회", description = "활성 상태인 반복 지출의 월간 총액을 조회합니다.")
   @ApiResponse(responseCode = "200", description = "조회 성공")
   @GetMapping("/monthly-total")
   public ResponseEntity<ApiSuccessResponse<BigDecimal>> getMonthlyTotal(
-      @LoginUser LoginUserDto loginUser,
-      @PathVariable CustomUuid familyUuid) {
+      @LoginUser LoginUserDto loginUser, @PathVariable CustomUuid familyUuid) {
 
     BigDecimal totalMonthlyAmount =
         recurringExpenseService.getMonthlyTotal(loginUser.userUuid(), familyUuid);
@@ -119,19 +118,19 @@ public class RecurringExpenseController {
       @PathVariable CustomUuid uuid,
       @Valid @RequestBody UpdateRecurringExpenseRequest request) {
 
-    RecurringExpenseDto.Update updateDto = RecurringExpenseDto.Update.builder()
-        .categoryUuid(request.getCategoryUuid())
-        .name(request.getName())
-        .amount(request.getAmount())
-        .dayOfMonth(request.getDayOfMonth())
-        .build();
+    RecurringExpenseDto.Update updateDto =
+        RecurringExpenseDto.Update.builder()
+            .categoryUuid(request.getCategoryUuid())
+            .name(request.getName())
+            .amount(request.getAmount())
+            .dayOfMonth(request.getDayOfMonth())
+            .build();
 
     RecurringExpenseDto.Response serviceResponse =
-        recurringExpenseService.update(
-            loginUser.userUuid(), familyUuid, uuid, updateDto);
+        recurringExpenseService.update(loginUser.userUuid(), familyUuid, uuid, updateDto);
 
-    return ResponseEntity.ok(ApiSuccessResponse.of("반복 지출이 수정되었습니다",
-        RecurringExpenseResponse.from(serviceResponse)));
+    return ResponseEntity.ok(
+        ApiSuccessResponse.of("반복 지출이 수정되었습니다", RecurringExpenseResponse.from(serviceResponse)));
   }
 
   @Operation(summary = "반복 지출 삭제", description = "반복 지출을 종료(삭제) 처리합니다.")

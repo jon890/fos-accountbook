@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.bifos.accountbook.config.security.JwtProperties;
 import com.bifos.accountbook.config.security.JwtTokenProvider;
 import com.bifos.accountbook.config.security.SocialLoginAssertionVerifier;
@@ -31,14 +32,11 @@ class AuthControllerTest extends AbstractControllerTest {
 
   private static final String SOCIAL_LOGIN_URL = "/api/v1/auth/social-login";
 
-  @Autowired
-  private JwtProperties jwtProperties;
+  @Autowired private JwtProperties jwtProperties;
 
-  @Autowired
-  private JwtTokenProvider jwtTokenProvider;
+  @Autowired private JwtTokenProvider jwtTokenProvider;
 
-  @Autowired
-  private SecurityFilterChain securityFilterChain;
+  @Autowired private SecurityFilterChain securityFilterChain;
 
   private final SocialLoginRequest request =
       new SocialLoginRequest("google", "google-123", "user@example.com", "사용자", null);
@@ -46,13 +44,15 @@ class AuthControllerTest extends AbstractControllerTest {
   private String assertionFor(String subject, String email) {
     long now = System.currentTimeMillis();
     return Jwts.builder()
-               .audience().add(SocialLoginAssertionVerifier.AUDIENCE).and()
-               .subject(subject)
-               .claim("email", email)
-               .issuedAt(new Date(now))
-               .expiration(new Date(now + 60_000))
-               .signWith(SocialLoginAssertionVerifier.deriveKey(jwtProperties.getSecret()), Jwts.SIG.HS256)
-               .compact();
+        .audience()
+        .add(SocialLoginAssertionVerifier.AUDIENCE)
+        .and()
+        .subject(subject)
+        .claim("email", email)
+        .issuedAt(new Date(now))
+        .expiration(new Date(now + 60_000))
+        .signWith(SocialLoginAssertionVerifier.deriveKey(jwtProperties.getSecret()), Jwts.SIG.HS256)
+        .compact();
   }
 
   private String refreshRequest(String refreshToken) throws Exception {
@@ -60,52 +60,65 @@ class AuthControllerTest extends AbstractControllerTest {
   }
 
   private AuthenticationEntryPoint authenticationEntryPoint() {
-    return securityFilterChain.getFilters()
-                              .stream()
-                              .filter(ExceptionTranslationFilter.class::isInstance)
-                              .map(ExceptionTranslationFilter.class::cast)
-                              .findFirst()
-                              .orElseThrow(() -> new AssertionError("ExceptionTranslationFilter가 없다"))
-                              .getAuthenticationEntryPoint();
+    return securityFilterChain.getFilters().stream()
+        .filter(ExceptionTranslationFilter.class::isInstance)
+        .map(ExceptionTranslationFilter.class::cast)
+        .findFirst()
+        .orElseThrow(() -> new AssertionError("ExceptionTranslationFilter가 없다"))
+        .getAuthenticationEntryPoint();
   }
 
   @Test
   @DisplayName("소셜 로그인 - 서명이 맞으면 토큰을 발급한다")
   void socialLogin_Success_WithValidAssertion() throws Exception {
-    mockMvc.perform(post(SOCIAL_LOGIN_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header(SocialLoginAssertionVerifier.HEADER, assertionFor("google:google-123", "user@example.com"))
-                        .content(objectMapper.writeValueAsString(request)))
-           .andExpect(status().isOk())
-           .andExpect(jsonPath("$.data.accessToken").isNotEmpty());
+    mockMvc
+        .perform(
+            post(SOCIAL_LOGIN_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(
+                    SocialLoginAssertionVerifier.HEADER,
+                    assertionFor("google:google-123", "user@example.com"))
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.accessToken").isNotEmpty());
   }
 
   @Test
   @DisplayName("소셜 로그인 - 서명이 없으면 401")
   void socialLogin_Unauthorized_WithoutAssertion() throws Exception {
-    mockMvc.perform(post(SOCIAL_LOGIN_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-           .andExpect(status().isUnauthorized());
+    mockMvc
+        .perform(
+            post(SOCIAL_LOGIN_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isUnauthorized());
   }
 
   @Test
   @DisplayName("소셜 로그인 - 다른 사용자의 서명을 재사용하면 401")
   void socialLogin_Unauthorized_WithAssertionForOtherUser() throws Exception {
-    mockMvc.perform(post(SOCIAL_LOGIN_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header(SocialLoginAssertionVerifier.HEADER, assertionFor("google:someone-else", "user@example.com"))
-                        .content(objectMapper.writeValueAsString(request)))
-           .andExpect(status().isUnauthorized());
+    mockMvc
+        .perform(
+            post(SOCIAL_LOGIN_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(
+                    SocialLoginAssertionVerifier.HEADER,
+                    assertionFor("google:someone-else", "user@example.com"))
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isUnauthorized());
   }
 
   @Test
   @DisplayName("로그인 서명을 access token 으로 쓰면 인증되지 않는다")
   void assertion_IsNotAcceptedAsAccessToken() throws Exception {
-    mockMvc.perform(get("/api/v1/families")
-                        .header("Authorization", "Bearer " + assertionFor("google:google-123", "user@example.com")))
-           .andExpect(status().isUnauthorized())
-           .andExpect(jsonPath("$.code").value("A002"));
+    mockMvc
+        .perform(
+            get("/api/v1/families")
+                .header(
+                    "Authorization",
+                    "Bearer " + assertionFor("google:google-123", "user@example.com")))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code").value("A002"));
   }
 
   @Test
@@ -114,12 +127,14 @@ class AuthControllerTest extends AbstractControllerTest {
     User user = fixtures.users.user().build();
     String refreshToken = jwtTokenProvider.generateRefreshToken(user);
 
-    mockMvc.perform(post("/api/v1/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(refreshRequest(refreshToken)))
-           .andExpect(status().isOk())
-           .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
-           .andExpect(jsonPath("$.data.refreshToken").isNotEmpty());
+    mockMvc
+        .perform(
+            post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(refreshRequest(refreshToken)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+        .andExpect(jsonPath("$.data.refreshToken").isNotEmpty());
   }
 
   @Test
@@ -128,11 +143,13 @@ class AuthControllerTest extends AbstractControllerTest {
     User user = fixtures.users.user().build();
     String accessToken = jwtTokenProvider.generateToken(user).getToken();
 
-    mockMvc.perform(post("/api/v1/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(refreshRequest(accessToken)))
-           .andExpect(status().isUnauthorized())
-           .andExpect(jsonPath("$.code").value("A002"));
+    mockMvc
+        .perform(
+            post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(refreshRequest(accessToken)))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code").value("A002"));
   }
 
   @Test
@@ -141,27 +158,28 @@ class AuthControllerTest extends AbstractControllerTest {
     User user = fixtures.users.user().build();
     String refreshToken = jwtTokenProvider.generateRefreshToken(user);
 
-    mockMvc.perform(get("/api/v1/families")
-                        .header("Authorization", "Bearer " + refreshToken))
-           .andExpect(status().isUnauthorized())
-           .andExpect(jsonPath("$.code").value("A002"));
+    mockMvc
+        .perform(get("/api/v1/families").header("Authorization", "Bearer " + refreshToken))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code").value("A002"));
   }
 
   @Test
   @DisplayName("인증 정보 없이 보호 경로를 호출하면 401 A002를 반환한다")
   void protectedResource_Unauthorized_WithoutToken() throws Exception {
-    mockMvc.perform(get("/api/v1/families"))
-           .andExpect(status().isUnauthorized())
-           .andExpect(jsonPath("$.code").value("A002"));
+    mockMvc
+        .perform(get("/api/v1/families"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code").value("A002"));
   }
 
   @Test
   @DisplayName("잘못된 JWT로 보호 경로를 호출하면 401 A002를 반환한다")
   void protectedResource_Unauthorized_WithInvalidToken() throws Exception {
-    mockMvc.perform(get("/api/v1/families")
-                        .header("Authorization", "Bearer invalid.jwt.token"))
-           .andExpect(status().isUnauthorized())
-           .andExpect(jsonPath("$.code").value("A002"));
+    mockMvc
+        .perform(get("/api/v1/families").header("Authorization", "Bearer invalid.jwt.token"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code").value("A002"));
   }
 
   @Test
@@ -170,8 +188,8 @@ class AuthControllerTest extends AbstractControllerTest {
     MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/families");
     MockHttpServletResponse response = new MockHttpServletResponse();
 
-    authenticationEntryPoint().commence(
-        request, response, new InsufficientAuthenticationException("인증 정보가 없습니다"));
+    authenticationEntryPoint()
+        .commence(request, response, new InsufficientAuthenticationException("인증 정보가 없습니다"));
 
     String body = new String(response.getContentAsByteArray(), StandardCharsets.UTF_8);
 

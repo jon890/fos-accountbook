@@ -46,12 +46,13 @@ public class CategoryController {
       @LoginUser LoginUserDto loginUser,
       @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
       @Valid @RequestBody CreateCategoryRequest request) {
-    log.info("Creating category in family: {} by user: {}", familyUuid.getValue(), loginUser.userUuid());
+    log.info(
+        "Creating category in family: {} by user: {}", familyUuid.getValue(), loginUser.userUuid());
 
-    CategoryResponse response = categoryService.createCategory(loginUser.userUuid(), familyUuid, request);
+    CategoryResponse response =
+        categoryService.createCategory(loginUser.userUuid(), familyUuid, request);
 
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
+    return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiSuccessResponse.of("카테고리가 생성되었습니다", response));
   }
 
@@ -61,9 +62,13 @@ public class CategoryController {
   public ResponseEntity<ApiSuccessResponse<List<CategoryResponse>>> getFamilyCategories(
       @LoginUser LoginUserDto loginUser,
       @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid) {
-    log.info("Fetching categories for family: {} by user: {}", familyUuid.getValue(), loginUser.userUuid());
+    log.info(
+        "Fetching categories for family: {} by user: {}",
+        familyUuid.getValue(),
+        loginUser.userUuid());
 
-    List<CategoryResponse> categories = categoryService.getFamilyCategories(loginUser.userUuid(), familyUuid);
+    List<CategoryResponse> categories =
+        categoryService.getFamilyCategories(loginUser.userUuid(), familyUuid);
 
     return ResponseEntity.ok(ApiSuccessResponse.of(categories));
   }
@@ -76,7 +81,10 @@ public class CategoryController {
       @LoginUser LoginUserDto loginUser,
       @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
       @PathVariable String categoryUuid) {
-    log.info("Fetching category: {} in family: {} by user: {}", categoryUuid, familyUuid.getValue(),
+    log.info(
+        "Fetching category: {} in family: {} by user: {}",
+        categoryUuid,
+        familyUuid.getValue(),
         loginUser.userUuid());
 
     CategoryResponse category = categoryService.getCategory(loginUser.userUuid(), categoryUuid);
@@ -90,7 +98,9 @@ public class CategoryController {
    * @deprecated PUT /families/{familyUuid}/categories/{categoryUuid} 를 사용해주세요.
    */
   @Deprecated
-  @Operation(summary = "[Deprecated] 카테고리 수정", description = "⚠️ Deprecated: /families/{familyUuid}/categories/{categoryUuid} 를 사용해주세요.",
+  @Operation(
+      summary = "[Deprecated] 카테고리 수정",
+      description = "⚠️ Deprecated: /families/{familyUuid}/categories/{categoryUuid} 를 사용해주세요.",
       deprecated = true)
   @ApiResponse(responseCode = "200", description = "수정 성공")
   @ApiResponse(responseCode = "403", description = "접근 권한 없음")
@@ -103,7 +113,8 @@ public class CategoryController {
     log.info("[Deprecated] Updating category: {} by user: {}", categoryUuid, loginUser.userUuid());
 
     CustomUuid familyUuid = categoryService.resolveCategoryFamilyUuid(categoryUuid);
-    CategoryResponse response = categoryService.updateCategory(loginUser.userUuid(), familyUuid, categoryUuid, request);
+    CategoryResponse response =
+        categoryService.updateCategory(loginUser.userUuid(), familyUuid, categoryUuid, request);
 
     return ResponseEntity.ok(ApiSuccessResponse.of("카테고리가 수정되었습니다", response));
   }
@@ -114,7 +125,9 @@ public class CategoryController {
    * @deprecated DELETE /families/{familyUuid}/categories/{categoryUuid} 를 사용해주세요.
    */
   @Deprecated
-  @Operation(summary = "[Deprecated] 카테고리 삭제", description = "⚠️ Deprecated: /families/{familyUuid}/categories/{categoryUuid} 를 사용해주세요.",
+  @Operation(
+      summary = "[Deprecated] 카테고리 삭제",
+      description = "⚠️ Deprecated: /families/{familyUuid}/categories/{categoryUuid} 를 사용해주세요.",
       deprecated = true)
   @ApiResponse(responseCode = "200", description = "삭제 성공")
   @ApiResponse(responseCode = "400", description = "기본 카테고리는 삭제 불가")
@@ -122,8 +135,7 @@ public class CategoryController {
   @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음")
   @DeleteMapping("/categories/{categoryUuid}")
   public ResponseEntity<ApiSuccessResponse<Void>> deleteCategoryLegacy(
-      @LoginUser LoginUserDto loginUser,
-      @PathVariable String categoryUuid) {
+      @LoginUser LoginUserDto loginUser, @PathVariable String categoryUuid) {
     log.info("[Deprecated] Deleting category: {} by user: {}", categoryUuid, loginUser.userUuid());
 
     CustomUuid familyUuid = categoryService.resolveCategoryFamilyUuid(categoryUuid);
@@ -142,10 +154,14 @@ public class CategoryController {
       @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
       @PathVariable String categoryUuid,
       @Valid @RequestBody UpdateCategoryRequest request) {
-    log.info("Updating category: {} in family: {} by user: {}", categoryUuid, familyUuid.getValue(),
+    log.info(
+        "Updating category: {} in family: {} by user: {}",
+        categoryUuid,
+        familyUuid.getValue(),
         loginUser.userUuid());
 
-    CategoryResponse response = categoryService.updateCategory(loginUser.userUuid(), familyUuid, categoryUuid, request);
+    CategoryResponse response =
+        categoryService.updateCategory(loginUser.userUuid(), familyUuid, categoryUuid, request);
 
     return ResponseEntity.ok(ApiSuccessResponse.of("카테고리가 수정되었습니다", response));
   }
@@ -160,7 +176,10 @@ public class CategoryController {
       @LoginUser LoginUserDto loginUser,
       @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
       @PathVariable String categoryUuid) {
-    log.info("Deleting category: {} in family: {} by user: {}", categoryUuid, familyUuid.getValue(),
+    log.info(
+        "Deleting category: {} in family: {} by user: {}",
+        categoryUuid,
+        familyUuid.getValue(),
         loginUser.userUuid());
 
     categoryService.deleteCategory(loginUser.userUuid(), familyUuid, categoryUuid);

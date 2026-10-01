@@ -29,23 +29,21 @@ public class OpenApiConfig {
   public OpenAPI openAPI() {
     return new OpenAPI()
         .info(apiInfo())
-        .servers(List.of(
-            new Server()
-                .url("http://localhost:8080" + contextPath)
-                .description("로컬 개발 서버"),
-            new Server()
-                .url("https://api.your-domain.com" + contextPath)
-                .description("프로덕션 서버")
-        ))
-        .components(new Components()
-                        .addSecuritySchemes("bearerAuth", securityScheme()))
+        .servers(
+            List.of(
+                new Server().url("http://localhost:8080" + contextPath).description("로컬 개발 서버"),
+                new Server()
+                    .url("https://api.your-domain.com" + contextPath)
+                    .description("프로덕션 서버")))
+        .components(new Components().addSecuritySchemes("bearerAuth", securityScheme()))
         .addSecurityItem(new SecurityRequirement().addList("bearerAuth"));
   }
 
   private Info apiInfo() {
     return new Info()
         .title("FOS Accountbook API")
-        .description("""
+        .description(
+            """
                          ## 우리집 가계부 API 문서
 
                          가족 단위 가계부 관리를 위한 RESTful API입니다.
@@ -71,13 +69,13 @@ public class OpenApiConfig {
                          - `500 Internal Server Error`: 서버 오류
                          """)
         .version("1.0.0")
-        .contact(new Contact()
-                     .name("FOS Accountbook Team")
-                     .email("support@example.com")
-                     .url("https://github.com/yourusername/fos-accountbook"))
-        .license(new License()
-                     .name("Apache 2.0")
-                     .url("https://www.apache.org/licenses/LICENSE-2.0"));
+        .contact(
+            new Contact()
+                .name("FOS Accountbook Team")
+                .email("support@example.com")
+                .url("https://github.com/yourusername/fos-accountbook"))
+        .license(
+            new License().name("Apache 2.0").url("https://www.apache.org/licenses/LICENSE-2.0"));
   }
 
   private SecurityScheme securityScheme() {
@@ -90,4 +88,3 @@ public class OpenApiConfig {
         .description("JWT 토큰을 입력하세요. 'Bearer ' 접두사는 자동으로 추가됩니다.");
   }
 }
-

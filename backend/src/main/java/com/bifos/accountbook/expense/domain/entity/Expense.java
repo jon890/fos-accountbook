@@ -27,10 +27,12 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Table(name = "expenses", indexes = {
-    @Index(name = "idx_family_uuid_date", columnList = "family_uuid,date"),
-    @Index(name = "idx_category_uuid", columnList = "category_uuid")
-})
+@Table(
+    name = "expenses",
+    indexes = {
+      @Index(name = "idx_family_uuid_date", columnList = "family_uuid,date"),
+      @Index(name = "idx_category_uuid", columnList = "category_uuid")
+    })
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor
@@ -45,26 +47,20 @@ public class Expense {
   @Column(nullable = false, unique = true, length = 36)
   private CustomUuid uuid;
 
-  /**
-   * 가족 연관관계 (JPA 연관관계 사용)
-   * LAZY 로딩으로 필요 시에만 로드
-   */
+  /** 가족 연관관계 (JPA 연관관계 사용) LAZY 로딩으로 필요 시에만 로드 */
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "family_uuid", referencedColumnName = "uuid", nullable = false)
   private Family family;
 
   /**
-   * 가족 UUID (읽기 전용 — QueryDSL 서브쿼리에서 묵시적 JOIN 방지용)
-   * JPA 쓰기는 family 연관관계가 담당하므로 insertable/updatable = false
+   * 가족 UUID (읽기 전용 — QueryDSL 서브쿼리에서 묵시적 JOIN 방지용) JPA 쓰기는 family 연관관계가 담당하므로 insertable/updatable
+   * = false
    */
   @Getter(AccessLevel.NONE)
   @Column(name = "family_uuid", insertable = false, updatable = false, length = 36)
   private CustomUuid familyUuid;
 
-  /**
-   * 카테고리 UUID (캐시 활용을 위해 연관관계 사용 안함)
-   * CategoryService의 캐시를 통해 조회
-   */
+  /** 카테고리 UUID (캐시 활용을 위해 연관관계 사용 안함) CategoryService의 캐시를 통해 조회 */
   @Column(name = "category_uuid", nullable = false, length = 36)
   private CustomUuid categoryUuid;
 
@@ -89,18 +85,12 @@ public class Expense {
   @Column(name = "updated_at", nullable = false)
   private LocalDateTime updatedAt;
 
-  /**
-   * 지출 상태
-   * ExpenseStatusConverter가 자동으로 코드값으로 변환하여 DB에 저장합니다.
-   */
+  /** 지출 상태 ExpenseStatusConverter가 자동으로 코드값으로 변환하여 DB에 저장합니다. */
   @Column(nullable = false, length = 20)
   @Builder.Default
   private ExpenseStatus status = ExpenseStatus.ACTIVE;
 
-  /**
-   * 예산 계산에서 제외 여부
-   * true인 경우 월별 예산 합계 계산에서 제외됩니다.
-   */
+  /** 예산 계산에서 제외 여부 true인 경우 월별 예산 합계 계산에서 제외됩니다. */
   @Column(name = "exclude_from_budget", nullable = false)
   @Builder.Default
   private boolean excludeFromBudget = false;
@@ -112,12 +102,9 @@ public class Expense {
   private String yearMonth;
 
   /**
-   * JPA 연관관계 정책:
-   * - Family: @ManyToOne 사용 (ORM의 장점 활용)
-   * - Category: UUID만 사용 (CategoryService 캐시 활용)
+   * JPA 연관관계 정책: - Family: @ManyToOne 사용 (ORM의 장점 활용) - Category: UUID만 사용 (CategoryService 캐시 활용)
    * - User: UUID만 사용 (복잡도 감소)
    */
-
   @PrePersist
   public void prePersist() {
     if (uuid == null) {
@@ -127,9 +114,7 @@ public class Expense {
 
   // ========== 편의 메서드 ==========
 
-  /**
-   * Family UUID 조회 (편의 메서드)
-   */
+  /** Family UUID 조회 (편의 메서드) */
   public CustomUuid getFamilyUuid() {
     // DB에서 로드된 경우 컬럼 필드 직접 반환 (LAZY 로딩 불필요)
     // Builder로 생성 직후(save 전/직후)에는 familyUuid 컬럼이 아직 null이므로 연관관계로 fallback
@@ -141,10 +126,9 @@ public class Expense {
 
   // ========== 비즈니스 메서드 ==========
 
-  /**
-   * 지출 정보 수정
-   */
-  public void update(CustomUuid categoryUuid, BigDecimal amount, String description, LocalDateTime date) {
+  /** 지출 정보 수정 */
+  public void update(
+      CustomUuid categoryUuid, BigDecimal amount, String description, LocalDateTime date) {
     if (categoryUuid != null) {
       this.categoryUuid = categoryUuid;
     }
@@ -162,16 +146,12 @@ public class Expense {
     }
   }
 
-  /**
-   * 예산 제외 여부 설정
-   */
+  /** 예산 제외 여부 설정 */
   public void setExcludeFromBudget(boolean excludeFromBudget) {
     this.excludeFromBudget = excludeFromBudget;
   }
 
-  /**
-   * 지출 삭제 (Soft Delete)
-   */
+  /** 지출 삭제 (Soft Delete) */
   public void delete() {
     this.status = ExpenseStatus.DELETED;
   }

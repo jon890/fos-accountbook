@@ -16,9 +16,8 @@ import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * JWT 토큰 검증/추출을 위한 추상 클래스
- * JwtTokenProvider와 NextAuthTokenProvider의 공통 로직을 제공합니다.
- * 하위 클래스는 getSecretKey()를 구현하여 각자의 비밀키를 제공합니다.
+ * JWT 토큰 검증/추출을 위한 추상 클래스 JwtTokenProvider와 NextAuthTokenProvider의 공통 로직을 제공합니다. 하위 클래스는
+ * getSecretKey()를 구현하여 각자의 비밀키를 제공합니다.
  */
 @Slf4j
 public abstract class AbstractJwtTokenProvider {
@@ -28,9 +27,7 @@ public abstract class AbstractJwtTokenProvider {
   protected static final String REFRESH_TOKEN_TYPE = "refresh";
 
   protected JwtParser getJwtParser() {
-    return Jwts.parser()
-               .verifyWith(getSigningKey())
-               .build();
+    return Jwts.parser().verifyWith(getSigningKey()).build();
   }
 
   /**
@@ -43,8 +40,7 @@ public abstract class AbstractJwtTokenProvider {
   protected abstract SecureDigestAlgorithm<SecretKey, SecretKey> getAlgorithm();
 
   /**
-   * 문자열 비밀키를 SecretKey 객체로 변환합니다.
-   * 키가 짧으면 자동으로 패딩하여 안전한 길이로 만듭니다.
+   * 문자열 비밀키를 SecretKey 객체로 변환합니다. 키가 짧으면 자동으로 패딩하여 안전한 길이로 만듭니다.
    *
    * @param secret 비밀키 문자열
    * @return SecretKey
@@ -54,8 +50,9 @@ public abstract class AbstractJwtTokenProvider {
 
     // HS512는 최소 64바이트 필요
     if (keyBytes.length < 64) {
-      log.warn("JWT secret key is too short ({} bytes). Padding to 64 bytes for HS512 compatibility.",
-               keyBytes.length);
+      log.warn(
+          "JWT secret key is too short ({} bytes). Padding to 64 bytes for HS512 compatibility.",
+          keyBytes.length);
 
       // 키를 64바이트로 패딩 (반복 + SHA-256 해시 조합)
       byte[] paddedKey = new byte[64];
@@ -87,7 +84,8 @@ public abstract class AbstractJwtTokenProvider {
 
       Object tokenType = claims.get(TOKEN_TYPE_CLAIM);
       if (!expectedTokenType.equals(tokenType)) {
-        log.debug("JWT token type does not match: expected={}, actual={}", expectedTokenType, tokenType);
+        log.debug(
+            "JWT token type does not match: expected={}, actual={}", expectedTokenType, tokenType);
         return false;
       }
 
@@ -114,8 +112,7 @@ public abstract class AbstractJwtTokenProvider {
    */
   protected Claims getClaimsFromToken(String token) {
     try {
-      return getJwtParser().parseSignedClaims(token)
-                           .getPayload();
+      return getJwtParser().parseSignedClaims(token).getPayload();
     } catch (Exception e) {
       log.debug("Failed to extract claims from token: {}", e.getMessage());
       return null;

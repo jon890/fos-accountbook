@@ -46,18 +46,19 @@ public class DashboardController {
   @Operation(summary = "카테고리별 지출 요약", description = "가족의 카테고리별 지출 요약을 조회합니다.")
   @ApiResponse(responseCode = "200", description = "조회 성공")
   @GetMapping("/expenses/by-category")
-  public ResponseEntity<ApiSuccessResponse<CategoryExpenseSummaryResponse>> getCategoryExpenseSummary(
-      @LoginUser LoginUserDto loginUser,
-      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
-      @RequestParam(required = false) String startDate,
-      @RequestParam(required = false) String endDate,
-      @RequestParam(required = false) String categoryUuid) {
+  public ResponseEntity<ApiSuccessResponse<CategoryExpenseSummaryResponse>>
+      getCategoryExpenseSummary(
+          @LoginUser LoginUserDto loginUser,
+          @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
+          @RequestParam(required = false) String startDate,
+          @RequestParam(required = false) String endDate,
+          @RequestParam(required = false) String categoryUuid) {
 
-    ExpenseSummarySearchRequest searchRequest = ExpenseSummarySearchRequest.withDefaults(
-        startDate, endDate, categoryUuid);
+    ExpenseSummarySearchRequest searchRequest =
+        ExpenseSummarySearchRequest.withDefaults(startDate, endDate, categoryUuid);
 
-    CategoryExpenseSummaryResponse response = dashboardService.getCategoryExpenseSummary(
-        loginUser.userUuid(), familyUuid, searchRequest);
+    CategoryExpenseSummaryResponse response =
+        dashboardService.getCategoryExpenseSummary(loginUser.userUuid(), familyUuid, searchRequest);
 
     return ResponseEntity.ok(ApiSuccessResponse.of(response));
   }
@@ -76,8 +77,8 @@ public class DashboardController {
     int targetYear = year != null ? year : now.getYear();
     int targetMonth = month != null ? month : now.getMonthValue();
 
-    MonthlyStatsResponse response = dashboardService.getMonthlyStats(
-        loginUser.userUuid(), familyUuid, targetYear, targetMonth);
+    MonthlyStatsResponse response =
+        dashboardService.getMonthlyStats(loginUser.userUuid(), familyUuid, targetYear, targetMonth);
 
     return ResponseEntity.ok(ApiSuccessResponse.of(response));
   }
@@ -104,8 +105,9 @@ public class DashboardController {
       throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
     }
 
-    MonthlyTrendResponse response = dashboardService.getMonthlyTrend(
-        loginUser.userUuid(), familyUuid, fromYearMonth, toYearMonth);
+    MonthlyTrendResponse response =
+        dashboardService.getMonthlyTrend(
+            loginUser.userUuid(), familyUuid, fromYearMonth, toYearMonth);
 
     return ResponseEntity.ok(ApiSuccessResponse.of(response));
   }
@@ -120,8 +122,9 @@ public class DashboardController {
       @RequestParam Integer month,
       @RequestParam(defaultValue = "false") boolean compareWithPrev) {
 
-    CategoryBreakdownResponse response = dashboardService.getCategoryBreakdown(
-        loginUser.userUuid(), familyUuid, year, month, compareWithPrev);
+    CategoryBreakdownResponse response =
+        dashboardService.getCategoryBreakdown(
+            loginUser.userUuid(), familyUuid, year, month, compareWithPrev);
 
     return ResponseEntity.ok(ApiSuccessResponse.of(response));
   }
@@ -135,8 +138,8 @@ public class DashboardController {
       @RequestParam Integer year,
       @RequestParam Integer month) {
 
-    DailyStatsResponse response = dashboardService.getDailyStats(
-        loginUser.userUuid(), familyUuid, year, month);
+    DailyStatsResponse response =
+        dashboardService.getDailyStats(loginUser.userUuid(), familyUuid, year, month);
 
     return ResponseEntity.ok(ApiSuccessResponse.of(response));
   }

@@ -21,8 +21,7 @@ public class RecurringExpenseRepositoryImpl implements RecurringExpenseRepositor
   private final RecurringExpenseJpaRepository jpaRepository;
   private final JPAQueryFactory queryFactory;
 
-  private static final QRecurringExpense recurringExpense =
-      QRecurringExpense.recurringExpense;
+  private static final QRecurringExpense recurringExpense = QRecurringExpense.recurringExpense;
 
   @Override
   public RecurringExpense save(RecurringExpense recurringExpense) {
@@ -36,7 +35,8 @@ public class RecurringExpenseRepositoryImpl implements RecurringExpenseRepositor
 
   @Override
   public List<RecurringExpense> findAllActiveByFamilyUuid(String familyUuid) {
-    return queryFactory.selectFrom(recurringExpense)
+    return queryFactory
+        .selectFrom(recurringExpense)
         .where(
             recurringExpense.familyUuid.eq(familyUuid),
             recurringExpense.status.eq(RecurringExpenseStatus.ACTIVE))
@@ -46,7 +46,8 @@ public class RecurringExpenseRepositoryImpl implements RecurringExpenseRepositor
 
   @Override
   public List<RecurringExpense> findAllActiveByDayOfMonth(int dayOfMonth) {
-    return queryFactory.selectFrom(recurringExpense)
+    return queryFactory
+        .selectFrom(recurringExpense)
         .where(
             recurringExpense.dayOfMonth.eq(dayOfMonth),
             recurringExpense.status.eq(RecurringExpenseStatus.ACTIVE))
@@ -58,31 +59,36 @@ public class RecurringExpenseRepositoryImpl implements RecurringExpenseRepositor
       String recurringExpenseUuid, String yearMonth) {
     QExpense expense = QExpense.expense;
 
-    Integer result = queryFactory.selectOne()
-        .from(expense)
-        .where(
-            expense.recurringExpenseUuid.eq(recurringExpenseUuid),
-            expense.yearMonth.eq(yearMonth))
-        .fetchFirst();
+    Integer result =
+        queryFactory
+            .selectOne()
+            .from(expense)
+            .where(
+                expense.recurringExpenseUuid.eq(recurringExpenseUuid),
+                expense.yearMonth.eq(yearMonth))
+            .fetchFirst();
 
     return result != null;
   }
 
   @Override
   public BigDecimal sumActiveAmountByFamilyUuid(String familyUuid) {
-    BigDecimal sum = queryFactory.select(recurringExpense.amount.sum())
-        .from(recurringExpense)
-        .where(
-            recurringExpense.familyUuid.eq(familyUuid),
-            recurringExpense.status.eq(RecurringExpenseStatus.ACTIVE))
-        .fetchOne();
+    BigDecimal sum =
+        queryFactory
+            .select(recurringExpense.amount.sum())
+            .from(recurringExpense)
+            .where(
+                recurringExpense.familyUuid.eq(familyUuid),
+                recurringExpense.status.eq(RecurringExpenseStatus.ACTIVE))
+            .fetchOne();
 
     return sum != null ? sum : BigDecimal.ZERO;
   }
 
   @Override
   public void moveRecurringExpenses(CustomUuid oldCategoryUuid, CustomUuid newCategoryUuid) {
-    queryFactory.update(recurringExpense)
+    queryFactory
+        .update(recurringExpense)
         .set(recurringExpense.categoryUuid, newCategoryUuid.getValue())
         .where(
             recurringExpense.categoryUuid.eq(oldCategoryUuid.getValue()),

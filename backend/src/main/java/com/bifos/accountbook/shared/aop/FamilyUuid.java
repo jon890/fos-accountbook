@@ -8,24 +8,20 @@ import java.lang.annotation.Target;
 /**
  * 가족 UUID 파라미터를 표시하는 애노테이션
  *
- * <p>{@link ValidateFamilyAccess} 애노테이션이 붙은 메서드에서
- * 가족 UUID 파라미터를 명시적으로 표시하기 위해 사용합니다.</p>
+ * <p>{@link ValidateFamilyAccess} 애노테이션이 붙은 메서드에서 가족 UUID 파라미터를 명시적으로 표시하기 위해 사용합니다.
  *
  * <h3>사용 예시</h3>
- * <pre>
- * {@code
+ *
+ * <pre>{@code
  * @ValidateFamilyAccess
  * public ExpenseResponse createExpense(@UserUuid CustomUuid userId, @FamilyUuid CustomUuid familyId, ...) {
  *   // 파라미터 이름이 달라도 정상 작동
  * }
- * }
- * </pre>
+ * }</pre>
  *
  * @see ValidateFamilyAccess
  * @see UserUuid
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface FamilyUuid {
-}
-
+public @interface FamilyUuid {}

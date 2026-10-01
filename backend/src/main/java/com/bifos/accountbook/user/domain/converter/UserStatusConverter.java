@@ -1,15 +1,13 @@
 package com.bifos.accountbook.user.domain.converter;
 
 import com.bifos.accountbook.shared.converter.AbstractCodeEnumConverter;
-
 import com.bifos.accountbook.user.domain.value.UserStatus;
 import jakarta.persistence.Converter;
 
 /**
  * UserStatus Enum을 DB 코드값으로 변환하는 Converter
- * <p>
- * autoApply = true로 설정하여 모든 UserStatus 필드에 자동 적용됩니다.
- * </p>
+ *
+ * <p>autoApply = true로 설정하여 모든 UserStatus 필드에 자동 적용됩니다.
  */
 @Converter(autoApply = true)
 public class UserStatusConverter extends AbstractCodeEnumConverter<UserStatus> {
@@ -18,4 +16,3 @@ public class UserStatusConverter extends AbstractCodeEnumConverter<UserStatus> {
     super(UserStatus.class);
   }
 }
-

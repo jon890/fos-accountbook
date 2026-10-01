@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 /**
  * Family 도메인 테스트 Fixture
  *
- * 가족 생성 및 멤버 관리를 담당
+ * <p>가족 생성 및 멤버 관리를 담당
  */
 public class FamilyFixtures {
 
@@ -32,9 +32,7 @@ public class FamilyFixtures {
     this.userFixtures = userFixtures;
   }
 
-  /**
-   * 기본 가족 반환 (lazy initialization)
-   */
+  /** 기본 가족 반환 (lazy initialization) */
   public Family getDefaultFamily() {
     if (defaultFamily == null) {
       defaultFamily = family().build();
@@ -42,23 +40,17 @@ public class FamilyFixtures {
     return defaultFamily;
   }
 
-  /**
-   * Family Builder 시작점
-   */
+  /** Family Builder 시작점 */
   public FamilyBuilder family() {
     return new FamilyBuilder(familyRepository, familyMemberRepository, userFixtures);
   }
 
-  /**
-   * 캐시 초기화
-   */
+  /** 캐시 초기화 */
   public void clear() {
     this.defaultFamily = null;
   }
 
-  /**
-   * Family Builder - 가족 생성
-   */
+  /** Family Builder - 가족 생성 */
   public static class FamilyBuilder {
     private final FamilyRepository familyRepository;
     private final FamilyMemberRepository familyMemberRepository;
@@ -67,9 +59,10 @@ public class FamilyFixtures {
     private BigDecimal budget = BigDecimal.ZERO;
     private User owner;
 
-    FamilyBuilder(FamilyRepository familyRepository,
-                  FamilyMemberRepository familyMemberRepository,
-                  UserFixtures userFixtures) {
+    FamilyBuilder(
+        FamilyRepository familyRepository,
+        FamilyMemberRepository familyMemberRepository,
+        UserFixtures userFixtures) {
       this.familyRepository = familyRepository;
       this.familyMemberRepository = familyMemberRepository;
       this.userFixtures = userFixtures;
@@ -95,23 +88,20 @@ public class FamilyFixtures {
         owner = userFixtures.getDefaultUser();
       }
 
-      Family family = Family.builder()
-                            .name(name)
-                            .monthlyBudget(budget)
-                            .build();
+      Family family = Family.builder().name(name).monthlyBudget(budget).build();
       family = familyRepository.save(family);
 
       // 가족 멤버 자동 추가
-      FamilyMember member = FamilyMember.builder()
-                                        .uuid(CustomUuid.generate())
-                                        .familyUuid(family.getUuid())
-                                        .userUuid(owner.getUuid())
-                                        .status(FamilyMemberStatus.ACTIVE)
-                                        .build();
+      FamilyMember member =
+          FamilyMember.builder()
+              .uuid(CustomUuid.generate())
+              .familyUuid(family.getUuid())
+              .userUuid(owner.getUuid())
+              .status(FamilyMemberStatus.ACTIVE)
+              .build();
       familyMemberRepository.save(member);
 
       return family;
     }
   }
 }
-

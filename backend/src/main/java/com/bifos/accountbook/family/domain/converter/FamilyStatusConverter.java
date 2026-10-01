@@ -4,9 +4,7 @@ import com.bifos.accountbook.family.domain.value.FamilyStatus;
 import com.bifos.accountbook.shared.converter.AbstractCodeEnumConverter;
 import jakarta.persistence.Converter;
 
-/**
- * FamilyStatus Enum을 DB 코드값으로 변환하는 Converter
- */
+/** FamilyStatus Enum을 DB 코드값으로 변환하는 Converter */
 @Converter(autoApply = true)
 public class FamilyStatusConverter extends AbstractCodeEnumConverter<FamilyStatus> {
 
@@ -14,4 +12,3 @@ public class FamilyStatusConverter extends AbstractCodeEnumConverter<FamilyStatu
     super(FamilyStatus.class);
   }
 }
-

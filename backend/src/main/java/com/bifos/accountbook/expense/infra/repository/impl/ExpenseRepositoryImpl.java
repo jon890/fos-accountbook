@@ -19,10 +19,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 /**
- * ExpenseRepository 구현체
- * - JpaRepository: 기본 CRUD 작업
- * - QueryDSL: 동적 쿼리 및 복잡한 조건 처리
- * - 통계 쿼리는 DashboardRepository로 분리됨
+ * ExpenseRepository 구현체 - JpaRepository: 기본 CRUD 작업 - QueryDSL: 동적 쿼리 및 복잡한 조건 처리 - 통계 쿼리는
+ * DashboardRepository로 분리됨
  */
 @Repository
 @RequiredArgsConstructor
@@ -52,17 +50,13 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
   }
 
   @Override
-  public List<Expense> findByFamilyUuidAndDateBetween(CustomUuid familyUuid,
-                                                      LocalDateTime startDate,
-                                                      LocalDateTime endDate) {
+  public List<Expense> findByFamilyUuidAndDateBetween(
+      CustomUuid familyUuid, LocalDateTime startDate, LocalDateTime endDate) {
     return jpaRepository.findByFamilyUuidAndDateBetween(familyUuid, startDate, endDate);
   }
 
   /**
-   * 가족 UUID와 필터링 조건으로 지출 조회 (QueryDSL)
-   * - 동적 조건을 BooleanExpression으로 처리
-   * - null 조건은 자동으로 무시됨
-   * - 페이징 지원
+   * 가족 UUID와 필터링 조건으로 지출 조회 (QueryDSL) - 동적 조건을 BooleanExpression으로 처리 - null 조건은 자동으로 무시됨 - 페이징 지원
    */
   @Override
   public Page<Expense> findByFamilyUuidWithFilters(
@@ -75,53 +69,49 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
     QExpense expense = QExpense.expense;
 
     // QueryDSL로 동적 쿼리 실행
-    List<Expense> expenses = queryFactory.selectFrom(expense)
-                                         .where(expense.family.uuid.eq(familyUuid),
-                                                expense.status.eq(ExpenseStatus.ACTIVE),
-                                                categoryUuidEq(expense, categoryUuid),
-                                                dateGoe(expense, startDate),
-                                                dateLoe(expense, endDate))
-                                         .orderBy(expense.date.desc(), expense.id.desc())
-                                         .offset(pageable.getOffset())
-                                         .limit(pageable.getPageSize())
-                                         .fetch();
+    List<Expense> expenses =
+        queryFactory
+            .selectFrom(expense)
+            .where(
+                expense.family.uuid.eq(familyUuid),
+                expense.status.eq(ExpenseStatus.ACTIVE),
+                categoryUuidEq(expense, categoryUuid),
+                dateGoe(expense, startDate),
+                dateLoe(expense, endDate))
+            .orderBy(expense.date.desc(), expense.id.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
 
     // 전체 카운트 조회
-    Long total = queryFactory.select(expense.count())
-                             .from(expense)
-                             .where(expense.family.uuid.eq(familyUuid),
-                                    expense.status.eq(ExpenseStatus.ACTIVE),
-                                    categoryUuidEq(expense, categoryUuid),
-                                    dateGoe(expense, startDate),
-                                    dateLoe(expense, endDate)
-                             )
-                             .fetchOne();
+    Long total =
+        queryFactory
+            .select(expense.count())
+            .from(expense)
+            .where(
+                expense.family.uuid.eq(familyUuid),
+                expense.status.eq(ExpenseStatus.ACTIVE),
+                categoryUuidEq(expense, categoryUuid),
+                dateGoe(expense, startDate),
+                dateLoe(expense, endDate))
+            .fetchOne();
 
     return new PageImpl<>(expenses, pageable, total != null ? total : 0L);
   }
 
   // ===== 동적 쿼리 조건 메서드 =====
 
-  /**
-   * 카테고리 UUID 동적 조건
-   * null이면 조건 미적용 (전체 카테고리)
-   */
+  /** 카테고리 UUID 동적 조건 null이면 조건 미적용 (전체 카테고리) */
   private BooleanExpression categoryUuidEq(QExpense expense, CustomUuid categoryUuid) {
     return categoryUuid != null ? expense.categoryUuid.eq(categoryUuid) : null;
   }
 
-  /**
-   * 시작 날짜 동적 조건 (>= startDate)
-   * null이면 조건 미적용
-   */
+  /** 시작 날짜 동적 조건 (>= startDate) null이면 조건 미적용 */
   private BooleanExpression dateGoe(QExpense expense, LocalDateTime startDate) {
     return startDate != null ? expense.date.goe(startDate) : null;
   }
 
-  /**
-   * 종료 날짜 동적 조건 (<= endDate)
-   * null이면 조건 미적용
-   */
+  /** 종료 날짜 동적 조건 (<= endDate) null이면 조건 미적용 */
   private BooleanExpression dateLoe(QExpense expense, LocalDateTime endDate) {
     return endDate != null ? expense.date.loe(endDate) : null;
   }
@@ -132,9 +122,8 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
   }
 
   @Override
-  public BigDecimal sumAmountByFamilyUuidAndDateBetween(CustomUuid familyUuid,
-                                                        LocalDateTime startDate,
-                                                        LocalDateTime endDate) {
+  public BigDecimal sumAmountByFamilyUuidAndDateBetween(
+      CustomUuid familyUuid, LocalDateTime startDate, LocalDateTime endDate) {
     return jpaRepository.sumAmountByFamilyUuidAndDateBetween(familyUuid, startDate, endDate);
   }
 
@@ -146,10 +135,10 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
   @Override
   public long softDeleteAllByFamilyUuid(CustomUuid familyUuid) {
     QExpense expense = QExpense.expense;
-    return queryFactory.update(expense)
+    return queryFactory
+        .update(expense)
         .set(expense.status, ExpenseStatus.DELETED)
-        .where(expense.family.uuid.eq(familyUuid)
-            .and(expense.status.eq(ExpenseStatus.ACTIVE)))
+        .where(expense.family.uuid.eq(familyUuid).and(expense.status.eq(ExpenseStatus.ACTIVE)))
         .execute();
   }
 }

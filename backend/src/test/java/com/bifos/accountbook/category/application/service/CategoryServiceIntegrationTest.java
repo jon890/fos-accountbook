@@ -2,6 +2,7 @@ package com.bifos.accountbook.category.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.category.domain.repository.CategoryRepository;
 import com.bifos.accountbook.category.domain.value.CategoryStatus;
@@ -21,14 +22,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 @DisplayName("CategoryService 통합 테스트")
 class CategoryServiceIntegrationTest extends TestFixturesSupport {
 
-  @Autowired
-  private CategoryService categoryService;
+  @Autowired private CategoryService categoryService;
 
-  @Autowired
-  private CategoryRepository categoryRepository;
+  @Autowired private CategoryRepository categoryRepository;
 
-  @Autowired
-  private ExpenseRepository expenseRepository;
+  @Autowired private ExpenseRepository expenseRepository;
 
   @Test
   @DisplayName("가족 생성 시 기본 카테고리가 생성되며, 그 중 하나는 isDefault=true여야 한다")
@@ -58,10 +56,14 @@ class CategoryServiceIntegrationTest extends TestFixturesSupport {
     Family family = fixtures.families.family().owner(user).build();
     categoryService.createDefaultCategoriesForFamily(family.getUuid());
 
-    Category defaultCategory = categoryRepository.getDefaultCategoryByFamily(family.getUuid()).orElseThrow();
+    Category defaultCategory =
+        categoryRepository.getDefaultCategoryByFamily(family.getUuid()).orElseThrow();
 
     // when & then
-    assertThatThrownBy(() -> categoryService.deleteCategory(user.getUuid(), family.getUuid(), defaultCategory.getUuid().getValue()))
+    assertThatThrownBy(
+            () ->
+                categoryService.deleteCategory(
+                    user.getUuid(), family.getUuid(), defaultCategory.getUuid().getValue()))
         .isInstanceOf(BusinessException.class)
         .extracting("errorCode")
         .isEqualTo(ErrorCode.CANNOT_DELETE_DEFAULT_CATEGORY);
@@ -79,22 +81,28 @@ class CategoryServiceIntegrationTest extends TestFixturesSupport {
     Category normalCategory = fixtures.categories.category(family).name("일반").build();
 
     // 지출 생성 (일반 카테고리에 속함)
-    Expense expense = fixtures.expenses.expense(family, normalCategory)
-        .user(user)
-        .amount(BigDecimal.valueOf(10000))
-        .build();
+    Expense expense =
+        fixtures
+            .expenses
+            .expense(family, normalCategory)
+            .user(user)
+            .amount(BigDecimal.valueOf(10000))
+            .build();
 
     // when
-    categoryService.deleteCategory(user.getUuid(), family.getUuid(), normalCategory.getUuid().getValue());
+    categoryService.deleteCategory(
+        user.getUuid(), family.getUuid(), normalCategory.getUuid().getValue());
 
     // then
     // 1. 일반 카테고리는 삭제 상태
-    Category deletedCategory = categoryRepository.findByUuid(normalCategory.getUuid()).orElseThrow();
+    Category deletedCategory =
+        categoryRepository.findByUuid(normalCategory.getUuid()).orElseThrow();
     assertThat(deletedCategory.getStatus()).isEqualTo(CategoryStatus.DELETED);
 
     // 2. 지출의 카테고리가 기본 카테고리로 변경되었는지 확인
     Expense updatedExpense = expenseRepository.findByUuid(expense.getUuid()).orElseThrow();
-    Category defaultCategory = categoryRepository.getDefaultCategoryByFamily(family.getUuid()).orElseThrow();
+    Category defaultCategory =
+        categoryRepository.getDefaultCategoryByFamily(family.getUuid()).orElseThrow();
 
     assertThat(updatedExpense.getCategoryUuid()).isEqualTo(defaultCategory.getUuid());
   }

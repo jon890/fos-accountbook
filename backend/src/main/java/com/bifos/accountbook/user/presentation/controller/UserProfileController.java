@@ -31,7 +31,8 @@ public class UserProfileController {
   @Operation(summary = "내 프로필 조회", description = "로그인한 사용자의 프로필을 조회합니다.")
   @ApiResponse(responseCode = "200", description = "조회 성공")
   @GetMapping
-  public ResponseEntity<ApiSuccessResponse<UserProfileResponse>> getMyProfile(@LoginUser LoginUserDto user) {
+  public ResponseEntity<ApiSuccessResponse<UserProfileResponse>> getMyProfile(
+      @LoginUser LoginUserDto user) {
     UserProfileResponse profile = userProfileService.getOrCreateProfile(user.userUuid());
     return ResponseEntity.ok(ApiSuccessResponse.of("프로필을 조회했습니다", profile));
   }
@@ -39,10 +40,9 @@ public class UserProfileController {
   @Operation(summary = "내 프로필 수정", description = "로그인한 사용자의 프로필을 수정합니다.")
   @ApiResponse(responseCode = "200", description = "수정 성공")
   @PutMapping
-  public ResponseEntity<ApiSuccessResponse<UserProfileResponse>> updateMyProfile(@LoginUser LoginUserDto user,
-                                                                                 @Valid @RequestBody UpdateUserProfileRequest request) {
+  public ResponseEntity<ApiSuccessResponse<UserProfileResponse>> updateMyProfile(
+      @LoginUser LoginUserDto user, @Valid @RequestBody UpdateUserProfileRequest request) {
     UserProfileResponse profile = userProfileService.updateProfile(user.userUuid(), request);
     return ResponseEntity.ok(ApiSuccessResponse.of("프로필이 수정되었습니다", profile));
   }
 }
-

@@ -30,4 +30,3 @@ public class AuthResponse {
     private String image;
   }
 }
-

@@ -51,8 +51,7 @@ public class IncomeController {
       @Valid @RequestBody CreateIncomeRequest request) {
     IncomeResponse response = incomeService.createIncome(loginUser.userUuid(), familyUuid, request);
 
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
+    return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiSuccessResponse.of("수입이 등록되었습니다", response));
   }
 
@@ -68,9 +67,11 @@ public class IncomeController {
       @RequestParam(required = false) String startDate,
       @RequestParam(required = false) String endDate) {
 
-    IncomeSearchRequest searchRequest = IncomeSearchRequest.withDefaults(page, size, categoryUuid, startDate, endDate);
+    IncomeSearchRequest searchRequest =
+        IncomeSearchRequest.withDefaults(page, size, categoryUuid, startDate, endDate);
 
-    Page<IncomeResponse> incomesPage = incomeService.getFamilyIncomes(loginUser.userUuid(), familyUuid, searchRequest);
+    Page<IncomeResponse> incomesPage =
+        incomeService.getFamilyIncomes(loginUser.userUuid(), familyUuid, searchRequest);
 
     PaginationResponse<IncomeResponse> response = PaginationResponse.from(incomesPage);
 
@@ -99,8 +100,8 @@ public class IncomeController {
       @PathVariable CustomUuid familyUuid,
       @PathVariable CustomUuid incomeUuid,
       @Valid @RequestBody UpdateIncomeRequest request) {
-    IncomeResponse response = incomeService.updateIncome(
-        loginUser.userUuid(), familyUuid, incomeUuid, request);
+    IncomeResponse response =
+        incomeService.updateIncome(loginUser.userUuid(), familyUuid, incomeUuid, request);
     return ResponseEntity.ok(ApiSuccessResponse.of("수입이 수정되었습니다", response));
   }
 

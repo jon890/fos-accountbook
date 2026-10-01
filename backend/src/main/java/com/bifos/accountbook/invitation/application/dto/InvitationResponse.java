@@ -36,10 +36,7 @@ public class InvitationResponse {
     private String avatarUrl;
 
     public static InviterInfo from(User user) {
-      return InviterInfo.builder()
-                        .name(user.getName())
-                        .avatarUrl(user.getImage())
-                        .build();
+      return InviterInfo.builder().name(user.getName()).avatarUrl(user.getImage()).build();
     }
   }
 
@@ -48,29 +45,27 @@ public class InvitationResponse {
     boolean isUsed = InvitationStatus.ACCEPTED == invitation.getStatus();
 
     return InvitationResponse.builder()
-                             .uuid(invitation.getUuid().getValue())
-                             .familyUuid(invitation.getFamilyUuid().getValue())
-                             .token(invitation.getToken())
-                             .status(invitation.getStatus())
-                             .expiresAt(invitation.getExpiresAt())
-                             .createdAt(invitation.getCreatedAt())
-                             .isExpired(isExpired)
-                             .isUsed(isUsed)
-                             .build();
+        .uuid(invitation.getUuid().getValue())
+        .familyUuid(invitation.getFamilyUuid().getValue())
+        .token(invitation.getToken())
+        .status(invitation.getStatus())
+        .expiresAt(invitation.getExpiresAt())
+        .createdAt(invitation.getCreatedAt())
+        .isExpired(isExpired)
+        .isUsed(isUsed)
+        .build();
   }
 
   public static InvitationResponse fromWithFamilyName(Invitation invitation, String familyName) {
-    return from(invitation).toBuilder()
-                           .familyName(familyName)
-                           .build();
+    return from(invitation).toBuilder().familyName(familyName).build();
   }
 
-  public static InvitationResponse fromWithDetails(Invitation invitation, String familyName,
-      User inviterUser, int memberCount) {
+  public static InvitationResponse fromWithDetails(
+      Invitation invitation, String familyName, User inviterUser, int memberCount) {
     return from(invitation).toBuilder()
-                           .familyName(familyName)
-                           .inviter(inviterUser != null ? InviterInfo.from(inviterUser) : null)
-                           .memberCount(memberCount)
-                           .build();
+        .familyName(familyName)
+        .inviter(inviterUser != null ? InviterInfo.from(inviterUser) : null)
+        .memberCount(memberCount)
+        .build();
   }
 }

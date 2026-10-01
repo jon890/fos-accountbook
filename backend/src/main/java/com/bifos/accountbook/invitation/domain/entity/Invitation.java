@@ -25,10 +25,12 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Table(name = "invitations", indexes = {
-    @Index(name = "idx_token", columnList = "token"),
-    @Index(name = "idx_family_uuid", columnList = "family_uuid")
-})
+@Table(
+    name = "invitations",
+    indexes = {
+      @Index(name = "idx_token", columnList = "token"),
+      @Index(name = "idx_family_uuid", columnList = "family_uuid")
+    })
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor
@@ -64,11 +66,19 @@ public class Invitation {
   private LocalDateTime createdAt;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "family_uuid", referencedColumnName = "uuid", insertable = false, updatable = false)
+  @JoinColumn(
+      name = "family_uuid",
+      referencedColumnName = "uuid",
+      insertable = false,
+      updatable = false)
   private Family family;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "inviter_user_uuid", referencedColumnName = "uuid", insertable = false, updatable = false)
+  @JoinColumn(
+      name = "inviter_user_uuid",
+      referencedColumnName = "uuid",
+      insertable = false,
+      updatable = false)
   private User inviter;
 
   @PrePersist
@@ -81,9 +91,7 @@ public class Invitation {
 
   // ========== 비즈니스 메서드 ==========
 
-  /**
-   * 초대 수락
-   */
+  /** 초대 수락 */
   public void accept() {
     if (this.status != InvitationStatus.PENDING) {
       throw new IllegalStateException("수락할 수 없는 초대 상태입니다");
@@ -94,16 +102,12 @@ public class Invitation {
     this.status = InvitationStatus.ACCEPTED;
   }
 
-  /**
-   * 초대 만료 여부 확인
-   */
+  /** 초대 만료 여부 확인 */
   public boolean isExpired() {
     return LocalDateTime.now().isAfter(this.expiresAt);
   }
 
-  /**
-   * 초대 수락 가능 여부 확인
-   */
+  /** 초대 수락 가능 여부 확인 */
   public boolean canAccept() {
     return this.status == InvitationStatus.PENDING && !isExpired();
   }

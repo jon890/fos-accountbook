@@ -18,12 +18,11 @@ import org.springframework.stereotype.Component;
 /**
  * 소셜 로그인 요청이 프론트엔드 서버에서 왔는지 검증한다.
  *
- * <p>프론트엔드 서버는 OAuth 로그인을 마친 뒤 같은 AUTH_SECRET 으로 짧은 수명의 HS256 JWT 를 서명해
- * {@value #HEADER} 헤더에 싣는다. 서명이 없으면 누구든 providerId 만 알면 다른 사용자의 토큰을 받는다.</p>
+ * <p>프론트엔드 서버는 OAuth 로그인을 마친 뒤 같은 AUTH_SECRET 으로 짧은 수명의 HS256 JWT 를 서명해 {@value #HEADER} 헤더에 싣는다.
+ * 서명이 없으면 누구든 providerId 만 알면 다른 사용자의 토큰을 받는다.
  *
- * <p>키는 AUTH_SECRET 으로 {@value #AUDIENCE} 를 HMAC-SHA256 한 파생 키다.
- * access token 키와 비밀값 길이에 상관없이 달라, 두 토큰이 서로의 서명 검증을 통과하지 못한다.
- * 수신자(aud)가 있는 토큰을 access token 으로 받지 않는 검사는 그 위에 한 겹 더 둔 방어다.</p>
+ * <p>키는 AUTH_SECRET 으로 {@value #AUDIENCE} 를 HMAC-SHA256 한 파생 키다. access token 키와 비밀값 길이에 상관없이 달라, 두
+ * 토큰이 서로의 서명 검증을 통과하지 못한다. 수신자(aud)가 있는 토큰을 access token 으로 받지 않는 검사는 그 위에 한 겹 더 둔 방어다.
  */
 @Slf4j
 @Component
@@ -39,9 +38,7 @@ public class SocialLoginAssertionVerifier {
     this.key = deriveKey(jwtProperties.getSecret());
   }
 
-  /**
-   * 프론트엔드 signSocialLoginAssertion 과 같은 방식으로 서명 키를 만든다.
-   */
+  /** 프론트엔드 signSocialLoginAssertion 과 같은 방식으로 서명 키를 만든다. */
   public static SecretKey deriveKey(String secret) {
     try {
       Mac mac = Mac.getInstance("HmacSHA256");
@@ -64,12 +61,13 @@ public class SocialLoginAssertionVerifier {
 
     Claims claims;
     try {
-      claims = Jwts.parser()
-                   .verifyWith(key)
-                   .requireAudience(AUDIENCE)
-                   .build()
-                   .parseSignedClaims(assertion)
-                   .getPayload();
+      claims =
+          Jwts.parser()
+              .verifyWith(key)
+              .requireAudience(AUDIENCE)
+              .build()
+              .parseSignedClaims(assertion)
+              .getPayload();
     } catch (JwtException | IllegalArgumentException e) {
       log.debug("Invalid social login assertion: {}", e.getMessage());
       return false;
@@ -77,7 +75,8 @@ public class SocialLoginAssertionVerifier {
 
     Date issuedAt = claims.getIssuedAt();
     Date expiration = claims.getExpiration();
-    if (issuedAt == null || expiration == null
+    if (issuedAt == null
+        || expiration == null
         || expiration.getTime() - issuedAt.getTime() > MAX_LIFETIME.toMillis()) {
       log.debug("Social login assertion lifetime is missing or too long");
       return false;

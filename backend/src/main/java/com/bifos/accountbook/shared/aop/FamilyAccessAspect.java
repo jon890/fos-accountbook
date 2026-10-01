@@ -17,30 +17,29 @@ import org.springframework.stereotype.Component;
 /**
  * 가족 접근 권한 검증 AOP
  *
- * <p>{@link ValidateFamilyAccess} 애노테이션이 붙은 메서드 실행 전에
- * 사용자의 가족 접근 권한을 자동으로 검증합니다.</p>
+ * <p>{@link ValidateFamilyAccess} 애노테이션이 붙은 메서드 실행 전에 사용자의 가족 접근 권한을 자동으로 검증합니다.
  *
  * <h3>검증 로직</h3>
+ *
  * <ol>
- *   <li>메서드 파라미터에서 <b>userUuid</b>와 <b>familyUuid</b>를 추출</li>
- *   <li>FamilyValidationService를 통해 권한 확인</li>
- *   <li>권한이 없으면 BusinessException 발생</li>
+ *   <li>메서드 파라미터에서 <b>userUuid</b>와 <b>familyUuid</b>를 추출
+ *   <li>FamilyValidationService를 통해 권한 확인
+ *   <li>권한이 없으면 BusinessException 발생
  * </ol>
  *
  * <h3>파라미터 요구사항</h3>
+ *
  * <ul>
  *   <li><b>사용자 UUID</b>: CustomUuid 타입 (필수)
- *     <ul>
- *       <li>권장: {@link UserUuid @UserUuid} 애노테이션 사용</li>
- *       <li>하위 호환: 파라미터 이름이 "userUuid"인 경우 자동 인식</li>
- *     </ul>
- *   </li>
+ *       <ul>
+ *         <li>권장: {@link UserUuid @UserUuid} 애노테이션 사용
+ *         <li>하위 호환: 파라미터 이름이 "userUuid"인 경우 자동 인식
+ *       </ul>
  *   <li><b>가족 UUID</b>: CustomUuid 타입 (필수)
- *     <ul>
- *       <li>권장: {@link FamilyUuid @FamilyUuid} 애노테이션 사용</li>
- *       <li>하위 호환: 파라미터 이름이 "familyUuid"인 경우 자동 인식</li>
- *     </ul>
- *   </li>
+ *       <ul>
+ *         <li>권장: {@link FamilyUuid @FamilyUuid} 애노테이션 사용
+ *         <li>하위 호환: 파라미터 이름이 "familyUuid"인 경우 자동 인식
+ *       </ul>
  * </ul>
  *
  * @see ValidateFamilyAccess
@@ -63,7 +62,8 @@ public class FamilyAccessAspect {
    * @throws BusinessException 권한이 없거나 필수 파라미터가 없는 경우
    */
   @Before("@annotation(validateFamilyAccess)")
-  public void validateFamilyAccess(JoinPoint joinPoint, ValidateFamilyAccess validateFamilyAccess) throws BusinessException {
+  public void validateFamilyAccess(JoinPoint joinPoint, ValidateFamilyAccess validateFamilyAccess)
+      throws BusinessException {
     MethodSignature signature = (MethodSignature) joinPoint.getSignature();
     Method method = signature.getMethod();
     Object[] args = joinPoint.getArgs();
@@ -98,15 +98,17 @@ public class FamilyAccessAspect {
       // 중복 애노테이션 감지: 이미 값이 있으면 예외 발생
       if (hasUserUuidAnnotation) {
         if (userUuid != null) {
-          throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR,
-                                      "@ValidateFamilyAccess: @UserUuid 애노테이션이 여러 파라미터에 중복 사용되었습니다")
+          throw new BusinessException(
+                  ErrorCode.INTERNAL_SERVER_ERROR,
+                  "@ValidateFamilyAccess: @UserUuid 애노테이션이 여러 파라미터에 중복 사용되었습니다")
               .addParameter("method", method.getName());
         }
         userUuid = (CustomUuid) args[i];
       } else if (hasFamilyUuidAnnotation) {
         if (familyUuid != null) {
-          throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR,
-                                      "@ValidateFamilyAccess: @FamilyUuid 애노테이션이 여러 파라미터에 중복 사용되었습니다")
+          throw new BusinessException(
+                  ErrorCode.INTERNAL_SERVER_ERROR,
+                  "@ValidateFamilyAccess: @FamilyUuid 애노테이션이 여러 파라미터에 중복 사용되었습니다")
               .addParameter("method", method.getName());
         }
         familyUuid = (CustomUuid) args[i];
@@ -128,14 +130,16 @@ public class FamilyAccessAspect {
 
     // 필수 파라미터 검증
     if (userUuid == null) {
-      throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR,
-                                  "@ValidateFamilyAccess: 'userUuid' 파라미터(CustomUuid)가 필요합니다")
+      throw new BusinessException(
+              ErrorCode.INTERNAL_SERVER_ERROR,
+              "@ValidateFamilyAccess: 'userUuid' 파라미터(CustomUuid)가 필요합니다")
           .addParameter("method", method.getName());
     }
 
     if (familyUuid == null) {
-      throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR,
-                                  "@ValidateFamilyAccess: 'familyUuid' 파라미터(CustomUuid)가 필요합니다")
+      throw new BusinessException(
+              ErrorCode.INTERNAL_SERVER_ERROR,
+              "@ValidateFamilyAccess: 'familyUuid' 파라미터(CustomUuid)가 필요합니다")
           .addParameter("method", method.getName());
     }
 
@@ -143,4 +147,3 @@ public class FamilyAccessAspect {
     familyValidationService.validateFamilyAccess(userUuid, familyUuid);
   }
 }
-

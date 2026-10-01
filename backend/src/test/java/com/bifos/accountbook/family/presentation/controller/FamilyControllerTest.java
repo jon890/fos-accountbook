@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.bifos.accountbook.family.application.dto.CreateFamilyRequest;
 import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.family.domain.entity.FamilyMember;
@@ -27,17 +28,13 @@ import org.springframework.http.MediaType;
 @DisplayName("가족 컨트롤러 통합 테스트")
 class FamilyControllerTest extends AbstractControllerTest {
 
-  @Autowired
-  private UserProfileRepository userProfileRepository;
+  @Autowired private UserProfileRepository userProfileRepository;
 
-  @Autowired
-  private FamilyMemberRepository familyMemberRepository;
+  @Autowired private FamilyMemberRepository familyMemberRepository;
 
-  @Autowired
-  private FamilyRepository familyRepository;
+  @Autowired private FamilyRepository familyRepository;
 
-  @Autowired
-  private UserRepository userRepository;
+  @Autowired private UserRepository userRepository;
 
   private static final String API_BASE_URL = "/api/v1/families";
 
@@ -47,23 +44,22 @@ class FamilyControllerTest extends AbstractControllerTest {
     // Given: TestFixtures로 유저 생성
     User testUser = fixtures.getDefaultUser();
 
-    CreateFamilyRequest request = CreateFamilyRequest.builder()
-                                                     .name("우리 가족")
-                                                     .build();
+    CreateFamilyRequest request = CreateFamilyRequest.builder().name("우리 가족").build();
 
     // When & Then
-    mockMvc.perform(post(API_BASE_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-           .andDo(print())
-           .andExpect(status().isCreated())
-           .andExpect(jsonPath("$.success").value(true))
-           .andExpect(jsonPath("$.data.name").value("우리 가족"))
-           .andExpect(jsonPath("$.data.memberCount").value(1));
+    mockMvc
+        .perform(
+            post(API_BASE_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andDo(print())
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.data.name").value("우리 가족"))
+        .andExpect(jsonPath("$.data.memberCount").value(1));
 
     // 기본 가족으로 설정되었는지 확인
-    UserProfile profile = userProfileRepository.findByUserUuid(testUser.getUuid())
-                                               .orElseThrow();
+    UserProfile profile = userProfileRepository.findByUserUuid(testUser.getUuid()).orElseThrow();
 
     assertThat(profile.getDefaultFamilyUuid()).isNotNull();
     assertThat(profile.getDefaultFamilyUuid().getValue()).isNotBlank();
@@ -76,37 +72,37 @@ class FamilyControllerTest extends AbstractControllerTest {
     User testUser = fixtures.getDefaultUser();
 
     // Given: 첫 번째 가족 생성
-    CreateFamilyRequest firstRequest = CreateFamilyRequest.builder()
-                                                          .name("첫 번째 가족")
-                                                          .build();
+    CreateFamilyRequest firstRequest = CreateFamilyRequest.builder().name("첫 번째 가족").build();
 
-    mockMvc.perform(post(API_BASE_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(firstRequest)))
-           .andExpect(status().isCreated());
+    mockMvc
+        .perform(
+            post(API_BASE_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(firstRequest)))
+        .andExpect(status().isCreated());
 
     // 첫 번째 가족의 UUID 가져오기
-    UserProfile profileAfterFirst = userProfileRepository.findByUserUuid(testUser.getUuid())
-                                                         .orElseThrow();
+    UserProfile profileAfterFirst =
+        userProfileRepository.findByUserUuid(testUser.getUuid()).orElseThrow();
     String firstFamilyUuid = profileAfterFirst.getDefaultFamilyUuid().getValue();
 
     // Given: 두 번째 가족 생성
-    CreateFamilyRequest secondRequest = CreateFamilyRequest.builder()
-                                                           .name("두 번째 가족")
-                                                           .build();
+    CreateFamilyRequest secondRequest = CreateFamilyRequest.builder().name("두 번째 가족").build();
 
     // When & Then
-    mockMvc.perform(post(API_BASE_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(secondRequest)))
-           .andDo(print())
-           .andExpect(status().isCreated())
-           .andExpect(jsonPath("$.success").value(true))
-           .andExpect(jsonPath("$.data.name").value("두 번째 가족"));
+    mockMvc
+        .perform(
+            post(API_BASE_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(secondRequest)))
+        .andDo(print())
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.data.name").value("두 번째 가족"));
 
     // 기본 가족이 변경되지 않았는지 확인 (여전히 첫 번째 가족)
-    UserProfile profileAfterSecond = userProfileRepository.findByUserUuid(testUser.getUuid())
-                                                          .orElseThrow();
+    UserProfile profileAfterSecond =
+        userProfileRepository.findByUserUuid(testUser.getUuid()).orElseThrow();
 
     assertThat(profileAfterSecond.getDefaultFamilyUuid()).isNotNull();
     assertThat(profileAfterSecond.getDefaultFamilyUuid().getValue()).isEqualTo(firstFamilyUuid);
@@ -118,15 +114,16 @@ class FamilyControllerTest extends AbstractControllerTest {
     // Given: TestFixtures로 유저 생성 (인증을 위해)
     fixtures.getDefaultUser();
 
-    CreateFamilyRequest request = CreateFamilyRequest.builder()
-                                                     .build();
+    CreateFamilyRequest request = CreateFamilyRequest.builder().build();
 
     // When & Then
-    mockMvc.perform(post(API_BASE_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-           .andDo(print())
-           .andExpect(status().isBadRequest());
+    mockMvc
+        .perform(
+            post(API_BASE_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andDo(print())
+        .andExpect(status().isBadRequest());
   }
 
   @Test
@@ -136,39 +133,42 @@ class FamilyControllerTest extends AbstractControllerTest {
     Family family = familyRepository.save(Family.builder().name("우리 가족").build());
     LocalDateTime ownerJoinedAt = LocalDateTime.of(2025, 5, 1, 9, 0);
     LocalDateTime memberJoinedAt = LocalDateTime.of(2025, 5, 2, 9, 0);
-    User member = userRepository.save(User.builder()
-                                         .name("구성원")
-                                         .email("member@example.com")
-                                         .image("https://example.com/member.png")
-                                         .provider("google")
-                                         .providerId("member-provider")
-                                         .build());
+    User member =
+        userRepository.save(
+            User.builder()
+                .name("구성원")
+                .email("member@example.com")
+                .image("https://example.com/member.png")
+                .provider("google")
+                .providerId("member-provider")
+                .build());
     saveMember(family, member, FamilyMemberRole.MEMBER, memberJoinedAt);
     saveMember(family, owner, FamilyMemberRole.OWNER, ownerJoinedAt);
 
     User formerUser = fixtures.users.user().email("former@example.com").build();
-    FamilyMember formerMember = saveMember(family, formerUser, FamilyMemberRole.MEMBER,
-                                          ownerJoinedAt.minusDays(1));
+    FamilyMember formerMember =
+        saveMember(family, formerUser, FamilyMemberRole.MEMBER, ownerJoinedAt.minusDays(1));
     formerMember.leave();
     familyMemberRepository.save(formerMember);
     fixtures.families.family().name("다른 가족").owner(formerUser).build();
 
-    mockMvc.perform(get(API_BASE_URL + "/{familyUuid}/members", family.getUuid().getValue()))
-           .andExpect(status().isOk())
-           .andExpect(jsonPath("$.success").value(true))
-           .andExpect(jsonPath("$.data.length()").value(2))
-           .andExpect(jsonPath("$.data[0].userUuid").value(owner.getUuid().getValue()))
-           .andExpect(jsonPath("$.data[0].name").value(owner.getName()))
-           .andExpect(jsonPath("$.data[0].email").value(owner.getEmail()))
-           .andExpect(jsonPath("$.data[0].image").value(nullValue()))
-           .andExpect(jsonPath("$.data[0].role").value("OWNER"))
-           .andExpect(jsonPath("$.data[0].joinedAt").value("2025-05-01T09:00:00"))
-           .andExpect(jsonPath("$.data[1].userUuid").value(member.getUuid().getValue()))
-           .andExpect(jsonPath("$.data[1].name").value("구성원"))
-           .andExpect(jsonPath("$.data[1].email").value("member@example.com"))
-           .andExpect(jsonPath("$.data[1].image").value("https://example.com/member.png"))
-           .andExpect(jsonPath("$.data[1].role").value("MEMBER"))
-           .andExpect(jsonPath("$.data[1].joinedAt").value("2025-05-02T09:00:00"));
+    mockMvc
+        .perform(get(API_BASE_URL + "/{familyUuid}/members", family.getUuid().getValue()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.data.length()").value(2))
+        .andExpect(jsonPath("$.data[0].userUuid").value(owner.getUuid().getValue()))
+        .andExpect(jsonPath("$.data[0].name").value(owner.getName()))
+        .andExpect(jsonPath("$.data[0].email").value(owner.getEmail()))
+        .andExpect(jsonPath("$.data[0].image").value(nullValue()))
+        .andExpect(jsonPath("$.data[0].role").value("OWNER"))
+        .andExpect(jsonPath("$.data[0].joinedAt").value("2025-05-01T09:00:00"))
+        .andExpect(jsonPath("$.data[1].userUuid").value(member.getUuid().getValue()))
+        .andExpect(jsonPath("$.data[1].name").value("구성원"))
+        .andExpect(jsonPath("$.data[1].email").value("member@example.com"))
+        .andExpect(jsonPath("$.data[1].image").value("https://example.com/member.png"))
+        .andExpect(jsonPath("$.data[1].role").value("MEMBER"))
+        .andExpect(jsonPath("$.data[1].joinedAt").value("2025-05-02T09:00:00"));
   }
 
   @Test
@@ -183,16 +183,17 @@ class FamilyControllerTest extends AbstractControllerTest {
     saveMember(family, unnamedUser, FamilyMemberRole.MEMBER, joinedAt);
     fixtures.users.setSecurityContext(unnamedUser);
 
-    mockMvc.perform(get(API_BASE_URL + "/{familyUuid}/members", family.getUuid().getValue()))
-           .andExpect(status().isOk())
-           .andExpect(jsonPath("$.data.length()").value(2))
-           .andExpect(jsonPath("$.data[0].userUuid").value(owner.getUuid().getValue()))
-           .andExpect(jsonPath("$.data[1].userUuid").value(unnamedUser.getUuid().getValue()))
-           .andExpect(jsonPath("$.data[1].name").value(nullValue()))
-           .andExpect(jsonPath("$.data[1].image").value(nullValue()))
-           .andExpect(jsonPath("$.data[1].email").value("unnamed@example.com"))
-           .andExpect(jsonPath("$.data[1].role").value("MEMBER"))
-           .andExpect(jsonPath("$.data[1].joinedAt").value("2025-05-01T09:00:00"));
+    mockMvc
+        .perform(get(API_BASE_URL + "/{familyUuid}/members", family.getUuid().getValue()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.length()").value(2))
+        .andExpect(jsonPath("$.data[0].userUuid").value(owner.getUuid().getValue()))
+        .andExpect(jsonPath("$.data[1].userUuid").value(unnamedUser.getUuid().getValue()))
+        .andExpect(jsonPath("$.data[1].name").value(nullValue()))
+        .andExpect(jsonPath("$.data[1].image").value(nullValue()))
+        .andExpect(jsonPath("$.data[1].email").value("unnamed@example.com"))
+        .andExpect(jsonPath("$.data[1].role").value("MEMBER"))
+        .andExpect(jsonPath("$.data[1].joinedAt").value("2025-05-01T09:00:00"));
   }
 
   @Test
@@ -202,10 +203,11 @@ class FamilyControllerTest extends AbstractControllerTest {
     User outsider = fixtures.users.user().email("outsider@example.com").build();
     fixtures.users.setSecurityContext(outsider);
 
-    mockMvc.perform(get(API_BASE_URL + "/{familyUuid}/members", family.getUuid().getValue()))
-           .andExpect(status().isForbidden())
-           .andExpect(jsonPath("$.success").value(false))
-           .andExpect(jsonPath("$.code").value("F003"));
+    mockMvc
+        .perform(get(API_BASE_URL + "/{familyUuid}/members", family.getUuid().getValue()))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.code").value("F003"));
   }
 
   @Test
@@ -213,23 +215,28 @@ class FamilyControllerTest extends AbstractControllerTest {
   void getFamilyMembers_FormerMemberDenied() throws Exception {
     User owner = fixtures.getDefaultUser();
     Family family = fixtures.getDefaultFamily();
-    FamilyMember member = familyMemberRepository.findByFamilyUuidAndUserUuid(family.getUuid(), owner.getUuid())
-                                               .orElseThrow();
+    FamilyMember member =
+        familyMemberRepository
+            .findByFamilyUuidAndUserUuid(family.getUuid(), owner.getUuid())
+            .orElseThrow();
     member.leave();
     familyMemberRepository.save(member);
 
-    mockMvc.perform(get(API_BASE_URL + "/{familyUuid}/members", family.getUuid().getValue()))
-           .andExpect(status().isForbidden())
-           .andExpect(jsonPath("$.success").value(false))
-           .andExpect(jsonPath("$.code").value("F003"));
+    mockMvc
+        .perform(get(API_BASE_URL + "/{familyUuid}/members", family.getUuid().getValue()))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.code").value("F003"));
   }
 
-  private FamilyMember saveMember(Family family, User user, FamilyMemberRole role, LocalDateTime joinedAt) {
-    return familyMemberRepository.save(FamilyMember.builder()
-                                                  .familyUuid(family.getUuid())
-                                                  .userUuid(user.getUuid())
-                                                  .role(role)
-                                                  .joinedAt(joinedAt)
-                                                  .build());
+  private FamilyMember saveMember(
+      Family family, User user, FamilyMemberRole role, LocalDateTime joinedAt) {
+    return familyMemberRepository.save(
+        FamilyMember.builder()
+            .familyUuid(family.getUuid())
+            .userUuid(user.getUuid())
+            .role(role)
+            .joinedAt(joinedAt)
+            .build());
   }
 }

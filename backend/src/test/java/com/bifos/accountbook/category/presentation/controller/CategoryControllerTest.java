@@ -28,19 +28,21 @@ class CategoryControllerTest extends AbstractControllerTest {
 
   @BeforeEach
   void setUp() {
-    doTransactionWithoutResult(() -> {
-      testUser = fixtures.getDefaultUser();
-      testFamily = fixtures.families.family().build();
-      testCategory = fixtures.categories.category(testFamily).build();
-    });
+    doTransactionWithoutResult(
+        () -> {
+          testUser = fixtures.getDefaultUser();
+          testFamily = fixtures.families.family().build();
+          testCategory = fixtures.categories.category(testFamily).build();
+        });
   }
 
   private ResultActions createWithColor(String color) throws Exception {
     CreateCategoryRequest request = new CreateCategoryRequest("식비", color, null, null);
-    return mockMvc.perform(post("/api/v1/families/{familyUuid}/categories", testFamily.getUuid().getValue())
-                               .contentType(MediaType.APPLICATION_JSON)
-                               .header("X-User-UUID", testUser.getUuid().getValue())
-                               .content(objectMapper.writeValueAsString(request)));
+    return mockMvc.perform(
+        post("/api/v1/families/{familyUuid}/categories", testFamily.getUuid().getValue())
+            .contentType(MediaType.APPLICATION_JSON)
+            .header("X-User-UUID", testUser.getUuid().getValue())
+            .content(objectMapper.writeValueAsString(request)));
   }
 
   @Test
@@ -91,14 +93,19 @@ class CategoryControllerTest extends AbstractControllerTest {
   @Test
   @DisplayName("색상을 OKLCH 로 수정할 수 있다")
   void update_oklchColor() throws Exception {
-    UpdateCategoryRequest request = new UpdateCategoryRequest(null, "oklch(0.520 0.120 152)", null, null);
+    UpdateCategoryRequest request =
+        new UpdateCategoryRequest(null, "oklch(0.520 0.120 152)", null, null);
 
-    mockMvc.perform(put("/api/v1/families/{familyUuid}/categories/{categoryUuid}",
-                        testFamily.getUuid().getValue(), testCategory.getUuid().getValue())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-User-UUID", testUser.getUuid().getValue())
-                        .content(objectMapper.writeValueAsString(request)))
-           .andExpect(status().isOk())
-           .andExpect(jsonPath("$.data.color").value("oklch(0.520 0.120 152)"));
+    mockMvc
+        .perform(
+            put(
+                    "/api/v1/families/{familyUuid}/categories/{categoryUuid}",
+                    testFamily.getUuid().getValue(),
+                    testCategory.getUuid().getValue())
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-User-UUID", testUser.getUuid().getValue())
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.color").value("oklch(0.520 0.120 152)"));
   }
 }

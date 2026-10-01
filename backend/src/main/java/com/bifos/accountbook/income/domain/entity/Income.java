@@ -26,10 +26,12 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Table(name = "incomes", indexes = {
-    @Index(name = "idx_family_uuid_date", columnList = "family_uuid,date"),
-    @Index(name = "idx_category_uuid", columnList = "category_uuid")
-})
+@Table(
+    name = "incomes",
+    indexes = {
+      @Index(name = "idx_family_uuid_date", columnList = "family_uuid,date"),
+      @Index(name = "idx_category_uuid", columnList = "category_uuid")
+    })
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor
@@ -44,18 +46,12 @@ public class Income {
   @Column(nullable = false, unique = true, length = 36)
   private CustomUuid uuid;
 
-  /**
-   * 가족 연관관계 (JPA 연관관계 사용)
-   * LAZY 로딩으로 필요 시에만 로드
-   */
+  /** 가족 연관관계 (JPA 연관관계 사용) LAZY 로딩으로 필요 시에만 로드 */
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "family_uuid", referencedColumnName = "uuid", nullable = false)
   private Family family;
 
-  /**
-   * 카테고리 UUID (캐시 활용을 위해 연관관계 사용 안함)
-   * CategoryService의 캐시를 통해 조회
-   */
+  /** 카테고리 UUID (캐시 활용을 위해 연관관계 사용 안함) CategoryService의 캐시를 통해 조회 */
   @Column(name = "category_uuid", nullable = false, length = 36)
   private CustomUuid categoryUuid;
 
@@ -80,21 +76,15 @@ public class Income {
   @Column(name = "updated_at", nullable = false)
   private LocalDateTime updatedAt;
 
-  /**
-   * 수입 상태
-   * IncomeStatusConverter가 자동으로 코드값으로 변환하여 DB에 저장합니다.
-   */
+  /** 수입 상태 IncomeStatusConverter가 자동으로 코드값으로 변환하여 DB에 저장합니다. */
   @Column(nullable = false, length = 20)
   @Builder.Default
   private IncomeStatus status = IncomeStatus.ACTIVE;
 
   /**
-   * JPA 연관관계 정책:
-   * - Family: @ManyToOne 사용 (ORM의 장점 활용)
-   * - Category: UUID만 사용 (CategoryService 캐시 활용)
+   * JPA 연관관계 정책: - Family: @ManyToOne 사용 (ORM의 장점 활용) - Category: UUID만 사용 (CategoryService 캐시 활용)
    * - User: UUID만 사용 (복잡도 감소)
    */
-
   @PrePersist
   public void prePersist() {
     if (uuid == null) {
@@ -108,19 +98,16 @@ public class Income {
 
   // ========== 편의 메서드 ==========
 
-  /**
-   * Family UUID 조회 (편의 메서드)
-   */
+  /** Family UUID 조회 (편의 메서드) */
   public CustomUuid getFamilyUuid() {
     return family != null ? family.getUuid() : null;
   }
 
   // ========== 비즈니스 메서드 ==========
 
-  /**
-   * 수입 정보 수정
-   */
-  public void update(CustomUuid categoryUuid, BigDecimal amount, String description, LocalDateTime date) {
+  /** 수입 정보 수정 */
+  public void update(
+      CustomUuid categoryUuid, BigDecimal amount, String description, LocalDateTime date) {
     if (categoryUuid != null) {
       this.categoryUuid = categoryUuid;
     }
@@ -138,11 +125,8 @@ public class Income {
     }
   }
 
-  /**
-   * 수입 삭제 (Soft Delete)
-   */
+  /** 수입 삭제 (Soft Delete) */
   public void delete() {
     this.status = IncomeStatus.DELETED;
   }
 }
-

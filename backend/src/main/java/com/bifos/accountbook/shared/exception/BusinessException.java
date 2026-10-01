@@ -4,28 +4,17 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
 
-/**
- * 비즈니스 로직 관련 커스텀 예외
- * ErrorCode를 통해 표준화된 예외 처리 제공
- */
+/** 비즈니스 로직 관련 커스텀 예외 ErrorCode를 통해 표준화된 예외 처리 제공 */
 @Getter
 public class BusinessException extends RuntimeException {
 
-  /**
-   * 에러 코드 (ErrorCode enum)
-   */
+  /** 에러 코드 (ErrorCode enum) */
   private final ErrorCode errorCode;
 
-  /**
-   * 전달할 파라미터 정보
-   * 예: {"userId": "123", "familyId": "456"}
-   */
+  /** 전달할 파라미터 정보 예: {"userId": "123", "familyId": "456"} */
   private final Map<String, Object> parameters;
 
-  /**
-   * 디버그용 추가 정보
-   * 개발/테스트 환경에서만 노출
-   */
+  /** 디버그용 추가 정보 개발/테스트 환경에서만 노출 */
   private final Map<String, Object> debugInfo;
 
   /**
@@ -44,7 +33,7 @@ public class BusinessException extends RuntimeException {
    * 메시지 오버라이드 생성자
    *
    * @param errorCode 에러 코드
-   * @param message   커스텀 메시지
+   * @param message 커스텀 메시지
    */
   public BusinessException(ErrorCode errorCode, String message) {
     super(message);
@@ -57,7 +46,7 @@ public class BusinessException extends RuntimeException {
    * 원인 예외 포함 생성자
    *
    * @param errorCode 에러 코드
-   * @param cause     원인 예외
+   * @param cause 원인 예외
    */
   public BusinessException(ErrorCode errorCode, Throwable cause) {
     super(errorCode.getMessage(), cause);
@@ -69,8 +58,8 @@ public class BusinessException extends RuntimeException {
   /**
    * 전체 정보 포함 생성자
    *
-   * @param errorCode  에러 코드
-   * @param message    커스텀 메시지
+   * @param errorCode 에러 코드
+   * @param message 커스텀 메시지
    * @param parameters 파라미터 정보
    */
   public BusinessException(ErrorCode errorCode, String message, Map<String, Object> parameters) {
@@ -83,7 +72,7 @@ public class BusinessException extends RuntimeException {
   /**
    * 파라미터 추가 (빌더 패턴)
    *
-   * @param key   파라미터 키
+   * @param key 파라미터 키
    * @param value 파라미터 값
    * @return this
    */
@@ -95,7 +84,7 @@ public class BusinessException extends RuntimeException {
   /**
    * 디버그 정보 추가 (빌더 패턴)
    *
-   * @param key   디버그 정보 키
+   * @param key 디버그 정보 키
    * @param value 디버그 정보 값
    * @return this
    */
@@ -131,12 +120,12 @@ public class BusinessException extends RuntimeException {
    * 편의 메서드: 엔티티를 찾을 수 없을 때
    *
    * @param entityName 엔티티 이름
-   * @param id         엔티티 ID
+   * @param id 엔티티 ID
    * @return BusinessException
    */
   public static BusinessException entityNotFound(String entityName, Object id) {
-    return new BusinessException(ErrorCode.ENTITY_NOT_FOUND,
-                                 String.format("%s를 찾을 수 없습니다", entityName))
+    return new BusinessException(
+            ErrorCode.ENTITY_NOT_FOUND, String.format("%s를 찾을 수 없습니다", entityName))
         .addParameter("entityName", entityName)
         .addParameter("id", id);
   }
@@ -145,12 +134,12 @@ public class BusinessException extends RuntimeException {
    * 편의 메서드: 접근 권한 없음
    *
    * @param resource 리소스 이름
-   * @param userId   사용자 ID
+   * @param userId 사용자 ID
    * @return BusinessException
    */
   public static BusinessException accessDenied(String resource, String userId) {
-    return new BusinessException(ErrorCode.ACCESS_DENIED,
-                                 String.format("%s에 접근할 권한이 없습니다", resource))
+    return new BusinessException(
+            ErrorCode.ACCESS_DENIED, String.format("%s에 접근할 권한이 없습니다", resource))
         .addParameter("resource", resource)
         .addParameter("userId", userId);
   }
@@ -159,16 +148,16 @@ public class BusinessException extends RuntimeException {
    * 편의 메서드: 잘못된 입력값
    *
    * @param fieldName 필드 이름
-   * @param value     입력값
-   * @param reason    이유
+   * @param value 입력값
+   * @param reason 이유
    * @return BusinessException
    */
   public static BusinessException invalidInput(String fieldName, Object value, String reason) {
-    return new BusinessException(ErrorCode.INVALID_INPUT_VALUE,
-                                 String.format("%s의 입력값이 올바르지 않습니다: %s", fieldName, reason))
+    return new BusinessException(
+            ErrorCode.INVALID_INPUT_VALUE,
+            String.format("%s의 입력값이 올바르지 않습니다: %s", fieldName, reason))
         .addParameter("fieldName", fieldName)
         .addParameter("value", value)
         .addParameter("reason", reason);
   }
 }
-

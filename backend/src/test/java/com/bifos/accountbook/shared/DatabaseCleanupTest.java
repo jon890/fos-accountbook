@@ -1,6 +1,7 @@
 package com.bifos.accountbook.shared;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
 import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.user.domain.repository.UserRepository;
@@ -10,30 +11,27 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-/**
- * DatabaseCleanupListener 테스트
- */
+/** DatabaseCleanupListener 테스트 */
 @FosSpringBootTest
 @DisplayName("데이터베이스 정리 Listener 테스트")
 class DatabaseCleanupTest {
 
-  @Autowired
-  private UserRepository userRepository;
+  @Autowired private UserRepository userRepository;
 
-  @PersistenceContext
-  private EntityManager entityManager;
+  @PersistenceContext private EntityManager entityManager;
 
   @Test
   @DisplayName("첫 번째 테스트 - 사용자 생성")
   void test1_CreateUser() {
     // Given
-    User user = User.builder()
-                    .uuid(CustomUuid.generate())
-                    .provider("google")
-                    .providerId("test-1-" + System.currentTimeMillis())
-                    .email("test1@example.com")
-                    .name("테스트1")
-                    .build();
+    User user =
+        User.builder()
+            .uuid(CustomUuid.generate())
+            .provider("google")
+            .providerId("test-1-" + System.currentTimeMillis())
+            .email("test1@example.com")
+            .name("테스트1")
+            .build();
 
     // When
     User saved = userRepository.save(user);
@@ -43,8 +41,8 @@ class DatabaseCleanupTest {
     assertThat(userRepository.findByEmail("test1@example.com")).isPresent();
 
     // EntityManager로 카운트 확인
-    long count = entityManager.createQuery("SELECT COUNT(u) FROM User u", Long.class)
-                              .getSingleResult();
+    long count =
+        entityManager.createQuery("SELECT COUNT(u) FROM User u", Long.class).getSingleResult();
     assertThat(count).isGreaterThan(0);
   }
 
@@ -58,8 +56,8 @@ class DatabaseCleanupTest {
     assertThat(userRepository.findByEmail("test1@example.com")).isEmpty();
 
     // EntityManager로 카운트 확인
-    long count = entityManager.createQuery("SELECT COUNT(u) FROM User u", Long.class)
-                              .getSingleResult();
+    long count =
+        entityManager.createQuery("SELECT COUNT(u) FROM User u", Long.class).getSingleResult();
     assertThat(count).isEqualTo(0);
   }
 
@@ -67,13 +65,14 @@ class DatabaseCleanupTest {
   @DisplayName("세 번째 테스트 - 다시 사용자 생성")
   void test3_CreateAnotherUser() {
     // Given
-    User user = User.builder()
-                    .uuid(CustomUuid.generate())
-                    .provider("google")
-                    .providerId("test-3-" + System.currentTimeMillis())
-                    .email("test3@example.com")
-                    .name("테스트3")
-                    .build();
+    User user =
+        User.builder()
+            .uuid(CustomUuid.generate())
+            .provider("google")
+            .providerId("test-3-" + System.currentTimeMillis())
+            .email("test3@example.com")
+            .name("테스트3")
+            .build();
 
     // When
     User saved = userRepository.save(user);
@@ -83,9 +82,8 @@ class DatabaseCleanupTest {
     assertThat(userRepository.findByEmail("test3@example.com")).isPresent();
 
     // EntityManager로 카운트 확인
-    long count = entityManager.createQuery("SELECT COUNT(u) FROM User u", Long.class)
-                              .getSingleResult();
+    long count =
+        entityManager.createQuery("SELECT COUNT(u) FROM User u", Long.class).getSingleResult();
     assertThat(count).isEqualTo(1);
   }
 }
-

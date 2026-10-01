@@ -40,35 +40,34 @@ public class JwtTokenProvider extends AbstractJwtTokenProvider {
     Date now = new Date();
     Date expiryDate = new Date(now.getTime() + jwtProperties.getExpiration());
 
-    final String token = Jwts.builder()
-                             .subject(toSubjectConverter().apply(user))
-                             .claim(TOKEN_TYPE_CLAIM, ACCESS_TOKEN_TYPE)
-                             .issuedAt(now)
-                             .expiration(expiryDate)
-                             .signWith(getSigningKey(), getAlgorithm())
-                             .compact();
+    final String token =
+        Jwts.builder()
+            .subject(toSubjectConverter().apply(user))
+            .claim(TOKEN_TYPE_CLAIM, ACCESS_TOKEN_TYPE)
+            .issuedAt(now)
+            .expiration(expiryDate)
+            .signWith(getSigningKey(), getAlgorithm())
+            .compact();
 
     return AccessToken.builder()
-                      .token(token)
-                      .issuedAt(TimeUtils.toLocalDateTime(now))
-                      .expiresAt(TimeUtils.toLocalDateTime(expiryDate))
-                      .build();
+        .token(token)
+        .issuedAt(TimeUtils.toLocalDateTime(now))
+        .expiresAt(TimeUtils.toLocalDateTime(expiryDate))
+        .build();
   }
 
-  /**
-   * Refresh 토큰 생성
-   */
+  /** Refresh 토큰 생성 */
   public String generateRefreshToken(User user) {
     Date now = new Date();
     Date expiryDate = new Date(now.getTime() + jwtProperties.getRefreshExpiration());
 
     return Jwts.builder()
-               .subject(toSubjectConverter().apply(user))
-               .claim(TOKEN_TYPE_CLAIM, REFRESH_TOKEN_TYPE)
-               .issuedAt(now)
-               .expiration(expiryDate)
-               .signWith(getSigningKey(), getAlgorithm())
-               .compact();
+        .subject(toSubjectConverter().apply(user))
+        .claim(TOKEN_TYPE_CLAIM, REFRESH_TOKEN_TYPE)
+        .issuedAt(now)
+        .expiration(expiryDate)
+        .signWith(getSigningKey(), getAlgorithm())
+        .compact();
   }
 
   public boolean validateAccessToken(String token) {
@@ -79,9 +78,7 @@ public class JwtTokenProvider extends AbstractJwtTokenProvider {
     return validateToken(token, REFRESH_TOKEN_TYPE);
   }
 
-  /**
-   * Authentication 객체 생성
-   */
+  /** Authentication 객체 생성 */
   public Authentication createAuthentication(String token) {
     String userId = getUserIdFromToken(token);
     return new UsernamePasswordAuthenticationToken(userId, null, List.of());

@@ -30,4 +30,3 @@ public class SocialLoginRequest {
   @Size(max = 500, message = "이미지 URL은 최대 500자까지 가능합니다")
   private String image;
 }
-

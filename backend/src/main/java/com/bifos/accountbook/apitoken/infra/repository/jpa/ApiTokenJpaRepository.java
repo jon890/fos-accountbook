@@ -12,7 +12,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface ApiTokenJpaRepository extends JpaRepository<ApiToken, Long> {
 
-  @Query("""
+  @Query(
+      """
       SELECT t
       FROM ApiToken t
       WHERE t.tokenHash = :tokenHash
@@ -26,17 +27,19 @@ public interface ApiTokenJpaRepository extends JpaRepository<ApiToken, Long> {
       """)
   Optional<ApiToken> findActiveByTokenHash(@Param("tokenHash") String tokenHash);
 
-  @Query("""
+  @Query(
+      """
       SELECT t
       FROM ApiToken t
       WHERE t.uuid = :uuid
       AND t.userUuid = :userUuid
       AND t.status = com.bifos.accountbook.apitoken.domain.value.ApiTokenStatus.ACTIVE
       """)
-  Optional<ApiToken> findActiveByUuidAndUserUuid(@Param("uuid") CustomUuid uuid,
-                                                 @Param("userUuid") CustomUuid userUuid);
+  Optional<ApiToken> findActiveByUuidAndUserUuid(
+      @Param("uuid") CustomUuid uuid, @Param("userUuid") CustomUuid userUuid);
 
-  @Query("""
+  @Query(
+      """
       SELECT t
       FROM ApiToken t
       WHERE t.userUuid = :userUuid
@@ -45,7 +48,8 @@ public interface ApiTokenJpaRepository extends JpaRepository<ApiToken, Long> {
       """)
   List<ApiToken> findAllActiveByUserUuid(@Param("userUuid") CustomUuid userUuid);
 
-  @Query("""
+  @Query(
+      """
       SELECT COUNT(t)
       FROM ApiToken t
       WHERE t.userUuid = :userUuid
@@ -55,7 +59,8 @@ public interface ApiTokenJpaRepository extends JpaRepository<ApiToken, Long> {
 
   // 조회한 엔티티를 save 하면 merge 로 모든 칸을 덮어써 그 사이 폐기된 상태를 되돌릴 수 있어, 조건부 UPDATE 로만 갱신한다
   @Modifying
-  @Query("""
+  @Query(
+      """
       UPDATE ApiToken t
       SET t.lastUsedAt = :now
       WHERE t.id = :id

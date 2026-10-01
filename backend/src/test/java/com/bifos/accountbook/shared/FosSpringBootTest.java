@@ -11,13 +11,15 @@ import org.springframework.test.context.TestExecutionListeners;
 /**
  * FOS 가계부 통합 테스트를 위한 커스텀 애노테이션
  *
- * <p>다음 기능을 자동으로 적용합니다:</p>
+ * <p>다음 기능을 자동으로 적용합니다:
+ *
  * <ul>
- *     <li>{@link SpringBootTest} - Spring Boot 통합 테스트 활성화</li>
- *     <li>{@link DatabaseCleanupListener} - 각 테스트 후 데이터베이스 자동 정리</li>
+ *   <li>{@link SpringBootTest} - Spring Boot 통합 테스트 활성화
+ *   <li>{@link DatabaseCleanupListener} - 각 테스트 후 데이터베이스 자동 정리
  * </ul>
  *
  * <h3>사용법:</h3>
+ *
  * <pre>{@code
  * @FosSpringBootTest
  * class MyControllerTest {
@@ -41,11 +43,12 @@ import org.springframework.test.context.TestExecutionListeners;
  * }</pre>
  *
  * <h3>장점:</h3>
+ *
  * <ul>
- *     <li>테스트 코드가 간결해짐 (3줄 → 1줄)</li>
- *     <li>일관된 테스트 설정 보장</li>
- *     <li>DatabaseCleanupListener 적용 누락 방지</li>
- *     <li>프로젝트 전체에 동일한 테스트 패턴 적용</li>
+ *   <li>테스트 코드가 간결해짐 (3줄 → 1줄)
+ *   <li>일관된 테스트 설정 보장
+ *   <li>DatabaseCleanupListener 적용 누락 방지
+ *   <li>프로젝트 전체에 동일한 테스트 패턴 적용
  * </ul>
  *
  * @see SpringBootTest
@@ -58,8 +61,7 @@ import org.springframework.test.context.TestExecutionListeners;
 @SpringBootTest
 @TestExecutionListeners(
     value = DatabaseCleanupListener.class,
-    mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS
-)
+    mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public @interface FosSpringBootTest {
 
   /**
@@ -86,4 +88,3 @@ public @interface FosSpringBootTest {
    */
   SpringBootTest.WebEnvironment webEnvironment() default SpringBootTest.WebEnvironment.MOCK;
 }
-

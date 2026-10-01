@@ -21,17 +21,16 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-/**
- * 알림 엔티티
- * 예산 경고, 예산 초과 등 사용자에게 보낼 알림을 저장합니다.
- */
+/** 알림 엔티티 예산 경고, 예산 초과 등 사용자에게 보낼 알림을 저장합니다. */
 @Entity
-@Table(name = "notifications", indexes = {
-    @Index(name = "idx_family_uuid", columnList = "family_uuid"),
-    @Index(name = "idx_family_type_month", columnList = "family_uuid,type,alert_month"),
-    @Index(name = "idx_family_user_created", columnList = "family_uuid,user_uuid,created_at"),
-    @Index(name = "idx_user_is_read", columnList = "user_uuid,is_read")
-})
+@Table(
+    name = "notifications",
+    indexes = {
+      @Index(name = "idx_family_uuid", columnList = "family_uuid"),
+      @Index(name = "idx_family_type_month", columnList = "family_uuid,type,alert_month"),
+      @Index(name = "idx_family_user_created", columnList = "family_uuid,user_uuid,created_at"),
+      @Index(name = "idx_user_is_read", columnList = "user_uuid,is_read")
+    })
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor
@@ -52,10 +51,7 @@ public class Notification {
   @Column(name = "user_uuid", length = 36)
   private CustomUuid userUuid;
 
-  /**
-   * 알림 타입
-   * NotificationTypeConverter가 자동으로 코드값으로 변환하여 DB에 저장합니다.
-   */
+  /** 알림 타입 NotificationTypeConverter가 자동으로 코드값으로 변환하여 DB에 저장합니다. */
   @Column(nullable = false, length = 50)
   private NotificationType type;
 
@@ -71,10 +67,7 @@ public class Notification {
   @Column(name = "reference_type", length = 50)
   private String referenceType;
 
-  /**
-   * 알림 생성 연월 (YYYY-MM)
-   * 중복 알림 방지를 위해 사용
-   */
+  /** 알림 생성 연월 (YYYY-MM) 중복 알림 방지를 위해 사용 */
   @Column(name = "alert_month", nullable = false, length = 7)
   private String yearMonth;
 
@@ -96,32 +89,23 @@ public class Notification {
 
   // ========== 비즈니스 메서드 ==========
 
-  /**
-   * 알림을 읽음 처리합니다.
-   */
+  /** 알림을 읽음 처리합니다. */
   public void markAsRead() {
     this.isRead = true;
   }
 
-  /**
-   * 알림을 미읽음 처리합니다.
-   */
+  /** 알림을 미읽음 처리합니다. */
   public void markAsUnread() {
     this.isRead = false;
   }
 
-  /**
-   * YearMonth로부터 yearMonth 문자열을 생성합니다.
-   */
+  /** YearMonth로부터 yearMonth 문자열을 생성합니다. */
   public static String formatYearMonth(YearMonth yearMonth) {
     return yearMonth.format(DateTimeFormatter.ofPattern("yyyy-MM"));
   }
 
-  /**
-   * LocalDateTime으로부터 yearMonth 문자열을 생성합니다.
-   */
+  /** LocalDateTime으로부터 yearMonth 문자열을 생성합니다. */
   public static String formatYearMonth(LocalDateTime dateTime) {
     return formatYearMonth(YearMonth.from(dateTime));
   }
 }
-

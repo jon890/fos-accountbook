@@ -4,10 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-/**
- * 에러 코드 및 메시지 정의
- * 비즈니스 예외 발생 시 사용할 에러 정보를 관리
- */
+/** 에러 코드 및 메시지 정의 비즈니스 예외 발생 시 사용할 에러 정보를 관리 */
 @Getter
 @AllArgsConstructor
 public enum ErrorCode {
@@ -102,11 +99,8 @@ public enum ErrorCode {
   private final String code;
   private final String message;
 
-  /**
-   * HTTP 상태 코드 반환
-   */
+  /** HTTP 상태 코드 반환 */
   public int getStatusCode() {
     return httpStatus.value();
   }
 }
-
