@@ -186,3 +186,24 @@ test("클라이언트 탐색 중 알림의 바깥 여백을 표시한다", async
   }
   expect(notificationListBox.x).toBe(expectedListX);
 });
+
+test("목록 마지막 내용이 하단 탭과 가운데 버튼에 가리지 않는다", async ({ page }) => {
+  await page.goto("/transactions");
+  const addButton = page.locator('nav[aria-label="주 메뉴"] button');
+  await expect(addButton).toBeVisible();
+
+  const spacing = await page.evaluate(() => {
+    const main = document.querySelector("main");
+    const button = document.querySelector('nav[aria-label="주 메뉴"] button');
+    if (!main || !button) {
+      throw new Error("main or add button is missing");
+    }
+    return {
+      mainPaddingBottom: parseFloat(getComputedStyle(main).paddingBottom),
+      coveredFromBottom: window.innerHeight - button.getBoundingClientRect().top,
+    };
+  });
+
+  // 스크롤을 끝까지 내렸을 때 마지막 내용과 가운데 버튼 사이에 12px 이상 남아야 한다.
+  expect(spacing.mainPaddingBottom - spacing.coveredFromBottom).toBeGreaterThanOrEqual(12);
+});

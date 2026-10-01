@@ -46,6 +46,10 @@ export function DayTransactionList({ selectedDate, expenseTotal, expenses, incom
         <ul className="divide-y divide-border">
           {transactions.map((item) => {
             const member = getMemberColor(colors, item.transaction.userUuid);
+            const excludeFromBudget =
+              item.type === "expense" &&
+              (item.transaction.excludeFromBudget ||
+                item.transaction.category?.excludeFromBudget === true);
             return (
               <li key={`${item.type}-${item.transaction.uuid}`}>
                 <TransactionRow
@@ -53,6 +57,7 @@ export function DayTransactionList({ selectedDate, expenseTotal, expenses, incom
                   kind={item.type}
                   tx={{
                     ...item.transaction,
+                    excludeFromBudget,
                     createdBy: {
                       uuid: item.transaction.userUuid,
                       name: member.label,

@@ -45,6 +45,8 @@ export function ExpenseListClient({
                     color: category.color,
                   }
                 : expense.category;
+              const excludeFromBudget =
+                expense.excludeFromBudget || category?.excludeFromBudget === true;
               const member = getMemberColor(memberColors, expense.userUuid);
               return (
                 <div key={expense.uuid} className="px-3 md:px-4">
@@ -52,6 +54,7 @@ export function ExpenseListClient({
                     tx={{
                       ...expense,
                       category: transactionCategory,
+                      excludeFromBudget,
                       createdBy: { name: member.label, colorClass: member.bgClass },
                     }}
                     variant="full"

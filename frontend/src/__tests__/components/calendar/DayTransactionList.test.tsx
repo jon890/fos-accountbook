@@ -30,6 +30,26 @@ describe("선택 날짜 거래 목록", () => {
     expect(screen.getByText("💰")).toBeInTheDocument();
     expect(screen.queryByText(/기타/)).not.toBeInTheDocument();
   });
+
+  it.each([
+    ["지출 자체", calendarExpense({ excludeFromBudget: true })],
+    [
+      "카테고리 유래",
+      calendarExpense({
+        category: { uuid: "category-1", name: "식비", icon: "🍚", color: "", excludeFromBudget: true },
+      }),
+    ],
+  ])("%s 예산 제외 지출을 행에 표시한다", (_, expense) => {
+    render(<DayTransactionList {...props} expenses={[expense]} incomes={[]} />);
+
+    expect(screen.getByRole("button", { name: /예산 제외/ })).toBeInTheDocument();
+  });
+
+  it("일반 지출 행에는 예산 제외를 표시하지 않는다", () => {
+    render(<DayTransactionList {...props} expenses={[calendarExpense()]} incomes={[]} />);
+
+    expect(screen.queryByText("예산 제외")).not.toBeInTheDocument();
+  });
   it("선택한 날의 지출과 수입을 시간순으로 보이고 서버의 지출 합계를 쓴다", () => {
     render(<DayTransactionList {...props} />);
     expect(screen.getByText("9월 14일 (월)")).toBeInTheDocument();

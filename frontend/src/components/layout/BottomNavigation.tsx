@@ -83,7 +83,7 @@ export function BottomNavigation() {
           })}
           <Button
             type="button"
-            aria-label="지출 추가"
+            aria-label="거래 추가"
             onClick={() => setDialogOpen(true)}
             className="absolute bottom-7 left-1/2 size-14 -translate-x-1/2 rounded-full border-4 border-bg-elev bg-brand-500 p-0 text-brand-fg shadow-[var(--shadow-fab)] hover:bg-brand-600"
           >

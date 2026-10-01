@@ -176,6 +176,9 @@ function EditTransactionDialogBody({
   const [categoryUuid, setCategoryUuid] = useState<string | null>(transaction.categoryUuid);
   const [date, setDate] = useState(() => getDateInitial(transaction));
   const [description, setDescription] = useState(() => getDescriptionInitial(transaction));
+  const [excludeFromBudget, setExcludeFromBudget] = useState(
+    () => type === "expense" && "excludeFromBudget" in transaction && transaction.excludeFromBudget,
+  );
   const [name, setName] = useState(recurring?.name ?? "");
   const [dayOfMonth, setDayOfMonth] = useState<number | undefined>(recurring?.dayOfMonth);
 
@@ -246,7 +249,7 @@ function EditTransactionDialogBody({
   let formAction = recurringFormAction;
   let isUpdating = isRecurringPending;
   let errors: Record<string, string[] | undefined> | undefined = recurringState.errors;
-  let ctaGradient = "gradient-budget text-brand-fg";
+  let ctaGradient = "gradient-primary text-brand-fg";
   let ctaLabel = "고정지출";
 
   if (type === "expense") {
@@ -364,7 +367,7 @@ function EditTransactionDialogBody({
             className={cn(
               "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all",
               type === "recurring"
-                ? "gradient-budget text-brand-fg shadow-sm"
+                ? "gradient-primary text-brand-fg shadow-sm"
                 : "text-fg-muted opacity-40 cursor-not-allowed",
             )}
           >
@@ -382,6 +385,8 @@ function EditTransactionDialogBody({
           onCategoryChange={setCategoryUuid}
           description={description}
           onDescriptionChange={setDescription}
+          excludeFromBudget={excludeFromBudget}
+          onExcludeFromBudgetChange={setExcludeFromBudget}
           date={date}
           onDateChange={setDate}
           name={name}

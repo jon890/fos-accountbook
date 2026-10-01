@@ -17,6 +17,7 @@ const updateExpenseSchema = z.object({
   description: z.string().optional(),
   categoryId: z.string().min(1, "카테고리를 선택해주세요").optional(),
   date: z.string().optional(),
+  excludeFromBudget: z.boolean().optional(),
 });
 
 export async function updateExpenseAction(
@@ -33,6 +34,10 @@ export async function updateExpenseAction(
       description: formData.get("description")?.toString(),
       categoryId: formData.get("categoryId")?.toString(),
       date: formData.get("date")?.toString(),
+      excludeFromBudget:
+        formData.has("excludeFromBudget")
+          ? formData.get("excludeFromBudget") === "true"
+          : undefined,
     };
 
     const validatedFields = updateExpenseSchema.safeParse(rawData);
@@ -44,7 +49,7 @@ export async function updateExpenseAction(
       };
     }
 
-    const { expenseUuid, familyUuid, amount, description, categoryId, date } =
+    const { expenseUuid, familyUuid, amount, description, categoryId, date, excludeFromBudget } =
       validatedFields.data;
 
     const sessionFamilyUuid = await getSelectedFamilyUuid();
@@ -55,16 +60,26 @@ export async function updateExpenseAction(
       return { success: false, message: "권한이 없습니다.", errors: {} };
     }
 
-    if (!categoryId && !amount && description === undefined && !date) {
+    const hasExpenseChanges =
+      Boolean(categoryId) ||
+      amount !== undefined ||
+      description !== undefined ||
+      Boolean(date) ||
+      excludeFromBudget !== undefined;
+
+    if (!hasExpenseChanges) {
       return { success: false, message: "수정할 내용이 없습니다", errors: {} };
     }
 
-    await updateExpense(familyUuid, expenseUuid, {
+    const expenseData = {
       amount,
       description,
       categoryId,
       date,
-    });
+      ...(excludeFromBudget === undefined ? {} : { excludeFromBudget }),
+    };
+
+    await updateExpense(familyUuid, expenseUuid, expenseData);
 
     revalidateTransactionPaths();
 

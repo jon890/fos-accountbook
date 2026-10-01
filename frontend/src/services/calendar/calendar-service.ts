@@ -74,6 +74,7 @@ export async function getCalendarMonth(
     name: category.name,
     icon: category.icon ?? "",
     color: category.color ?? "",
+    excludeFromBudget: category.excludeFromBudget === true,
   }]));
 
   return {
