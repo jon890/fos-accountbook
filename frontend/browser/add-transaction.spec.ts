@@ -41,3 +41,19 @@ test("다크 테마에서 거래 추가 표면과 고정지출 강조를 표시�
   await page.getByRole("button", { name: "카테고리 추가" }).click();
   await expectNonWhiteBackground(page.locator('[data-slot="dialog-content"]'));
 });
+
+test("예산 제외 스위치는 가로로 긴 막대로 표시하고 터치 영역은 44px 을 유지한다", async ({ page }) => {
+  await page.goto("/transactions");
+  await page.getByRole("button", { name: "거래 추가" }).click();
+
+  const toggle = page.getByRole("switch", { name: "예산에서 제외" });
+  await toggle.scrollIntoViewIfNeeded();
+  const toggleBox = await toggle.boundingBox();
+  const trackBox = await toggle.locator('[data-slot="switch-track"]').boundingBox();
+  if (!toggleBox || !trackBox) {
+    throw new Error("switch bounding box is unavailable");
+  }
+
+  expect(toggleBox.height).toBeGreaterThanOrEqual(44);
+  expect(trackBox.width).toBeGreaterThan(trackBox.height * 1.5);
+});
