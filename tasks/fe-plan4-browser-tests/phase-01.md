@@ -154,8 +154,8 @@ pnpm test:browser
 | `frontend/.gitignore` | 수정 |
 | `frontend/browser/settings.ts` | 신규 |
 | `frontend/browser/playwright.config.ts` | 신규 |
-| `frontend/browser/web-server.ts` | 신규 |
-| `frontend/browser/fake-backend.ts` | 신규 |
+| `frontend/browser/web-server.mjs` | 신규 |
+| `frontend/browser/fake-backend.mjs` | 신규 |
 | `frontend/browser/fixtures.ts` | 신규 |
 | `frontend/browser/categories.spec.ts` | 신규 |
 | `frontend/browser/notifications.spec.ts` | 신규 |
