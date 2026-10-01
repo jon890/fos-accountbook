@@ -3,6 +3,9 @@ import { BACKEND_PORT, FAMILY_UUID } from "./settings.ts";
 
 const createdAt = "2026-01-01T00:00:00.000Z";
 const unhandledRequests = [];
+let categoriesAreEmpty = false;
+let notificationsAreHeld = false;
+let notificationHold;
 
 const family = {
   uuid: FAMILY_UUID,
@@ -81,12 +84,34 @@ function sendJson(response, status, body) {
   response.end(JSON.stringify(body));
 }
 
-const server = createServer((request, response) => {
+const server = createServer(async (request, response) => {
   const method = request.method ?? "GET";
   const pathname = new URL(request.url ?? "/", `http://${request.headers.host}`).pathname;
 
   if (method === "POST" && pathname === "/__test/reset") {
     unhandledRequests.length = 0;
+    categoriesAreEmpty = false;
+    setNotificationsHeld(false);
+    sendJson(response, 200, { success: true });
+    return;
+  }
+  if (method === "POST" && pathname === "/__test/categories") {
+    const body = await readJson(request);
+    if (typeof body?.empty !== "boolean") {
+      sendJson(response, 400, { success: false, message: "Expected an empty boolean" });
+      return;
+    }
+    categoriesAreEmpty = body.empty;
+    sendJson(response, 200, { success: true });
+    return;
+  }
+  if (method === "POST" && pathname === "/__test/notifications-delay") {
+    const body = await readJson(request);
+    if (typeof body?.hold !== "boolean") {
+      sendJson(response, 400, { success: false, message: "Expected a hold boolean" });
+      return;
+    }
+    setNotificationsHeld(body.hold);
     sendJson(response, 200, { success: true });
     return;
   }
@@ -99,7 +124,7 @@ const server = createServer((request, response) => {
     return;
   }
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/categories`) {
-    sendJson(response, 200, { success: true, data: categories });
+    sendJson(response, 200, { success: true, data: categoriesAreEmpty ? [] : categories });
     return;
   }
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/notifications/unread-count`) {
@@ -107,6 +132,7 @@ const server = createServer((request, response) => {
     return;
   }
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/notifications`) {
+    await waitForNotifications();
     sendJson(response, 200, { success: true, data: { notifications, unreadCount: 1, totalCount: notifications.length } });
     return;
   }
@@ -115,6 +141,38 @@ const server = createServer((request, response) => {
   unhandledRequests.push(requestName);
   sendJson(response, 404, { success: false, message: `Unsupported test backend path: ${requestName}` });
 });
+
+function setNotificationsHeld(hold) {
+  notificationsAreHeld = hold;
+  if (hold && !notificationHold) {
+    let release;
+    const promise = new Promise((resolve) => {
+      release = resolve;
+    });
+    notificationHold = { promise, release };
+  }
+  if (!hold && notificationHold) {
+    notificationHold.release();
+    notificationHold = undefined;
+  }
+}
+
+async function waitForNotifications() {
+  if (!notificationsAreHeld) return;
+  await notificationHold.promise;
+}
+
+async function readJson(request) {
+  let body = "";
+  for await (const chunk of request) {
+    body += chunk;
+  }
+  try {
+    return JSON.parse(body);
+  } catch {
+    return null;
+  }
+}
 
 server.listen(BACKEND_PORT, "127.0.0.1", () => {
   console.log(`Fake backend listening on ${BACKEND_PORT}`);

@@ -12,7 +12,7 @@ export function CategoriesHero({
 }: CategoriesHeroProps) {
   return (
     <Card className="overflow-hidden border-0 gradient-category text-brand-fg">
-      <div className="p-5 md:p-6">
+      <div className="p-4 md:p-6">
         <p className="text-xs md:text-sm text-brand-fg/80 mb-1">카테고리 관리</p>
         <h1 className="text-xl md:text-2xl font-bold mb-3">
           {familyName ?? "가족"}

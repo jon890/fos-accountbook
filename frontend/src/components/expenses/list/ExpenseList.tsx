@@ -45,7 +45,7 @@ export async function ExpenseList({
   if (!result.success) {
     return (
       <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-xl">
-        <CardContent className="py-8">
+        <CardContent className="py-6 md:py-8">
           <p className="text-center text-gray-500 text-sm md:text-base">
             {result.error.message || "지출 내역을 불러오는데 실패했습니다."}
           </p>
