@@ -71,3 +71,4 @@ python3 ../scripts/check-adr-links.py
 | `CLAUDE.md` | 수정 |
 | `backend/.claude/build-with-teams-overlay.md` | 수정 |
 | `backend/docs/adr/ADR-B22-static-analysis-tools.md` | 수정 |
+| `backend/docs/code-architecture.md` | 수정 |
