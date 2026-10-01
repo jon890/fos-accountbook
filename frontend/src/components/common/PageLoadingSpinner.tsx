@@ -15,10 +15,10 @@ export function PageLoadingSpinner() {
           <div className="absolute inset-0 w-16 h-16 md:w-20 md:h-20 gradient-primary rounded-2xl md:rounded-3xl animate-ping opacity-20"></div>
         </div>
         <div className="flex flex-col items-center space-y-2">
-          <div className="text-base md:text-lg text-gray-900 font-semibold">
+          <div className="text-base md:text-lg text-fg font-semibold">
             로딩 중...
           </div>
-          <div className="text-xs md:text-sm text-gray-500">
+          <div className="text-xs md:text-sm text-fg-muted">
             잠시만 기다려주세요
           </div>
         </div>

@@ -24,7 +24,7 @@ export function RecurringExpenseList({ data }: RecurringExpenseListProps) {
       </Card>
 
       {/* 목록 */}
-      <Card className="border-0 glass shadow-xl">
+      <Card className="border border-border bg-bg-elev shadow-xl">
         <CardContent className="p-3 md:p-6">
           {data.items.length === 0 ? (
             <EmptyState

@@ -106,17 +106,19 @@ interface FamilyMemberSummary {
 interface Category {
   uuid: string;
   familyUuid: string;
+  type: "EXPENSE" | "INCOME";
   name: string;
   color?: string; // #RRGGBB(기존 값, 기본 카테고리) 또는 oklch(L C H)(팔레트에서 고른 값)
   icon?: string; // 이모지 또는 아이콘 이름
   excludeFromBudget?: boolean;
-  isDefault?: boolean; // true = 삭제 불가 ('미분류')
+  isDefault?: boolean; // true = 삭제 불가 (지출 '미분류', 수입 '기타 수입')
   createdAt: string;
   updatedAt: string;
 }
 
 // Zod 스키마 (Server Action 입력 검증)
 const createCategorySchema = z.object({
+  type: z.enum(["EXPENSE", "INCOME"]),
   name: z.string().trim().min(1, "이름은 필수입니다"),
   color: z.string().optional(),
   icon: z.string().optional(),

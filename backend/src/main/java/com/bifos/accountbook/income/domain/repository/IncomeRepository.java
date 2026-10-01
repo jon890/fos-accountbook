@@ -38,6 +38,9 @@ public interface IncomeRepository {
       LocalDateTime endDate,
       Pageable pageable);
 
+  /** 특정 카테고리의 수입 전체 이력을 다른 카테고리로 이동한다. */
+  void moveIncomes(CustomUuid oldCategoryUuid, CustomUuid newCategoryUuid);
+
   /** 가족의 모든 활성 수입을 DELETED 상태로 벌크 변경 */
   long softDeleteAllByFamilyUuid(CustomUuid familyUuid);
 }

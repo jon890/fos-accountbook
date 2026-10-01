@@ -14,7 +14,8 @@ POST /auth/social-login → JWT 발급
     │
     ▼
 POST /families → 가족 생성
-    │  └─ 기본 카테고리 10개 자동 생성 (미분류, 식비, 교통 등)
+    │  └─ 지출 카테고리 11개와 수입 카테고리 4개 자동 생성
+    │     (삭제할 수 없는 기본 카테고리: 지출 미분류, 수입 기타 수입)
     │  └─ UserProfile.defaultFamilyUuid 자동 설정
     │
     ▼
@@ -87,9 +88,9 @@ DELETE /families/{familyUuid}/categories/{categoryUuid}
     ▼
 CategoryService.deleteCategory()
     ├─ 기본 카테고리 여부 체크 (is_default=true → 삭제 불가)
-    ├─ 기본 카테고리 조회 (이동 대상)
-    ├─ ExpenseService.moveExpensesToDefaultCategory()
-    ├─ RecurringExpenseService.moveRecurringExpensesToDefaultCategory()
+    ├─ 종류별 기본 카테고리 조회 (지출: 미분류, 수입: 기타 수입)
+    ├─ EXPENSE → 지출 전체 이력과 ACTIVE 반복 지출을 미분류로 이관
+    ├─ INCOME → 수입 전체 이력을 기타 수입으로 이관
     └─ Category status → DELETED + 캐시 무효화
 ```
 
@@ -189,5 +190,5 @@ API 인증 필터(`JwtAuthenticationFilter`)는 `typ=access` 인 토큰만 인�
 동기 호출 (향후 이벤트 전환 후보):
 
 - `family → category`: 가족 생성 시 기본 카테고리 생성
-- `category → expense/recurring`: 카테고리 삭제 시 기본 카테고리로 이동 (income은 미구현)
+- `category → expense/recurring/income`: 카테고리 삭제 시 종류별 기본 카테고리로 이동
 - `family → user`: 가족 생성 시 기본 가족 설정

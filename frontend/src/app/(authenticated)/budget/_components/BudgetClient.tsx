@@ -67,7 +67,7 @@ export function BudgetClient({
             {year}년 {month}월
           </p>
         </div>
-        <div className="p-3 gradient-budget rounded-xl shadow-md">
+        <div className="p-3 gradient-primary rounded-xl shadow-md">
           <PiggyBank className="w-5 h-5 md:w-6 md:h-6 text-brand-fg" />
         </div>
       </div>
@@ -88,7 +88,7 @@ export function BudgetClient({
             <Button
               variant="default"
               onClick={() => router.push("/settings")}
-              className="gradient-budget text-brand-fg shadow-sm hover:opacity-90 transition-opacity"
+              className="gradient-primary text-brand-fg shadow-sm hover:opacity-90 transition-opacity"
             >
               <Settings className="w-4 h-4" />
               예산 설정하기
@@ -104,7 +104,7 @@ export function BudgetClient({
             "relative overflow-hidden border-0 shadow-lg",
             isBudgetExceeded
               ? "gradient-expense text-expense-fg"
-              : "gradient-budget text-brand-fg"
+              : "gradient-primary text-brand-fg"
           )}
         >
           <CardContent className="p-4 md:p-6">
@@ -135,7 +135,7 @@ export function BudgetClient({
               </div>
               <Progress
                 value={isBudgetExceeded ? 100 : usagePercent}
-                className="h-2 gradient-card-overlay"
+                className="h-2 bg-[var(--color-hero-track)] [&_[data-slot=progress-indicator]]:bg-[var(--color-hero-fill)]"
               />
             </div>
           </CardContent>

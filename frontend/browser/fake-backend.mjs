@@ -5,8 +5,10 @@ const createdAt = "2026-01-01T00:00:00.000Z";
 const unhandledRequests = [];
 let categoriesAreEmpty = false;
 let transactionsAreEmpty = false;
+let categorySummaryIsEmpty = false;
 let notificationsAreHeld = false;
 let notificationHold;
+let budgetIsConfigured = true;
 
 const family = {
   uuid: FAMILY_UUID,
@@ -16,13 +18,14 @@ const family = {
   updatedAt: createdAt,
   memberCount: 2,
   expenseCount: 12,
-  categoryCount: 3,
+  categoryCount: 4,
 };
 
 const categories = [
   {
     uuid: "33333333-3333-3333-3333-333333333331",
     familyUuid: FAMILY_UUID,
+    type: "EXPENSE",
     name: "식비",
     icon: "utensils",
     color: "oklch(0.560 0.140 35)",
@@ -33,6 +36,7 @@ const categories = [
   {
     uuid: "33333333-3333-3333-3333-333333333332",
     familyUuid: FAMILY_UUID,
+    type: "EXPENSE",
     name: "교통",
     icon: "bus",
     color: "oklch(0.540 0.130 230)",
@@ -43,6 +47,7 @@ const categories = [
   {
     uuid: "33333333-3333-3333-3333-333333333333",
     familyUuid: FAMILY_UUID,
+    type: "EXPENSE",
     name: "생활",
     icon: "house",
     color: "oklch(0.510 0.110 188)",
@@ -50,7 +55,33 @@ const categories = [
     createdAt,
     updatedAt: createdAt,
   },
+  {
+    uuid: "33333333-3333-3333-3333-333333333334",
+    familyUuid: FAMILY_UUID,
+    type: "INCOME",
+    name: "급여",
+    icon: "wallet",
+    color: "oklch(0.650 0.140 145)",
+    createdAt,
+    updatedAt: createdAt,
+  },
 ];
+
+function getCategory(type, name) {
+  const category = categories.find(
+    (candidate) => candidate.type === type && candidate.name === name,
+  );
+
+  if (!category) {
+    throw new Error(`Missing ${type} category fixture: ${name}`);
+  }
+
+  return category;
+}
+
+const foodExpenseCategory = getCategory("EXPENSE", "식비");
+const livingExpenseCategory = getCategory("EXPENSE", "생활");
+const salaryIncomeCategory = getCategory("INCOME", "급여");
 
 const notifications = [
   {
@@ -99,7 +130,7 @@ const transactions = {
     uuid: "55555555-5555-5555-5555-555555555551",
     familyUuid: FAMILY_UUID,
     userUuid: members[0].userUuid,
-    categoryUuid: categories[0].uuid,
+    categoryUuid: foodExpenseCategory.uuid,
     category: null,
     amount: 12500,
     description: "점심 식사",
@@ -136,8 +167,8 @@ const transactions = {
     uuid: "55555555-5555-5555-5555-555555555552",
     familyUuid: FAMILY_UUID,
     userUuid: members[0].userUuid,
-    categoryUuid: categories[2].uuid,
-    category: { ...categories[2], icon: "💳" },
+    categoryUuid: salaryIncomeCategory.uuid,
+    category: { ...salaryIncomeCategory, icon: "💳" },
     amount: 3000000,
     description: "급여",
     date: "2026-10-01T09:00:00.000Z",
@@ -150,8 +181,8 @@ const recurringExpenses = [
   {
     uuid: "55555555-5555-5555-5555-555555555553",
     familyUuid: FAMILY_UUID,
-    categoryUuid: categories[2].uuid,
-    category: { ...categories[2], icon: "🏠" },
+    categoryUuid: livingExpenseCategory.uuid,
+    category: { ...livingExpenseCategory, icon: "🏠" },
     name: "월세",
     amount: 850000,
     dayOfMonth: 25,
@@ -194,6 +225,8 @@ const server = createServer(async (request, response) => {
     unhandledRequests.length = 0;
     categoriesAreEmpty = false;
     transactionsAreEmpty = false;
+    categorySummaryIsEmpty = false;
+    budgetIsConfigured = true;
     setNotificationsHeld(false);
     sendJson(response, 200, { success: true });
     return;
@@ -218,6 +251,26 @@ const server = createServer(async (request, response) => {
     sendJson(response, 200, { success: true });
     return;
   }
+  if (method === "POST" && pathname === "/__test/category-summary") {
+    const body = await readJson(request);
+    if (typeof body?.empty !== "boolean") {
+      sendJson(response, 400, { success: false, message: "Expected an empty boolean" });
+      return;
+    }
+    categorySummaryIsEmpty = body.empty;
+    sendJson(response, 200, { success: true });
+    return;
+  }
+  if (method === "POST" && pathname === "/__test/budget") {
+    const body = await readJson(request);
+    if (typeof body?.configured !== "boolean") {
+      sendJson(response, 400, { success: false, message: "Expected a configured boolean" });
+      return;
+    }
+    budgetIsConfigured = body.configured;
+    sendJson(response, 200, { success: true });
+    return;
+  }
   if (method === "POST" && pathname === "/__test/notifications-delay") {
     const body = await readJson(request);
     if (typeof body?.hold !== "boolean") {
@@ -234,6 +287,22 @@ const server = createServer(async (request, response) => {
   }
   if (method === "GET" && pathname === "/api/v1/families") {
     sendJson(response, 200, { success: true, data: [family] });
+    return;
+  }
+  if (method === "GET" && pathname === "/api/v1/users/me/profile") {
+    sendJson(response, 200, {
+      success: true,
+      data: {
+        timezone: "Asia/Seoul",
+        language: "ko",
+        currency: "KRW",
+        defaultFamilyUuid: FAMILY_UUID,
+      },
+    });
+    return;
+  }
+  if (method === "GET" && pathname === "/api/v1/users/me/api-tokens") {
+    sendJson(response, 200, { success: true, data: [] });
     return;
   }
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/categories`) {
@@ -259,6 +328,42 @@ const server = createServer(async (request, response) => {
         totalIncome: 3000000,
         totalExpense: 16200,
         memberExpenseTotals: [{ userUuid: members[0].userUuid, amount: 16200 }],
+      },
+    });
+    return;
+  }
+  if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/dashboard/stats/monthly`) {
+    const budget = budgetIsConfigured ? family.monthlyBudget : 0;
+    const monthlyExpense = budgetIsConfigured ? 16200 : 0;
+    sendJson(response, 200, {
+      success: true,
+      data: {
+        monthlyExpense,
+        monthlyIncome: 3000000,
+        remainingBudget: budget - monthlyExpense,
+        familyMembers: family.memberCount,
+        budget,
+        year: 2026,
+        month: 10,
+      },
+    });
+    return;
+  }
+  if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/dashboard/stats/category-breakdown`) {
+    sendJson(response, 200, {
+      success: true,
+      data: {
+        year: 2026,
+        month: 10,
+        totalExpense: 16200,
+        items: [{
+          categoryUuid: categories[0].uuid,
+          name: categories[0].name,
+          icon: "🍚",
+          color: categories[0].color,
+          totalAmount: 16200,
+          percentage: 100,
+        }],
       },
     });
     return;
@@ -297,7 +402,20 @@ const server = createServer(async (request, response) => {
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/dashboard/expenses/by-category`) {
     sendJson(response, 200, {
       success: true,
-      data: { totalExpense: 12500, categoryStats: [] },
+      data: categorySummaryIsEmpty ? {
+        totalExpense: 0,
+        categoryStats: [],
+      } : {
+        totalExpense: 50100,
+        categoryStats: [
+          { categoryUuid: categories[0].uuid, categoryName: "식비", categoryIcon: "🍚", categoryColor: categories[0].color, totalAmount: 15000, count: 5, percentage: 30 },
+          { categoryUuid: categories[1].uuid, categoryName: "교통", categoryIcon: "🚌", categoryColor: categories[1].color, totalAmount: 12500, count: 4, percentage: 25 },
+          { categoryUuid: categories[2].uuid, categoryName: "생활", categoryIcon: "🏠", categoryColor: categories[2].color, totalAmount: 10000, count: 3, percentage: 20 },
+          { categoryUuid: "33333333-3333-3333-3333-333333333337", categoryName: "카페", categoryIcon: "☕", categoryColor: "oklch(0.520 0.110 60)", totalAmount: 6000, count: 2, percentage: 12 },
+          { categoryUuid: "33333333-3333-3333-3333-333333333335", categoryName: "쇼핑", categoryIcon: "🛍️", categoryColor: "oklch(0.560 0.140 330)", totalAmount: 4100, count: 2, percentage: 8 },
+          { categoryUuid: "33333333-3333-3333-3333-333333333336", categoryName: "기타", categoryIcon: "📦", categoryColor: "oklch(0.510 0.015 230)", totalAmount: 2500, count: 1, percentage: 5 },
+        ],
+      },
     });
     return;
   }

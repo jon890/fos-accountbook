@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "카테고리 (Category)", description = "지출 카테고리 관리 API")
+@Tag(name = "카테고리 (Category)", description = "지출 및 수입 카테고리 관리 API")
 @Slf4j
 @RestController
 @RequestMapping("/api/v1")
@@ -38,7 +38,7 @@ public class CategoryController {
 
   private final CategoryService categoryService;
 
-  @Operation(summary = "카테고리 생성", description = "가족의 새 지출 카테고리를 생성합니다.")
+  @Operation(summary = "카테고리 생성", description = "가족의 새 지출 또는 수입 카테고리를 생성합니다.")
   @ApiResponse(responseCode = "201", description = "생성 성공")
   @ApiResponse(responseCode = "403", description = "접근 권한 없음")
   @PostMapping("/families/{familyUuid}/categories")
@@ -166,7 +166,7 @@ public class CategoryController {
     return ResponseEntity.ok(ApiSuccessResponse.of("카테고리가 수정되었습니다", response));
   }
 
-  @Operation(summary = "카테고리 삭제", description = "카테고리를 삭제합니다. 해당 카테고리의 지출은 기본 카테고리로 이동됩니다.")
+  @Operation(summary = "카테고리 삭제", description = "카테고리를 삭제합니다. 지출과 반복 지출은 미분류로, 수입은 기타 수입으로 이동됩니다.")
   @ApiResponse(responseCode = "200", description = "삭제 성공")
   @ApiResponse(responseCode = "400", description = "기본 카테고리는 삭제 불가")
   @ApiResponse(responseCode = "403", description = "접근 권한 없음")

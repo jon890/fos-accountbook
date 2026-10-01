@@ -90,7 +90,7 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
 
     // When: 카테고리 생성
     CreateCategoryRequest request =
-        new CreateCategoryRequest("New Category", "#00ff00", "🍏", null);
+        new CreateCategoryRequest("New Category", "#00ff00", "🍏", null, null);
     categoryService.createCategory(testUser.getUuid(), familyUuid, request);
 
     // Then: 캐시가 무효화됨
@@ -134,6 +134,7 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
     // Given: TestFixtures로 데이터 생성 + 캐시 준비
     User testUser = fixtures.getDefaultUser();
     Family testFamily = fixtures.getDefaultFamily();
+    categoryService.createDefaultCategoriesForFamily(testFamily.getUuid());
     Category category =
         fixtures
             .categories

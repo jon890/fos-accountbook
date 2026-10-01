@@ -1,6 +1,7 @@
 package com.bifos.accountbook.category.infra.repository.jpa;
 
 import com.bifos.accountbook.category.domain.entity.Category;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.shared.value.CustomUuid;
 import java.util.List;
 import java.util.Optional;
@@ -22,13 +23,16 @@ public interface CategoryJpaRepository extends JpaRepository<Category, Long> {
   List<Category> findAllByFamilyUuid(@Param("familyUuid") CustomUuid familyUuid);
 
   @Query(
-      "SELECT c FROM Category c WHERE c.familyUuid = :familyUuid AND c.name = :name AND c.status = com.bifos.accountbook.category.domain.value.CategoryStatus.ACTIVE")
-  Optional<Category> findByFamilyUuidAndName(
-      @Param("familyUuid") CustomUuid familyUuid, @Param("name") String name);
+      "SELECT c FROM Category c WHERE c.familyUuid = :familyUuid AND c.type = :type AND c.name = :name AND c.status = com.bifos.accountbook.category.domain.value.CategoryStatus.ACTIVE")
+  Optional<Category> findByFamilyUuidAndTypeAndName(
+      @Param("familyUuid") CustomUuid familyUuid,
+      @Param("type") CategoryType type,
+      @Param("name") String name);
 
   @Query(
-      "SELECT c FROM Category c WHERE c.familyUuid = :familyUuid AND c.isDefault = true AND c.status = com.bifos.accountbook.category.domain.value.CategoryStatus.ACTIVE")
-  Optional<Category> findByFamilyUuidAndIsDefaultTrue(@Param("familyUuid") CustomUuid familyUuid);
+      "SELECT c FROM Category c WHERE c.familyUuid = :familyUuid AND c.type = :type AND c.isDefault = true AND c.status = com.bifos.accountbook.category.domain.value.CategoryStatus.ACTIVE")
+  Optional<Category> findByFamilyUuidAndTypeAndIsDefaultTrue(
+      @Param("familyUuid") CustomUuid familyUuid, @Param("type") CategoryType type);
 
   @Query(
       "SELECT COUNT(c) FROM Category c WHERE c.familyUuid = :familyUuid AND c.status = com.bifos.accountbook.category.domain.value.CategoryStatus.ACTIVE")

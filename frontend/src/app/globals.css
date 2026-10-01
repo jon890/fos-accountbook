@@ -15,6 +15,7 @@
   --color-brand-700: oklch(0.470 0.165 257);
   --color-brand-800: oklch(0.385 0.130 257);
   --color-brand-900: oklch(0.300 0.095 257);
+  --color-brand-ink: oklch(0.470 0.165 257);
 
   /* ── semantic ───────────────────────────────── */
   --color-income:  oklch(0.610 0.150 152);
@@ -148,6 +149,36 @@
 }
 
 [data-theme="dark"] {
+  --color-brand-tint: oklch(0.205 0.030 257);
+  --color-brand-50: oklch(0.255 0.045 257);
+  --color-brand-100: oklch(0.300 0.065 257);
+  --color-brand-200: oklch(0.380 0.095 257);
+  --color-brand-700: oklch(0.800 0.110 257);
+  --color-brand-800: oklch(0.860 0.080 257);
+  --color-brand-900: oklch(0.920 0.045 257);
+
+  --color-cat-food-bg: oklch(0.300 0.060 35);
+  --color-cat-food-fg: oklch(0.800 0.110 35);
+  --color-cat-cafe-bg: oklch(0.300 0.060 60);
+  --color-cat-cafe-fg: oklch(0.800 0.110 60);
+  --color-cat-transit-bg: oklch(0.300 0.060 230);
+  --color-cat-transit-fg: oklch(0.800 0.110 230);
+  --color-cat-telecom-bg: oklch(0.300 0.060 280);
+  --color-cat-telecom-fg: oklch(0.800 0.110 280);
+  --color-cat-home-bg: oklch(0.300 0.060 188);
+  --color-cat-home-fg: oklch(0.800 0.110 188);
+  --color-cat-shopping-bg: oklch(0.300 0.060 330);
+  --color-cat-shopping-fg: oklch(0.800 0.110 330);
+  --color-cat-health-bg: oklch(0.300 0.060 152);
+  --color-cat-health-fg: oklch(0.800 0.110 152);
+  --color-cat-leisure-bg: oklch(0.300 0.060 105);
+  --color-cat-leisure-fg: oklch(0.800 0.110 105);
+  --color-cat-education-bg: oklch(0.300 0.060 250);
+  --color-cat-education-fg: oklch(0.800 0.110 250);
+  --color-cat-etc-bg: oklch(0.300 0.008 230);
+  --color-cat-etc-fg: oklch(0.760 0.015 230);
+  --color-category-fallback-bg: oklch(0.720 0.130 250 / 0.18);
+
   --color-member-1: oklch(0.78 0.12 275);
   --color-member-2: oklch(0.78 0.10 205);
   --color-member-3: oklch(0.78 0.12 330);
@@ -216,7 +247,7 @@
   }
 
   .gradient-primary {
-    background-image: linear-gradient(135deg, oklch(0.720 0.130 257) 0%, oklch(0.555 0.130 257) 100%);
+    background-image: linear-gradient(135deg, oklch(0.650 0.130 257) 0%, oklch(0.555 0.130 257) 100%);
   }
 
   .gradient-expense {
@@ -271,6 +302,56 @@
     backdrop-filter: blur(12px);
     background-color: rgba(255, 255, 255, 0.75);
     border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  [data-theme="dark"] .app-background {
+    background: linear-gradient(
+      160deg,
+      var(--color-bg) 0%,
+      color-mix(in oklch, var(--color-brand-tint) 40%, var(--color-bg)) 55%,
+      color-mix(in oklch, var(--color-brand-tint) 20%, var(--color-bg)) 100%
+    );
+  }
+
+  [data-theme="dark"] .gradient-primary {
+    background-image: linear-gradient(135deg, oklch(0.640 0.130 257) 0%, oklch(0.475 0.130 257) 100%);
+  }
+
+  [data-theme="dark"] .gradient-expense {
+    background: linear-gradient(135deg, oklch(0.620 0.180 25) 0%, oklch(0.500 0.180 25) 100%);
+  }
+
+  [data-theme="dark"] .gradient-income {
+    background: linear-gradient(135deg, oklch(0.620 0.150 152) 0%, oklch(0.480 0.150 152) 100%);
+  }
+
+  [data-theme="dark"] .gradient-budget {
+    background-image: linear-gradient(135deg, oklch(0.740 0.150 78) 0%, oklch(0.600 0.150 78) 100%);
+  }
+
+  [data-theme="dark"] .gradient-family {
+    background-image: linear-gradient(135deg, oklch(0.730 0.105 257) 0%, oklch(0.560 0.140 257) 100%);
+  }
+
+  [data-theme="dark"] .gradient-category {
+    background-image: linear-gradient(135deg, oklch(0.810 0.075 257) 0%, oklch(0.640 0.130 257) 100%);
+  }
+
+  [data-theme="dark"] .gradient-blue-purple {
+    background-image: linear-gradient(135deg, oklch(0.540 0.190 256) 0%, oklch(0.505 0.205 277) 100%);
+  }
+
+  [data-theme="dark"] .gradient-emerald-green {
+    background-image: linear-gradient(135deg, oklch(0.690 0.145 165) 0%, oklch(0.480 0.135 162) 100%);
+  }
+
+  [data-theme="dark"] .gradient-purple-indigo {
+    background-image: linear-gradient(135deg, oklch(0.620 0.165 290) 0%, oklch(0.505 0.205 277) 100%);
+  }
+
+  [data-theme="dark"] .glass {
+    background-color: color-mix(in oklch, var(--color-bg-elev) 75%, transparent);
+    border-color: color-mix(in oklch, var(--color-bg-elev) 50%, transparent);
   }
 
   .hover-lift {

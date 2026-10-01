@@ -9,6 +9,7 @@ import com.bifos.accountbook.category.application.dto.CreateCategoryRequest;
 import com.bifos.accountbook.category.application.dto.UpdateCategoryRequest;
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.category.domain.value.CategoryColor;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.shared.AbstractControllerTest;
 import com.bifos.accountbook.user.domain.entity.User;
@@ -37,7 +38,7 @@ class CategoryControllerTest extends AbstractControllerTest {
   }
 
   private ResultActions createWithColor(String color) throws Exception {
-    CreateCategoryRequest request = new CreateCategoryRequest("식비", color, null, null);
+    CreateCategoryRequest request = new CreateCategoryRequest("식비", color, null, null, null);
     return mockMvc.perform(
         post("/api/v1/families/{familyUuid}/categories", testFamily.getUuid().getValue())
             .contentType(MediaType.APPLICATION_JSON)
@@ -107,5 +108,29 @@ class CategoryControllerTest extends AbstractControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.color").value("oklch(0.520 0.120 152)"));
+  }
+
+  @Test
+  @DisplayName("종류 없이 카테고리를 생성하면 지출 카테고리가 된다")
+  void create_withoutType_defaultsToExpense() throws Exception {
+    createWithColor("#10b981")
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.data.type").value(CategoryType.EXPENSE.name()));
+  }
+
+  @Test
+  @DisplayName("수입 종류 카테고리를 생성하면 응답에도 수입으로 표시된다")
+  void create_incomeType_returnsIncome() throws Exception {
+    CreateCategoryRequest request =
+        new CreateCategoryRequest("식비", "#10b981", "💰", null, CategoryType.INCOME);
+
+    mockMvc
+        .perform(
+            post("/api/v1/families/{familyUuid}/categories", testFamily.getUuid().getValue())
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-User-UUID", testUser.getUuid().getValue())
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.data.type").value(CategoryType.INCOME.name()));
   }
 }

@@ -73,6 +73,7 @@ const mockCategories = [
   {
     uuid: "cat-1",
     familyUuid: "family-1",
+    type: "EXPENSE" as const,
     name: "식비",
     icon: "🍔",
     color: "#EF4444",
@@ -112,7 +113,7 @@ const mockRecurring: RecurringExpense = {
   uuid: "recurring-1",
   familyUuid: "family-1",
   categoryUuid: "cat-1",
-  category: { uuid: "cat-1", familyUuid: "family-1", name: "구독", color: "#3B82F6", icon: "📺", createdAt: "2024-01-01T00:00:00Z", updatedAt: "2024-01-01T00:00:00Z" },
+  category: { uuid: "cat-1", familyUuid: "family-1", type: "EXPENSE", name: "구독", color: "#3B82F6", icon: "📺", createdAt: "2024-01-01T00:00:00Z", updatedAt: "2024-01-01T00:00:00Z" },
   name: "넷플릭스",
   amount: 17000,
   dayOfMonth: 15,

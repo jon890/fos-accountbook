@@ -178,7 +178,7 @@ export function AnalyticsClient({
             ₩{formatShortAmount(totalIncome)}
           </p>
         </div>
-        <div className="gradient-budget rounded-2xl p-3 text-brand-fg">
+        <div className="gradient-primary rounded-2xl p-3 text-brand-fg">
           <div className="flex items-center gap-1 mb-2 opacity-80">
             <Wallet className="w-3.5 h-3.5" />
             <span className="text-[11px] font-medium">{isCurrentMonth ? "잔여예산" : "예산"}</span>
@@ -223,12 +223,12 @@ export function AnalyticsClient({
 
       {/* 지출 TOP 5 */}
       {topExpenses.length > 0 && (
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-50">
-          <h2 className="text-sm font-bold text-gray-700 mb-3">지출 TOP 5</h2>
+        <div className="bg-bg-elev rounded-2xl p-4 shadow-sm border border-border">
+          <h2 className="text-sm font-bold text-fg mb-3">지출 TOP 5</h2>
           <div className="space-y-2.5">
             {topExpenses.map((expense, idx) => (
               <div key={expense.uuid} className="flex items-center gap-3">
-                <span className="w-5 h-5 rounded-full bg-gray-100 text-[10px] font-bold text-gray-400 flex items-center justify-center shrink-0">
+                <span className="w-5 h-5 rounded-full bg-bg-muted text-[10px] font-bold text-fg-subtle flex items-center justify-center shrink-0">
                   {idx + 1}
                 </span>
                 <div
@@ -238,10 +238,10 @@ export function AnalyticsClient({
                   {expense.category?.icon ?? "💸"}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-gray-800 truncate">
+                  <p className="text-xs font-semibold text-fg truncate">
                     {expense.description || expense.category?.name || "기타"}
                   </p>
-                  <p className="text-[10px] text-gray-400">
+                  <p className="text-[10px] text-fg-subtle">
                     {expense.description ? `${expense.category?.name ?? "기타"} · ` : ""}
                     {expense.date.split("T")[0]}
                   </p>

@@ -17,6 +17,7 @@ const categories: CategoryResponse[] = [
   {
     uuid: "cat-1",
     familyUuid: "fam-1",
+    type: "EXPENSE",
     name: "Regular Category",
     color: "#000000",
     icon: "🍔",
@@ -27,6 +28,7 @@ const categories: CategoryResponse[] = [
   {
     uuid: "cat-2",
     familyUuid: "fam-1",
+    type: "EXPENSE",
     name: "Excluded Category",
     color: "#ffffff",
     icon: "🚫",

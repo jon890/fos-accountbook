@@ -60,6 +60,10 @@ export function TransactionFormFields({
   const selectedCategory = categories.find((category) => category.uuid === categoryUuid);
   const isCategoryExcluded = selectedCategory?.excludeFromBudget === true;
   const isDesktop = useMediaQuery("(min-width: 768px)");
+  const categoryType = type === "income" ? "INCOME" : "EXPENSE";
+  const filteredCategories = categories.filter(
+    (category) => category.type === categoryType,
+  );
 
   function handleFocus(event: FocusEvent<HTMLDivElement>) {
     if (!isDesktop && event.target instanceof HTMLInputElement) {
@@ -86,7 +90,7 @@ export function TransactionFormFields({
           </div>
         ) : (
           <CategoryGrid
-            categories={categories}
+            categories={filteredCategories}
             selectedUuid={categoryUuid}
             onSelect={onCategoryChange}
           />
