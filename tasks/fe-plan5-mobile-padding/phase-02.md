@@ -1,6 +1,6 @@
 # Phase 02. 화면이 다시 쌓은 바깥 여백을 뺀다
 
-**Execution profile**: fast
+**Execution profile**: standard
 **Domain**: color-token
 
 ## 목표
@@ -42,7 +42,13 @@
 - `frontend/browser/mobile-spacing.spec.ts` 에 더한다.
   - `/categories`: `mobile` 에서 첫 `[data-slot="card"]` 의 `boundingBox().x` 가 12 다. `desktop` 에서는 `main` 의 `padding-left` 로 정해진 위치보다 왼쪽에 있지 않다.
   - `/notifications`: `mobile` 에서 알림 목록 바깥 상자의 `boundingBox().x` 가 12 다.
-- 가짜 백엔드가 응답하는 두 화면만 단언한다. 다른 화면은 이 phase 에서 백엔드 경로를 더하지 않는다.
+- 가짜 백엔드가 응답하는 두 화면만 단언한다. 다른 화면은 이 phase 에서 application API 경로를 더하지 않는다.
+
+### 4. 계획 검토 반영
+
+- 바깥 여백 규칙은 `md` 미만에 적용한다. `md` 이상의 표에 명시한 화면 여백은 유지한다.
+- 카테고리 desktop 카드 위치는 중앙 정렬된 896px 영역의 왼쪽 좌표 192px로 정확히 단언한다. 모바일 알림 loading과 완료 화면 x 좌표는 모두 12px이다.
+- 가짜 백엔드에 테스트 전용 알림 응답 지연 설정을 추가한다. `POST /__test/notifications-delay`에 `{hold: true}`를 보내 응답을 보류하고 `{hold: false}`로 해제한다. 응답은 테스트가 명시적으로 해제할 때까지 보류하고 reset에서 해제해 실행 순서 의존을 막는다. 클라이언트 탐색 중 알림 loading과 완료 화면의 바깥 x 좌표를 모바일에서 비교한다. 고정 시간 대기는 쓰지 않는다.
 
 ## 검증
 
@@ -74,3 +80,4 @@ pnpm test:browser browser/mobile-spacing.spec.ts
 | `frontend/src/app/(authenticated)/notifications/loading.tsx` | 수정 |
 | `frontend/src/app/(authenticated)/calendar/loading.tsx` | 수정 |
 | `frontend/browser/mobile-spacing.spec.ts` | 수정 |
+| `frontend/browser/fake-backend.mjs` | 수정 |

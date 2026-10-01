@@ -51,8 +51,8 @@
 
 ### 2. `CardHeader` 를 쓰는 네 화면과 위아래 여백이 없는 `CategoryItem` 맞추기
 
-- `AuthCenterCard`, `InvitePageClient`, `families/create/page.tsx`: 헤더 `pt-8` 을 `pt-6 md:pt-8` 로, 헤더와 본문 사이가 두 배가 되지 않게 `CardContent` 에 `pt-0` 을 준다.
-- `BudgetClient` 의 두 요약 카드: `CardHeader className="p-4 pb-1"`(순서 교정), `CardContent className="p-4 pt-0"` 유지.
+- `AuthCenterCard`, `InvitePageClient`, `families/create/page.tsx`: 헤더 `pt-8` 을 `pt-6 md:pt-8` 로, 헤더와 본문 사이가 두 배가 되지 않게 `CardContent` 에 `pt-0 md:pt-0` 을 준다.
+- `BudgetClient` 의 두 요약 카드: `CardHeader className="p-4 pb-1 md:p-4 md:pb-1"`, `CardContent className="p-4 pt-0 md:p-4 md:pt-0"`로 breakpoint까지 명시한다.
 - `CategoryItem`: `CardContent className="p-3 md:p-4"`.
 
 ### 3. 다이얼로그 두 종류
@@ -69,7 +69,16 @@
 
 - `/categories` 에서 `[data-slot="card"]` 첫 요소의 계산된 `padding-top` 이 `0px` 이다(두 project 모두).
 - `/categories` 에서 첫 카테고리 항목(`CategoryItem` 의 `[data-slot="card-content"]`)의 `padding-top` 이 `mobile` 에서 `12px`, `desktop` 에서 `16px` 이다.
-- 가짜 백엔드가 모르는 경로를 받으면 fixture 가 실패시키므로, 이 spec 이 새 백엔드 경로를 부르지 않는지 확인한다.
+- 가짜 백엔드가 모르는 경로를 받으면 fixture 가 실패시키므로, 이 spec 이 새 application API 경로를 부르지 않는지 확인한다.
+
+### 6. 계획 검토 반영
+
+- 테스트 기대값: Dialog padding은 mobile 16px, desktop 24px이다. AlertDialog는 mobile padding 16px, 실제 폭 358px, radius 16px(기존 rounded-lg 토큰)이며 desktop padding 24px, max-width 512px이다.
+- EmptyState는 mobile 좌우 16px, 위 32px, 아래 24px, 원 64px, 아이콘 32px이며 desktop 좌우 24px, 위 52px, 아래 40px, 원 96px, 아이콘 48px이다.
+
+- 기본값의 `md:p-6`은 비반응형 부분 여백보다 우선한다. 본문 위 여백을 없애는 네 화면은 `pt-0 md:pt-0`을 쓴다. Budget 헤더와 본문은 데스크톱도 16px을 유지하도록 헤더 `p-4 pb-1 md:p-4 md:pb-1`, 본문 `p-4 pt-0 md:p-4 md:pt-0`을 쓴다.
+- `CategoryExpenseSummary`의 본문은 `md:pt-0`, `FamilySelector` 오류 카드와 `transactions/page.tsx`의 `py-8`, `py-12`는 같은 `md:py-*`를 명시해 기존 의도를 유지한다.
+- 브라우저 테스트는 카테고리 추가 Dialog와 삭제 AlertDialog의 폭별 여백, 모바일 폭과 둥근 모서리도 확인한다. 가짜 백엔드에 테스트 전용 빈 카테고리 설정을 추가해 `EmptyState`의 폭별 여백과 아이콘 크기를 확인한다. `POST /__test/categories`에 `{empty: true}`를 보내 빈 목록을 설정하고 기존 reset에서 설정을 초기화한다.
 
 ## 검증
 
@@ -99,3 +108,7 @@ pnpm test:browser
 | `frontend/src/app/(authenticated)/budget/_components/BudgetClient.tsx` | 수정 |
 | `frontend/src/app/(authenticated)/categories/_components/CategoryItem.tsx` | 수정 |
 | `frontend/browser/mobile-spacing.spec.ts` | 신규 |
+| `frontend/src/components/expenses/summary/CategoryExpenseSummary.tsx` | 수정 |
+| `frontend/src/components/families/FamilySelector.tsx` | 수정 |
+| `frontend/src/app/(authenticated)/transactions/page.tsx` | 수정 |
+| `frontend/browser/fake-backend.mjs` | 수정 |
