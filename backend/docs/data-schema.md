@@ -1,4 +1,4 @@
-# Data Schema — fos-accountbook-backend (Canonical)
+# fos-accountbook-backend 데이터 구조 (Canonical)
 
 > 이 파일이 DB 스키마·API 스펙의 **canonical 소스**다.
 > 프론트엔드는 `fos-accountbook/docs/data-schema.md`에서 TypeScript 타입으로 파생한다.
