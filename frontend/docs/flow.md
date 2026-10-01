@@ -1,4 +1,4 @@
-# Flow — fos-accountbook 사용자 흐름
+# fos-accountbook 사용자 흐름
 
 ## 1. 최초 사용자 온보딩
 
@@ -17,7 +17,7 @@
                     │
                     ├─ 없음 → /families/create
                     │           └─ 가족 이름 + 월 예산 입력
-                    │                   └─ 가족 생성 → 기본 카테고리('미분류') 자동 생성
+                    │                   └─ 가족 생성 → 지출 11개, 수입 4개 카테고리 자동 생성
                     │                           └─ /calendar
                     │
                     └─ 있음 → /calendar
@@ -82,6 +82,7 @@ ADR-F21 에 따라 모든 진입점(달력의 「이 날짜에 추가」, Bottom
             ├─ TransactionFormFields (type 분기)
             │   ├─ AmountInput (₩ + 56/64px num, 빠른 추가 칩 +1k/+5k/+10k, md+ +50k)
             │   ├─ CategoryGrid (5×2 mobile / 10×1 desktop, role=radiogroup, --color-cat-*-bg/-fg 톤)
+            │   │   └─ 지출·고정지출은 EXPENSE, 수입은 INCOME만 표시
             │   ├─ Description input (메모, name="description")
             │   ├─ [expense/income 일 때] Date input (type="date", default: defaultDate ?? 오늘)
             │   └─ [recurring 일 때]  Name input + DayOfMonth (1~28)
@@ -93,9 +94,10 @@ ADR-F21 에 따라 모든 진입점(달력의 「이 날짜에 추가」, Bottom
                             └─ revalidatePath → toast 성공 메시지
 ```
 
-거래 종류를 바꿔도 금액, 카테고리, 설명과 선택한 날짜를 유지한다.
+거래 종류를 바꿔도 금액, 설명과 선택한 날짜를 유지한다.
 고정지출을 거쳐 지출이나 수입으로 돌아와도 날짜는 그대로다.
-고정지출 이름과 결제일은 종류를 바꿀 때 초기화한다.
+카테고리 선택, 고정지출 이름과 결제일은 종류를 바꿀 때 초기화한다.
+새 종류의 첫 카테고리를 자동으로 선택하지 않는다.
 
 ---
 
@@ -170,7 +172,7 @@ ADR-F21 에 따라 모든 진입점(달력의 「이 날짜에 추가」, Bottom
                     └─ TransactionRow variant=compact (모바일) / variant=full (md: 5-col grid 44/1fr/110/28/140)
 ```
 
-helper: `services/transaction/transaction-service.ts` 의 `groupTransactionsWithTotal` (groupByDate wrap + 합계). `applyClientFilters` 는 amountMin/Max/q post-filter (현재 미사용 — 후속 plan 에서 wiring).
+helper: `services/transaction/transaction-service.ts`의 `groupTransactionsWithTotal`은 groupByDate 결과에 합계를 더한다. `applyClientFilters`는 amountMin/Max/q로 조회 결과를 필터링한다. 현재 사용하지 않으며 후속 계획에서 연결한다.
 
 page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 탭을 바꾸면 URL 이 바뀌고 서버가 그 탭만 다시 그린다.
 세 탭을 모두 slot props 로 넘기면 RSC 가 보이지 않는 탭까지 렌더링해 조회가 매번 세 배로 나간다.
@@ -266,9 +268,10 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
             │
             ├─ 기본 카테고리(isDefault=true) → 삭제 불가 오류
             │
-            └─ 일반 카테고리 → Soft Delete
-                    └─ 해당 카테고리의 모든 Expense → '미분류' 카테고리로 이동
-                            └─ revalidatePath → 목록 갱신
+            └─ 일반 카테고리 → 종류별 거래 이관 후 Soft Delete
+                    ├─ EXPENSE → 삭제 이력을 포함한 지출과 ACTIVE 고정지출을 '미분류'로 이동
+                    ├─ INCOME → 삭제 이력을 포함한 수입을 '기타 수입'으로 이동
+                    └─ revalidatePath → 목록 갱신
 ```
 
 ---
@@ -391,7 +394,7 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 
 ## 14-1. Header / TopBar 구조 (plan019)
 
-`src/components/layout/Header.tsx` 가 `(authenticated)/layout.tsx` 의 sticky top bar — 전 인증 페이지에 일관 표시.
+`src/components/layout/Header.tsx`를 `(authenticated)/layout.tsx`의 sticky top bar로 써서 모든 인증 페이지에 표시한다.
 
 ```
 [Header sticky top-0 z-50 backdrop-blur-xl bg-bg-elev/95 border-b border-border]
@@ -414,7 +417,7 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 - `border-border` (하드 회색 폐기)
 - `ring-brand-100` Avatar (`ring-blue-100` 폐기)
 - `text-fg-muted` 보조 텍스트 (`text-muted-foreground` 폐기)
-- `text-brand-fg` 로고 아이콘 + AvatarFallback (`text-white` 폐기, ADR-F23)
+- `text-brand-fg`를 로고 아이콘과 AvatarFallback에 적용 (`text-white` 폐기, ADR-F23)
 
 ---
 
@@ -422,8 +425,8 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 
 App Router 의 segment 경계에서 일관 표시:
 
-- **Empty** (`src/components/empty/EmptyState.tsx`): 거래 0건 등 — 96px brand-50 round + inbox 아이콘 + 제목/부제 + (선택) CTA + (선택) 팁 박스
-- **Error** (`src/app/error.tsx` + `src/app/global-error.tsx` + `src/app/(authenticated)/error.tsx`): 88px expense/10 round + AlertCircle + "문제가 발생했어요" + DEV ONLY 디버그 박스 (production 숨김) + 다시 시도 / 홈으로
+- **Empty** (`src/components/empty/EmptyState.tsx`): 거래가 0건이면 96px brand-50 원형 배경, inbox 아이콘, 제목과 부제를 표시한다. 필요하면 CTA와 팁 박스를 더한다.
+- **Error** (`src/app/error.tsx`, `src/app/global-error.tsx`, `src/app/(authenticated)/error.tsx`): 88px expense/10 원형 배경, AlertCircle, "문제가 발생했어요", 다시 시도와 홈으로 버튼을 표시한다. 디버그 박스는 개발 환경에서만 표시한다.
 - **Loading** (`src/app/(authenticated)/{calendar,transactions,analytics,*}/loading.tsx`): 페이지 구조에 맞춘 `Skel`을 표시한다. `globals.css`의 `ab-shimmer` 애니메이션과 `.ab-skel` 클래스를 재사용한다.
 
 `error.tsx` 는 모두 `"use client"` 첫 줄 필수 (App Router 규약). `loading.tsx` 는 Server Component OK.
@@ -442,9 +445,9 @@ App Router 의 segment 경계에서 일관 표시:
 
 라우팅:
 - `src/app/not-found.tsx` (전역, public 라우트용)
-- `src/app/(authenticated)/not-found.tsx` (Header 보존 + StatusCard 404)
+- `src/app/(authenticated)/not-found.tsx` (Header를 보존하고 StatusCard 404 표시)
 - `src/app/(authenticated)/forbidden.tsx` (Next.js 16 `forbidden()` 호출 시) — status=403
-- 500 은 기존 `error.tsx` (plan012) 가 자동 처리 + 동일 StatusCard 사용
+- 500은 기존 `error.tsx` (plan012)가 자동 처리하며 같은 StatusCard를 사용한다.
 
 ---
 
@@ -465,13 +468,13 @@ Dashboard BudgetHeroCard 의 확장 전용 페이지. 분석은 /analytics, 예�
                     └─ BudgetCategoryBars (수평 bar top 5 + 예산 대비 % + ↑많음 라벨)
 ```
 
-예산 0 시: EmptyState 카드 + "예산 설정하기" → /settings 로. 라인 차트 + 카테고리 bar 자체 미렌더.
+예산이 0이면 EmptyState 카드와 "예산 설정하기" 버튼을 표시하고 /settings로 연결한다. 라인 차트와 카테고리 bar는 표시하지 않는다.
 
 ---
 
 ## 14-4. Toast / AlertDialog 시각 시스템 (plan020)
 
-sonner Toaster + Radix AlertDialog 의 색 토큰을 plan001 OKLCH 시스템 (ADR-F24) 으로 통일.
+sonner Toaster와 Radix AlertDialog의 색 토큰을 plan001 OKLCH 시스템 (ADR-F24)으로 통일한다.
 
 ```
 Toast 타입 매핑 (richColors OFF — 토큰 직접):
@@ -494,7 +497,7 @@ AlertDialog:
 
 ## 14-5. /categories 페이지 구조 (plan024)
 
-Teal 리디자인 + 인라인 style 제거 + Empty state 일관화.
+Teal 디자인을 적용하고 인라인 style을 제거하며 빈 상태 표시를 통일한다.
 
 ```
 [/categories (server)]
@@ -507,6 +510,9 @@ Teal 리디자인 + 인라인 style 제거 + Empty state 일관화.
                 │   ├─ 가족명 + 총 카테고리 수
                 │   └─ 카테고리 추가 CTA
                 │
+                ├─ SegmentedToggle (지출 / 수입)
+                │   └─ 선택한 종류로 목록 필터링, 추가 대화상자에 같은 종류 전달
+                │
                 ├─ CategoryList (grid 2/3/4)
                 │   └─ CategoryItem
                 │       ├─ 아이콘 영역 정사각형 (w-10 h-10 / w-12 h-12)
@@ -518,7 +524,7 @@ Teal 리디자인 + 인라인 style 제거 + Empty state 일관화.
 
 핵심 변경:
 - CategoriesHero 신설 — settings/budget Hero 패턴 일관
-- `style={{ backgroundColor, color }}` 인라인 → `style={{ '--cat-color': color } as CSSProperties}` + Tailwind arbitrary class
+- `style={{ backgroundColor, color }}` 대신 `style={{ '--cat-color': color } as CSSProperties}`와 Tailwind arbitrary class 사용
 - 색 코드 oklch 문자열 노출 제거 (dot 미리보기만)
 - 사용 통계 (이번 달 지출 금액) — 별도 plan 후보
 

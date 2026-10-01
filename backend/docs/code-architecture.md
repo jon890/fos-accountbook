@@ -1,4 +1,4 @@
-# Code Architecture — fos-accountbook-backend
+# fos-accountbook-backend 코드 구조
 
 > 상세 코딩 컨벤션·테스트 패턴·명령어는 `CLAUDE.md` 참고. 이 문서는 계층 구조와 설계 철학만 다룬다.
 
@@ -79,7 +79,7 @@ user ◄── family ──► category
 | ----------------------- | ------------------------------------------------------------------------- | ------------------------------------ |
 | ExpenseService          | CategoryService, UserService, FamilyValidationService                     |                                      |
 | IncomeService           | CategoryService, UserService, FamilyValidationService                     |                                      |
-| CategoryService         | ExpenseService, RecurringExpenseService (ObjectProvider)                  | 카테고리 삭제 시 이관                |
+| CategoryService         | ExpenseService, RecurringExpenseService, IncomeService (ObjectProvider)   | 카테고리 삭제 시 종류별 이관         |
 | FamilyService           | UserService, CategoryService, UserProfileService, FamilyValidationService | 가족 생성 시 카테고리/프로필         |
 | RecurringExpenseService | CategoryService                                                           |                                      |
 | InvitationService       | UserService                                                               | FamilyRepository 직접 참조           |
@@ -91,7 +91,7 @@ user ◄── family ──► category
 ### 결합 포인트 (향후 MSA 전환 시 해소 대상)
 
 1. **JPA `@ManyToOne` 관계**: Expense↔Family, Income↔Family, FamilyMember↔Family/User, Invitation↔Family/User
-2. **동기 호출**: FamilyService→CategoryService, CategoryService→ExpenseService (ObjectProvider)
+2. **동기 호출**: FamilyService→CategoryService. CategoryService는 ObjectProvider로 ExpenseService, RecurringExpenseService, IncomeService를 조회해 삭제할 카테고리의 종류에 맞게 거래를 이관한다.
 3. **FamilyValidationService**: 6개 서비스가 공유하는 AOP 관심사
 
 이미 잘 분리된 부분:
@@ -182,7 +182,7 @@ public class RecurringExpenseScheduler {
 
 멱등성: DB UNIQUE constraint로 보장. 재실행 시 중복 생성 없음.
 
-### 테스트 가능한 시간 의존성 — Clock 주입
+### Clock 주입으로 시간에 의존하는 로직 테스트하기
 
 날짜/시간에 의존하는 로직(스케줄러 등)은 `Clock` Bean을 주입하여 테스트 가능성을 확보한다:
 
@@ -241,11 +241,11 @@ static class TestClockConfig {
 
 ## 새 도메인 추가 체크리스트
 
-1. `{domain}/domain/` — Entity (`@Entity` + `@Builder`), Repository 인터페이스, Value Object
-2. `{domain}/infra/` — Repository 구현체 (JPA + QueryDSL)
-3. `{domain}/application/` — Service (`@Transactional(readOnly=true)` 기본) + DTO
-4. `{domain}/presentation/` — Controller + Request/Response DTO
+1. `{domain}/domain/`: Entity (`@Entity`, `@Builder`), Repository 인터페이스, Value Object
+2. `{domain}/infra/`: Repository 구현체 (JPA와 QueryDSL)
+3. `{domain}/application/`: Service (`@Transactional(readOnly=true)` 기본)와 DTO
+4. `{domain}/presentation/`: Controller와 Request/Response DTO
 5. `db/migration/` — Flyway SQL (`V{N}__{description}.sql`)
-6. `docs/data-schema.md` — 스키마 + API 엔드포인트 업데이트
+6. `docs/data-schema.md`: 스키마와 API 엔드포인트 업데이트
 7. 기존 삭제/이관 로직에 새 도메인 반영 (예: 카테고리 삭제 시 새 도메인 데이터도 기본 카테고리로 이동)
 8. `docs/flow.md` — 사용자 흐름에 새 도메인 시나리오 추가

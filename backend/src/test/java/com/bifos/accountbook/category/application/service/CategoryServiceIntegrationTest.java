@@ -91,6 +91,53 @@ class CategoryServiceIntegrationTest extends TestFixturesSupport {
   }
 
   @Test
+  @DisplayName("수입 기본 카테고리는 삭제할 수 없다")
+  void cannotDeleteIncomeDefaultCategory() {
+    User user = fixtures.users.user().buildAndSetSecurityContext();
+    Family family = fixtures.families.family().owner(user).build();
+    categoryService.createDefaultCategoriesForFamily(family.getUuid());
+    Category incomeDefault =
+        categoryRepository
+            .getDefaultCategoryByFamily(family.getUuid(), CategoryType.INCOME)
+            .orElseThrow();
+
+    assertThatThrownBy(
+            () ->
+                categoryService.deleteCategory(
+                    user.getUuid(), family.getUuid(), incomeDefault.getUuid().getValue()))
+        .isInstanceOf(BusinessException.class)
+        .extracting("errorCode")
+        .isEqualTo(ErrorCode.CANNOT_DELETE_DEFAULT_CATEGORY);
+  }
+
+  @Test
+  @DisplayName("지출 기본 카테고리가 없으면 카테고리 삭제와 지출 이관을 모두 롤백한다")
+  void deleteCategoryRollsBackWhenExpenseDefaultCategoryIsMissing() {
+    User user = fixtures.users.user().buildAndSetSecurityContext();
+    Family family = fixtures.families.family().owner(user).build();
+    Category expenseCategory = fixtures.categories.category(family).name("이관 실패 대상").build();
+    Expense expense = fixtures.expenses.expense(family, expenseCategory).user(user).build();
+
+    assertThatThrownBy(
+            () ->
+                categoryService.deleteCategory(
+                    user.getUuid(), family.getUuid(), expenseCategory.getUuid().getValue()))
+        .isInstanceOf(BusinessException.class)
+        .extracting("errorCode")
+        .isEqualTo(ErrorCode.CATEGORY_NOT_FOUND);
+
+    Category unchangedCategory =
+        categoryRepository.findByUuid(expenseCategory.getUuid()).orElseThrow();
+    Expense unchangedExpense = expenseRepository.findByUuid(expense.getUuid()).orElseThrow();
+    assertThat(unchangedCategory.getStatus()).isEqualTo(CategoryStatus.ACTIVE);
+    assertThat(unchangedExpense.getCategoryUuid()).isEqualTo(expenseCategory.getUuid());
+    assertThat(
+            categoryRepository.findAllByFamilyUuid(family.getUuid()).stream()
+                .filter(Category::isDefault))
+        .isEmpty();
+  }
+
+  @Test
   @DisplayName("카테고리 삭제 시 소속된 지출은 기본 카테고리로 이동해야 한다")
   void deleteCategoryMovesExpensesToDefault() {
     // given

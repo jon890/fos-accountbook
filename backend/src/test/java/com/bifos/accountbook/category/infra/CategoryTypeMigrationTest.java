@@ -19,6 +19,7 @@ class CategoryTypeMigrationTest {
         new org.springframework.jdbc.core.JdbcTemplate(dataSource);
     createPreMigrationSchema(jdbc);
     insertFamily(jdbc, "active-family", "ACTIVE");
+    insertFamily(jdbc, "salary-expense-family", "ACTIVE");
     insertFamily(jdbc, "deleted-family", "DELETED");
     insertUser(jdbc);
 
@@ -29,6 +30,7 @@ class CategoryTypeMigrationTest {
     insertCategory(jdbc, "recurring-ref", "active-family", "반복 참조", false);
     insertCategory(jdbc, "deleted-family-expense", "deleted-family", "삭제 가족 지출", false);
     insertCategory(jdbc, "existing-income-default", "active-family", "기타 수입", false);
+    insertCategory(jdbc, "expense-salary", "salary-expense-family", "급여", false);
 
     insertIncome(jdbc, "income-only", "active-family", "ACTIVE");
     insertIncome(jdbc, "mixed", "active-family", "ACTIVE");
@@ -39,6 +41,7 @@ class CategoryTypeMigrationTest {
     insertIncome(jdbc, "deleted-family-expense", "deleted-family", "ACTIVE");
     insertExpense(jdbc, "expense", "active-family");
     insertExpense(jdbc, "mixed", "active-family");
+    insertExpense(jdbc, "expense-salary", "salary-expense-family");
     insertRecurringExpense(jdbc, "recurring-ref", "active-family");
     jdbc.update("UPDATE categories SET status = 'DELETED' WHERE uuid = 'expense'");
 
@@ -55,6 +58,12 @@ class CategoryTypeMigrationTest {
     assertThat(typeOf(jdbc, "mixed")).isEqualTo("EXPENSE");
     assertThat(typeOf(jdbc, "uncategorized")).isEqualTo("EXPENSE");
     assertThat(typeOf(jdbc, "recurring-ref")).isEqualTo("EXPENSE");
+    assertThat(typeOf(jdbc, "expense-salary")).isEqualTo("EXPENSE");
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT COUNT(*) FROM categories WHERE family_uuid = 'salary-expense-family' AND name = '급여' AND type = 'INCOME' AND status = 'ACTIVE'",
+                Integer.class))
+        .isEqualTo(1);
     assertThat(
             jdbc.queryForObject(
                 "SELECT COUNT(*) FROM categories WHERE family_uuid = 'active-family' AND type = 'INCOME' AND status = 'ACTIVE' AND name IN ('급여', '부수입', '용돈', '기타 수입')",

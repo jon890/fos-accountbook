@@ -52,26 +52,11 @@ public class ExpenseService {
   /** 특정 카테고리의 모든 지출을 가족의 기본 카테고리로 이동 CategoryService에서 카테고리 삭제 시 호출됨 */
   @Transactional
   public void moveExpensesToDefaultCategory(CustomUuid familyUuid, CustomUuid oldCategoryUuid) {
-    // 기본 카테고리(미분류) 조회 또는 생성
+    // 지출 기본 카테고리(미분류) 조회
     Category defaultCategory =
         categoryRepository
             .getDefaultCategoryByFamily(familyUuid, CategoryType.EXPENSE)
-            .orElseGet(
-                () -> {
-                  log.warn(
-                      "Default category not found for family: {}. Creating new one.",
-                      familyUuid.getValue());
-                  Category newDefault =
-                      Category.builder()
-                          .familyUuid(familyUuid)
-                          .name("미분류")
-                          .color("#9ca3af")
-                          .icon("📂")
-                          .isDefault(true)
-                          .type(CategoryType.EXPENSE)
-                          .build();
-                  return categoryRepository.save(newDefault);
-                });
+            .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
 
     // 지출 이동
     expenseRepository.moveExpenses(oldCategoryUuid, defaultCategory.getUuid());
