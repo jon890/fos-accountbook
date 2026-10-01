@@ -11,6 +11,7 @@ export interface TxBase {
   amount: number;
   description: string | null;
   date?: string | null;
+  excludeFromBudget?: boolean;
   category: {
     uuid: string;
     name: string;
@@ -43,6 +44,7 @@ export function TransactionRow({
   const title = tx.description || categoryName;
   const time = tx.date ? format(parseISO(tx.date), "HH:mm") : undefined;
   const displayDetail = metadata ?? time;
+  const isBudgetExcluded = kind === "expense" && tx.excludeFromBudget === true;
   const detailItems = [
     tx.description
       ? { label: categoryName, showCreatorMarker: false, hideOnDesktop: variant === "full" }
@@ -55,6 +57,9 @@ export function TransactionRow({
         }
       : undefined,
     displayDetail ? { label: displayDetail, showCreatorMarker: false, hideOnDesktop: false } : undefined,
+    isBudgetExcluded
+      ? { label: "예산 제외", showCreatorMarker: false, hideOnDesktop: false }
+      : undefined,
   ].filter(
     (item): item is { label: string; showCreatorMarker: boolean; hideOnDesktop: boolean } =>
       Boolean(item)
@@ -88,7 +93,14 @@ export function TransactionRow({
             className={item.hideOnDesktop ? "md:hidden" : undefined}
           >
             {index > 0 && (
-              <span aria-hidden="true" className={variant === "full" ? "md:hidden" : undefined}>
+              <span
+                aria-hidden="true"
+                className={
+                  variant === "full" && (item.hideOnDesktop || detailItems[index - 1].hideOnDesktop)
+                    ? "md:hidden"
+                    : undefined
+                }
+              >
                 {" · "}
               </span>
             )}

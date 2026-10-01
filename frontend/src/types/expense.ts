@@ -33,6 +33,7 @@ export interface Expense {
     name: string;
     color: string;
     icon: string;
+    excludeFromBudget?: boolean;
   } | null;
   amount: number;
   description: string | null;
