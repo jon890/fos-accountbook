@@ -65,6 +65,7 @@ afterEach(() => {
 
 it("기간 차트 위에 예산 링크, 수입과 지출, 고정비 링크를 표시한다", async () => {
   render(await AnalyticsPage({ searchParams: Promise.resolve({}) }));
+  expect(screen.getByRole("heading", { name: "이번 달 2026년 10월" })).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "예산 보기" })).toHaveAttribute("href", "/budget");
   expect(screen.getByText("이번 달 수입")).toBeInTheDocument();
   expect(screen.getByText("이번 달 지출")).toBeInTheDocument();
@@ -87,6 +88,7 @@ it.each([
   expect(getCategoryBreakdownWithDeltaAction).toHaveBeenCalledWith(2026, month);
   expect(getMonthlyTrendAction).toHaveBeenCalledWith("m3", 2026, month);
   expect(screen.getByText(`분석:2026-${month}`)).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: `이번 달 2026년 ${month}월` })).toBeInTheDocument();
 });
 
 it("잘못된 기간은 기본 기간으로 조회한다", async () => {

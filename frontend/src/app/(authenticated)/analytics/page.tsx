@@ -96,25 +96,30 @@ export default async function AnalyticsPage({
 
   return (
     <>
-      <Link href="/budget" className="block" aria-label="예산 보기">
-        <BudgetHeroCard
-          remainingBudget={stats.remainingBudget}
+      <section aria-labelledby="current-month-heading">
+        <h2 id="current-month-heading" className="mb-4 text-base font-bold text-fg">
+          이번 달 <span className="text-sm font-normal text-fg-muted">{year}년 {month}월</span>
+        </h2>
+        <Link href="/budget" className="block" aria-label="예산 보기">
+          <BudgetHeroCard
+            remainingBudget={stats.remainingBudget}
+            monthlyExpense={stats.monthlyExpense}
+            budget={stats.budget}
+            daysRemaining={daysRemaining}
+          />
+        </Link>
+        <IncomeExpenseStats
+          monthlyIncome={stats.monthlyIncome}
           monthlyExpense={stats.monthlyExpense}
-          budget={stats.budget}
-          daysRemaining={daysRemaining}
         />
-      </Link>
-      <IncomeExpenseStats
-        monthlyIncome={stats.monthlyIncome}
-        monthlyExpense={stats.monthlyExpense}
-      />
-      <Link
-        href="/transactions?tab=recurring"
-        className="block bg-bg-elev rounded-[var(--radius-lg)] p-4 md:p-6 mb-6 shadow-[var(--shadow-default)]"
-      >
-        <p className="text-sm text-fg-muted">이달 고정비</p>
-        <p className="num text-xl font-bold text-fg">{formatCurrency(recurringTotal)}</p>
-      </Link>
+        <Link
+          href="/transactions?tab=recurring"
+          className="block bg-bg-elev rounded-[var(--radius-lg)] p-4 md:p-6 mb-6 shadow-[var(--shadow-default)]"
+        >
+          <p className="text-sm text-fg-muted">이달 고정비</p>
+          <p className="num text-xl font-bold text-fg">{formatCurrency(recurringTotal)}</p>
+        </Link>
+      </section>
       <AnalyticsClient
         initialYear={year}
         initialMonth={month}

@@ -189,9 +189,10 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
         ├─ getMonthlyTrendAction(period, year, month)         # /dashboard/stats/monthly-trend?from&to 한 번
         └─ getRecurringExpensesTotalAction()                 # /recurring-expenses/monthly-total
     │
-    ├─ 예산 카드 → /budget
-    ├─ 이번 달 수입·지출 카드
-    ├─ 이달 고정비 카드 → /transactions?tab=recurring
+    ├─ 「이번 달 YYYY년 M월」 제목: 아래 차트의 월 이동과 관계없이 이번 달 기준
+    │   ├─ 예산 카드 → /budget
+    │   ├─ 이번 달 수입·지출 카드
+    │   └─ 이달 고정비 카드 → /transactions?tab=recurring
     └─ AnalyticsClient (use client)
             ├─ AnalyticsPeriodToggle (segmented role=tablist, URL ?period= 단방향)
             ├─ AnalyticsCategoryDonut (172/160px Donut + 중앙 totalDelta ↑/↓)
