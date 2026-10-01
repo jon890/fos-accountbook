@@ -30,6 +30,7 @@
 - 색과 이모지 선택은 ui/Button을 재사용한다. 실제 palette의 oklch 문자열과 수정 fixture 색 문자열이 화면에 없는지 단언한다.
 - CategoryFormShell은 open: boolean, onOpenChange: (open: boolean) => void, title: string, description: string, children: ReactNode를 받는다. 호출자는 하단 버튼을 포함한 form 전체를 children으로 넘긴다. Shell은 form을 만들지 않는다. 모바일 form 본문은 스크롤 가능하게 하고 form 안 하단 버튼에 safe-area-pb를 적용한다.
 - add-transaction.spec.ts의 카테고리 다크 표면 기대값을 폭별 sheet-content/dialog-content로 보정하고 이 spec도 브라우저 검증에 포함한다.
+- mobile-spacing.spec.ts도 카테고리 창을 모바일 sheet-content와 데스크톱 dialog-content로 나눠 검증한다. 모바일은 SheetHeader의 16px 위 여백, 데스크톱은 Dialog의 24px 위 여백을 검증해 기존 여백 확인을 유지한다.
 
 ## 작업 항목
 
@@ -53,7 +54,7 @@
 ```bash
 pnpm tsc --noEmit && pnpm lint && pnpm lint:md && pnpm test
 pnpm test src/__tests__/components/categories/AddCategoryDialog.test.tsx src/__tests__/components/categories/EditCategoryDialog.test.tsx
-pnpm test:browser browser/categories.spec.ts browser/add-transaction.spec.ts
+pnpm test:browser browser/categories.spec.ts browser/add-transaction.spec.ts browser/mobile-spacing.spec.ts
 ```
 
 기대값: 모든 명령이 성공한다.
@@ -63,6 +64,7 @@ pnpm test:browser browser/categories.spec.ts browser/add-transaction.spec.ts
 | 파일 | 변경 |
 |---|---|
 | `frontend/browser/add-transaction.spec.ts` | 수정 |
+| `frontend/browser/mobile-spacing.spec.ts` | 수정 |
 | `frontend/src/app/(authenticated)/categories/_components/CategoryFormShell.tsx` | 신규 |
 | `frontend/src/app/(authenticated)/categories/_components/AddCategoryDialog.tsx` | 수정 |
 | `frontend/src/app/(authenticated)/categories/_components/EditCategoryDialog.tsx` | 수정 |
