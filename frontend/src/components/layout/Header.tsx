@@ -62,7 +62,16 @@ export function Header({ session, selectedFamilyUuid }: HeaderProps) {
   );
 
   const handleBack = () => {
-    if (window.history.length > 1) {
+    let enteredFromSameSite = false;
+    if (document.referrer) {
+      try {
+        enteredFromSameSite = new URL(document.referrer).origin === window.location.origin;
+      } catch {
+        enteredFromSameSite = false;
+      }
+    }
+
+    if (enteredFromSameSite) {
       router.back();
     } else {
       router.push("/menu");

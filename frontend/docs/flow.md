@@ -602,6 +602,6 @@ Teal 리디자인 + 인라인 style 제거 + Empty state 일관화.
 ```
 
 - 탭은 `Link` 로 만들고 현재 탭에 `aria-current="page"` 를 둔다. 탭 버튼은 칸 폭을 똑같이 나눠 쓰고 라벨은 12px 이다.
-- 하위 화면(`/categories`, `/budget`, `/notifications`, `/settings`, `/invite/*`)은 Header 왼쪽에 뒤로 가기 버튼을 둔다. 누르면 `router.back()`, 이전 기록이 없으면 `/menu` 로 간다.
+- 하위 화면(`/categories`, `/budget`, `/notifications`, `/settings`, `/invite/*`)은 Header 왼쪽에 뒤로 가기 버튼을 둔다. `document.referrer`의 origin이 현재 사이트와 같으면 `router.back()`으로 돌아가고, 비었거나 외부 사이트이면 `/menu`로 간다.
 - 가족 생성, 선택, 초대 수락 화면(`/families/*`, `/invite/*`)에서는 하단 탭을 숨긴다. 가족이 없을 때 거래를 추가하지 못하게 하기 위해서다.
 - 설정의 가족 「관리」 버튼은 없는 경로(`/families/{uuid}`)를 가리켜 404 가 났다. 버튼을 없애고 가족 정보는 설정 화면 안에서 보여 준다.

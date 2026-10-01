@@ -97,24 +97,26 @@ describe("Header", () => {
     expect(screen.queryByText("우리집 가계부")).not.toBeInTheDocument();
   });
 
-  it("이전 기록이 없으면 전체 메뉴로 이동한다", async () => {
+  it.each(["", "https://external.example/calendar", "invalid", "http://localhost:4000/menu", "https://localhost/menu"])("외부 진입 또는 빈 referrer %s는 전체 메뉴로 이동한다", async (referrer) => {
     jest.mocked(usePathname).mockReturnValue("/categories");
-    const historyLength = jest.spyOn(window.history, "length", "get").mockReturnValue(1);
+    const referrerSpy = jest.spyOn(document, "referrer", "get").mockReturnValue(referrer);
+    const historyLength = jest.spyOn(window.history, "length", "get").mockReturnValue(10);
     render(<Header session={createMockSession()} selectedFamilyUuid={null} />);
     await userEvent.setup().click(screen.getByRole("button", { name: "뒤로 가기" }));
     expect(mockRouter.push).toHaveBeenCalledWith("/menu");
     expect(mockRouter.back).not.toHaveBeenCalled();
     historyLength.mockRestore();
+    referrerSpy.mockRestore();
   });
 
-  it("이전 기록이 있으면 뒤로 이동한다", async () => {
+  it("같은 사이트에서 들어왔으면 뒤로 이동한다", async () => {
     jest.mocked(usePathname).mockReturnValue("/categories");
-    const historyLength = jest.spyOn(window.history, "length", "get").mockReturnValue(2);
+    const referrerSpy = jest.spyOn(document, "referrer", "get").mockReturnValue(`${window.location.origin}/menu`);
     render(<Header session={createMockSession()} selectedFamilyUuid={null} />);
     await userEvent.setup().click(screen.getByRole("button", { name: "뒤로 가기" }));
     expect(mockRouter.back).toHaveBeenCalled();
     expect(mockRouter.push).not.toHaveBeenCalled();
-    historyLength.mockRestore();
+    referrerSpy.mockRestore();
   });
 
   it.each(["/calendar", "/menu"])("%s에 로고를 표시한다", (pathname) => {
