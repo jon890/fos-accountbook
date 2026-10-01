@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.category.domain.repository.CategoryRepository;
 import com.bifos.accountbook.category.domain.value.CategoryStatus;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.expense.domain.entity.Expense;
 import com.bifos.accountbook.expense.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.expense.domain.value.ExpenseStatus;
@@ -70,6 +71,18 @@ class FamilyServiceIntegrationTest extends TestFixturesSupport {
     List<String> categoryNames = categories.stream().map(Category::getName).toList();
 
     assertThat(categoryNames).contains("미분류", "식비", "생활비");
+    assertThat(categoryNames).contains("급여", "부수입", "용돈", "기타 수입");
+    assertThat(categories.stream().filter(Category::isDefault)).hasSize(2);
+    assertThat(
+            categories.stream()
+                .filter(category -> category.getType() == CategoryType.EXPENSE)
+                .filter(Category::isDefault))
+        .hasSize(1);
+    assertThat(
+            categories.stream()
+                .filter(category -> category.getType() == CategoryType.INCOME)
+                .filter(Category::isDefault))
+        .hasSize(1);
 
     // 5. 각 카테고리가 올바른 가족에 속해있는지 확인
     categories.forEach(

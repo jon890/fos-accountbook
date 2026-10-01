@@ -1,6 +1,7 @@
 package com.bifos.accountbook.category.application.dto;
 
 import com.bifos.accountbook.category.domain.entity.Category;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +20,7 @@ public class CategoryResponse {
   private String color;
   private String icon;
   private boolean excludeFromBudget;
+  private CategoryType type;
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
 
@@ -30,6 +32,7 @@ public class CategoryResponse {
         .color(category.getColor())
         .icon(category.getIcon())
         .excludeFromBudget(category.isExcludeFromBudget())
+        .type(category.getType())
         .createdAt(category.getCreatedAt())
         .updatedAt(category.getUpdatedAt())
         .build();
@@ -42,6 +45,7 @@ public class CategoryResponse {
         .name(this.name)
         .color(this.color)
         .icon(this.icon)
+        .type(this.type)
         .build();
   }
 }

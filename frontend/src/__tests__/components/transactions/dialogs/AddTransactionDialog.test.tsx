@@ -59,9 +59,20 @@ const mockCategories = [
   {
     uuid: "cat-1",
     familyUuid: "family-1",
+    type: "EXPENSE" as const,
     name: "식비",
     icon: "🍔",
     color: "#EF4444",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z",
+  },
+  {
+    uuid: "income-cat-1",
+    familyUuid: "family-1",
+    type: "INCOME" as const,
+    name: "급여",
+    icon: "💰",
+    color: "#10B981",
     createdAt: "2024-01-01T00:00:00Z",
     updatedAt: "2024-01-01T00:00:00Z",
   },
@@ -174,6 +185,21 @@ describe("AddTransactionDialog", () => {
     await user.click(screen.getByRole("button", { name: /^수입$/ }));
 
     expect(screen.getByRole("button", { name: /수입 추가/ })).toBeInTheDocument();
+  });
+
+  it("거래 종류를 바꾸면 카테고리 선택을 비우고 자동 선택하지 않는다", async () => {
+    const user = userEvent.setup();
+    render(<AddTransactionDialog open onOpenChange={onOpenChange} defaultType="expense" />);
+
+    const expenseCategory = await screen.findByRole("radio", { name: "식비" });
+    await user.click(expenseCategory);
+    expect(expenseCategory).toHaveAttribute("aria-checked", "true");
+
+    await user.click(screen.getByRole("button", { name: /^수입$/ }));
+
+    const incomeCategory = screen.getByRole("radio", { name: "급여" });
+    expect(incomeCategory).toHaveAttribute("aria-checked", "false");
+    expect(screen.queryByRole("radio", { name: "식비" })).not.toBeInTheDocument();
   });
 
   it("고정지출 토글 클릭 → 고정지출 추가 버튼 + 이름/결제일 필드 표시", async () => {

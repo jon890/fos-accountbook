@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const createCategorySchema = z.object({
+  type: z.enum(["EXPENSE", "INCOME"]),
   name: z.string().trim().min(1, "이름은 필수입니다"),
   color: z.string().optional(),
   icon: z.string().optional(),

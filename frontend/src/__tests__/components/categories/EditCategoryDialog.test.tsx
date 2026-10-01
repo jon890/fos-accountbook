@@ -18,6 +18,7 @@ jest.mock("sonner", () => ({
 const mockCategory = {
   uuid: "cat-1",
   familyUuid: "fam-1",
+  type: "EXPENSE" as const,
   name: "Original Name",
   color: "#000000",
   icon: "🍔",

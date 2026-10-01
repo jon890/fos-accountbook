@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.bifos.accountbook.category.domain.entity.Category;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.recurring.presentation.dto.CreateRecurringExpenseRequest;
 import com.bifos.accountbook.recurring.presentation.dto.UpdateRecurringExpenseRequest;
@@ -181,6 +182,75 @@ class RecurringExpenseControllerTest extends AbstractControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.items[0].name").value("넷플릭스 프리미엄"))
         .andExpect(jsonPath("$.data.items[0].amount").value(23000.00));
+  }
+
+  @Test
+  @DisplayName("수입 카테고리로 반복 지출을 생성하면 CT005를 반환한다")
+  void createRecurringExpense_FailsWhenCategoryTypeIsIncome() throws Exception {
+    Category incomeCategory =
+        fixtures
+            .categories
+            .category(testFamily)
+            .name("반복 지출 수입 카테고리")
+            .type(CategoryType.INCOME)
+            .build();
+    CreateRecurringExpenseRequest request =
+        new CreateRecurringExpenseRequest(
+            incomeCategory.getUuid().getValue(), "잘못된 반복 지출", new BigDecimal("17000.00"), 15);
+
+    mockMvc
+        .perform(
+            post(
+                    "/api/v1/families/{familyUuid}/recurring-expenses",
+                    testFamily.getUuid().getValue())
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-User-UUID", testUser.getUuid().getValue())
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("CT005"));
+  }
+
+  @Test
+  @DisplayName("수입 카테고리로 반복 지출을 수정하면 CT005를 반환한다")
+  void updateRecurringExpense_FailsWhenCategoryTypeIsIncome() throws Exception {
+    Category incomeCategory =
+        fixtures
+            .categories
+            .category(testFamily)
+            .name("반복 지출 수정용 수입 카테고리")
+            .type(CategoryType.INCOME)
+            .build();
+    CreateRecurringExpenseRequest createRequest =
+        new CreateRecurringExpenseRequest(
+            testCategory.getUuid().getValue(), "수정 대상", new BigDecimal("17000.00"), 15);
+    String createResponse =
+        mockMvc
+            .perform(
+                post(
+                        "/api/v1/families/{familyUuid}/recurring-expenses",
+                        testFamily.getUuid().getValue())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("X-User-UUID", testUser.getUuid().getValue())
+                    .content(objectMapper.writeValueAsString(createRequest)))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String uuid = objectMapper.readTree(createResponse).path("data").path("uuid").asText();
+    UpdateRecurringExpenseRequest updateRequest =
+        new UpdateRecurringExpenseRequest(incomeCategory.getUuid().getValue(), null, null, null);
+
+    mockMvc
+        .perform(
+            put(
+                    "/api/v1/families/{familyUuid}/recurring-expenses/{uuid}",
+                    testFamily.getUuid().getValue(),
+                    uuid)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-User-UUID", testUser.getUuid().getValue())
+                .content(objectMapper.writeValueAsString(updateRequest)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("CT005"));
   }
 
   @Test
