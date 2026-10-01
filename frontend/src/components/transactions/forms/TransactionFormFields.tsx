@@ -76,7 +76,7 @@ export function TransactionFormFields({
       {/* 금액 (공용) */}
       <div className="space-y-2">
         <Label htmlFor="amount">금액 *</Label>
-        <AmountInput id="amount" value={amount} onChange={onAmountChange} />
+        <AmountInput id="amount" type={type} value={amount} onChange={onAmountChange} />
         <input type="hidden" name="amount" value={amount} />
         {errors?.amount && <p className="text-sm text-expense">{errors.amount[0]}</p>}
       </div>

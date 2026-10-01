@@ -154,7 +154,7 @@ export function EditTransactionDialog({
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[720px] bg-bg-elev">
+        <DialogContent className="max-h-[90dvh] max-w-[720px] flex flex-col overflow-hidden bg-bg-elev">
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
           </DialogHeader>
@@ -476,7 +476,7 @@ function EditTransactionDialogBody({
             </p>
           )}
         </div>
-        <div className="sticky bottom-0 shrink-0 bg-bg-elev px-5 pt-4 safe-area-pb md:px-0">
+        <div className="sticky bottom-0 shrink-0 bg-bg-elev px-5 pt-4 safe-area-pb md:static md:px-0">
           {missingField && (
             <p
               id="transaction-form-missing-field"
