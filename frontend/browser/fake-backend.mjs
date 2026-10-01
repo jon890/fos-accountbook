@@ -411,7 +411,7 @@ const server = createServer(async (request, response) => {
           { categoryUuid: categories[0].uuid, categoryName: "식비", categoryIcon: "🍚", categoryColor: categories[0].color, totalAmount: 15000, count: 5, percentage: 30 },
           { categoryUuid: categories[1].uuid, categoryName: "교통", categoryIcon: "🚌", categoryColor: categories[1].color, totalAmount: 12500, count: 4, percentage: 25 },
           { categoryUuid: categories[2].uuid, categoryName: "생활", categoryIcon: "🏠", categoryColor: categories[2].color, totalAmount: 10000, count: 3, percentage: 20 },
-          { categoryUuid: "33333333-3333-3333-3333-333333333334", categoryName: "카페", categoryIcon: "☕", categoryColor: "oklch(0.520 0.110 60)", totalAmount: 6000, count: 2, percentage: 12 },
+          { categoryUuid: "33333333-3333-3333-3333-333333333337", categoryName: "카페", categoryIcon: "☕", categoryColor: "oklch(0.520 0.110 60)", totalAmount: 6000, count: 2, percentage: 12 },
           { categoryUuid: "33333333-3333-3333-3333-333333333335", categoryName: "쇼핑", categoryIcon: "🛍️", categoryColor: "oklch(0.560 0.140 330)", totalAmount: 4100, count: 2, percentage: 8 },
           { categoryUuid: "33333333-3333-3333-3333-333333333336", categoryName: "기타", categoryIcon: "📦", categoryColor: "oklch(0.510 0.015 230)", totalAmount: 2500, count: 1, percentage: 5 },
         ],
