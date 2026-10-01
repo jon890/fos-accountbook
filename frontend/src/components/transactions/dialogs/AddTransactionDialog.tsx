@@ -136,6 +136,7 @@ function AddTransactionDialogBody({ onOpenChange, defaultType, defaultDate }: Ad
   const [amount, setAmount] = useState(0);
   const [categoryUuid, setCategoryUuid] = useState<string | null>(null);
   const [description, setDescription] = useState("");
+  const [excludeFromBudget, setExcludeFromBudget] = useState(false);
 
   // expense/income 전용
   const [date, setDate] = useState(() => defaultDate ?? toLocalDateInput());
@@ -282,6 +283,8 @@ function AddTransactionDialogBody({ onOpenChange, defaultType, defaultDate }: Ad
           onCategoryChange={setCategoryUuid}
           description={description}
           onDescriptionChange={setDescription}
+          excludeFromBudget={excludeFromBudget}
+          onExcludeFromBudgetChange={setExcludeFromBudget}
           date={date}
           onDateChange={setDate}
           name={name}

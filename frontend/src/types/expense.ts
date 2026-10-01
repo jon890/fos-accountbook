@@ -15,6 +15,7 @@ export interface ExpenseResponse {
   amount: string; // BigDecimal은 문자열로 전송
   description?: string;
   date: string; // ISO 8601 형식
+  excludeFromBudget: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -36,6 +37,7 @@ export interface Expense {
   amount: number;
   description: string | null;
   date: string;
+  excludeFromBudget: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -69,6 +71,7 @@ export interface CreateExpenseRequest {
   amount: number;
   description?: string;
   date: string; // ISO 8601 형식 (YYYY-MM-DDTHH:mm:ss)
+  excludeFromBudget?: boolean;
 }
 
 /**
@@ -79,6 +82,7 @@ export interface UpdateExpenseRequest {
   amount?: number;
   description?: string;
   date?: string;
+  excludeFromBudget?: boolean;
 }
 
 /**

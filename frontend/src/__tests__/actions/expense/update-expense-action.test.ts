@@ -23,24 +23,23 @@ jest.mock("@/lib/server/auth/auth", () => ({
 }));
 jest.mock("@/lib/server/auth/auth-helpers");
 jest.mock("@/lib/server/api/client");
+jest.mock("@/services/expense/expense-service");
 jest.mock("next/cache");
 
 import { updateExpenseAction } from "@/actions/expense/update-expense-action";
-import { serverApiPut } from "@/lib/server/api/client";
 import { requireAuth, getSelectedFamilyUuid } from "@/lib/server/auth/auth-helpers";
 import { revalidatePath } from "next/cache";
 import type { Session } from "next-auth";
+import { updateExpense } from "@/services/expense/expense-service";
 
 const mockRequireAuth = requireAuth as jest.MockedFunction<typeof requireAuth>;
 const mockGetSelectedFamilyUuid = getSelectedFamilyUuid as jest.MockedFunction<
   typeof getSelectedFamilyUuid
 >;
-const mockedServerApiClient = serverApiPut as jest.MockedFunction<
-  typeof serverApiPut
->;
 const mockedRevalidatePath = revalidatePath as jest.MockedFunction<
   typeof revalidatePath
 >;
+const mockUpdateExpense = updateExpense as jest.MockedFunction<typeof updateExpense>;
 
 const mockSession: Session = {
   user: { userUuid: "user-1" },
@@ -52,6 +51,7 @@ describe("updateExpenseAction", () => {
     jest.clearAllMocks();
     mockRequireAuth.mockResolvedValue(mockSession);
     mockGetSelectedFamilyUuid.mockResolvedValue("family-uuid");
+    mockUpdateExpense.mockResolvedValue(undefined);
   });
 
   const createFormData = (data: Record<string, string>) => {
@@ -64,8 +64,6 @@ describe("updateExpenseAction", () => {
 
   it("유효한 데이터로 지출 수정에 성공한다", async () => {
     // Given
-    mockedServerApiClient.mockResolvedValueOnce(undefined);
-
     const formData = createFormData({
       expenseUuid: "test-uuid",
       familyUuid: "family-uuid",
@@ -83,9 +81,10 @@ describe("updateExpenseAction", () => {
     // Then
     expect(result.success).toBe(true);
     expect(result.message).toBe("지출이 수정되었습니다");
-    expect(mockedServerApiClient).toHaveBeenCalledWith(
-      "/families/family-uuid/expenses/test-uuid",
-      expect.any(Object)
+    expect(mockUpdateExpense).toHaveBeenCalledWith(
+      "family-uuid",
+      "test-uuid",
+      expect.objectContaining({ amount: 50000 }),
     );
     expect(mockedRevalidatePath).toHaveBeenCalledWith("/transactions");
     expect(mockedRevalidatePath).toHaveBeenCalledWith("/calendar");
@@ -130,9 +129,6 @@ describe("updateExpenseAction", () => {
   });
 
   it("금액만 수정해도 성공한다", async () => {
-    // Given
-    mockedServerApiClient.mockResolvedValueOnce(undefined);
-
     const formData = createFormData({
       expenseUuid: "test-uuid",
       familyUuid: "family-uuid",
@@ -150,7 +146,7 @@ describe("updateExpenseAction", () => {
 
   it("API 호출 실패 시 에러 메시지를 반환한다", async () => {
     // Given
-    mockedServerApiClient.mockRejectedValueOnce(new Error("Network error"));
+    mockUpdateExpense.mockRejectedValueOnce(new Error("Network error"));
 
     const formData = createFormData({
       expenseUuid: "test-uuid",
@@ -170,8 +166,6 @@ describe("updateExpenseAction", () => {
 
   it("날짜 형식을 ISO 8601로 변환한다", async () => {
     // Given
-    mockedServerApiClient.mockResolvedValueOnce(undefined);
-
     const formData = createFormData({
       expenseUuid: "test-uuid",
       familyUuid: "family-uuid",
@@ -185,8 +179,8 @@ describe("updateExpenseAction", () => {
     await updateExpenseAction(initialState, formData);
 
     // Then
-    const callArg = mockedServerApiClient.mock.calls[0][1] as Record<string, unknown>;
-    expect(callArg?.date).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    const callArg = mockUpdateExpense.mock.calls[0][2];
+    expect(callArg?.date).toBe("2025-01-15");
   });
 
   it("아무것도 수정하지 않으면 에러를 반환한다", async () => {
@@ -242,5 +236,34 @@ describe("updateExpenseAction", () => {
     // Then
     expect(result.success).toBe(false);
     expect(result.message).toBe("가족 정보를 찾을 수 없습니다.");
+  });
+
+  it.each([true, false])("excludeFromBudget=%s만 수정해도 서비스 요청에 전달한다", async (excludeFromBudget) => {
+    const formData = createFormData({
+      expenseUuid: "test-uuid",
+      familyUuid: "family-uuid",
+      excludeFromBudget: String(excludeFromBudget),
+    });
+
+    const result = await updateExpenseAction({ success: false, message: "", errors: {} }, formData);
+
+    expect(result.success).toBe(true);
+    expect(mockUpdateExpense).toHaveBeenCalledWith(
+      "family-uuid",
+      "test-uuid",
+      expect.objectContaining({ excludeFromBudget }),
+    );
+  });
+
+  it("excludeFromBudget가 없으면 서비스 요청 객체에 넣지 않는다", async () => {
+    const formData = createFormData({
+      expenseUuid: "test-uuid",
+      familyUuid: "family-uuid",
+      amount: "30000",
+    });
+
+    await updateExpenseAction({ success: false, message: "", errors: {} }, formData);
+
+    expect(mockUpdateExpense.mock.calls[0][2]).not.toHaveProperty("excludeFromBudget");
   });
 });

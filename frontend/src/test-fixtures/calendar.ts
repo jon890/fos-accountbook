@@ -12,6 +12,7 @@ export function calendarExpense(overrides: Partial<Expense> = {}): Expense {
     amount: 32000,
     description: "점심",
     date: "2026-09-14T12:00:00",
+    excludeFromBudget: false,
     createdAt: "2026-09-14T12:00:00",
     updatedAt: "2026-09-14T12:00:00",
     ...overrides,

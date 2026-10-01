@@ -176,6 +176,9 @@ function EditTransactionDialogBody({
   const [categoryUuid, setCategoryUuid] = useState<string | null>(transaction.categoryUuid);
   const [date, setDate] = useState(() => getDateInitial(transaction));
   const [description, setDescription] = useState(() => getDescriptionInitial(transaction));
+  const [excludeFromBudget, setExcludeFromBudget] = useState(
+    () => type === "expense" && "excludeFromBudget" in transaction && transaction.excludeFromBudget,
+  );
   const [name, setName] = useState(recurring?.name ?? "");
   const [dayOfMonth, setDayOfMonth] = useState<number | undefined>(recurring?.dayOfMonth);
 
@@ -382,6 +385,8 @@ function EditTransactionDialogBody({
           onCategoryChange={setCategoryUuid}
           description={description}
           onDescriptionChange={setDescription}
+          excludeFromBudget={excludeFromBudget}
+          onExcludeFromBudgetChange={setExcludeFromBudget}
           date={date}
           onDateChange={setDate}
           name={name}

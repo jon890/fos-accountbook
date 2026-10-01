@@ -16,6 +16,7 @@ jest.mock("@/lib/server/auth/auth", () => ({
 }));
 jest.mock("@/lib/server/auth/auth-helpers");
 jest.mock("@/lib/server/api/client");
+jest.mock("@/services/expense/expense-service");
 jest.mock("next/cache");
 
 import { createExpenseAction } from "@/actions/expense/create-expense-action";
@@ -25,6 +26,7 @@ import {
   getSelectedFamilyUuid,
 } from "@/lib/server/auth/auth-helpers";
 import { revalidatePath } from "next/cache";
+import { createExpense } from "@/services/expense/expense-service";
 
 const mockRequireAuthOrRedirect = requireAuthOrRedirect as jest.MockedFunction<
   typeof requireAuthOrRedirect
@@ -38,11 +40,13 @@ const mockServerApiClient = serverApiClient as jest.MockedFunction<
 const mockRevalidatePath = revalidatePath as jest.MockedFunction<
   typeof revalidatePath
 >;
+const mockCreateExpense = createExpense as jest.MockedFunction<typeof createExpense>;
 
 describe("createExpenseAction", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockRequireAuthOrRedirect.mockResolvedValue(undefined as never);
+    mockCreateExpense.mockResolvedValue(undefined);
   });
 
   it("지출 생성 성공 시 /transactions, /, /analytics를 revalidate한다", async () => {
@@ -67,5 +71,31 @@ describe("createExpenseAction", () => {
     expect(mockRevalidatePath).toHaveBeenCalledWith("/budget");
     expect(mockRevalidatePath).not.toHaveBeenCalledWith("/");
     expect(mockRevalidatePath).toHaveBeenCalledWith("/analytics");
+  });
+
+  it.each([true, false])("excludeFromBudget=%s를 서비스 요청에 전달한다", async (excludeFromBudget) => {
+    mockGetSelectedFamilyUuid.mockResolvedValue("family-1");
+    const formData = new FormData();
+    formData.append("amount", "10000");
+    formData.append("categoryId", "category-1");
+    formData.append("excludeFromBudget", String(excludeFromBudget));
+
+    await createExpenseAction({ success: false, message: "", errors: {} }, formData);
+
+    expect(mockCreateExpense).toHaveBeenCalledWith(
+      "family-1",
+      expect.objectContaining({ excludeFromBudget }),
+    );
+  });
+
+  it("excludeFromBudget가 없으면 서비스 요청 객체에 넣지 않는다", async () => {
+    mockGetSelectedFamilyUuid.mockResolvedValue("family-1");
+    const formData = new FormData();
+    formData.append("amount", "10000");
+    formData.append("categoryId", "category-1");
+
+    await createExpenseAction({ success: false, message: "", errors: {} }, formData);
+
+    expect(mockCreateExpense.mock.calls[0][1]).not.toHaveProperty("excludeFromBudget");
   });
 });

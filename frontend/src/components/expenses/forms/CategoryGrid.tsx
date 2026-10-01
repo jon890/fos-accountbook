@@ -3,6 +3,7 @@
 import { cn } from "@/lib/client/utils";
 import { getCategoryToneKey, type CategoryToneKey } from "@/lib/utils/category-tone";
 import type { CategoryResponse } from "@/types/category";
+import { EyeOff } from "lucide-react";
 
 interface CategoryGridProps {
   categories: CategoryResponse[];
@@ -42,10 +43,11 @@ export function CategoryGrid({
             type="button"
             role="radio"
             aria-checked={isSelected}
+            aria-label={category.excludeFromBudget ? `${category.name} 예산 제외` : category.name}
             disabled={disabled}
             onClick={() => onSelect(category.uuid)}
             className={cn(
-              "flex flex-col items-center justify-center gap-1 rounded-xl border-[1.5px] px-1 py-2 transition-colors disabled:opacity-50 disabled:pointer-events-none",
+              "relative flex flex-col items-center justify-center gap-1 rounded-xl border-[1.5px] px-1 py-2 transition-colors disabled:opacity-50 disabled:pointer-events-none",
               isSelected
                 ? cn(tone.bg, tone.border)
                 : "bg-bg border-border hover:bg-bg-muted",
@@ -60,6 +62,12 @@ export function CategoryGrid({
                 isSelected ? cn(tone.text, "font-bold") : "text-fg-muted font-medium",
               )}
             >
+            {category.excludeFromBudget && (
+              <EyeOff
+                aria-hidden="true"
+                className="absolute right-1.5 top-1.5 h-3.5 w-3.5 text-fg-muted"
+              />
+            )}
               {category.name}
             </span>
           </button>
