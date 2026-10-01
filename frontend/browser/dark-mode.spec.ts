@@ -1,4 +1,5 @@
 import { expect, test } from "./fixtures";
+import { BACKEND_BASE_URL } from "./settings";
 
 const darkTokens = {
   "--color-brand-tint": "oklch(0.205 0.030 257)",
@@ -114,6 +115,7 @@ test("다크 테마에서 옅은 토큰과 화면 배경을 어둡게 표시한�
   await assertFixedTokensDoNotChange(page);
   await assertThemedClassStylesChange(page);
   await assertSelectedCategoryColors(page, "dark");
+  await assertBudgetSurfaces(page, "dark");
 });
 
 test.describe("라이트 테마", () => {
@@ -142,8 +144,58 @@ test.describe("라이트 테마", () => {
 
     await assertTokenValues(page, lightTokens);
     await assertSelectedCategoryColors(page, "light");
+    await assertBudgetSurfaces(page, "light");
   });
 });
+
+async function assertBudgetSurfaces(
+  page: import("@playwright/test").Page,
+  theme: "dark" | "light",
+) {
+  await page.goto("/budget");
+
+  const budgetCard = page.locator("[data-slot='card'].gradient-primary")
+    .filter({ hasText: "예산 남은 금액" })
+    .first();
+  await expect(budgetCard).toBeVisible();
+  await expect(budgetCard).toHaveClass(/gradient-primary/);
+  await expectGradientForegroundContrast(budgetCard, 3);
+
+  const progress = budgetCard.locator("[data-slot='progress']");
+  await expect(progress).toHaveClass(/bg-\[var\(--color-hero-track\)\]/);
+  const progressColors = await progress.evaluate((element) => {
+    const indicator = element.querySelector("[data-slot='progress-indicator']");
+    if (!indicator) throw new Error("예산 진행 막대 채움이 없습니다");
+
+    return {
+      fill: getComputedStyle(indicator).backgroundColor,
+      primary: getComputedStyle(document.documentElement).getPropertyValue("--primary").trim(),
+    };
+  });
+  expect(await normalizeColor(page, progressColors.fill)).not.toEqual(
+    await normalizeColor(page, progressColors.primary),
+  );
+
+  await page.goto("/transactions?tab=recurring");
+  const recurringList = page.getByRole("button", { name: /월세/ })
+    .locator("xpath=ancestor::*[@data-slot='card']");
+  await expect(recurringList).toBeVisible();
+  await expect(recurringList).toHaveClass(/bg-bg-elev/);
+  await expect(recurringList).toHaveClass(/border-border/);
+  if (theme === "dark") {
+    await expectBackgroundBelow(recurringList, 0.45);
+  }
+
+  const response = await page.request.post(`${BACKEND_BASE_URL}/__test/budget`, {
+    data: { configured: false },
+  });
+  expect(response.ok()).toBe(true);
+
+  await page.goto("/budget");
+  const budgetSetupButton = page.getByRole("button", { name: "예산 설정하기" });
+  await expect(budgetSetupButton).toHaveClass(/gradient-primary/);
+  await expectGradientForegroundContrast(budgetSetupButton, 3);
+}
 
 async function assertTokenValues(
   page: import("@playwright/test").Page,
@@ -310,6 +362,31 @@ async function normalizeColor(page: import("@playwright/test").Page, color: stri
   }, color);
 }
 
+async function expectGradientForegroundContrast(
+  locator: import("@playwright/test").Locator,
+  minimumContrast: number,
+) {
+  const colors = await locator.evaluate((element) => {
+    const styles = getComputedStyle(element);
+    const stops = [...styles.backgroundImage.matchAll(/(?:oklch|oklab|lab)\([^)]*\)/g)]
+      .map((match) => match[0]);
+    if (stops.length === 0) throw new Error("그라디언트 정지점을 찾을 수 없습니다");
+
+    return { foreground: styles.color, stops };
+  });
+
+  const page = locator.page();
+  const foreground = await normalizeColor(page, colors.foreground);
+  const contrasts = await Promise.all(colors.stops.map(async (stop) => {
+    const background = await normalizeColor(page, stop);
+    return contrastRatio(foreground, background);
+  }));
+
+  for (const contrast of contrasts) {
+    expect(contrast).toBeGreaterThanOrEqual(minimumContrast);
+  }
+}
+
 function expectColorMapsClose(
   actual: Record<string, string>,
   expected: Record<string, string>,
@@ -329,6 +406,28 @@ function expectColorMapsClose(
 
 function colorChannels(color: string): number[] {
   return [...color.matchAll(/[-+]?\d*\.?\d+(?:e[-+]?\d+)?/gi)].map((match) => Number(match[0]));
+}
+
+function contrastRatio(foreground: string, background: string): number {
+  const foregroundLuminance = relativeLuminance(colorChannels(foreground));
+  const backgroundLuminance = relativeLuminance(colorChannels(background));
+  const lighter = Math.max(foregroundLuminance, backgroundLuminance);
+  const darker = Math.min(foregroundLuminance, backgroundLuminance);
+
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function relativeLuminance(channels: number[]): number {
+  const normalized = channels.slice(0, 3).map((channel) => (
+    channel > 1 ? channel / 255 : channel
+  ));
+  const linear = normalized.map((channel) => (
+    channel <= 0.04045
+      ? channel / 12.92
+      : ((channel + 0.055) / 1.055) ** 2.4
+  ));
+
+  return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
 }
 
 async function expectBackgroundBelow(locator: import("@playwright/test").Locator, limit: number) {

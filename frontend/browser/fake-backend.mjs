@@ -8,6 +8,7 @@ let transactionsAreEmpty = false;
 let categorySummaryIsEmpty = false;
 let notificationsAreHeld = false;
 let notificationHold;
+let budgetIsConfigured = true;
 
 const family = {
   uuid: FAMILY_UUID,
@@ -196,6 +197,7 @@ const server = createServer(async (request, response) => {
     categoriesAreEmpty = false;
     transactionsAreEmpty = false;
     categorySummaryIsEmpty = false;
+    budgetIsConfigured = true;
     setNotificationsHeld(false);
     sendJson(response, 200, { success: true });
     return;
@@ -227,6 +229,16 @@ const server = createServer(async (request, response) => {
       return;
     }
     categorySummaryIsEmpty = body.empty;
+    sendJson(response, 200, { success: true });
+    return;
+  }
+  if (method === "POST" && pathname === "/__test/budget") {
+    const body = await readJson(request);
+    if (typeof body?.configured !== "boolean") {
+      sendJson(response, 400, { success: false, message: "Expected a configured boolean" });
+      return;
+    }
+    budgetIsConfigured = body.configured;
     sendJson(response, 200, { success: true });
     return;
   }
@@ -287,6 +299,42 @@ const server = createServer(async (request, response) => {
         totalIncome: 3000000,
         totalExpense: 16200,
         memberExpenseTotals: [{ userUuid: members[0].userUuid, amount: 16200 }],
+      },
+    });
+    return;
+  }
+  if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/dashboard/stats/monthly`) {
+    const budget = budgetIsConfigured ? family.monthlyBudget : 0;
+    const monthlyExpense = budgetIsConfigured ? 16200 : 0;
+    sendJson(response, 200, {
+      success: true,
+      data: {
+        monthlyExpense,
+        monthlyIncome: 3000000,
+        remainingBudget: budget - monthlyExpense,
+        familyMembers: family.memberCount,
+        budget,
+        year: 2026,
+        month: 10,
+      },
+    });
+    return;
+  }
+  if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/dashboard/stats/category-breakdown`) {
+    sendJson(response, 200, {
+      success: true,
+      data: {
+        year: 2026,
+        month: 10,
+        totalExpense: 16200,
+        items: [{
+          categoryUuid: categories[0].uuid,
+          name: categories[0].name,
+          icon: "🍚",
+          color: categories[0].color,
+          totalAmount: 16200,
+          percentage: 100,
+        }],
       },
     });
     return;
