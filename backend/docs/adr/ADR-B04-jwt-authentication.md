@@ -10,6 +10,8 @@
 
 **보안 고려**: Refresh Token 탈취 시 7일 유효 → 향후 Refresh Token Rotation 검토
 
+**토큰 종류 구분**: access 와 refresh 는 `typ` 클레임으로 구분한다([ADR-B19](ADR-B19-jwt-token-type-claim.md)).
+
 **참고**: `application-local.yml`에서 access token을 24시간으로 오버라이드함 (개발 편의).
 prod 프로파일은 15분 유지.
 

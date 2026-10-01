@@ -23,3 +23,5 @@
 | [ADR-B16](ADR-B16-domain-package-structure.md) | 도메인 기반 패키지 리팩토링 | accepted |
 | [ADR-B17](ADR-B17-social-login-signature.md) | 소셜 로그인 서명 | accepted |
 | [ADR-B18](ADR-B18-agent-integration-token.md) | 외부 에이전트 연동 토큰 | accepted |
+| [ADR-B19](ADR-B19-jwt-token-type-claim.md) | access token 과 refresh token 을 typ 클레임으로 구분한다 | accepted |
+| [ADR-B20](ADR-B20-log-body-policy.md) | 운영 로그에 요청과 응답 본문을 남기지 않는다 | accepted |
