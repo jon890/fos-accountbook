@@ -20,6 +20,18 @@ const privatePaths = [
   "/auth/signout",
 ];
 
+function pngDimensions(image: Buffer) {
+  expect(image.subarray(0, 8)).toEqual(
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+  );
+  expect(image.subarray(12, 16).toString("ascii")).toBe("IHDR");
+
+  return {
+    width: image.readUInt32BE(16),
+    height: image.readUInt32BE(20),
+  };
+}
+
 test("랜딩에서 서비스 메타데이터를 제공한다", async ({ browser }) => {
   const context = await browser.newContext();
 
@@ -121,4 +133,69 @@ test("robots, sitemap, manifest가 공개 경로와 앱 설정을 제공한다",
       { src: "/apple-icon", sizes: "180x180", type: "image/png" },
     ],
   });
+});
+
+test("링크 미리보기와 앱 아이콘을 PNG로 제공한다", async ({ browser, request }) => {
+  const context = await browser.newContext();
+
+  try {
+    const page = await context.newPage();
+
+    await page.goto("/");
+
+    const openGraphImageUrl = await page
+      .locator('meta[property="og:image"]')
+      .getAttribute("content");
+    const iconUrl = await page.locator('link[rel="icon"]').getAttribute("href");
+    const appleIconUrl = await page
+      .locator('link[rel="apple-touch-icon"]')
+      .getAttribute("href");
+
+    expect(openGraphImageUrl).toBeTruthy();
+    expect(iconUrl).toBeTruthy();
+    expect(appleIconUrl).toBeTruthy();
+    await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute(
+      "content",
+      "우리집 가계부: 가족이 함께 쓰는 가계부",
+    );
+    await expect(page.locator('link[rel="icon"]')).toHaveAttribute("sizes", "512x512");
+    await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute(
+      "sizes",
+      "180x180",
+    );
+
+    const imageResponses = await Promise.all([
+      request.get(openGraphImageUrl!),
+      request.get(iconUrl!),
+      request.get(appleIconUrl!),
+    ]);
+    const expectedDimensions = [
+      { width: 1200, height: 630 },
+      { width: 512, height: 512 },
+      { width: 180, height: 180 },
+    ];
+
+    for (const [index, response] of imageResponses.entries()) {
+      expect(response.status()).toBe(200);
+      expect(response.headers()["content-type"]).toContain("image/png");
+
+      const image = await response.body();
+      expect(image.length).toBeGreaterThan(0);
+      expect(pngDimensions(image)).toEqual(expectedDimensions[index]);
+    }
+
+    const manifestResponse = await request.get("/manifest.webmanifest");
+    const manifest = (await manifestResponse.json()) as {
+      icons: Array<{ src: string }>;
+    };
+
+    for (const icon of manifest.icons) {
+      const response = await request.get(icon.src);
+
+      expect(response.status()).toBe(200);
+      expect(response.headers()["content-type"]).toContain("image/png");
+    }
+  } finally {
+    await context.close();
+  }
 });
