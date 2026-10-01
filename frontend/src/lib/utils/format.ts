@@ -182,7 +182,14 @@ export function formatCompactAmount(amount: number): string {
     return `${sign}${Number((absoluteAmount / 10000).toFixed(1))}만`;
   }
   if (absoluteAmount >= 1000) {
-    return `${sign}${Number((absoluteAmount / 1000).toFixed(1))}천`;
+    const thousands = Number((absoluteAmount / 1000).toFixed(1));
+
+    // 9,960원 이상은 반올림하면 10천이 되므로 만 단위로 표시한다.
+    if (thousands >= 10) {
+      return `${sign}1만`;
+    }
+
+    return `${sign}${thousands}천`;
   }
   return `${sign}${Math.round(absoluteAmount)}`;
 }
