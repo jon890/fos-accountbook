@@ -23,7 +23,8 @@
 
 ## 의도 메모
 
-- 디자인: brand 색 배경, 흰 글자로 「우리집 가계부」 와 한 줄 소개 「가족이 함께 쓰는 가계부」. 아이콘은 같은 배경에 짧은 기호(예: 「가」 한 글자나 ₩)를 둔다. 화려하게 만들지 않는다.
+- 디자인: brand 색 배경, 흰 글자로 「우리집 가계부」 와 한 줄 소개 「가족이 함께 쓰는 가계부」. 아이콘은 같은 배경에 「가」 한 글자를 둔다. icon은 512×512, apple-icon은 180×180 PNG로 만든다.
+- Pretendard-Bold.otf를 fs로 읽고, `next.config.ts`의 `outputFileTracingIncludes`에 세 이미지 경로용 글꼴 파일을 명시한다. 별도 글꼴 파일과 의존성은 추가하지 않는다.
 - `opengraph-image` 에 `alt` export 를 둔다.
 
 ## 작업 항목
@@ -32,13 +33,14 @@
 
 ### 2. `frontend/src/app/icon.tsx` 와 `frontend/src/app/apple-icon.tsx`, `frontend/src/app/favicon.ico` 삭제
 
-### 3. standalone 빌드에서 글꼴 파일이 실리게 하기(필요할 때만 `frontend/next.config.ts`)
+### 3. `frontend/next.config.ts` 에 글꼴 tracing을 추가해 standalone 빌드에 포함하기
 
 ### 4. 이 phase 를 검증하는 브라우저 테스트
 
 - `frontend/browser/seo.spec.ts` 에 더한다.
   - 세션 없는 context 로 `/` 의 `meta[property="og:image"]` 주소를 읽어 GET 하면 200, `content-type` 이 `image/png`, 응답 크기가 0 보다 크다.
   - `/icon` 과 `/apple-icon` 경로(실제 경로는 `link[rel="icon"]`, `link[rel="apple-touch-icon"]` 의 href 로 읽는다)가 200 과 `image/png` 다.
+  - PNG IHDR로 OG 1200×630, icon 512×512, apple-icon 180×180을 확인하고, `og:image:alt`와 icon link sizes를 단언한다. manifest의 두 경로로도 직접 GET해 연결이 유효함을 확인한다.
 
 ## 검증
 
