@@ -1,0 +1,14 @@
+{
+  "name": "fe-plan10-navigation-loading",
+  "description": "주소를 바꾸는 클라이언트 전환과 서버 액션 뒤 이동에 대기 표시를 붙여, 버튼을 누르고 화면이 바뀔 때까지 아무 표시가 없는 문제를 없앤다",
+  "status": "pending",
+  "created_at": "2026-10-01",
+  "total_phases": 4,
+  "current_phase": 1,
+  "phases": [
+    { "number": 1, "file": "phase-01.md", "execution_profile": "standard" },
+    { "number": 2, "file": "phase-02.md", "execution_profile": "fast" },
+    { "number": 3, "file": "phase-03.md", "execution_profile": "standard" },
+    { "number": 4, "file": "phase-04.md", "execution_profile": "fast" }
+  ]
+}
