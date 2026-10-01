@@ -71,7 +71,7 @@ export default function CreateFamilyPage() {
     <div className="min-h-screen bg-bg p-4">
       <div className="max-w-md mx-auto pt-20">
         <Card className="bg-bg-elev border-border shadow-default">
-          <CardHeader className="text-center pt-8 pb-4">
+          <CardHeader className="text-center pt-6 pb-4 md:pt-8">
             <div className="mx-auto mb-3 w-24 h-24 rounded-full gradient-family flex items-center justify-center">
               <Users className="w-10 h-10 text-brand-fg" strokeWidth={2.2} />
             </div>
@@ -83,7 +83,7 @@ export default function CreateFamilyPage() {
             </CardDescription>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="pt-0 md:pt-0">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* 가족 타입 선택 */}
               <div className="space-y-3">

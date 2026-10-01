@@ -24,7 +24,7 @@ export function CategoryItem({
 
   return (
     <Card className="hover:shadow-md transition-shadow" style={colorStyle}>
-      <CardContent className="px-2 md:p-4">
+      <CardContent className="p-3 md:p-4">
         <div className="flex flex-col justify-between h-full gap-2 md:gap-3">
           <div className="flex items-start justify-between">
             <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center text-xl md:text-2xl shrink-0 bg-[color-mix(in_srgb,var(--cat-color)_16%,transparent)] text-[var(--cat-color)]">

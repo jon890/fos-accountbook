@@ -99,7 +99,7 @@ export default async function TransactionsPage({
             <Suspense
               fallback={
                 <Card className="w-full border-0 bg-bg-elev backdrop-blur-sm shadow-xl">
-                  <CardContent className="flex justify-center items-center min-h-[200px] py-8">
+                  <CardContent className="flex justify-center items-center min-h-[200px] py-8 md:py-8">
                     <LoadingSpinner />
                   </CardContent>
                 </Card>
@@ -117,7 +117,7 @@ export default async function TransactionsPage({
             <Suspense
               fallback={
                 <Card className="w-full">
-                  <CardContent className="flex justify-center items-center min-h-[400px] py-12">
+                  <CardContent className="flex justify-center items-center min-h-[400px] py-12 md:py-12">
                     <LoadingSpinner />
                   </CardContent>
                 </Card>
@@ -144,7 +144,7 @@ export default async function TransactionsPage({
           <Suspense
             fallback={
               <Card className="w-full">
-                <CardContent className="flex justify-center items-center min-h-[400px] py-12">
+                <CardContent className="flex justify-center items-center min-h-[400px] py-12 md:py-12">
                   <LoadingSpinner />
                 </CardContent>
               </Card>
@@ -169,7 +169,7 @@ export default async function TransactionsPage({
           <Suspense
             fallback={
               <Card className="w-full">
-                <CardContent className="flex justify-center items-center min-h-[400px] py-12">
+                <CardContent className="flex justify-center items-center min-h-[400px] py-12 md:py-12">
                   <LoadingSpinner />
                 </CardContent>
               </Card>
@@ -189,7 +189,7 @@ async function RecurringExpenseListWrapper({ month }: { month: string }) {
   if (!result.success) {
     return (
       <Card className="w-full">
-        <CardContent className="flex justify-center items-center min-h-[200px] py-8">
+        <CardContent className="flex justify-center items-center min-h-[200px] py-8 md:py-8">
           <p className="text-fg-muted text-sm">고정지출을 불러올 수 없습니다</p>
         </CardContent>
       </Card>

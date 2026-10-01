@@ -109,7 +109,7 @@ export function FamilySelector({
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
-          <CardContent className="py-8 text-center">
+          <CardContent className="py-8 text-center md:py-8">
             <p className="text-expense mb-4">{error}</p>
             <Button onClick={retryLoadFamilies}>다시 시도</Button>
           </CardContent>

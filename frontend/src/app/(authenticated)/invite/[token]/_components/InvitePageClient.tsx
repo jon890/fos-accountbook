@@ -73,7 +73,7 @@ export function InvitePageClient({
   return (
     <div className="min-h-screen flex items-center justify-center p-5 bg-bg">
       <Card className="max-w-md w-full bg-bg-elev border-border shadow-default">
-        <CardHeader className="text-center pb-4 pt-8">
+        <CardHeader className="text-center pb-4 pt-6 md:pt-8">
           {inviterName ? (
             <Avatar className="size-24 mx-auto mb-4">
               {inviterAvatarUrl && (
@@ -98,7 +98,7 @@ export function InvitePageClient({
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 pt-0 md:pt-0">
           {/* 가족 정보 */}
           <div className="bg-bg-muted rounded-2xl p-5 space-y-4">
             <div className="flex items-center gap-3">

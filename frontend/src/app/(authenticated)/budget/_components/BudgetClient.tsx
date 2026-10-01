@@ -75,7 +75,7 @@ export function BudgetClient({
       {/* 예산 미설정 빈 상태 */}
       {!hasBudget && (
         <Card className="border-dashed border-2 border-border bg-bg-elev">
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center md:py-12">
             <div className="p-4 bg-brand-50 rounded-full mb-4">
               <PiggyBank className="w-8 h-8 text-brand-500 opacity-85" />
             </div>
@@ -184,12 +184,12 @@ export function BudgetClient({
         <div className="grid grid-cols-2 gap-3 md:gap-4">
           {/* 이번 달 지출 */}
           <Card className="bg-bg-elev border-border">
-            <CardHeader className="pb-1 p-4">
+            <CardHeader className="p-4 pb-1 md:p-4 md:pb-1">
               <CardTitle className="text-xs text-fg-muted font-medium">
                 이번 달 지출
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-0">
+            <CardContent className="p-4 pt-0 md:p-4 md:pt-0">
               <p className="text-lg md:text-xl font-bold text-fg">
                 {formatCurrency(monthlyExpense)}
               </p>
@@ -205,12 +205,12 @@ export function BudgetClient({
 
           {/* 남은 예산 */}
           <Card className="bg-bg-elev border-border">
-            <CardHeader className="pb-1 p-4">
+            <CardHeader className="p-4 pb-1 md:p-4 md:pb-1">
               <CardTitle className="text-xs text-fg-muted font-medium">
                 {isBudgetExceeded ? "초과 금액" : "남은 예산"}
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-0">
+            <CardContent className="p-4 pt-0 md:p-4 md:pt-0">
               <p
                 className={cn(
                   "text-lg md:text-xl font-bold",
