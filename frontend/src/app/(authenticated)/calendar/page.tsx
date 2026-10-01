@@ -4,6 +4,7 @@ import { CalendarHome } from "@/components/calendar/CalendarHome";
 import { auth } from "@/lib/server/auth";
 import { handleActionError } from "@/lib/server/action-result-handler";
 import { getDatePartsInTimezone } from "@/lib/utils/date-timezone";
+import { ErrorCode } from "@/lib/errors";
 
 interface CalendarPageProps {
   searchParams: Promise<{ month?: string | string[]; date?: string | string[] }>;
@@ -47,6 +48,11 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
 
   const result = await getCalendarMonthAction(year, month);
   if (!result.success) {
+    const invalidFamily = result.error.code === ErrorCode.FAMILY_NOT_FOUND
+      || result.error.code === ErrorCode.NOT_FAMILY_MEMBER;
+    if (invalidFamily) {
+      redirect("/families/select");
+    }
     const isAuthError = result.error.code === "A001" || result.error.code === "A002";
     if (isAuthError) {
       handleActionError(result);

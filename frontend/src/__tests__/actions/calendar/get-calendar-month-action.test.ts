@@ -26,6 +26,14 @@ beforeEach(() => {
 });
 
 describe("달력 Action", () => {
+  it.each([
+    [403, ErrorCode.NOT_FAMILY_MEMBER],
+    [404, ErrorCode.FAMILY_NOT_FOUND],
+    [500, ErrorCode.INTERNAL_ERROR],
+  ])("백엔드 %s를 %s로 변환한다", async (status, code) => {
+    jest.mocked(getCalendarMonth).mockRejectedValue(new ServerApiError("조회 실패", Number(status)));
+    expect(await getCalendarMonthAction(2026, 1)).toMatchObject({ success: false, error: { code } });
+  });
   it("선택 가족의 월 응답을 반환한다", async () => {
     expect(await getCalendarMonthAction(2026, 1)).toEqual({ success: true, data });
     expect(getCalendarMonth).toHaveBeenCalledWith("family-1", 2026, 1);

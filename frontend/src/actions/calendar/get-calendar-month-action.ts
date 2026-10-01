@@ -1,7 +1,8 @@
 "use server";
 
 import { z } from "zod";
-import { ActionError, handleActionError, successResult, type ActionResult } from "@/lib/errors";
+import { ActionError, ErrorCode, handleActionError, successResult, type ActionResult } from "@/lib/errors";
+import { ServerApiError } from "@/lib/server/api/types";
 import { requireAuth, getSelectedFamilyUuid } from "@/lib/server/auth/auth-helpers";
 import { getCalendarMonth } from "@/services/calendar/calendar-service";
 import type { CalendarMonth } from "@/types/calendar";
@@ -25,6 +26,12 @@ export async function getCalendarMonthAction(
     const data = await getCalendarMonth(familyUuid, input.year, input.month);
     return successResult(data);
   } catch (error) {
+    if (error instanceof ServerApiError && error.status === 403) {
+      return new ActionError(ErrorCode.NOT_FAMILY_MEMBER).toFailureResult();
+    }
+    if (error instanceof ServerApiError && error.status === 404) {
+      return new ActionError(ErrorCode.FAMILY_NOT_FOUND).toFailureResult();
+    }
     return handleActionError(error, "달력 조회에 실패했습니다");
   }
 }

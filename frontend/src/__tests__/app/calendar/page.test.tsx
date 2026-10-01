@@ -83,10 +83,16 @@ describe("달력 Page", () => {
     expect(screen.getByText(/2026-10-01/)).toBeInTheDocument();
   });
 
-  it.each(["C004", "C001", "F003"] as const)("일반 오류 %s는 로그인 이동 없이 error boundary로 던진다", async (code) => {
+  it.each(["C004", "C001", "C003"] as const)("일반 오류 %s는 로그인 이동 없이 error boundary로 던진다", async (code) => {
     jest.mocked(getCalendarMonthAction).mockResolvedValue({ success: false, error: { code, message: "조회 실패" } });
     await expect(CalendarPage({ searchParams: Promise.resolve({}) })).rejects.toThrow("조회 실패");
     expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it.each(["F001", "F003"] as const)("기본 가족 오류 %s는 가족 선택으로 이동한다", async (code) => {
+    jest.mocked(getCalendarMonthAction).mockResolvedValue({ success: false, error: { code, message: "유효하지 않은 가족" } });
+    await expect(CalendarPage({ searchParams: Promise.resolve({}) })).rejects.toThrow("redirect:/families/select");
+    expect(redirect).toHaveBeenCalledWith("/families/select");
   });
 
   it.each(["A001", "A002"] as const)("인증 오류 %s는 기존 로그인 오류 처리로 이동한다", async (code) => {
