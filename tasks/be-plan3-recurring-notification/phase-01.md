@@ -1,6 +1,6 @@
 # Phase 01. 템플릿 하나를 트랜잭션 하나로 처리하고 실패를 격리한다
 
-**Execution profile**: standard
+**Execution profile**: deep
 
 ## 목표
 
@@ -49,16 +49,17 @@
 
 - `RecurringExpenseSchedulerTest` 의 TC-01~TC-06 은 그대로 통과한다.
 - 신규 케이스: 같은 날 템플릿 두 개 중 하나의 처리가 예외를 내면 다른 하나의 Expense 는 생성되고, 이벤트의 count 는 1 이다.
-  예외는 `@MockitoSpyBean`(Spring Boot 4 에서 쓰는 이름은 코드베이스의 기존 사용처를 `git grep -n "SpyBean\|MockitoBean" backend/src/test` 로 확인)으로 생성기의 한 호출만 실패시키거나, 해당 템플릿의 카테고리 같은 데이터를 깨뜨려 만든다.
-- 신규 케이스: 생성기 호출 안에서 Expense 저장 뒤 예외가 나면 그 Expense 가 남지 않는다(트랜잭션 롤백). 생성기를 직접 부르는 테스트로 확인한다.
+  예외는 실제 Generator 를 `@MockitoSpyBean` 으로 감싸 실 메서드를 실행한 뒤 특정 템플릿에만 주입한다. 이 실패 주입은 코디네이터가 승인한 제한적 테스트 예외이며, Service/Repository 의 반환값이나 DB 저장을 모킹하지 않는다.
+- 신규 케이스: 생성기 호출 안에서 Expense 저장 뒤 예외가 나면 그 Expense 가 남지 않는다(트랜잭션 롤백). 프록시를 거쳐 생성기를 직접 부르는 테스트로 확인한다. spy 의 실 메서드 실행 뒤 같은 트랜잭션 안에서 예외를 주입하고, 실제 Repository 조회로 저장 행과 멱등성 키가 남지 않았음을 확인한다.
 
 ## 검증
 
 `backend/` 에서 실행한다. `gradle/wrapper/gradle-wrapper.jar` 가 없으면 먼저 `mise exec gradle@9.8.0 -- gradle wrapper --gradle-version 9.8.0` 을 돌린다. jar 는 커밋하지 않는다.
 
 ```bash
-./gradlew test --tests "com.bifos.accountbook.recurring.application.service.RecurringExpenseSchedulerTest"
-./gradlew checkstyleMain checkstyleTest test
+# cwd: backend
+./gradlew test --tests "com.bifos.accountbook.recurring.application.service.RecurringExpenseSchedulerTest" --no-daemon --console=plain
+./gradlew checkstyleMain checkstyleTest test --no-daemon --console=plain
 ```
 
 기대값: 두 명령 모두 BUILD SUCCESSFUL.
