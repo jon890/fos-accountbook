@@ -13,7 +13,7 @@
 
 모든 경로는 저장소 root 기준이다. 명령은 `frontend/` 에서 돌린다.
 
-**근거 문서**: `frontend/docs/adr/ADR-F40-in-sheet-amount-keypad.md`, `frontend/docs/flow.md` 의 등록 흐름 절(「AddTransactionDialog (responsive ...)」 도식)과 `/categories` 절, `frontend/docs/adr/ADR-F21-transaction-dialog-unification.md`.
+**근거 문서**: `frontend/docs/adr/ADR-F40-in-sheet-amount-keypad.md`, `frontend/docs/flow.md` 의 등록 흐름 절의 AddTransactionDialog 도식과 `/categories` 절, `frontend/docs/adr/ADR-F21-transaction-dialog-unification.md`.
 
 코드에서 확인한 사실:
 
@@ -28,6 +28,8 @@
 - 768px 미만에서는 숨은 입력 칸을 `readOnly`, `inputMode="none"`, `tabIndex={-1}` 로 두고 표시 영역을 눌러도 포커스하지 않는다. 숫자패드는 금액 표시 바로 아래, 빠른 추가 칩 위에 둔다. 폼 전송 값은 지금처럼 숨은 칸이나 상위 상태에서 나간다.
 - 768px 이상은 지금 동작을 유지하고 숫자패드를 그리지 않는다.
 - 빠른 추가 칩은 `min-h-11` 로 키운다.
+- 숫자패드는 기존 ui/Button을 사용한다. 00으로 최대 자리를 넘으면 추가하지 않고, 0의 앞자리 0은 누적하지 않는다. 지우기에서 0은 유지한다.
+- fake-backend는 POST `/api/v1/families/{familyUuid}/expenses`를 기존 Expense 응답 모양으로 지원한다. 요청 상태는 `{ path, body }[]`로 기록하고 GET `/__test/created-transactions`에서 반환한다. `/__test/reset`에서 비운다. 브라우저 테스트는 이 목록의 amount가 숫자패드 입력값인지 단언한다.
 
 ## 작업 항목
 

@@ -13,7 +13,7 @@
 
 모든 경로는 저장소 root 기준이다. 명령은 `frontend/` 에서 돌린다.
 
-**근거 문서**: `frontend/docs/adr/ADR-F40-in-sheet-amount-keypad.md`, `frontend/docs/flow.md` 의 등록 흐름 절(「AddTransactionDialog (responsive ...)」 도식)과 `/categories` 절, `frontend/docs/adr/ADR-F21-transaction-dialog-unification.md`.
+**근거 문서**: `frontend/docs/adr/ADR-F40-in-sheet-amount-keypad.md`, `frontend/docs/flow.md` 의 등록 흐름 절의 AddTransactionDialog 도식과 `/categories` 절, `frontend/docs/adr/ADR-F21-transaction-dialog-unification.md`.
 
 코드에서 확인한 사실:
 
@@ -27,7 +27,9 @@
 - 빠진 값 판정은 순수 함수로 뺀다: `frontend/src/lib/client/transaction-form-readiness.ts` 의 `getMissingField({ type, amount, categoryUuid, date, name, dayOfMonth })` 가 `"amount" | "category" | "date" | "name" | "dayOfMonth" | null` 을 돌려준다. 순서는 화면 순서(금액, 카테고리, 날짜 또는 이름, 결제일)다.
 - 안내 문구: 금액 「금액을 입력해 주세요」, 카테고리 「카테고리를 골라 주세요」, 날짜 「날짜를 골라 주세요」, 이름 「이름을 입력해 주세요」, 결제일 「결제일을 1~28 중에서 입력해 주세요」. 저장 버튼 바로 위에 `text-xs text-fg-muted`, `id` 를 주고 버튼에 `aria-describedby` 로 잇는다.
 - 저장 중 잠금은 시트 본문을 `<fieldset disabled={pending} className="contents">` 로 감싼다. `pending` 은 지금 각 창이 쓰는 `useActionState` 의 대기 값이다.
-- 종류 토글은 `role="radiogroup" aria-label="거래 종류"`, 각 버튼은 `role="radio" aria-checked`. 방향키 이동은 phase 04 의 격자와 같은 방식으로 한다.
+- 종류 토글은 기존 `ui/radio-group.tsx`의 RadioGroup과 RadioGroupItem을 재사용한다. Item은 선택적으로 children을 받아 기존 Indicator 대신 표시할 수 있게 하고, 종류 문구와 아이콘을 children으로 넘긴다. 기존 기본 Indicator 동작은 유지한다. Radix의 방향키 선택, 순환 및 단일 Tab 정지점을 사용한다. 수정 창은 현재 종류만 활성화하고 그룹을 잠근다.
+- 세 useActionState의 pending을 OR로 합쳐 fieldset으로 본문과 하단 버튼을 모두 잠근다. Add와 Edit 테스트에서 입력, 취소, 저장 잠금과 안내의 aria-describedby 연결을 검증한다. Add 종류 토글 방향키 선택도 검증한다.
+- 기존 브라우저 spec의 종류 locator를 button에서 radio로 바꾼다. flow.md의 첫 누락 값 목록에 날짜를 보완한다.
 
 ## 작업 항목
 
@@ -56,12 +58,17 @@ pnpm tsc --noEmit && pnpm lint && pnpm lint:md && pnpm test
 pnpm test src/__tests__/lib/client/transaction-form-readiness.test.ts src/__tests__/components/transactions/dialogs/AddTransactionDialog.test.tsx src/__tests__/components/transactions/dialogs/EditTransactionDialog.test.tsx
 ```
 
+추가 검증: `pnpm test:browser browser/add-transaction.spec.ts`.
+
 기대값: 모든 명령이 성공한다.
 
 ## 변경 파일
 
 | 파일 | 변경 |
 |---|---|
+| `frontend/src/components/ui/radio-group.tsx` | 수정 |
+| `frontend/browser/add-transaction.spec.ts` | 수정 |
+| `frontend/docs/flow.md` | 수정 |
 | `frontend/src/lib/client/transaction-form-readiness.ts` | 신규 |
 | `frontend/src/__tests__/lib/client/transaction-form-readiness.test.ts` | 신규 |
 | `frontend/src/components/transactions/dialogs/AddTransactionDialog.tsx` | 수정 |

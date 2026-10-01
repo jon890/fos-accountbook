@@ -13,7 +13,7 @@
 
 모든 경로는 저장소 root 기준이다. 명령은 `frontend/` 에서 돌린다.
 
-**근거 문서**: `frontend/docs/adr/ADR-F40-in-sheet-amount-keypad.md`, `frontend/docs/flow.md` 의 등록 흐름 절(「AddTransactionDialog (responsive ...)」 도식)과 `/categories` 절, `frontend/docs/adr/ADR-F21-transaction-dialog-unification.md`.
+**근거 문서**: `frontend/docs/adr/ADR-F40-in-sheet-amount-keypad.md`, `frontend/docs/flow.md` 의 등록 흐름 절의 AddTransactionDialog 도식과 `/categories` 절, `frontend/docs/adr/ADR-F21-transaction-dialog-unification.md`.
 
 코드에서 확인한 사실:
 
@@ -26,6 +26,7 @@
 
 - 칩은 날짜 칸 아래 `min-h-11` 버튼 둘이다. 「오늘」 은 `toLocalDateInput()`, 「어제」 는 하루 전의 `toLocalDateInput` 값을 넣는다. 지금 날짜와 같은 칩은 `aria-pressed="true"` 와 선택 스타일을 준다.
 - 결제일 `onChange` 는 빈 문자열이면 `undefined` 를 넘긴다. 래퍼는 빈 값이면 `NaN` 대신 검증 오류(「결제일을 1~28 중에서 입력해 주세요」)가 나게 한다. 스키마의 `min(1)` 에 같은 문구를 단다.
+- 두 래퍼는 dayOfMonth FormData가 비었으면 safeParse 전에 동일한 errors.dayOfMonth를 반환하고 action을 호출하지 않는다. 수정 래퍼의 partial()은 유지한다. 등록과 수정 창 테스트에 필수 조건과 native required를 우회한 form 제출로 빈 값 거부를 검증한다.
 
 ## 작업 항목
 
@@ -44,7 +45,7 @@
 
 ```bash
 pnpm tsc --noEmit && pnpm lint && pnpm lint:md && pnpm test
-pnpm test src/__tests__/components/transactions/TransactionFormFields.test.tsx src/__tests__/lib/schemas/recurring-expense.test.ts
+pnpm test src/__tests__/components/transactions/TransactionFormFields.test.tsx src/__tests__/lib/schemas/recurring-expense.test.ts src/__tests__/components/transactions/dialogs/AddTransactionDialog.test.tsx src/__tests__/components/transactions/dialogs/EditTransactionDialog.test.tsx
 ```
 
 기대값: 모든 명령이 성공한다.
@@ -53,6 +54,8 @@ pnpm test src/__tests__/components/transactions/TransactionFormFields.test.tsx s
 
 | 파일 | 변경 |
 |---|---|
+| `frontend/src/__tests__/components/transactions/dialogs/AddTransactionDialog.test.tsx` | 수정 |
+| `frontend/src/__tests__/components/transactions/dialogs/EditTransactionDialog.test.tsx` | 수정 |
 | `frontend/src/components/transactions/forms/TransactionFormFields.tsx` | 수정 |
 | `frontend/src/components/transactions/dialogs/AddTransactionDialog.tsx` | 수정 |
 | `frontend/src/components/transactions/dialogs/EditTransactionDialog.tsx` | 수정 |
