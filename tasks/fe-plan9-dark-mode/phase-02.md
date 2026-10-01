@@ -8,7 +8,7 @@
 화면 코드가 Tailwind 기본 팔레트(`gray-*`, `bg-white` 등) 대신 토큰을 쓰게 바꾸고, 팔레트를 다시 쓰면 `pnpm test` 가 실패하게 한다.
 내역 화면의 「카테고리별 지출」 박스는 색과 함께 배치를 줄여, 모바일에서 버려지는 영역을 없앤다.
 
-**범위 외**: `frontend/src/components/ui/dialog.tsx`, `frontend/src/components/ui/sheet.tsx`, `frontend/src/components/expenses/forms/ExpenseFilters.tsx` 는 등록 화면 정리 PR 이 고치거나 지운다.
+**범위 외**: 등록 화면 구조는 변경하지 않는다. `dialog.tsx`, `sheet.tsx`의 오버레이 팔레트만 고정 토큰으로 치환한다. `TransactionFormFields`, `CategoryGrid`, 카테고리 관리 화면은 수정하지 않는다.
 
 ## 컨텍스트
 
@@ -50,7 +50,7 @@
   - 펼치면 행 하나가 카드가 아니라 목록 한 줄이다. `divide-y divide-border`, 행 `py-2.5`, 아이콘 `size-8`, 이름과 건수 아래에 높이 4px 막대 하나, 오른쪽에 금액과 비율을 둔다.
   - 처음에는 상위 5개만 보이고 「전체 N개 보기」 로 나머지를 편다.
   - 걸러진 카테고리 행은 `bg-brand-50` 과 `aria-pressed="true"` 로 표시한다. hover 이동 효과와 배경 그라디언트는 없앤다.
-  - 카테고리 색은 지금처럼 `style` 로 넣되, 투명도를 붙인 바탕(`${color}20`)은 다크에서도 읽히는지 확인한다.
+  - 카테고리 색은 `--cat-color` 사용자 지정 변수로 넣고 `color-mix(in oklch, var(--cat-color) 12%, transparent)`로 바탕을 만든다. `CSSProperties` 단언은 사용자 지정 변수 객체에만 적용한다. 건수는 `text-fg-muted`로 표시한다.
 - 랜딩 CTA 는 `bg-neutral-0 text-brand-ink` 로 바꾼다. 두 토큰은 다크에서 바뀌지 않는다(phase 01).
 - 네이버 버튼은 테스트 허용 목록에 둔다.
 
@@ -67,6 +67,8 @@
 ### 3. `AnalyticsClient.tsx` TOP 5 카드, `PageError.tsx`, `PageLoadingSpinner.tsx`, `LoadingSpinner.tsx` 치환
 
 ### 4. `button.tsx` outline 의 `bg-white` 를 `bg-bg-elev` 로, `LandingPage.tsx` CTA 를 고정 토큰으로
+
+`dialog.tsx`, `sheet.tsx`의 `bg-black/50`은 `bg-neutral-950/50`로, `families/create/page.tsx`의 `border-white`는 `border-brand-fg`로 바꾼다. 가짜 백엔드는 카테고리 통계를 반환하도록 보완하고, 기존 테스트의 빈 상태는 별도 설정으로 유지한다.
 
 ### 5. 재발 방지 테스트 `frontend/src/__tests__/lib/no-raw-palette.test.ts`(신규)
 
@@ -107,3 +109,7 @@ pnpm test:browser
 | `frontend/src/__tests__/lib/no-raw-palette.test.ts` | 신규 |
 | `frontend/src/__tests__/components/expenses/CategoryExpenseSummary.test.tsx` | 신규 |
 | `frontend/browser/category-summary.spec.ts` | 신규 |
+| `frontend/browser/fake-backend.mjs` | 수정 |
+| `frontend/src/components/ui/dialog.tsx` | 수정 |
+| `frontend/src/components/ui/sheet.tsx` | 수정 |
+| `frontend/src/app/(authenticated)/families/create/page.tsx` | 수정 |

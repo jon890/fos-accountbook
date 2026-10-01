@@ -66,6 +66,9 @@
 - 계산된 배경색의 밝기를 판정하는 helper 를 spec 안에 둔다. `getComputedStyle` 값이 `oklch(L ...)` 면 L 을, `rgb()` 면 상대 휘도를 쓴다. 다크에서 배경 밝기가 0.45 미만이어야 한다.
 - 대상: `/notifications` 의 안읽음 알림 행, `/settings` 의 선택된 기본 가족 행과 카드 아이콘 바탕, `/categories` 의 카테고리 카드.
 - 같은 대상을 `colorScheme: "light"` 에서도 돌려 밝기가 0.85 이상인지 확인해 라이트 회귀를 막는다.
+- `/transactions`에서 지출 등록 시트를 열고 첫 카테고리를 선택한 뒤 `aria-checked="true"` 버튼의 바탕과 글자색을 두 테마에서 확인한다. `CategoryGrid` 소스는 수정하지 않는다.
+- `getComputedStyle(document.documentElement).getPropertyValue(...)`로 변경 대상의 모든 `brand-*`, `cat-*-{bg|fg}`, `category-fallback-bg` 토큰이 두 테마에서 계획한 값을 갖는지 반복 단언한다. 고정 `brand-300`부터 `brand-600`, `brand-ink`는 두 테마 값이 같은지 확인한다.
+- `.app-background`, `.glass`, 모든 `.gradient-*` 다크 변형은 브라우저 안에 해당 클래스를 가진 임시 요소를 만들어 계산된 스타일을 확인하고 라이트 값과 비교한다. 테스트 종료 시 임시 요소는 제거한다.
 - 가짜 백엔드가 모르는 경로(설정 화면의 프로필, API 토큰 조회 등)를 받으면 `frontend/browser/fake-backend.mjs` 에 더한다.
 - 대상 요소는 보이는 글자로 찾고 `locator("xpath=ancestor::...")` 나 `closest` 로 배경을 가진 조상을 고른다. 이 phase 에서 컴포넌트에 `data-testid` 를 더하지 않는다.
 

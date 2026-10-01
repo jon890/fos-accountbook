@@ -1,6 +1,6 @@
 # Phase 03. 예산 화면과 고정지출 목록의 색 정리
 
-**Execution profile**: fast
+**Execution profile**: standard
 **Domain**: color-token
 
 ## 목표
@@ -41,6 +41,7 @@
 - 다크에서 `/transactions` 의 고정지출 목록 카드와 카테고리별 지출 카드 배경 밝기가 0.45 미만이다.
 - 다크에서 `/budget` 예산 현황 카드의 진행 막대 채움 색이 `--primary` 와 다르다.
 - 가짜 백엔드에 예산 화면용 응답이 없으면 `frontend/browser/fake-backend.mjs` 에 더한다.
+- 정상 예산과 예산 미설정 상태를 가짜 백엔드 설정으로 제공한다. 두 테마에서 정상 카드와 예산 설정 버튼이 `gradient-primary` 배경을 쓰며 밝은 foreground가 적용되는지 확인한다. 그라디언트 정지점과 foreground를 RGB로 변환해 대비를 측정하고 3:1 이상인지 확인한다.
 
 ## 검증
 
