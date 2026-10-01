@@ -61,19 +61,23 @@ RecurringExpense 템플릿 저장 (status=ACTIVE)
         오늘 dayOfMonth인 ACTIVE 템플릿 조회
                    │
                    ▼  (각 템플릿마다)
+        템플릿 하나를 트랜잭션 하나로 처리 (RecurringExpenseGenerator)
         (recurring_expense_uuid, year_month) 중복 체크
                    │
-            ┌──────┴──────┐
-            │ 미생성       │ 이미 존재
-            ▼             ▼
-        Expense 생성   log.warn → skip
+            ┌──────┴──────┬──────────────┐
+            │ 미생성       │ 이미 존재     │ 예외
+            ▼             ▼              ▼
+        Expense 생성   log.warn → skip  log.warn → 그 템플릿만 skip, 다음 템플릿 계속
+            │
+            ▼  (모든 템플릿 처리 뒤 가족마다)
+        RecurringExpenseCreatedEvent 발행 (트랜잭션 밖)
             │
             ▼
-        RecurringExpenseCreatedEvent 발행
-            │
-            ▼
-        Notification 생성 (RECURRING_EXPENSE_CREATED)
+        가족의 ACTIVE 구성원마다 Notification 생성 (RECURRING_EXPENSE_CREATED, userUuid = 구성원)
 ```
+
+스케줄러는 트랜잭션 밖에서 이벤트를 발행한다. `@TransactionalEventListener` 는 기본값으로 트랜잭션 밖 이벤트를 버리므로, 이 리스너는 `fallbackExecution = true` 로 받는다.
+알림 목록은 `userUuid` 로 조회하므로 수신자를 구성원마다 정해 저장한다. `userUuid` 가 null 인 알림은 아무에게도 보이지 않는다.
 
 ## 4. 카테고리 삭제 시 연쇄 처리
 
