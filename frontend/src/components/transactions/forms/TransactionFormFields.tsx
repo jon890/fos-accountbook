@@ -115,7 +115,7 @@ export function TransactionFormFields({
           <input
             type="hidden"
             name="excludeFromBudget"
-            value={isCategoryExcluded ? "false" : String(excludeFromBudget)}
+            value={String(excludeFromBudget)}
           />
           {isCategoryExcluded && <p className="text-xs text-fg-subtle">이 카테고리는 예산에서 제외돼요</p>}
         </div>

@@ -73,6 +73,12 @@ describe("TransactionFormFields", () => {
     expect(screen.getByText("이 카테고리는 예산에서 제외돼요")).toBeInTheDocument();
   });
 
+  it("카테고리 잠금 중에도 지출 자체의 제외 값을 그대로 보낸다", () => {
+    const { container } = renderFields("expense", "excluded", true);
+    const hidden = container.querySelector<HTMLInputElement>('input[name="excludeFromBudget"]');
+    expect(hidden?.value).toBe("true");
+  });
+
   it("카테고리를 바꾸면 이전 사용자의 스위치 값을 유지한다", () => {
     function ControlledFields() {
       const [categoryUuid, setCategoryUuid] = useState<string | null>("excluded");
