@@ -180,7 +180,7 @@ CREATE TABLE notifications (
     id                BIGINT       PRIMARY KEY AUTO_INCREMENT,
     notification_uuid VARCHAR(36)  NOT NULL UNIQUE,
     family_uuid       VARCHAR(36)  NOT NULL,
-    user_uuid         VARCHAR(36),                    -- NULL = 가족 전체
+    user_uuid         VARCHAR(36),                    -- 수신자 UUID (레거시 행 호환을 위해 nullable)
     type              VARCHAR(50)  NOT NULL,           -- BUDGET_50_EXCEEDED | BUDGET_80_EXCEEDED | BUDGET_100_EXCEEDED | RECURRING_EXPENSE_CREATED
     title             VARCHAR(200) NOT NULL,
     message           TEXT         NOT NULL,
@@ -195,6 +195,9 @@ CREATE TABLE notifications (
     INDEX idx_notif_user_is_read       (user_uuid, is_read)
 );
 ```
+
+현재 알림은 ACTIVE 구성원마다 `user_uuid` 를 채워 저장한다. `user_uuid` 가 NULL 인 레거시 행은 사용자별 알림 목록에 표시하지 않는다.
+중복은 애플리케이션에서 `(family_uuid, user_uuid, type, year_month)` 로 판단한다. `idx_notif_family_type_month` 는 조회 인덱스이며 사용자별 중복을 막는 UNIQUE 제약이 아니다.
 
 ### [recurring] recurring_expenses
 

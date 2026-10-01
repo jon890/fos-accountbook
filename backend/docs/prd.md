@@ -73,7 +73,7 @@
 
 - 월 예산 대비 지출 비율 알림: 50%, 80%, 100% 초과 시
 - 반복 지출 자동 생성 시 알림
-- `(familyUuid, type, yearMonth)` 기준 중복 방지
+- ACTIVE 구성원마다 알림 생성, `(familyUuid, userUuid, type, yearMonth)` 기준 중복 방지
 - 이벤트 기반 (ADR-B08): 지출 생성/수정 → 알림 체크
 
 ### F7. 초대

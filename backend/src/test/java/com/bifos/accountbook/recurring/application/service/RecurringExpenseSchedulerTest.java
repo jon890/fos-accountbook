@@ -334,7 +334,8 @@ class RecurringExpenseSchedulerTest extends TestFixturesSupport {
     fixtures.recurringExpenses.recurringExpense(family, category).dayOfMonth(15).build();
 
     scheduler.generateRecurringExpenses();
-    scheduler.generateRecurringExpenses();
+    eventPublisher.publishEvent(new RecurringExpenseCreatedEvent(
+        family.getUuid().getValue(), "반복 지출", 1));
 
     assertThat(recurringNotificationsFor(user)).hasSize(1);
     assertThat(recurringNotificationsFor(secondUser)).hasSize(1);
@@ -404,6 +405,12 @@ class RecurringExpenseSchedulerTest extends TestFixturesSupport {
           family.getUuid(), FIXED_DATE.atStartOfDay(), FIXED_DATE.plusDays(1).atStartOfDay()))
           .extracting(Expense::getRecurringExpenseUuid)
           .containsExactly(template.getUuid().getValue());
+      List<RecurringExpenseCreatedEvent> publishedEvents = events
+          .stream(RecurringExpenseCreatedEvent.class)
+          .toList();
+      assertThat(publishedEvents).hasSize(1);
+      assertThat(publishedEvents.getFirst().familyUuid()).isEqualTo(family.getUuid().getValue());
+      assertThat(publishedEvents.getFirst().count()).isEqualTo(1);
       assertThat(recurringNotificationsFor(user)).isEmpty();
       assertThat(recurringNotificationsFor(secondUser)).isEmpty();
     } finally {

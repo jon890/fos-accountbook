@@ -159,6 +159,8 @@ applicationEventPublisher.publishEvent(new ExpenseCreatedEvent(familyUuid, date)
 public void handle(ExpenseCreatedEvent event) { ... }
 ```
 
+반복 지출 이벤트는 스케줄러가 트랜잭션 밖에서 발행하므로 `fallbackExecution = true` 로 받는다. 구성원별 알림은 새 트랜잭션에 저장하며, 저장 실패 시 알림 전체를 롤백하고 지출은 유지한다.
+
 ### 스케줄러 패턴 (반복 지출)
 
 ```java
@@ -169,9 +171,9 @@ public class RecurringExpenseScheduler {
   @Scheduled(cron = "0 0 1 * * ?")  // 매일 새벽 1시
   public void generateRecurringExpenses() {
     // 1. 오늘 day_of_month인 ACTIVE 템플릿 조회
-    // 2. 각 템플릿 → Expense INSERT 시도
-    //    - (recurring_expense_uuid, year_month) UNIQUE 위반 시 log.warn 후 skip
-    // 3. 성공 시 ApplicationEvent 발행 → RECURRING_EXPENSE_CREATED 알림
+    // 2. 별도 RecurringExpenseGenerator 빈에서 템플릿마다 트랜잭션으로 Expense 생성
+    //    - 중복 또는 예외는 log.warn 후 해당 템플릿만 skip, 다음 템플릿 계속
+    // 3. 모든 템플릿 처리 뒤 가족별 성공 수 집계 → 트랜잭션 밖에서 이벤트 발행
   }
 }
 ```
