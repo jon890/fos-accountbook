@@ -34,74 +34,33 @@
 | dark mode 셀렉터 | ADR-F15 — `[data-theme="dark"]` 만. `.dark` 신규 사용 금지 |
 | 카테고리 분포·월 집계 stat 추가 | ADR-F30 — 백엔드 집계 API 를 부른다. 목록을 받아 프론트에서 더하지 않는다 |
 | URL searchParams 기반 input/필터 | ADR-F17 — useEffect 안 setState 금지, `draft ?? current` derived value 패턴 |
-| `alert/confirm/prompt` 대체 | ADR-F08 — sonner 토스트 사용 |
 | Jest 테스트 추가 | ADR-F09 — MSW 아닌 jest.mock 방식 |
 | 실시간 업데이트 vs revalidate | ADR-F10 — Server Action + `revalidatePath` 유지 |
 | CI 코드 리뷰 워크플로 수정 | ADR-F11 — 트리거/모델/봇 허용 정책 |
 
 ---
 
-## 기술 스택
-
-Next.js 16 (App Router) · TypeScript 6 (strict) · Tailwind CSS v4 · Radix UI + Shadcn · NextAuth v5 · pnpm 10 · Jest + Testing Library
-
----
-
 ## 아키텍처 레이어 규칙
 
-```
-Page (app/) → Action (actions/) → Service (services/) → lib/server/api
-```
-
-| 레이어            | 담당                                           | 금지                                        |
-| ----------------- | ---------------------------------------------- | ------------------------------------------- |
-| `actions/`        | `"use server"`, 인증, Zod 검증, revalidatePath | API 직접 호출, 비즈니스 로직                |
-| `services/`       | API 호출, 쿼리 빌딩, 데이터 변환               | `"use server"`, revalidatePath, requireAuth |
-| `lib/server/api/` | HTTP 클라이언트                                | —                                           |
+`Page (app/) → Action (actions/) → Service (services/) → lib/server/api`.
+레이어 책임은 [`docs/code-architecture.md`](docs/code-architecture.md) 를 따른다.
 
 ---
 
 ## 코딩 규칙
 
-### TypeScript
-
-- `strict: true` — `any` 타입 금지
-- Server Actions에 명시적 반환 타입 권장
-- 입력값은 Zod로 런타임 검증
-
-### React / Next.js
-
-- **Server Component가 기본** — 클라이언트 상태가 필요할 때만 `"use client"`
-- `"use client"` 지시어는 파일 최상단 첫 줄
-- `useRouter`, `useState`, `useEffect` 등 훅은 Client Component에서만
-
 ### 스타일링
 
-- **OKLCH 토큰 강제** (ADR-F13) — `globals.css` 의 `@theme` 블록 외부에서 hex/rgb/hsl 직접 작성 금지
-  - brand: `--color-brand-{50..900}` (Toss Blue h=257)
-  - semantic: `--color-{income|expense|warning}`
-  - surface: `--color-{bg|bg-elev|bg-muted|fg|fg-muted|fg-subtle|border|border-strong}` (light/dark 분리)
-- **시맨틱 그라디언트 클래스 필수** — 하드코딩 색상 금지
-  - `gradient-expense` · `gradient-income` · `gradient-budget`
-  - `gradient-family` · `gradient-category` · `gradient-primary`
-- **Dark mode**: `[data-theme="dark"]` 셀렉터만 사용 (ADR-F15). `.dark` 클래스 신규 추가 금지
-- **폰트**: `--font-sans` (Pretendard Variable, ADR-F14) + `--font-num` (Inter, 수치 전용 + tabular-nums)
-- 인라인 `style={{ }}` 최소화 — 단일 토큰은 `text-[var(--token)]` arbitrary class
-- `cn()` 유틸리티로 클래스 병합
-
-### 컴포넌트
-
-- `src/components/ui/` Shadcn 컴포넌트 우선 사용
-- CVA(class-variance-authority)로 variant 관리
+상황별 ADR 필수 참조 표의 ADR-F07, F13, F14, F15, F23 을 따른다.
+하드코딩 색상은 쓰지 않는다.
 
 ---
 
 ## 금지사항
 
-- `alert()` · `confirm()` · `prompt()` → `toast` (sonner) 사용
-- `console.log` 프로덕션 코드에 남기지 않기
-- `any` 타입 사용 금지
-- `NEXT_PUBLIC_` 없는 환경 변수를 클라이언트 번들에 노출 금지
+- `alert()`, `confirm()`, `prompt()` 는 쓰지 않는다. ADR-F08 의 sonner 토스트를 사용한다.
+- 클라이언트 코드에 `console.log` 를 남기지 않는다. 서버 로그는 `lib/server/api/logging.ts` 를 거친다.
+- 클라이언트 코드는 `@/lib/env/server.env` 의 `serverEnv` 를 import 하지 않고, `NEXT_PUBLIC_` 이 없는 `process.env` 값을 직접 읽지 않는다.
 - Server Action 권한 검증은 ADR-F25 의 3 패턴 중 하나로 명시한다.
   - (a) **Single-family**: `getSelectedFamilyUuid()` + 입력 familyUuid 가 있으면 session 비교 (`updateExpenseAction` 패턴)
   - (b) **Multi-family**: `assertFamilyAccess(familyUuid)` helper (`updateFamilyAction` 패턴)
@@ -109,11 +68,12 @@ Page (app/) → Action (actions/) → Service (services/) → lib/server/api
   - `formData.get("familyUuid")` 단순 신뢰 금지 — 클라이언트 주입 시 권한 상승 위험
   - 신규 Action 작성 시 3 패턴 분류 자체 점검 필수
 - **ActionError 코드 분리** — 권한·검증 실패 시 에러 코드를 정확히 구분한다. 클라이언트가 코드로 분기하므로 묶으면 핸들러 오동작 위험.
-  - 가족 미선택 (`getSelectedFamilyUuid() === null`): `ActionError.familyNotSelected()` (F002) — `ActionError.invalidInput("familyUuid", ...)` 사용 금지. 기준 패턴은 `create-category-action.ts`
+  - 가족 미선택 (`getSelectedFamilyUuid() === null`): `ActionError.familyNotSelected()` (F002). `ActionError.invalidInput("familyUuid", ...)` 는 쓰지 않는다.
+  - 기준 패턴은 `actions/notification/mark-notification-read-action.ts` 이다.
   - 가족 불일치 (다른 familyUuid 접근): `new ActionError(ErrorCode.NOT_FAMILY_MEMBER, "...")` (F003)
   - 인증 실패: `ActionError.unauthorized()`
 - **외부 UUID 입력 형식 검증 필수** — Server Action 파라미터로 받은 UUID 가 API 경로에 직접 삽입될 때는 형식 검증 후 사용한다 (예: `notificationUuid`, `categoryUuid`).
-  - 기준 패턴: `mark-notification-read-action.ts` 의 `UUID_REGEX` 검증
+  - 기준 패턴: `actions/invitation/_schemas.ts` 의 Zod `z.string().uuid()` 스키마
   - 세션에서 가져오는 `familyUuid` 는 검증 불필요 (서버 신뢰 가능)
 
 ---
@@ -122,17 +82,3 @@ Page (app/) → Action (actions/) → Service (services/) → lib/server/api
 
 - 위치: `src/__tests__/`
 - 실행: `pnpm test` / `pnpm test:ci`
-- Service 함수는 단위 테스트 권장
-- Server Action 테스트: jest.mock 방식 (MSW 아님 — ADR-F09 참고)
-
----
-
-## PR 체크리스트
-
-1. Server/Client Component 경계가 올바른가?
-2. 새 색상/스타일이 시맨틱 클래스를 사용하는가?
-3. TypeScript 타입이 충분히 엄격한가?
-4. Server Actions에서 인증/권한 확인이 누락되지 않았는가?
-5. `alert()` 등 브라우저 기본 UI 사용 여부
-6. 에러 처리가 적절한가?
-7. PR 제목이 `type(scope): description` 형식을 따르는가?
