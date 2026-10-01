@@ -108,7 +108,7 @@ export function NotificationList({
             <p className="text-xs text-fg-muted mt-1">예산 80% / 100% 초과 시 알려드릴게요</p>
           </div>
         ) : (
-          <div className="divide-y">
+          <div data-slot="notification-list" className="divide-y">
             {recentNotifications.map((notification) => (
               <NotificationItem
                 key={notification.notificationUuid}

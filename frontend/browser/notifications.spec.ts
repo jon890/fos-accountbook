@@ -34,7 +34,7 @@ test("알림이 많아도 알림 창 목록이 카드 안에서 스크롤된다"
   await expect(popover.getByText("추가 알림 1", { exact: true })).toBeVisible();
 
   const { popoverBottom, lastItemBottom, viewportHeight } = await popover.evaluate((element) => {
-    const items = element.querySelectorAll(".divide-y > *");
+    const items = element.querySelectorAll('[data-slot="notification-list"] > *');
     const last = items[items.length - 1];
     return {
       popoverBottom: element.getBoundingClientRect().bottom,
@@ -48,7 +48,7 @@ test("알림이 많아도 알림 창 목록이 카드 안에서 스크롤된다"
   await expect(page.getByRole("link", { name: "전체 보기 →" })).toBeInViewport();
   expect(lastItemBottom).toBeGreaterThan(popoverBottom);
   const lastItemVisible = await popover.evaluate((element) => {
-    const items = element.querySelectorAll(".divide-y > *");
+    const items = element.querySelectorAll('[data-slot="notification-list"] > *');
     const last = items[items.length - 1].getBoundingClientRect();
     const hit = document.elementFromPoint(last.left + 10, Math.min(last.top + 10, window.innerHeight - 1));
     return element.contains(hit);
