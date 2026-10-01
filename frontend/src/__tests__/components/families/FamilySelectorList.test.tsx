@@ -77,6 +77,31 @@ describe("FamilySelectorList", () => {
     expect(screen.getByRole("button", { name: "우리 가족" })).toBeEnabled();
   });
 
+  it("누른 가족에만 진행 표시를 하고 다른 가족은 이름을 유지한 채 비활성화한다", async () => {
+    jest.mocked(useAppRouter).mockReturnValue(createRouter());
+    let resolveAction!: (result: Awaited<ReturnType<typeof selectFamilyAction>>) => void;
+    jest.mocked(selectFamilyAction).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveAction = resolve;
+      }),
+    );
+    const other = { ...family, uuid: "family-2", name: "본가" };
+
+    render(<FamilySelectorList families={[family, other]} selectedFamilyUuid="" />);
+    await userEvent.setup().click(screen.getByRole("button", { name: "우리 가족" }));
+
+    expect(screen.getByRole("button", { name: "전환 중..." })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "본가" })).toBeDisabled();
+
+    // 남은 비동기 전환이 다음 테스트로 이어지지 않게 끝낸다.
+    await act(async () => {
+      resolveAction({ success: false, error: { code: "F001", message: "전환 실패" } } as Awaited<ReturnType<typeof selectFamilyAction>>);
+    });
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "우리 가족" })).toBeEnabled();
+    });
+  });
+
   it("전환 action이 실패하면 버튼을 다시 활성화하고 오류를 표시한다", async () => {
     jest.mocked(useAppRouter).mockReturnValue(createRouter());
     jest.mocked(selectFamilyAction).mockResolvedValue({
