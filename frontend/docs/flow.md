@@ -558,7 +558,7 @@ Teal 디자인을 적용하고 인라인 style을 제거하며 빈 상태 표시
         │
         └─ SettingsPageClient (use client)
                 │
-                ├─ SettingsHero (gradient-budget)
+                ├─ SettingsHero (gradient-primary)
                 │   ├─ 사용자 이름 + email
                 │   ├─ 현재 기본 가족명
                 │   └─ 월 예산

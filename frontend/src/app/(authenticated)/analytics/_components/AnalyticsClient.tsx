@@ -178,7 +178,7 @@ export function AnalyticsClient({
             ₩{formatShortAmount(totalIncome)}
           </p>
         </div>
-        <div className="gradient-budget rounded-2xl p-3 text-brand-fg">
+        <div className="gradient-primary rounded-2xl p-3 text-brand-fg">
           <div className="flex items-center gap-1 mb-2 opacity-80">
             <Wallet className="w-3.5 h-3.5" />
             <span className="text-[11px] font-medium">{isCurrentMonth ? "잔여예산" : "예산"}</span>
