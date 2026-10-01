@@ -23,7 +23,7 @@
 
 - 포맷 결과가 켜져 있는 Checkstyle 규칙(특히 `SeparatorWrap`)과 부딪히면, 포맷터를 Checkstyle 에 맞추지 말고 그 Checkstyle 규칙을 끈다. 포맷 규칙의 주인은 포맷터다(ADR-B22). 끈 규칙과 이유를 커밋 메시지에 적는다.
 - 버전은 범위가 아닌 정확한 값으로 고정한다. Spotless 와 google-java-format 은 Java 21 과 Gradle 9.8 에서 도는 최신 안정 버전을 고른다.
-- 설정 커밋과 포맷 커밋을 나눈다. 포맷 커밋에는 공백과 줄바꿈 변경만 있어야 한다.
+- 설정 커밋과 포맷 커밋을 나눈다. Spotless의 google-java-format 단계는 import 정렬과 미사용 import 제거를 항상 실행하므로 import 변경은 선행 커밋으로 분리한다. 포맷 커밋에는 공백, 줄바꿈과 Javadoc 줄 배치만 담고 실행 코드의 토큰은 그대로 둔다.
 
 ## 작업 항목
 
@@ -34,11 +34,14 @@
 
 ### 2. 저장소 전체 포맷 커밋
 
-- `./gradlew spotlessApply --no-daemon` 결과만 담은 커밋 하나. 메시지는 `style(backend): google-java-format 으로 백엔드 Java 전체를 포맷한다`.
+- `./gradlew spotlessApply --no-daemon`을 실행한다. 각 변경 Java 파일에서 `git show HEAD:<경로>`의 원본 import 구간만 포맷 결과의 import 구간으로 치환한 내용을 만든다. 다른 구간은 원본을 그대로 둔다. 임시 Python 스크립트는 실행별 `/tmp` 디렉터리에 만들고 사용 후 지운다.
+- import 이외의 공백 제거 원문이 같고, 변경 후 import가 원래 import의 부분집합인지 단언한다. 각 결과를 `git hash-object -w --stdin`으로 만들고 `git update-index --cacheinfo 100644,<blob>,<경로>`로 index에만 반영한다. `style(backend): 포맷터 기준으로 Java import를 정리한다`로 커밋한다.
+- 나머지 Java 변경은 formatter 출력만 담은 커밋 하나로 만든다. 메시지는 `style(backend): google-java-format 으로 백엔드 Java 전체를 포맷한다`다. 아래 토큰 비교로 실행 코드가 그대로인지 확인한다.
 
 ### 3. `.git-blame-ignore-revs`
 
 - 저장소 root 에 `.git-blame-ignore-revs` 를 만들고 2번 커밋의 전체 해시를 한 줄 주석과 함께 넣는다. 이 파일은 2번 커밋 뒤의 별도 커밋이다.
+- 해시는 import 선행 커밋이 아니라 2번의 마지막 전체 포맷 커밋 해시를 쓴다.
 
 ### 4. 포맷과 부딪히는 Checkstyle 규칙 정리
 
@@ -59,7 +62,15 @@
 git diff --stat HEAD~2 HEAD~1 -- . | tail -1
 ```
 
-기대값: 앞의 두 명령이 BUILD SUCCESSFUL. 포맷 커밋을 `git show --stat` 과 `git diff -w` 로 보면 공백 외 변경이 없다(`git diff -w <포맷 커밋>^ <포맷 커밋> --stat` 이 비거나 줄바꿈 이동만 남는다).
+포맷 커밋을 만들기 직전 저장소 root에서 토큰 비교를 실행한다. import 커밋의 부모가 아닌 현재 HEAD(import 정리 완료)와 워킹 파일을 비교한다.
+
+```bash
+python3 -c 'import pathlib,re,subprocess; p=re.compile(r"\"(?:\\.|[^\"\\])*\"|\x27(?:\\.|[^\x27\\])*\x27|//[^\n]*|/\*[\s\S]*?\*/|\S"); tokens=lambda s:[x for x in p.findall(s) if not x.startswith(("//","/*"))]; files=subprocess.check_output(["git","diff","--name-only","--","backend/src"],text=True).splitlines(); bad=[f for f in files if tokens(subprocess.check_output(["git","show","HEAD:"+f],text=True))!=tokens(pathlib.Path(f).read_text())]; assert not bad,bad; print("code tokens unchanged:",len(files))'
+```
+
+기대 종료 코드는 0이다. import 선행 커밋은 위 작업 항목의 원문 동등성 단언이, 포맷 커밋은 이 토큰 비교가 각각 변경 범위를 검증한다.
+
+기대값: 앞의 두 명령이 BUILD SUCCESSFUL. 포맷 커밋을 `git show --stat` 과 `git diff -w` 로 보면 공백, 줄바꿈과 Javadoc 줄 배치만 바뀐다. Java의 문자열과 문자 리터럴을 보존하고 주석과 공백을 제외한 토큰 비교가 동일해야 한다.
 
 ## 변경 파일
 
