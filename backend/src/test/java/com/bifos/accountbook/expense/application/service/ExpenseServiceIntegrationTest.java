@@ -15,6 +15,7 @@ import com.bifos.accountbook.family.domain.repository.FamilyRepository;
 import com.bifos.accountbook.shared.value.CustomUuid;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
@@ -362,5 +363,34 @@ class ExpenseServiceIntegrationTest extends TestFixturesSupport {
     // Then
     assertThat(expenses.getContent()).isEmpty();
     assertThat(expenses.getTotalElements()).isEqualTo(0);
+  }
+
+  @Test
+  @DisplayName("같은 시각의 지출은 나중에 등록한 것부터 페이지를 넘겨도 겹치거나 빠지지 않는다")
+  void getFamilyExpenses_SameDate_StableAcrossPages() {
+    // Given
+    LocalDateTime sameTime = LocalDateTime.of(2025, 3, 1, 0, 0);
+    for (String description : List.of("첫째", "둘째", "셋째")) {
+      fixtures.expenses.expense(testFamily, foodCategory)
+                       .description(description)
+                       .date(sameTime)
+                       .build();
+    }
+
+    // When
+    List<String> descriptions = new ArrayList<>();
+    for (int page = 0; page < 2; page++) {
+      ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
+                                                               .startDate("2025-03-01")
+                                                               .endDate("2025-03-01")
+                                                               .page(page)
+                                                               .size(2)
+                                                               .build();
+      expenseService.getFamilyExpenses(testUser.getUuid(), testFamily.getUuid(), searchRequest)
+                    .forEach(expense -> descriptions.add(expense.getDescription()));
+    }
+
+    // Then
+    assertThat(descriptions).containsExactly("셋째", "둘째", "첫째");
   }
 }

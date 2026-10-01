@@ -85,7 +85,7 @@ public class IncomeRepositoryImpl implements IncomeRepository {
                categoryUuidEq(income, categoryUuid),
                dateGoe(income, startDate),
                dateLoe(income, endDate))
-        .orderBy(income.date.desc())
+        .orderBy(income.date.desc(), income.id.desc())
         .offset(pageable.getOffset())
         .limit(pageable.getPageSize())
         .fetch();

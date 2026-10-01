@@ -16,6 +16,7 @@ import com.bifos.accountbook.family.domain.repository.FamilyRepository;
 import com.bifos.accountbook.shared.value.CustomUuid;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
@@ -418,5 +419,33 @@ class IncomeServiceIntegrationTest extends TestFixturesSupport {
     assertThat(incomes.getContent()).hasSize(5);
     assertThat(incomes.getTotalElements()).isEqualTo(5);
   }
-}
 
+  @Test
+  @DisplayName("같은 시각의 수입은 나중에 등록한 것부터 페이지를 넘겨도 겹치거나 빠지지 않는다")
+  void getFamilyIncomes_SameDate_StableAcrossPages() {
+    // Given
+    LocalDateTime sameTime = LocalDateTime.of(2025, 3, 1, 0, 0);
+    for (String description : List.of("첫째", "둘째", "셋째")) {
+      fixtures.incomes.income(testFamily, salaryCategory)
+                      .description(description)
+                      .date(sameTime)
+                      .build();
+    }
+
+    // When
+    List<String> descriptions = new ArrayList<>();
+    for (int page = 0; page < 2; page++) {
+      IncomeSearchRequest searchRequest = IncomeSearchRequest.builder()
+                                                             .startDate(sameTime)
+                                                             .endDate(sameTime.plusDays(1).minusSeconds(1))
+                                                             .page(page)
+                                                             .size(2)
+                                                             .build();
+      incomeService.getFamilyIncomes(testUser.getUuid(), testFamily.getUuid(), searchRequest)
+                   .forEach(income -> descriptions.add(income.getDescription()));
+    }
+
+    // Then
+    assertThat(descriptions).containsExactly("셋째", "둘째", "첫째");
+  }
+}
