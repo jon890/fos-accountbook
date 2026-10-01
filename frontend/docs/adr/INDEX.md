@@ -42,3 +42,4 @@
 | [ADR-F35](ADR-F35-mobile-spacing.md) | 화면 바깥 여백은 레이아웃이 갖고 카드 여백은 카드 부품이 갖는다 | accepted |
 | [ADR-F36](ADR-F36-seo-and-link-preview.md) | 랜딩만 검색에 노출하고 링크 미리보기와 아이콘은 코드로 만든다 | accepted |
 | [ADR-F37](ADR-F37-single-transaction-row.md) | 거래 목록은 공용 행 하나로 그리고 누르면 수정 시트를 연다 | accepted |
+| [ADR-F38](ADR-F38-dark-mode-tokens-and-theme-choice.md) | 다크 모드 색은 토큰이 맡고, 테마는 기기마다 고른다 | accepted |

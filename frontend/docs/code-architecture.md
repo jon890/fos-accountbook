@@ -142,6 +142,9 @@ src/
   - `--color-neutral-{0..950}` — cool gray h=230
   - `--color-{bg|bg-elev|bg-muted|fg|fg-muted|fg-subtle|border|border-strong}` — surface 토큰 (light/dark 분리)
 - **Dark mode**: `[data-theme="dark"]` 셀렉터 (ADR-F15). `next-themes` `attribute="data-theme"`.
+- **다크 값**: 라이트 전용 값을 가진 토큰(`brand-tint`, `brand-{50|100|200}`, `brand-{700|800|900}`, `cat-*`, 바탕 그라디언트)은 다크 블록에서 다시 정의한다. `brand-ink` 와 `neutral-0` 은 테마와 무관한 고정값이다 (ADR-F38).
+- **테마 선택**: 설정 화면에서 시스템, 라이트, 다크를 고른다. `next-themes` 가 그 기기의 브라우저에 저장한다 (ADR-F38).
 - **시맨틱 그라디언트 클래스**: `gradient-{primary|expense|income|budget|family|category}` 6종 — 클래스명 유지, 값만 OKLCH.
 - **수치 표기**: `.num` 또는 `data-num` — Inter + `tabular-nums` (ADR-F14).
+- **금지**: Tailwind 기본 팔레트 클래스(`gray-*`, `blue-*`, `white` 등). 단위 테스트가 소스를 검사한다 (ADR-F38).
 - **금지**: hex / rgb / hsl 직접 작성 (`oklch()` 또는 토큰 변수만). `style={{ color: ... }}` inline 토큰 직접 표기 — `text-[var(--token)]` arbitrary class 사용.
