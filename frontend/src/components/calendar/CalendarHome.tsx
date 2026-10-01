@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AddTransactionDialog } from "@/components/transactions/dialogs/AddTransactionDialog";
 import { EditTransactionDialog } from "@/components/transactions/dialogs/EditTransactionDialog";
 import { buildMemberColorMap } from "@/lib/utils/member-color";
@@ -24,8 +24,10 @@ export function CalendarHome(props: CalendarHomeProps) {
 
 function CalendarMonthContent({ data, initialDate, today, familyUuid }: CalendarHomeProps) {
   const router = useRouter();
+  const urlDate = useSearchParams().get("date");
   const [dateDraft, setDateDraft] = useState<string | null>(null);
   const [previousInitialDate, setPreviousInitialDate] = useState(initialDate);
+  const [previousUrlDate, setPreviousUrlDate] = useState(urlDate);
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<CalendarTransaction | null>(null);
   const handleEditOpenChange = useCallback((open: boolean) => {
@@ -37,6 +39,12 @@ function CalendarMonthContent({ data, initialDate, today, familyUuid }: Calendar
   if (initialDate !== previousInitialDate) {
     setPreviousInitialDate(initialDate);
     setDateDraft(null);
+  }
+  if (urlDate !== previousUrlDate) {
+    setPreviousUrlDate(urlDate);
+    if (urlDate === null) {
+      setDateDraft(null);
+    }
   }
 
   const selectedDate = dateDraft ?? initialDate;
@@ -51,8 +59,9 @@ function CalendarMonthContent({ data, initialDate, today, familyUuid }: Calendar
       return;
     }
     url.searchParams.set("date", selectedDate);
-    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
-  }, [selectedDate]);
+    // Next.js가 내부 history 상태를 복사하고 useSearchParams도 갱신하도록 맡긴다.
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  }, [selectedDate, urlDate]);
 
   function selectDate(date: string) {
     setDateDraft(date);

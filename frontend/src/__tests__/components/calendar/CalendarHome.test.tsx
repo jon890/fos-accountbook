@@ -9,7 +9,11 @@ import type { Income } from "@/types/income";
 
 const mockPush = jest.fn();
 const mockEditLoadError = jest.fn();
-jest.mock("next/navigation", () => ({ useRouter: () => ({ push: mockPush }) }));
+const mockSearchParams = jest.fn();
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mockPush }),
+  useSearchParams: () => mockSearchParams(),
+}));
 jest.mock("@/actions/calendar/get-calendar-month-action", () => ({ getCalendarMonthAction: jest.fn() }));
 jest.mock("@/lib/server/auth", () => ({ auth: async () => ({ user: { profile: { defaultFamilyUuid: "family-1", timezone: "Asia/Seoul" } } }) }));
 jest.mock("@/components/transactions/dialogs/AddTransactionDialog", () => ({
@@ -30,6 +34,7 @@ const props = { data, initialDate: "2026-09-14", today: "2026-09-14", familyUuid
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockSearchParams.mockImplementation(() => new URLSearchParams(window.location.search));
   window.history.replaceState({}, "", "/calendar?month=2026-09&date=2026-09-14");
   jest.mocked(getCalendarMonthAction).mockResolvedValue({ success: true, data });
 });
@@ -53,7 +58,7 @@ describe("달력 홈", () => {
     expect(mockPush).not.toHaveBeenCalled();
     expect(screen.getByText("다음 날 식사")).toBeInTheDocument();
     expect(screen.queryByText("점심")).not.toBeInTheDocument();
-    expect(replace).toHaveBeenCalledWith({}, "", "/calendar?month=2026-09&date=2026-09-15");
+    expect(replace).toHaveBeenCalledWith(null, "", "/calendar?month=2026-09&date=2026-09-15");
     expect(window.location.search).toBe("?month=2026-09&date=2026-09-15");
     replace.mockRestore();
   });
@@ -120,6 +125,49 @@ describe("달력 홈", () => {
     expect(screen.getByText("9월 14일 (월)")).toBeInTheDocument();
     expect(screen.getByText("점심")).toBeInTheDocument();
     expect(new URLSearchParams(window.location.search).get("date")).toBe(props.today);
+  });
+
+  it("오늘에서 다른 날을 고른 뒤 달력 탭으로 재진입하면 같은 초기 날짜여도 오늘로 돌아간다", async () => {
+    const view = render(<CalendarHome {...props} />);
+    await userEvent.setup().click(screen.getByRole("button", { name: "9월 15일" }));
+    expect(screen.getByText("다음 날 식사")).toBeInTheDocument();
+
+    window.history.replaceState({}, "", "/calendar");
+    view.rerender(<CalendarHome {...props} />);
+
+    expect(screen.getByText("9월 14일 (월)")).toBeInTheDocument();
+    expect(screen.getByText("점심")).toBeInTheDocument();
+    expect(new URLSearchParams(window.location.search).get("date")).toBe(props.today);
+  });
+
+  it("Next 내부 history 상태가 있어도 날짜 선택을 URL 구독에 반영하고 달력 탭 복귀를 감지한다", async () => {
+    const originalReplace = window.history.replaceState.bind(window.history);
+    originalReplace({ __NA: true }, "", "/calendar");
+    let canonicalSearch = "";
+    mockSearchParams.mockImplementation(() => new URLSearchParams(canonicalSearch));
+    const replace = jest.spyOn(window.history, "replaceState").mockImplementation((state, unused, url) => {
+      // Next의 내부 호출은 구독 갱신을 생략하고 외부 호출은 내부 상태를 복사한다.
+      if (!state?.__NA && !state?._N && url) {
+        canonicalSearch = new URL(String(url), window.location.href).search;
+      }
+      originalReplace({ ...state, __NA: true }, unused, url);
+    });
+    try {
+      const view = render(<CalendarHome {...props} />);
+      await userEvent.setup().click(screen.getByRole("button", { name: "9월 15일" }));
+      view.rerender(<CalendarHome {...props} />);
+      expect(new URLSearchParams(canonicalSearch).get("date")).toBe("2026-09-15");
+      expect(window.history.state.__NA).toBe(true);
+
+      canonicalSearch = "";
+      originalReplace({ __NA: true }, "", "/calendar");
+      view.rerender(<CalendarHome {...props} />);
+
+      expect(screen.getByText("9월 14일 (월)")).toBeInTheDocument();
+      expect(new URLSearchParams(canonicalSearch).get("date")).toBe(props.today);
+    } finally {
+      replace.mockRestore();
+    }
   });
 
   it("월 또는 가족이 바뀌면 서버가 지정한 날짜를 선택한다", async () => {
