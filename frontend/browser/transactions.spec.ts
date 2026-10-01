@@ -9,13 +9,29 @@ test("지출 행은 작성자와 날짜 링크를 보이고 한 번 눌러 수�
   await expect(row).toContainText("민지");
   await expect(row.getByText("삭제", { exact: true })).toHaveCount(0);
 
+  const details = row.locator("p.text-xs.text-fg-muted");
+  const categoryDetail = details.locator(":scope > span").nth(0);
+  const creatorDetail = details.locator(":scope > span").nth(1);
+  const timeDetail = details.locator(":scope > span").nth(2);
+  await expect(details).toHaveCount(1);
+
   const dateLink = page.locator('a[href^="/calendar?month="][href*="&date="]').first();
   await expect(dateLink).toHaveAttribute("href", /\/calendar\?month=\d{4}-\d{2}&date=\d{4}-\d{2}-\d{2}/);
 
   if (testInfo.project.name === "mobile") {
+    await expect(categoryDetail).toBeVisible();
+    await expect(creatorDetail).toBeVisible();
+    await expect(timeDetail).toBeVisible();
+    await expect(details).toHaveText(/^식비 · 민지 · \d{2}:\d{2}$/);
+
     const rowBox = await row.boundingBox();
     expect(rowBox?.height).toBeGreaterThanOrEqual(56);
     expect(await page.evaluate(() => document.body.scrollWidth <= window.innerWidth)).toBe(true);
+  } else {
+    await expect(categoryDetail).toBeHidden();
+    await expect(creatorDetail).toBeHidden();
+    await expect(timeDetail).toBeVisible();
+    expect(await details.innerText()).toMatch(/^\d{2}:\d{2}$/);
   }
 
   await row.click();

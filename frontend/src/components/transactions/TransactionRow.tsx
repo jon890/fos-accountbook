@@ -44,12 +44,21 @@ export function TransactionRow({
   const time = tx.date ? format(parseISO(tx.date), "HH:mm") : undefined;
   const displayDetail = metadata ?? time;
   const detailItems = [
-    tx.description ? { label: categoryName, showCreatorMarker: false } : undefined,
-    tx.createdBy?.name
-      ? { label: tx.createdBy.name, showCreatorMarker: Boolean(tx.createdBy.colorClass) }
+    tx.description
+      ? { label: categoryName, showCreatorMarker: false, hideOnDesktop: variant === "full" }
       : undefined,
-    displayDetail ? { label: displayDetail, showCreatorMarker: false } : undefined,
-  ].filter((item): item is { label: string; showCreatorMarker: boolean } => Boolean(item));
+    tx.createdBy?.name
+      ? {
+          label: tx.createdBy.name,
+          showCreatorMarker: Boolean(tx.createdBy.colorClass),
+          hideOnDesktop: variant === "full",
+        }
+      : undefined,
+    displayDetail ? { label: displayDetail, showCreatorMarker: false, hideOnDesktop: false } : undefined,
+  ].filter(
+    (item): item is { label: string; showCreatorMarker: boolean; hideOnDesktop: boolean } =>
+      Boolean(item)
+  );
   const isIncome = kind === "income";
   const amount = `${isIncome ? "+" : ""}${formatCurrency(Math.abs(tx.amount))}`;
   const isClickable = Boolean(onEdit);
@@ -62,16 +71,27 @@ export function TransactionRow({
     }
   }
 
-  function renderDetails(className: string) {
+  function renderDetails() {
     if (detailItems.length === 0) {
       return null;
     }
 
     return (
-      <p className={className}>
+      <p
+        className={`text-xs text-fg-muted ${
+          variant === "full" && !displayDetail ? "md:hidden" : ""
+        }`}
+      >
         {detailItems.map((item, index) => (
-          <span key={`${item.label}-${index}`}>
-            {index > 0 && " · "}
+          <span
+            key={`${item.label}-${index}`}
+            className={item.hideOnDesktop ? "md:hidden" : undefined}
+          >
+            {index > 0 && (
+              <span aria-hidden="true" className={variant === "full" ? "md:hidden" : undefined}>
+                {" · "}
+              </span>
+            )}
             {item.showCreatorMarker && tx.createdBy?.colorClass && (
               <span
                 aria-hidden="true"
@@ -106,8 +126,7 @@ export function TransactionRow({
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-[15px] font-semibold text-fg">{title}</p>
-        {renderDetails(`text-xs text-fg-muted ${variant === "full" ? "md:hidden" : ""}`)}
-        {variant === "full" && renderDetails("hidden text-xs text-fg-muted md:block")}
+        {renderDetails()}
       </div>
 
       {variant === "full" && (

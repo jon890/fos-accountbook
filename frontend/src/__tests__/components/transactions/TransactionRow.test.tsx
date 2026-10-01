@@ -55,4 +55,18 @@ describe("TransactionRow", () => {
     expect(screen.getByText("예정")).toBeInTheDocument();
     expect(screen.queryByText(/00:00/)).not.toBeInTheDocument();
   });
+
+  it("full 행은 보조 줄을 한 번만 렌더링하고 데스크톱에서는 중복 열 값을 숨긴다", () => {
+    const { container } = render(<TransactionRow variant="full" tx={transaction} />);
+
+    const details = container.querySelectorAll("p.text-xs.text-fg-muted");
+    expect(details).toHaveLength(1);
+    expect(details[0]).toHaveTextContent("식비 · 아내 · 12:30");
+
+    const detailSegments = details[0].querySelectorAll(":scope > span");
+    expect(detailSegments[0]).toHaveClass("md:hidden");
+    expect(detailSegments[1]).toHaveClass("md:hidden");
+    expect(detailSegments[2]).not.toHaveClass("md:hidden");
+    expect(details[0].querySelectorAll("[aria-hidden='true'].md\\:hidden")).toHaveLength(2);
+  });
 });
