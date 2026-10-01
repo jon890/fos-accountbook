@@ -1,6 +1,14 @@
 import Link from "next/link";
 import { LogOut } from "lucide-react";
+import type { Metadata } from "next";
 import { AuthCenterCard } from "@/components/auth/AuthCenterCard";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function SignOutPage() {
   return (
