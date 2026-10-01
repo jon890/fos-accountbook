@@ -1,4 +1,4 @@
-# Data Schema — fos-accountbook-backend (Canonical)
+# fos-accountbook-backend 데이터 구조 (Canonical)
 
 > 이 파일이 DB 스키마·API 스펙의 **canonical 소스**다.
 > 프론트엔드는 `fos-accountbook/docs/data-schema.md`에서 TypeScript 타입으로 파생한다.
@@ -100,7 +100,8 @@ CREATE TABLE categories (
     color               VARCHAR(50),                             -- #RRGGBB 또는 oklch(L C H). 기본값 #6366f1 은 엔티티가 채운다
     icon                VARCHAR(50),
     exclude_from_budget BOOLEAN     NOT NULL DEFAULT FALSE,
-    is_default          BOOLEAN     NOT NULL DEFAULT FALSE,       -- TRUE = 삭제 불가
+    type                VARCHAR(20) NOT NULL DEFAULT 'EXPENSE', -- EXPENSE | INCOME (ADR-B23)
+    is_default          BOOLEAN     NOT NULL DEFAULT FALSE,       -- TRUE = 삭제 불가. 종류마다 하나
     status              VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     created_at          DATETIME(3) NOT NULL,
     updated_at          DATETIME(3) NOT NULL,
@@ -266,6 +267,7 @@ CREATE TABLE api_tokens (
 | V13  | expenses에 recurring_expense_uuid, year_month 추가 + UNIQUE constraint          |
 | V14  | recurring_expenses 테이블 생성                                                  |
 | V20260930_1400 | api_tokens 테이블 생성 (이후 타임스탬프 버전, backend CLAUDE.md 「Database」) |
+| V20261001_1200 | categories 에 type 추가, 기존 카테고리 분류, 수입 기본 카테고리 생성 (ADR-B23) |
 
 ---
 

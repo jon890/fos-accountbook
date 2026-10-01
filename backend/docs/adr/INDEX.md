@@ -27,3 +27,4 @@
 | [ADR-B20](ADR-B20-log-body-policy.md) | 운영 로그에 요청과 응답 본문을 남기지 않는다 | accepted |
 | [ADR-B21](ADR-B21-business-date-asia-seoul.md) | 업무 날짜 판정은 Asia/Seoul로 하고 기본 Clock은 유지한다 | accepted |
 | [ADR-B22](ADR-B22-static-analysis-tools.md) | 코드 규칙은 도구 설정이 갖고 기존 위반은 기준 파일에 얼린다 | accepted |
+| [ADR-B23](ADR-B23-category-type.md) | 카테고리를 지출용과 수입용으로 나눈다 | accepted |

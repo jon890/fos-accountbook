@@ -3,6 +3,7 @@ package com.bifos.accountbook.expense.application.service;
 import com.bifos.accountbook.category.application.service.CategoryService;
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.category.domain.repository.CategoryRepository;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.expense.application.dto.CreateExpenseRequest;
 import com.bifos.accountbook.expense.application.dto.ExpenseResponse;
 import com.bifos.accountbook.expense.application.dto.ExpenseSearchRequest;
@@ -51,25 +52,11 @@ public class ExpenseService {
   /** 특정 카테고리의 모든 지출을 가족의 기본 카테고리로 이동 CategoryService에서 카테고리 삭제 시 호출됨 */
   @Transactional
   public void moveExpensesToDefaultCategory(CustomUuid familyUuid, CustomUuid oldCategoryUuid) {
-    // 기본 카테고리(미분류) 조회 또는 생성
+    // 지출 기본 카테고리(미분류) 조회
     Category defaultCategory =
         categoryRepository
-            .getDefaultCategoryByFamily(familyUuid)
-            .orElseGet(
-                () -> {
-                  log.warn(
-                      "Default category not found for family: {}. Creating new one.",
-                      familyUuid.getValue());
-                  Category newDefault =
-                      Category.builder()
-                          .familyUuid(familyUuid)
-                          .name("미분류")
-                          .color("#9ca3af")
-                          .icon("📂")
-                          .isDefault(true)
-                          .build();
-                  return categoryRepository.save(newDefault);
-                });
+            .getDefaultCategoryByFamily(familyUuid, CategoryType.EXPENSE)
+            .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
 
     // 지출 이동
     expenseRepository.moveExpenses(oldCategoryUuid, defaultCategory.getUuid());
@@ -92,7 +79,7 @@ public class ExpenseService {
     var family = familyValidationService.validateAndGetFamily(userUuid, familyUuid);
 
     // 카테고리 확인 + 가족 소속 검증 (캐시 활용, DB 조회 없음)
-    categoryService.validateAndFindCached(familyUuid, categoryCustomUuid);
+    categoryService.validateAndFindCached(familyUuid, categoryCustomUuid, CategoryType.EXPENSE);
 
     // 지출 생성 (ORM 편의 메서드 활용)
     Expense expense =
@@ -231,7 +218,8 @@ public class ExpenseService {
     CustomUuid categoryCustomUuid = null;
     if (request.getCategoryUuid() != null) {
       categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
-      categoryService.validateAndFindCached(expense.getFamilyUuid(), categoryCustomUuid);
+      categoryService.validateAndFindCached(
+          expense.getFamilyUuid(), categoryCustomUuid, CategoryType.EXPENSE);
     }
 
     // 이벤트 발행을 위해 기존 금액 저장

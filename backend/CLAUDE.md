@@ -294,7 +294,8 @@ class SomeServiceTest extends TestFixturesSupport {
 **주요 도메인 개념**:
 
 - `expenses.exclude_from_budget` / `categories.exclude_from_budget`: 예산 집계에서 제외하는 플래그 (예: 보험, 저축)
-- `categories.is_default`: 가족당 하나의 기본 카테고리("미분류") 존재 — 카테고리 삭제 시 해당 지출이 이 카테고리로 이동. 기본 카테고리는 삭제 불가
+- `categories.type`: `EXPENSE` 또는 `INCOME`. 지출과 반복 지출은 지출 카테고리만, 수입은 수입 카테고리만 쓴다 (ADR-B23)
+- `categories.is_default`: 종류마다 하나(지출 「미분류」, 수입 「기타 수입」). 카테고리를 지우면 지출과 반복 지출은 미분류로, 수입은 기타 수입으로 옮긴다. 기본 카테고리는 삭제 불가 (ADR-B23)
 
 ---
 

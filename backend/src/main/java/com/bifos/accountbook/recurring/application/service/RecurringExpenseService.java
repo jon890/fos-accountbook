@@ -5,6 +5,7 @@ import com.bifos.accountbook.category.application.dto.CategoryResponse;
 import com.bifos.accountbook.category.application.service.CategoryService;
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.category.domain.repository.CategoryRepository;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.recurring.application.dto.RecurringExpenseDto;
 import com.bifos.accountbook.recurring.domain.entity.RecurringExpense;
 import com.bifos.accountbook.recurring.domain.repository.RecurringExpenseRepository;
@@ -50,7 +51,7 @@ public class RecurringExpenseService {
 
     CustomUuid categoryCustomUuid = CustomUuid.from(dto.getCategoryUuid());
     CategoryResponse categoryResponse =
-        categoryService.validateAndFindCached(familyUuid, categoryCustomUuid);
+        categoryService.validateAndFindCached(familyUuid, categoryCustomUuid, CategoryType.EXPENSE);
 
     RecurringExpense entity =
         RecurringExpense.builder()
@@ -135,7 +136,7 @@ public class RecurringExpenseService {
 
     if (dto.getCategoryUuid() != null) {
       CustomUuid categoryCustomUuid = CustomUuid.from(dto.getCategoryUuid());
-      categoryService.validateAndFindCached(familyUuid, categoryCustomUuid);
+      categoryService.validateAndFindCached(familyUuid, categoryCustomUuid, CategoryType.EXPENSE);
     }
 
     entity.update(dto.getCategoryUuid(), dto.getName(), dto.getAmount(), dto.getDayOfMonth());
@@ -182,7 +183,7 @@ public class RecurringExpenseService {
       CustomUuid familyUuid, CustomUuid oldCategoryUuid) {
     Category defaultCategory =
         categoryRepository
-            .getDefaultCategoryByFamily(familyUuid)
+            .getDefaultCategoryByFamily(familyUuid, CategoryType.EXPENSE)
             .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
 
     recurringExpenseRepository.moveRecurringExpenses(oldCategoryUuid, defaultCategory.getUuid());

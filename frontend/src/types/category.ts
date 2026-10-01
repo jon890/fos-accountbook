@@ -14,6 +14,7 @@ import z from "zod";
 export interface CategoryResponse {
   uuid: string;
   familyUuid: string;
+  type: "EXPENSE" | "INCOME";
   name: string;
   icon?: string;
   color?: string;

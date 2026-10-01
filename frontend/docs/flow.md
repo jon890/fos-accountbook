@@ -17,7 +17,7 @@
                     │
                     ├─ 없음 → /families/create
                     │           └─ 가족 이름 + 월 예산 입력
-                    │                   └─ 가족 생성 → 기본 카테고리('미분류') 자동 생성
+                    │                   └─ 가족 생성 → 지출 11개, 수입 4개 카테고리 자동 생성
                     │                           └─ /calendar
                     │
                     └─ 있음 → /calendar
@@ -82,6 +82,7 @@
             ├─ TransactionFormFields (type 분기)
             │   ├─ AmountInput (₩ + 56/64px num, 빠른 추가 칩 +1k/+5k/+10k, md+ +50k)
             │   ├─ CategoryGrid (5×2 mobile / 10×1 desktop, role=radiogroup, --color-cat-*-bg/-fg 톤)
+            │   │   └─ 지출·고정지출은 EXPENSE, 수입은 INCOME만 표시
             │   ├─ [expense 일 때] 예산에서 제외 스위치
             │   ├─ Description input (메모, name="description")
             │   ├─ [expense/income 일 때] Date input (type="date", default: defaultDate ?? 오늘)
@@ -94,13 +95,15 @@
                             └─ revalidatePath → toast 성공 메시지
 ```
 
-거래 종류를 바꿔도 금액, 카테고리, 설명과 선택한 날짜를 유지한다.
+거래 종류를 바꿔도 금액, 설명과 선택한 날짜를 유지한다.
 고정지출을 거쳐 지출이나 수입으로 돌아와도 날짜는 그대로다.
-고정지출 이름과 결제일은 종류를 바꿀 때 초기화한다.
+카테고리 선택, 고정지출 이름과 결제일은 종류를 바꿀 때 초기화한다.
+새 종류의 첫 카테고리를 자동으로 선택하지 않는다.
 
 예산 제외 카테고리는 선택 타일의 배지와 접근 이름으로 구분한다.
 지출의 「예산에서 제외」 스위치는 카테고리가 제외되면 켜진 상태로 잠긴다.
-이때 지출 자체 플래그는 false로 전송하고, 카테고리를 바꾸면 사용자가 고른 이전 값으로 돌아간다.
+잠금 중에도 지출 자체 플래그는 사용자가 고른 값을 그대로 전송한다.
+카테고리를 바꾸면 스위치는 사용자가 고른 이전 값으로 돌아간다.
 수입과 고정지출에는 이 스위치를 표시하지 않는다.
 
 ---
@@ -283,9 +286,10 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
             │
             ├─ 기본 카테고리(isDefault=true) → 삭제 불가 오류
             │
-            └─ 일반 카테고리 → Soft Delete
-                    └─ 해당 카테고리의 모든 Expense → '미분류' 카테고리로 이동
-                            └─ revalidatePath → 목록 갱신
+            └─ 일반 카테고리 → 종류별 거래 이관 후 Soft Delete
+                    ├─ EXPENSE → 삭제 이력을 포함한 지출과 ACTIVE 고정지출을 '미분류'로 이동
+                    ├─ INCOME → 삭제 이력을 포함한 수입을 '기타 수입'으로 이동
+                    └─ revalidatePath → 목록 갱신
 ```
 
 ---
@@ -522,6 +526,9 @@ Teal 디자인을 적용하고 인라인 style을 제거하며 빈 상태 표시
                 ├─ CategoriesHero (gradient-category Teal)
                 │   ├─ 가족명 + 총 카테고리 수
                 │   └─ 카테고리 추가 CTA
+                │
+                ├─ SegmentedToggle (지출 / 수입)
+                │   └─ 선택한 종류로 목록 필터링, 추가 대화상자에 같은 종류 전달
                 │
                 ├─ CategoryList (grid 2/3/4)
                 │   └─ CategoryItem

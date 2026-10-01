@@ -16,13 +16,14 @@ const family = {
   updatedAt: createdAt,
   memberCount: 2,
   expenseCount: 12,
-  categoryCount: 3,
+  categoryCount: 4,
 };
 
 const categories = [
   {
     uuid: "33333333-3333-3333-3333-333333333331",
     familyUuid: FAMILY_UUID,
+    type: "EXPENSE",
     name: "식비",
     icon: "utensils",
     color: "oklch(0.560 0.140 35)",
@@ -33,6 +34,7 @@ const categories = [
   {
     uuid: "33333333-3333-3333-3333-333333333332",
     familyUuid: FAMILY_UUID,
+    type: "EXPENSE",
     name: "교통",
     icon: "bus",
     color: "oklch(0.540 0.130 230)",
@@ -43,6 +45,7 @@ const categories = [
   {
     uuid: "33333333-3333-3333-3333-333333333333",
     familyUuid: FAMILY_UUID,
+    type: "EXPENSE",
     name: "생활",
     icon: "house",
     color: "oklch(0.510 0.110 188)",
@@ -50,7 +53,33 @@ const categories = [
     createdAt,
     updatedAt: createdAt,
   },
+  {
+    uuid: "33333333-3333-3333-3333-333333333334",
+    familyUuid: FAMILY_UUID,
+    type: "INCOME",
+    name: "급여",
+    icon: "wallet",
+    color: "oklch(0.650 0.140 145)",
+    createdAt,
+    updatedAt: createdAt,
+  },
 ];
+
+function getCategory(type, name) {
+  const category = categories.find(
+    (candidate) => candidate.type === type && candidate.name === name,
+  );
+
+  if (!category) {
+    throw new Error(`Missing ${type} category fixture: ${name}`);
+  }
+
+  return category;
+}
+
+const foodExpenseCategory = getCategory("EXPENSE", "식비");
+const livingExpenseCategory = getCategory("EXPENSE", "생활");
+const salaryIncomeCategory = getCategory("INCOME", "급여");
 
 const notifications = [
   {
@@ -99,7 +128,7 @@ const transactions = {
     uuid: "55555555-5555-5555-5555-555555555551",
     familyUuid: FAMILY_UUID,
     userUuid: members[0].userUuid,
-    categoryUuid: categories[0].uuid,
+    categoryUuid: foodExpenseCategory.uuid,
     category: null,
     amount: 12500,
     description: "점심 식사",
@@ -136,8 +165,8 @@ const transactions = {
     uuid: "55555555-5555-5555-5555-555555555552",
     familyUuid: FAMILY_UUID,
     userUuid: members[0].userUuid,
-    categoryUuid: categories[2].uuid,
-    category: { ...categories[2], icon: "💳" },
+    categoryUuid: salaryIncomeCategory.uuid,
+    category: { ...salaryIncomeCategory, icon: "💳" },
     amount: 3000000,
     description: "급여",
     date: "2026-10-01T09:00:00.000Z",
@@ -150,8 +179,8 @@ const recurringExpenses = [
   {
     uuid: "55555555-5555-5555-5555-555555555553",
     familyUuid: FAMILY_UUID,
-    categoryUuid: categories[2].uuid,
-    category: { ...categories[2], icon: "🏠" },
+    categoryUuid: livingExpenseCategory.uuid,
+    category: { ...livingExpenseCategory, icon: "🏠" },
     name: "월세",
     amount: 850000,
     dayOfMonth: 25,

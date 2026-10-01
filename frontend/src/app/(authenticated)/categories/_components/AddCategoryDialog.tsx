@@ -20,6 +20,7 @@ interface AddCategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   familyUuid: string;
+  type: "EXPENSE" | "INCOME";
   onSuccess: (category: CategoryResponse) => void;
 }
 
@@ -27,6 +28,7 @@ export function AddCategoryDialog({
   open,
   onOpenChange,
   familyUuid,
+  type,
   onSuccess,
 }: AddCategoryDialogProps) {
   return (
@@ -34,11 +36,14 @@ export function AddCategoryDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>카테고리 추가</DialogTitle>
-          <DialogDescription>새로운 지출 카테고리를 추가합니다</DialogDescription>
+          <DialogDescription>
+            새로운 {type === "EXPENSE" ? "지출" : "수입"} 카테고리를 추가합니다
+          </DialogDescription>
         </DialogHeader>
         {open ? (
           <AddCategoryDialogBody
             familyUuid={familyUuid}
+            type={type}
             onOpenChange={onOpenChange}
             onSuccess={onSuccess}
           />
@@ -50,12 +55,14 @@ export function AddCategoryDialog({
 
 interface AddCategoryDialogBodyProps {
   familyUuid: string;
+  type: "EXPENSE" | "INCOME";
   onOpenChange: (open: boolean) => void;
   onSuccess: (category: CategoryResponse) => void;
 }
 
 function AddCategoryDialogBody({
   familyUuid,
+  type,
   onOpenChange,
   onSuccess,
 }: AddCategoryDialogBodyProps) {
@@ -76,6 +83,7 @@ function AddCategoryDialogBody({
     setIsSubmitting(true);
     try {
       const result = await createCategoryAction(familyUuid, {
+        type,
         name: name.trim(),
         color,
         icon,

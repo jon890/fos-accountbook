@@ -2,6 +2,7 @@ package com.bifos.accountbook.category.domain.entity;
 
 import com.bifos.accountbook.category.domain.value.CategoryColor;
 import com.bifos.accountbook.category.domain.value.CategoryStatus;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.shared.value.CustomUuid;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -74,6 +75,10 @@ public class Category implements Serializable {
   @Column(name = "is_default", nullable = false)
   @Builder.Default
   private boolean isDefault = false;
+
+  @Column(nullable = false, length = 20)
+  @Builder.Default
+  private CategoryType type = CategoryType.EXPENSE;
 
   // JPA 연관관계 제거
   // family, expenses는 UUID로만 참조하고 필요 시 Service 계층에서 조회
