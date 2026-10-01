@@ -34,7 +34,8 @@ jsdom 은 레이아웃을 계산하지 않아 Jest 로는 폭별 여백을 확�
 
 ### 서버 환경 변수
 
-`frontend/src/lib/env/schemas/server.env.ts` 가 시작할 때 검사한다:
+`frontend/src/lib/env/schemas/server.env.schema.ts` 가 환경 스키마를 정의하고,
+`frontend/src/lib/env/server.env.ts` 가 시작할 때 검사한다:
 `AUTH_URL`, `AUTH_SECRET`(32자 이상), `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `AUTH_NAVER_ID`, `AUTH_NAVER_SECRET`, `BACKEND_API_URL`.
 빌드 때는 `SKIP_ENV_VALIDATION=true` 로 검사를 건너뛴다(`frontend/Dockerfile` 과 같다). 실행할 때는 `AUTH_TRUST_HOST=true` 도 준다.
 `BACKEND_API_URL` 은 `/api/v1` 까지 담는다(예: `http://127.0.0.1:3101/api/v1`).
@@ -125,6 +126,21 @@ pnpm test:browser
 - `pnpm test` 는 기존 Jest 테스트만 돌고 통과한다. 출력에 `browser/` 의 파일이 없다.
 - `pnpm test:browser` 는 4개 테스트를 `mobile` 과 `desktop` 에서 돌려 8건 모두 통과한다.
 - `main` 의 `padding-left` 단언을 일부러 `13px` 로 바꾸면 `mobile` 에서 실패한다. 확인한 뒤 되돌린다.
+
+### 가짜 백엔드와 fixture의 실패 검증
+
+화면 spec 4개와 두 project의 8건은 유지한다. 다음 검증은 일회성 실행으로 하고,
+임시 코드가 필요하면 `mktemp -d`로 `/tmp` 아래에 만들고 종료 시 제거한다.
+
+1. 가짜 백엔드를 별도 포트로 띄우고 `POST /__test/reset`이 성공하는지 확인한다.
+2. `GET /api/v1/unsupported`의 상태가 404이고 `success`가 false인지 단언한다.
+3. `GET /__test/unhandled`가 `["GET /api/v1/unsupported"]`인지 단언한다.
+4. 다시 reset한 뒤 unhandled가 빈 배열인지 단언한다. 하나라도 다르면 종료 코드 1로 끝낸다.
+5. 화면 테스트 중 한 테스트에 미지원 API 요청을 잠깐 넣는다.
+   fixture 종료 단언 때문에 테스트 명령이 실패하고, 실패 메시지에 해당 경로가 나오는지 확인한다.
+   요청을 제거한 뒤 같은 테스트 명령이 통과하는지 확인한다.
+
+가짜 백엔드 검증 프로세스는 성공과 실패 모두에서 종료한다.
 
 ## 변경 파일
 

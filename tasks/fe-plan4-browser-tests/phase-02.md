@@ -52,6 +52,25 @@ cd frontend && pnpm install --frozen-lockfile && pnpm exec playwright install ch
 - 첫 명령이 `['test', 'browser']` 처럼 두 job 을 출력한다.
 - `pnpm test:browser` 가 8건 모두 통과한다.
 
+### CI 설정의 의미 검증
+
+job 존재 검사에 더해 일회성 Python 검증으로 아래 값을 모두 단언한다.
+임시 스크립트가 필요하면 `mktemp -d`로 `/tmp` 아래에 만들고 종료 시 제거한다.
+어느 단언이든 실패하면 종료 코드 1로 끝낸다.
+
+- `browser.runs-on`은 `ubuntu-latest`이고 기본 실행 디렉터리는 `frontend`다.
+- checkout, pnpm 설정, Node 설정의 action major는 기존 `test` job과 같다.
+- pnpm 버전은 `10.22.0`, Node 버전은 `22`, 캐시는 `pnpm`이다.
+  캐시 의존 파일은 `frontend/pnpm-lock.yaml`이다.
+- 설치와 실행 명령은 각각 `pnpm install --frozen-lockfile`,
+  `pnpm exec playwright install --with-deps chromium`, `pnpm test:browser`다.
+- artifact 단계는 `if: failure()`를 쓰고 `actions/upload-artifact`를 호출한다.
+  artifact 경로가 `frontend/browser/playwright.config.ts`의 `outputDir`에
+  `frontend/`를 붙인 경로와 같은지 단언한다.
+
+설정의 실행 명령이나 artifact 경로를 임시로 틀리게 바꿨을 때 검증이 실패하는지 확인하고,
+원래 값으로 되돌린 뒤 검증이 통과하는지 확인한다.
+
 ## 변경 파일
 
 | 파일 | 변경 |
