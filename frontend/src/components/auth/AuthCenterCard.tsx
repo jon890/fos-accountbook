@@ -28,7 +28,7 @@ export function AuthCenterCard({
   return (
     <div className="min-h-screen flex items-center justify-center bg-bg p-4">
       <Card className="w-full max-w-md bg-bg-elev border-border shadow-default">
-        <CardHeader className="text-center pt-8 pb-4">
+        <CardHeader className="text-center pt-6 pb-4 md:pt-8">
           <div
             className={cn(
               "mx-auto mb-3 w-16 h-16 rounded-2xl flex items-center justify-center",
@@ -46,7 +46,7 @@ export function AuthCenterCard({
             </CardDescription>
           )}
         </CardHeader>
-        <CardContent className="space-y-4">{children}</CardContent>
+        <CardContent className="space-y-4 pt-0 md:pt-0">{children}</CardContent>
       </Card>
     </div>
   );

@@ -68,10 +68,10 @@ export default function CreateFamilyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg p-4">
-      <div className="max-w-md mx-auto pt-20">
+    <div className="min-h-screen bg-bg md:p-4">
+      <div className="max-w-md mx-auto md:pt-20">
         <Card className="bg-bg-elev border-border shadow-default">
-          <CardHeader className="text-center pt-8 pb-4">
+          <CardHeader className="text-center pt-6 pb-4 md:pt-8">
             <div className="mx-auto mb-3 w-24 h-24 rounded-full gradient-family flex items-center justify-center">
               <Users className="w-10 h-10 text-brand-fg" strokeWidth={2.2} />
             </div>
@@ -83,8 +83,8 @@ export default function CreateFamilyPage() {
             </CardDescription>
           </CardHeader>
 
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <CardContent className="pt-0 md:pt-0">
+            <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
               {/* 가족 타입 선택 */}
               <div className="space-y-3">
                 <Label className="text-sm font-medium">가족 타입</Label>
@@ -137,7 +137,7 @@ export default function CreateFamilyPage() {
             </form>
 
             {/* 안내 박스 */}
-            <div className="mt-6 p-4 bg-brand-50 rounded-md border border-brand-100">
+            <div className="mt-4 p-4 bg-brand-50 rounded-md border border-brand-100 md:mt-6">
               <h4 className="font-semibold text-sm text-brand-700 mb-1">
                 {familyType === "personal"
                   ? "혼자 사용하기"

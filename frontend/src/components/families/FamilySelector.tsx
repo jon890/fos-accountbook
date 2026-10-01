@@ -109,7 +109,7 @@ export function FamilySelector({
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
-          <CardContent className="py-8 text-center">
+          <CardContent className="py-8 text-center md:py-8">
             <p className="text-expense mb-4">{error}</p>
             <Button onClick={retryLoadFamilies}>다시 시도</Button>
           </CardContent>
@@ -119,9 +119,9 @@ export function FamilySelector({
   }
 
   return (
-    <div className="min-h-screen py-8 app-background">
-      <div className="max-w-2xl mx-auto px-4">
-        <div className="text-center mb-8">
+    <div className="min-h-screen md:py-8 app-background">
+      <div className="max-w-2xl mx-auto px-0 md:px-4">
+        <div className="text-center mb-4 md:mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex-1" />
             <h1 className="text-3xl font-bold text-fg flex-1">
@@ -159,7 +159,7 @@ export function FamilySelector({
                   className="cursor-pointer transition border-border hover:border-brand-300 hover:shadow-default bg-bg-elev"
                   onClick={() => handleFamilySelect(family)}
                 >
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 md:p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
@@ -190,7 +190,7 @@ export function FamilySelector({
                 </Card>
               ))}
 
-              <div className="my-8">
+              <div className="my-4 md:my-8">
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-border" />
@@ -209,7 +209,7 @@ export function FamilySelector({
               className="cursor-pointer hover:shadow-default transition-all duration-200 border-border hover:border-brand-300 group"
               onClick={() => onCreateFamily()}
             >
-              <CardContent className="p-6">
+              <CardContent className="p-4 md:p-6">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 gradient-primary rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <User className="w-7 h-7 text-brand-fg" />
@@ -231,7 +231,7 @@ export function FamilySelector({
               className="cursor-pointer hover:shadow-default transition-all duration-200 border-border hover:border-brand-300 group"
               onClick={() => onCreateFamily()}
             >
-              <CardContent className="p-6">
+              <CardContent className="p-4 md:p-6">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 gradient-family rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <Users className="w-7 h-7 text-brand-fg" />

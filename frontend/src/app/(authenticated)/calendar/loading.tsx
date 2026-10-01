@@ -2,7 +2,7 @@ import { Skel } from "@/components/loading/Skel";
 
 export default function CalendarLoading() {
   return (
-    <div className="mx-auto max-w-2xl space-y-5" aria-label="달력을 불러오는 중">
+    <div className="mx-auto max-w-2xl space-y-4" aria-label="달력을 불러오는 중">
       <div className="flex h-11 items-center justify-between">
         <Skel w={44} h={44} />
         <Skel w={140} h={24} />
