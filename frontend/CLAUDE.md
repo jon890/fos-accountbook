@@ -82,3 +82,5 @@
 
 - 위치: `src/__tests__/`
 - 실행: `pnpm test` / `pnpm test:ci`
+- 해상도별 화면 검증: `browser/`의 Playwright 테스트, `pnpm test:browser` (ADR-F34).
+  화면이 새 백엔드 경로를 부르면 가짜 백엔드에 더한다.

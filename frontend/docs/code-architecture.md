@@ -118,6 +118,8 @@ src/
 └── __tests__/              서비스 단위 테스트
 ```
 
+`src/` 밖의 `browser/` 는 Playwright 브라우저 테스트다. 테스트 설정, 가짜 백엔드, 세션 쿠키를 만드는 fixture, 화면별 `*.spec.ts` 를 둔다([ADR-F34](adr/ADR-F34-browser-tests-fake-backend.md)).
+
 ---
 
 ## 새 도메인 추가 체크리스트

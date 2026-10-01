@@ -1,12 +1,12 @@
 # Testing Strategy — fos-accountbook (Frontend)
 
-> 최종 업데이트: 2026-04-04
+> 최종 업데이트: 2026-10-01
 
 ## 1. 테스트 피라미드
 
 ```
 ┌─────────────────────────────────────┐
-│   E2E (Playwright, Docker Compose)  │  ← 향후 구축. CI-only
+│   Browser (Playwright, 가짜 백엔드)  │  ← 해상도별 화면 검증
 ├─────────────────────────────────────┤
 │   Contract (OpenAPI snapshot diff)  │  ← 백엔드 스냅샷 기반 타입 drift 감지
 ├─────────────────────────────────────┤
@@ -23,7 +23,7 @@
 | Unit      | Jest + jest.mock                   | Server Action의 Zod 검증, 인증, revalidate 동작 | `pnpm test` |
 | Component | Testing Library (예정)             | UI 컴포넌트 렌더링 + 사용자 인터랙션            | `pnpm test` |
 | Contract  | openapi-typescript + tsc           | 백엔드 API 스키마와 프론트 타입 동기화 검증     | CI pipeline |
-| E2E       | Playwright + Docker Compose (예정) | 실제 브라우저에서 전체 플로우 검증              | CI pipeline |
+| Browser   | Playwright + 가짜 백엔드           | 모바일과 데스크톱 폭에서 화면 배치와 여백 검증  | `pnpm test:browser`, CI browser job |
 
 ---
 
@@ -155,31 +155,28 @@ jobs:
 
 ---
 
-## 6. E2E 테스트 (향후)
+## 6. 브라우저 테스트
+
+결정과 근거는 [ADR-F34](adr/ADR-F34-browser-tests-fake-backend.md) 가 소유한다.
 
 ### 구조
 
-```yaml
-# docker-compose.test.yml
-services:
-  backend:
-    image: fos-accountbook-backend:test
-    environment:
-      SPRING_PROFILES_ACTIVE: test
-  frontend:
-    build: .
-    depends_on: [backend]
-  playwright:
-    image: mcr.microsoft.com/playwright:latest
-    depends_on: [frontend]
-    command: npx playwright test
-```
+| 구성 | 하는 일 |
+| --- | --- |
+| 웹 서버 | 빌드한 Next 서버를 띄운다. `BROWSER_WEB_SERVER=dev` 면 개발 서버를 띄운다 |
+| 가짜 백엔드 | `BACKEND_API_URL` 이 가리키는 HTTP 서버. 화면이 부르는 경로에 고정 응답을 준다. 모르는 경로를 받으면 기록하고 테스트를 실패시킨다 |
+| 세션 fixture | `AUTH_SECRET` 으로 NextAuth 세션 쿠키를 만들고 `backend_access_token` 쿠키와 함께 넣는다 |
+| project | `mobile`(390×844), `desktop`(1280×900). 같은 spec 을 두 폭으로 돌린다 |
 
-### 우선 E2E 시나리오
+### 단언 방식
 
-1. 로그인 → 거래 내역 → 반복 지출 탭 → 목록 조회
-2. 반복 지출 추가 → 목록에 표시 확인
-3. 대시보드 → 반복 지출 카드 금액 표시 확인
+- 여백과 위치는 `boundingBox()` 와 `getComputedStyle()` 로 숫자를 단언한다. 스크린샷 비교는 쓰지 않는다.
+- 폭에 따라 기대값이 다르면 `testInfo.project.name` 으로 나눈다.
+
+### 새 화면을 검사할 때
+
+1. 그 화면이 부르는 백엔드 경로를 가짜 백엔드에 더한다.
+2. `browser/{화면}.spec.ts` 를 만든다.
 
 ---
 
@@ -197,4 +194,7 @@ pnpm test:ci
 
 # 타입 검사
 pnpm exec tsc --noEmit
+
+# 브라우저 테스트 (처음 한 번 pnpm exec playwright install chromium)
+pnpm test:browser
 ```
