@@ -15,6 +15,7 @@ import com.bifos.accountbook.shared.aop.FamilyUuid;
 import com.bifos.accountbook.shared.aop.UserUuid;
 import com.bifos.accountbook.shared.aop.ValidateFamilyAccess;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -36,6 +37,7 @@ public class RecurringExpenseService {
   private final RecurringExpenseRepository recurringExpenseRepository;
   private final CategoryRepository categoryRepository;
   private final CategoryService categoryService;
+  private final Clock clock;
 
   @ValidateFamilyAccess
   @Transactional
@@ -61,7 +63,7 @@ public class RecurringExpenseService {
 
     entity = recurringExpenseRepository.save(entity);
 
-    String currentYearMonth = LocalDate.now().format(YEAR_MONTH_FORMATTER);
+    String currentYearMonth = LocalDate.now(clock).format(YEAR_MONTH_FORMATTER);
     boolean generated = recurringExpenseRepository
         .existsByRecurringExpenseUuidAndYearMonth(
             entity.getUuid().getValue(), currentYearMonth);
@@ -88,7 +90,7 @@ public class RecurringExpenseService {
 
     String targetYearMonth = yearMonth != null
         ? yearMonth
-        : LocalDate.now().format(YEAR_MONTH_FORMATTER);
+        : LocalDate.now(clock).format(YEAR_MONTH_FORMATTER);
 
     return entities.stream()
         .map(entity -> {
@@ -136,7 +138,7 @@ public class RecurringExpenseService {
 
     entity.update(dto.getCategoryUuid(), dto.getName(), dto.getAmount(), dto.getDayOfMonth());
 
-    String currentYearMonth = LocalDate.now().format(YEAR_MONTH_FORMATTER);
+    String currentYearMonth = LocalDate.now(clock).format(YEAR_MONTH_FORMATTER);
     boolean generated = recurringExpenseRepository
         .existsByRecurringExpenseUuidAndYearMonth(
             entity.getUuid().getValue(), currentYearMonth);

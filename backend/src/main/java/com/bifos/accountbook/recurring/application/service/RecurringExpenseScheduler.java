@@ -28,7 +28,7 @@ public class RecurringExpenseScheduler {
   private final ApplicationEventPublisher eventPublisher;
   private final Clock clock;
 
-  @Scheduled(cron = "0 0 1 * * ?")
+  @Scheduled(cron = "0 0 1 * * ?", zone = "Asia/Seoul")
   public void generateRecurringExpenses() {
     LocalDate today = LocalDate.now(clock);
     int dayOfMonth = today.getDayOfMonth();

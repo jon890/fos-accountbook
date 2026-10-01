@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
@@ -39,6 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class DashboardController {
 
   private final DashboardService dashboardService;
+  private final Clock clock;
 
   @Operation(summary = "카테고리별 지출 요약", description = "가족의 카테고리별 지출 요약을 조회합니다.")
   @ApiResponse(responseCode = "200", description = "조회 성공")
@@ -69,7 +71,7 @@ public class DashboardController {
       @RequestParam(required = false) Integer month) {
 
     // 기본값: 현재 연도/월
-    LocalDate now = LocalDate.now();
+    LocalDate now = LocalDate.now(clock);
     int targetYear = year != null ? year : now.getYear();
     int targetMonth = month != null ? month : now.getMonthValue();
 
@@ -138,4 +140,3 @@ public class DashboardController {
     return ResponseEntity.ok(ApiSuccessResponse.of(response));
   }
 }
-
