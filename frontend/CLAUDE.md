@@ -124,6 +124,7 @@ Page (app/) → Action (actions/) → Service (services/) → lib/server/api
 - 실행: `pnpm test` / `pnpm test:ci`
 - Service 함수는 단위 테스트 권장
 - Server Action 테스트: jest.mock 방식 (MSW 아님 — ADR-F09 참고)
+- 해상도별 화면 검증: `browser/` 의 Playwright 테스트, `pnpm test:browser` (ADR-F34). 화면이 새 백엔드 경로를 부르면 가짜 백엔드에 더한다
 
 ---
 
