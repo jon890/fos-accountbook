@@ -124,7 +124,7 @@ export function LandingPage() {
         </div>
         <Link
           href="/auth/signin"
-          className="mt-[18px] md:mt-0 h-[46px] md:h-14 px-6 md:px-9 rounded-[11px] md:rounded-[13px] bg-white text-brand-700 flex items-center justify-center gap-1.5 text-sm font-bold md:text-[15px] shrink-0 [box-shadow:var(--shadow-cta-white)]"
+          className="mt-[18px] md:mt-0 h-[46px] md:h-14 px-6 md:px-9 rounded-[11px] md:rounded-[13px] bg-neutral-0 text-brand-ink flex items-center justify-center gap-1.5 text-sm font-bold md:text-[15px] shrink-0 [box-shadow:var(--shadow-cta-white)]"
         >
           시작하기
           <ArrowRightIcon />

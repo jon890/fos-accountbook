@@ -15,17 +15,18 @@ export interface CategoryTone {
   fg: string;
 }
 
+// 값은 globals.css 의 --color-cat-*-{bg|fg} 토큰이 소유한다. 다크 값도 그쪽에 있다 (ADR-F38).
 const TONE_MAP: Record<CategoryToneKey, CategoryTone> = {
-  food:      { bg: "oklch(0.945 0.045  35)", fg: "oklch(0.560 0.140  35)" },
-  cafe:      { bg: "oklch(0.945 0.045  60)", fg: "oklch(0.520 0.110  60)" },
-  transit:   { bg: "oklch(0.945 0.045 230)", fg: "oklch(0.540 0.130 230)" },
-  telecom:   { bg: "oklch(0.945 0.045 280)", fg: "oklch(0.540 0.130 280)" },
-  home:      { bg: "oklch(0.945 0.045 188)", fg: "oklch(0.510 0.110 188)" },
-  shopping:  { bg: "oklch(0.945 0.045 330)", fg: "oklch(0.560 0.140 330)" },
-  health:    { bg: "oklch(0.945 0.045 152)", fg: "oklch(0.520 0.120 152)" },
-  leisure:   { bg: "oklch(0.945 0.045 105)", fg: "oklch(0.520 0.120 105)" },
-  education: { bg: "oklch(0.945 0.045 250)", fg: "oklch(0.540 0.130 250)" },
-  etc:       { bg: "oklch(0.945 0.005 230)", fg: "oklch(0.510 0.015 230)" },
+  food: { bg: "var(--color-cat-food-bg)", fg: "var(--color-cat-food-fg)" },
+  cafe: { bg: "var(--color-cat-cafe-bg)", fg: "var(--color-cat-cafe-fg)" },
+  transit: { bg: "var(--color-cat-transit-bg)", fg: "var(--color-cat-transit-fg)" },
+  telecom: { bg: "var(--color-cat-telecom-bg)", fg: "var(--color-cat-telecom-fg)" },
+  home: { bg: "var(--color-cat-home-bg)", fg: "var(--color-cat-home-fg)" },
+  shopping: { bg: "var(--color-cat-shopping-bg)", fg: "var(--color-cat-shopping-fg)" },
+  health: { bg: "var(--color-cat-health-bg)", fg: "var(--color-cat-health-fg)" },
+  leisure: { bg: "var(--color-cat-leisure-bg)", fg: "var(--color-cat-leisure-fg)" },
+  education: { bg: "var(--color-cat-education-bg)", fg: "var(--color-cat-education-fg)" },
+  etc: { bg: "var(--color-cat-etc-bg)", fg: "var(--color-cat-etc-fg)" },
 };
 
 const NAME_TO_KEY: Record<string, CategoryToneKey> = {
