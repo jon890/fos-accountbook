@@ -79,7 +79,7 @@ export function NotificationList({
   return (
     // 목록이 길면 가운데 영역만 줄어들어 스크롤한다. Radix ScrollArea 는 부모 높이가 확정돼야
     // 줄어드는데, 이 카드는 최대 높이만 정해 두어 목록이 카드 밖과 아래 「전체 보기」 위로 그려졌다.
-    <div className="flex max-h-[min(500px,calc(100dvh-6rem))] flex-col overflow-hidden">
+    <div className="flex max-h-[min(500px,var(--radix-popover-content-available-height,500px))] flex-col overflow-hidden">
       {/* 헤더 */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <h3 className="font-semibold text-lg">알림</h3>
