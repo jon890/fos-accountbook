@@ -31,13 +31,14 @@
 
 ### 2. `frontend/browser/navigation-loading.spec.ts`(신규): 같은 화면 전환
 
-- `/transactions` 에서 지출 목록 API 를 늦추고 「수입」 탭을 누르면, 응답 전에 `role="progressbar"` 가 보이고 목록 영역이 `aria-busy="true"` 다. 응답 뒤 둘 다 사라진다.
-- `/calendar` 에서 달력 API 를 늦추고 다음 달로 가면 같은 두 가지가 보인다.
+- `/transactions` 에서 페이지가 await 하는 `/api/v1/families/${FAMILY_UUID}/members` 를 늦추고 「수입」 탭을 누르면, 응답 전에 `role="progressbar"` 가 보이고 목록 영역이 `aria-busy="true"` 다. 응답 뒤 둘 다 사라지고 URL 은 `tab=incomes` 다. 수입 목록은 별도 Suspense 경계이므로 목록 API 지연만으로 페이지 전환을 보류하지 않는다.
+- `/calendar` 에서 `/api/v1/families/${FAMILY_UUID}/dashboard/daily-stats` 를 늦추고 다음 달 버튼을 누르면 같은 두 가지가 보인다. 응답 뒤 month URL 과 달 표기가 바뀐다.
 
 ### 3. 같은 spec 에 화면 간 전환과 가족 전환 시트
 
-- 하단 탭으로 다른 화면에 갈 때 `.ab-skel` 스켈레톤이 응답 전에 보인다(기존 동작의 회귀 방지).
-- 모바일에서 헤더의 「가족 전환」 을 누르면 가족 목록 API 응답 전에 시트가 열리고 스켈레톤이 보인다.
+- `/calendar` 에서 `/api/v1/families/${FAMILY_UUID}/members` 를 늦추고 내역 링크로 `/transactions` 에 갈 때 `.ab-skel` 스켈레톤이 응답 전에 보인다. 응답 뒤 목적 URL 과 본문을 확인한다.
+- 모바일 `/calendar` 에서 `/api/v1/families` 를 늦추고 헤더 메뉴의 「가족 전환」 을 누르면 응답 전에 시트와 스켈레톤이 보인다. 응답 뒤 가족 목록을 확인한다. desktop 은 모바일 전용 시나리오만 skip 한다.
+- 지연은 각 시나리오의 초기 렌더 완료 후 설정한다. 제어 경로 처리 뒤 API 분기 앞에 적용하며 reset 은 모든 지연 상태를 지운다. 각 시나리오의 검증 뒤 ms: 0 으로 해제한다.
 
 ## 검증
 

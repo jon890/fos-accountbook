@@ -42,7 +42,8 @@
 
 ### 4. 단위 테스트 `frontend/src/__tests__/lib/client/navigation.test.tsx`(신규)
 
-- `next/navigation` 의 `useRouter` 를 모킹하고 `push` 가 끝나지 않는 상태를 만든다. 150ms 전에는 막대가 없고, 지난 뒤에는 `role="progressbar"` 가 보인다. 전환이 끝나면 사라진다.
+- `next/navigation` 의 라우터 호출이 state 를 바꾸고 deferred Promise 를 던지는 Suspense 자식으로 전환을 보류한다. 라우터는 void 를 반환한다. 150ms 전에는 막대가 없고, 지난 뒤에는 `role="progressbar"` 가 보인다. Promise 해제 후 전환이 끝나면 사라진다.
+- 겹친 전환 중 하나만 끝나면 막대를 유지한다. pending 중 호출 컴포넌트를 unmount 하면 전역 대기 수를 정리한다. 즉시 완료와 라우터 예외도 전역 수를 남기지 않는다.
 - Provider 없이 `useAppRouter().push` 를 불러도 오류가 나지 않는다.
 
 ## 검증

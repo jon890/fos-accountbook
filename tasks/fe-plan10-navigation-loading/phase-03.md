@@ -47,12 +47,17 @@
 
 ### 3. 가족 선택, 가족 전환, 가족 만들기, 초대 수락 버튼의 대기 유지
 
+가족 선택은 `FamilySelectorPage` 가 action, session 갱신, 이동을 한 번씩 실행하고 대기 상태를 소유한다. `FamilySelector` 의 중복 action/session 호출을 제거하고 콜백과 pending prop 으로 선택 카드와 생성 버튼을 비활성화하며 진행 표시를 그린다. 자동 선택도 같은 콜백을 사용한다. 실패 시 대기를 해제하고 toast.error("가족 선택에 실패했습니다.") 를 표시한다.
+
 ### 4. 헤더 가족 전환 시트를 바로 열고 스켈레톤 표시
 
 ### 5. 단위 테스트
 
 - `frontend/src/__tests__/components/layout/Header.test.tsx`(수정): 「가족 전환」 을 누르면 응답 전에 시트와 스켈레톤이 보인다.
 - `frontend/src/__tests__/components/families/FamilySelectorList.test.tsx`(신규): 항목을 누르면 전환이 끝날 때까지 버튼이 비활성이다.
+- `frontend/src/__tests__/components/families/FamilySelectorPage.test.tsx`(신규): 실제 선택 UI에서 action/session 을 한 번씩 호출하고 action부터 이동까지 비활성과 진행 표시를 유지한다. action 실패 시 해제한다.
+- `frontend/src/__tests__/components/families/CreateFamilyPage.test.tsx`(신규), 기존 `InvitePageClient.test.tsx`: action부터 이동 완료까지 비활성과 진행 표시, 실패 후 복구를 확인한다.
+- 기존 CalendarHome.test.tsx 및 신규 TransactionsPageClient.test.tsx, AnalyticsClient.test.tsx에서 전역 pending의 `aria-busy` 와 흐림을 확인한다. Header 조회 실패 시 시트를 닫고 toast 를 표시하는 테스트도 추가한다.
 
 ## 검증
 
@@ -74,9 +79,16 @@ pnpm test src/__tests__/components/layout/Header.test.tsx src/__tests__/componen
 | `frontend/src/components/calendar/CalendarHome.tsx` | 수정 |
 | `frontend/src/app/(authenticated)/analytics/_components/AnalyticsClient.tsx` | 수정 |
 | `frontend/src/components/families/FamilySelectorPage.tsx` | 수정 |
+| `frontend/src/components/families/FamilySelector.tsx` | 수정 |
 | `frontend/src/components/families/FamilySelectorList.tsx` | 수정 |
 | `frontend/src/app/(authenticated)/families/create/page.tsx` | 수정 |
 | `frontend/src/app/(authenticated)/invite/[token]/_components/InvitePageClient.tsx` | 수정 |
 | `frontend/src/components/layout/Header.tsx` | 수정 |
 | `frontend/src/__tests__/components/layout/Header.test.tsx` | 수정 |
 | `frontend/src/__tests__/components/families/FamilySelectorList.test.tsx` | 신규 |
+| `frontend/src/__tests__/components/families/FamilySelectorPage.test.tsx` | 신규 |
+| `frontend/src/__tests__/components/families/CreateFamilyPage.test.tsx` | 신규 |
+| `frontend/src/__tests__/components/invite/InvitePageClient.test.tsx` | 수정 |
+| `frontend/src/__tests__/components/calendar/CalendarHome.test.tsx` | 수정 |
+| `frontend/src/__tests__/components/transactions/TransactionsPageClient.test.tsx` | 신규 |
+| `frontend/src/__tests__/components/analytics/AnalyticsClient.test.tsx` | 신규 |
