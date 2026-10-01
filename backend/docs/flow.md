@@ -120,7 +120,7 @@ GET /families/{familyUuid}/dashboard/stats/category-breakdown?year=2026&month=5&
     │
     ▼
 DashboardService.getCategoryBreakdown()
-    ├─ 기존 getCategoryExpenseStats 재활용 (월 범위 LocalDateTime 변환)
+    ├─ 월 범위는 [그 달 1일 00:00, 다음 달 1일 00:00) 반열린 구간 (다음 달 1일 00:00 지출은 다음 달)
     ├─ 카테고리별 금액·비율 계산
     └─ compareWithPrev=true 시 전월 조회 → delta 계산
 ```
