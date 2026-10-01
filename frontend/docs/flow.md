@@ -575,9 +575,9 @@ Teal 디자인을 적용하고 인라인 style을 제거하며 빈 상태 표시
 ```
 
 핵심 변경:
-- `gradient-primary` (plan019 폐기 토큰) → `bg-brand-500` 단색
+- 설정 화면의 강조 버튼은 `bg-brand-500` 단색을 쓴다.
 - DollarSign → Wallet (한국 원화 페이지 일관성)
-- inline budget edit (Edit2/Save/X 3 버튼) → BudgetEditDialog (plan014 responsive 패턴 재사용)
+- 예산 수정은 인라인 버튼 대신 반응형 `BudgetEditDialog`를 쓴다.
 - 기본 가족 카드 ↔ 내 가족 목록 카드 정보 분리 (radio vs 통계)
 
 ---

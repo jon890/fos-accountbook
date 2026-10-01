@@ -5,9 +5,13 @@ test("지출 행은 작성자와 날짜 링크를 보이고 한 번 눌러 수�
   await page.goto("/transactions");
 
   const row = page.getByRole("button", { name: /점심 식사/ });
+  const categoryExcludedRow = page.getByRole("button", { name: /버스 요금/ });
+  const regularExpenseRow = page.getByRole("button", { name: /세탁 세제/ });
   await expect(row).toContainText("식비");
   await expect(row).toContainText("민지");
   await expect(row.getByText("삭제", { exact: true })).toHaveCount(0);
+  await expect(categoryExcludedRow).toContainText("예산 제외");
+  await expect(regularExpenseRow.getByText("예산 제외", { exact: true })).toHaveCount(0);
 
   const details = row.locator("p.text-xs.text-fg-muted");
   const categoryDetail = details.locator(":scope > span").nth(0);
