@@ -60,7 +60,7 @@
 
 ### 4. 이 phase 를 검증하는 테스트
 
-- 마이그레이션: `backend/src/test/java/com/bifos/accountbook/category/infra/CategoryTypeMigrationTest.java`(신규). 독립 H2(MySQL 모드) DB에 Flyway `target`으로 직전 버전까지 적용한 뒤 데이터를 SQL로 넣고 최신 버전으로 마이그레이션한다. 수입 전용, 지출 전용, 혼합, 수입만 쓰는 미분류 기본, 지출 이름 충돌, 기존 수입 기본 재사용, 삭제 이력, ACTIVE 가족 범위를 단언한다. 정상 경로와 같은 종류 이름 중복 거부도 테스트한다.
+- 마이그레이션: `backend/src/test/java/com/bifos/accountbook/category/infra/CategoryTypeMigrationTest.java`(신규). 기존 V3의 복합 ALTER 문법은 H2와 호환되지 않으므로 기존 이력 파일은 수정하지 않는다. 독립 H2(MySQL 모드) DB에 JDBC DDL로 이번 SQL이 쓰는 직전 스키마를 구성하고, Flyway `baselineOnMigrate(true)`와 직전 버전 `20260930.1400`으로 기준을 기록한 뒤 이번 migration을 실행한다. 수입 전용, 지출 전용, 혼합, 수입만 쓰는 미분류 기본, 지출 이름 충돌, 기존 수입 기본 재사용, 삭제 이력, ACTIVE 가족 범위를 단언한다. 정상 경로와 같은 종류 이름 중복 거부도 테스트한다. 별도 격리 MySQL에서는 기존 전체 이력과 이번 SQL을 순서대로 적용해 호환성을 확인한다.
 - 컨트롤러: `backend/src/test/java/com/bifos/accountbook/category/presentation/controller/CategoryControllerTest.java` 에 `type` 응답과 `type` 없는 생성 요청이 `EXPENSE` 가 되는 케이스.
 - 명시적 `type=INCOME` 생성 요청이 수입 엔티티로 저장되고 응답도 `INCOME`인지 컨트롤러 테스트로 확인한다.
 - 가족 생성 뒤 수입 카테고리 네 개와 기본 두 개(지출, 수입)가 생기는 케이스(`backend/src/test/java/com/bifos/accountbook/family/` 의 기존 가족 생성 테스트에 더한다).
