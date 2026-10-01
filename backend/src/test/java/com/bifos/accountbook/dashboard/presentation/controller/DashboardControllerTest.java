@@ -487,6 +487,7 @@ class DashboardControllerTest extends AbstractControllerTest {
   @DisplayName("일별 통계 조회 - 권한 없는 가족 조회 실패")
   void getDailyStats_UnauthorizedFamily() throws Exception {
     // Given: 다른 가족 생성 (현재 사용자를 멤버로 추가하지 않음)
+    fixtures.getDefaultUser();
     CustomUuid otherFamilyUuid = CustomUuid.generate();
 
     // When & Then: 권한 없는 가족 조회 시 에러
@@ -494,7 +495,8 @@ class DashboardControllerTest extends AbstractControllerTest {
                         .param("year", "2024")
                         .param("month", "1")
                         .contentType(MediaType.APPLICATION_JSON))
-           .andExpect(status().isForbidden());
+           .andExpect(status().isForbidden())
+           .andExpect(jsonPath("$.code").value("F003"));
   }
 
   // ===== monthly-trend 통합 테스트 =====

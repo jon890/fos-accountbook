@@ -23,6 +23,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract class AbstractJwtTokenProvider {
 
+  protected static final String TOKEN_TYPE_CLAIM = "typ";
+  protected static final String ACCESS_TOKEN_TYPE = "access";
+  protected static final String REFRESH_TOKEN_TYPE = "refresh";
+
   protected JwtParser getJwtParser() {
     return Jwts.parser()
                .verifyWith(getSigningKey())
@@ -72,14 +76,21 @@ public abstract class AbstractJwtTokenProvider {
    * @param token JWT 토큰
    * @return 토큰이 유효하면 true, 그렇지 않으면 false
    */
-  public boolean validateToken(String token) {
+  protected boolean validateToken(String token, String expectedTokenType) {
     try {
       Claims claims = getJwtParser().parseSignedClaims(token).getPayload();
       // 수신자가 지정된 토큰(소셜 로그인 서명 등)은 access/refresh token 으로 받지 않는다
       if (claims.getAudience() != null && !claims.getAudience().isEmpty()) {
-        log.debug("JWT with audience is not an access token: {}", claims.getAudience());
+        log.debug("JWT with audience is not an application token: {}", claims.getAudience());
         return false;
       }
+
+      Object tokenType = claims.get(TOKEN_TYPE_CLAIM);
+      if (!expectedTokenType.equals(tokenType)) {
+        log.debug("JWT token type does not match: expected={}, actual={}", expectedTokenType, tokenType);
+        return false;
+      }
+
       return true;
     } catch (SecurityException e) {
       log.debug("Invalid JWT signature: {}", e.getMessage());
