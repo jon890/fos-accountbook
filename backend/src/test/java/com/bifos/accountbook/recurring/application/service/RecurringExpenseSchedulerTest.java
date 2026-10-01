@@ -39,6 +39,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
@@ -50,7 +51,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 class RecurringExpenseSchedulerTest extends TestFixturesSupport {
 
   private static final LocalDate FIXED_DATE = LocalDate.of(2025, 3, 15);
-  private static final ZoneId ZONE = ZoneId.systemDefault();
+  private static final ZoneId ZONE = ZoneId.of("Asia/Seoul");
 
   @TestConfiguration
   static class TestClockConfig {
@@ -107,6 +108,16 @@ class RecurringExpenseSchedulerTest extends TestFixturesSupport {
     user = fixtures.getDefaultUser();
     family = fixtures.getDefaultFamily();
     category = fixtures.getDefaultCategory();
+  }
+
+  @Test
+  @DisplayName("반복 지출 스케줄러는 Asia/Seoul 시간대로 실행한다")
+  void shouldUseAsiaSeoulCronZone() throws NoSuchMethodException {
+    Scheduled scheduled = RecurringExpenseScheduler.class
+        .getDeclaredMethod("generateRecurringExpenses")
+        .getAnnotation(Scheduled.class);
+
+    assertThat(scheduled.zone()).isEqualTo("Asia/Seoul");
   }
 
   @AfterEach

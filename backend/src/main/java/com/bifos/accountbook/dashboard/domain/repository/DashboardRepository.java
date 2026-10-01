@@ -38,6 +38,22 @@ public interface DashboardRepository {
   );
 
   /**
+   * 종료 날짜를 포함하지 않는 카테고리별 지출 통계 조회
+   *
+   * @param familyUuid 가족 UUID (필수)
+   * @param categoryUuid 카테고리 UUID (선택, null이면 전체)
+   * @param startDate 시작 날짜 (선택, null이면 제한 없음)
+   * @param endDate 종료 날짜 (선택, null이면 제한 없음)
+   * @return 카테고리별 지출 통계 목록
+   */
+  List<CategoryExpenseProjection> getCategoryExpenseStatsBefore(
+      CustomUuid familyUuid,
+      CustomUuid categoryUuid,
+      LocalDateTime startDate,
+      LocalDateTime endDate
+  );
+
+  /**
    * 전체 지출 합계 조회
    * - SUM 집계
    * - 동적 조건 필터링
@@ -93,4 +109,3 @@ public interface DashboardRepository {
 
   List<MonthlyTrendProjection> getMonthlyExpenseTrend(CustomUuid familyUuid, LocalDateTime from, LocalDateTime to);
 }
-

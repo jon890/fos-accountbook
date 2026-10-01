@@ -104,6 +104,32 @@ class DashboardControllerTest extends AbstractControllerTest {
   }
 
   @Test
+  @DisplayName("카테고리별 지출 요약 - 종료 시각 지출 포함")
+  void getCategoryExpenseSummary_IncludesExpenseAtEndDate() throws Exception {
+    Family family = fixtures.getDefaultFamily();
+    Category foodCategory = fixtures.getDefaultCategory();
+    LocalDateTime startDate = LocalDateTime.of(2026, 3, 1, 0, 0);
+    LocalDateTime endDate = LocalDateTime.of(2026, 3, 31, 23, 59);
+
+    fixtures.expenses.expense(family, foodCategory)
+                     .amount(BigDecimal.valueOf(10000))
+                     .date(startDate)
+                     .build();
+    fixtures.expenses.expense(family, foodCategory)
+                     .amount(BigDecimal.valueOf(20000))
+                     .date(endDate)
+                     .build();
+
+    mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/expenses/by-category", family.getUuid().getValue())
+                        .param("startDate", startDate.toString())
+                        .param("endDate", endDate.toString())
+                        .contentType(MediaType.APPLICATION_JSON))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.data.totalExpense").value(30000))
+           .andExpect(jsonPath("$.data.categoryStats[0].totalAmount").value(30000));
+  }
+
+  @Test
   @DisplayName("카테고리별 지출 요약 - 카테고리 필터링")
   void getCategoryExpenseSummary_WithCategoryFilter() throws Exception {
     // Given: 테스트 데이터 생성 (Fluent API)
@@ -614,6 +640,41 @@ class DashboardControllerTest extends AbstractControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
            .andExpect(status().isOk())
            .andExpect(jsonPath("$.data.items[0].deltaPercent").value(50.0));
+  }
+
+  @Test
+  @DisplayName("카테고리 분류 통계 - 월 경계 지출 제외 및 전월 비교")
+  void getCategoryBreakdown_ExcludesNextMonthBoundaryExpense() throws Exception {
+    User user = fixtures.getDefaultUser();
+    Family family = fixtures.getDefaultFamily();
+    Category foodCategory = fixtures.categories.category(family).name("식비").color("#FF5733").icon("🍕").build();
+
+    createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
+                  BigDecimal.valueOf(10000), LocalDateTime.of(2026, 3, 31, 23, 59));
+    createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
+                  BigDecimal.valueOf(20000), LocalDateTime.of(2026, 4, 1, 0, 0));
+    createExpense(family.getUuid(), user.getUuid(), foodCategory.getUuid(),
+                  BigDecimal.valueOf(30000), LocalDateTime.of(2026, 4, 2, 12, 0));
+
+    mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/category-breakdown",
+                        family.getUuid().getValue())
+                        .param("year", "2026")
+                        .param("month", "3")
+                        .contentType(MediaType.APPLICATION_JSON))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.data.totalExpense").value(10000))
+           .andExpect(jsonPath("$.data.items[0].totalAmount").value(10000));
+
+    mockMvc.perform(get("/api/v1/families/{familyUuid}/dashboard/stats/category-breakdown",
+                        family.getUuid().getValue())
+                        .param("year", "2026")
+                        .param("month", "4")
+                        .param("compareWithPrev", "true")
+                        .contentType(MediaType.APPLICATION_JSON))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.data.totalExpense").value(50000))
+           .andExpect(jsonPath("$.data.items[0].totalAmount").value(50000))
+           .andExpect(jsonPath("$.data.items[0].deltaPercent").value(400.0));
   }
 
   @Test

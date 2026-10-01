@@ -18,6 +18,8 @@ import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.shared.aop.FamilyUuid;
 import com.bifos.accountbook.shared.aop.UserUuid;
 import com.bifos.accountbook.shared.aop.ValidateFamilyAccess;
+import com.bifos.accountbook.shared.utils.BusinessTime;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.function.Function;
@@ -41,6 +43,7 @@ public class IncomeService {
   private final CategoryService categoryService; // 카테고리 조회 (캐시 활용)
   private final UserService userService; // 사용자 조회
   private final FamilyValidationService familyValidationService;
+  private final Clock clock;
 
   /**
    * 수입 생성
@@ -64,7 +67,9 @@ public class IncomeService {
         categoryCustomUuid,
         user.getUuid(),
         request.getDescription(),
-        request.getDate() != null ? request.getDate() : LocalDateTime.now()
+        request.getDate() != null
+            ? request.getDate()
+            : LocalDateTime.now(clock.withZone(BusinessTime.ZONE))
     );
 
     income = incomeRepository.save(income);

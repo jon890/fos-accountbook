@@ -21,7 +21,9 @@ import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.shared.aop.FamilyUuid;
 import com.bifos.accountbook.shared.aop.UserUuid;
 import com.bifos.accountbook.shared.aop.ValidateFamilyAccess;
+import com.bifos.accountbook.shared.utils.BusinessTime;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +47,7 @@ public class ExpenseService {
   private final UserService userService; // 사용자 조회
   private final FamilyValidationService familyValidationService; // 가족 검증 로직
   private final ApplicationEventPublisher eventPublisher; // 이벤트 발행
+  private final Clock clock;
 
   /**
    * 특정 카테고리의 모든 지출을 가족의 기본 카테고리로 이동
@@ -93,7 +96,9 @@ public class ExpenseService {
         categoryCustomUuid,
         user.getUuid(),
         request.getDescription(),
-        request.getDate() != null ? request.getDate() : LocalDateTime.now()
+        request.getDate() != null
+            ? request.getDate()
+            : LocalDateTime.now(clock.withZone(BusinessTime.ZONE))
     );
 
     // 예산 제외 플래그 설정
