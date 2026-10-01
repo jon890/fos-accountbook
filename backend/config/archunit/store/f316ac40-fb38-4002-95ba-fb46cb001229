@@ -1,0 +1,3 @@
+Method <com.bifos.accountbook.shared.aop.FamilyValidationService.validateAndGetFamily(com.bifos.accountbook.shared.value.CustomUuid, com.bifos.accountbook.shared.value.CustomUuid)> is annotated with @Transactional in (FamilyValidationService.java:81)
+Method <com.bifos.accountbook.shared.aop.FamilyValidationService.validateFamilyAccess(com.bifos.accountbook.shared.value.CustomUuid, com.bifos.accountbook.shared.value.CustomUuid)> is annotated with @Transactional in (FamilyValidationService.java:34)
+Method <com.bifos.accountbook.shared.aop.FamilyValidationService.validateFamilyOwner(com.bifos.accountbook.shared.value.CustomUuid, com.bifos.accountbook.shared.value.CustomUuid)> is annotated with @Transactional in (FamilyValidationService.java:53)

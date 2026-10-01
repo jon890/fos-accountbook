@@ -25,6 +25,9 @@ querydsl = "5.1.0"
 # Cache
 caffeine = "3.3.0"
 
+# Architecture testing
+archunit = "1.5.1"
+
 [libraries]
 # Spring Boot Starters
 spring-boot-starter-webmvc = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
@@ -61,6 +64,9 @@ querydsl-apt = { module = "com.querydsl:querydsl-apt", version.ref = "querydsl" 
 
 # Cache
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
+
+# Architecture testing
+archunit = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 
 # Testing
 spring-security-test = { module = "org.springframework.security:spring-security-test" }
