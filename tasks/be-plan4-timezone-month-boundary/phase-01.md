@@ -25,7 +25,7 @@
 ## 의도 메모
 
 - `dateLoe` 를 전부 미만으로 바꾸지 않는다. 사용자 기간 조회의 의미가 바뀐다.
-- 월 분포 쪽만 미만(`lt`)으로 세는 길을 만든다. 예: repository 에 끝을 포함하지 않는 메서드나 파라미터를 더하거나, 서비스가 「그 달의 마지막 순간」 이 아니라 반열린 구간을 쓰게 한다. 둘 중 코드가 덜 늘어나는 쪽을 고른다.
+- repository 에 `getCategoryExpenseStatsBefore` 메서드를 추가한다. 기존 집계 쿼리를 공유하되 이 메서드만 `lt(endDate)`를 적용한다. 기존 `getCategoryExpenseStats`는 `loe(endDate)`를 유지한다. 서비스의 이번 달과 전월 분포는 새 메서드를 호출한다.
 
 ## 작업 항목
 
@@ -36,7 +36,7 @@
 ### 2. 이 phase 를 검증하는 테스트
 
 - `DashboardControllerTest` 나 서비스 통합 테스트에 케이스를 더한다: 3월 31일 23:59 지출과 4월 1일 00:00 지출을 만들고 2026-03 분포를 조회하면 3월 31일 지출만 합계에 들어간다. 4월 분포를 `compareWithPrev=true` 로 조회하면 전월 금액에 4월 1일 지출이 들어가지 않는다.
-- 기존 `getCategoryExpenseSummary` 의 끝 날짜 포함 동작은 그대로다(기존 테스트가 통과한다).
+- 사용자 기간 조회에서 `expense.date == endDate`인 지출이 포함되는 회귀 테스트를 추가한다. 기존 `getCategoryExpenseSummary` 의 끝 날짜 포함 동작은 그대로다.
 
 ## 검증
 

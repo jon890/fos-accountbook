@@ -27,7 +27,7 @@
 ## 의도 메모
 
 - JVM 기본 시간대(`TZ`, `-Duser.timezone`)를 바꾸지 않는다. 감사 시각과 저장된 값이 섞여 틀어진다(ADR-B21 대안 기각).
-- 컨트롤러가 Clock 을 직접 주입받기보다 연월 기본값 계산을 서비스로 옮겨도 된다. 코드가 덜 늘어나는 쪽을 고른다.
+- `DashboardController`에 Clock을 직접 주입하고 기본 연월 계산에 사용한다.
 - 지출과 수입의 기본 날짜는 `LocalDateTime.now(clock)` 이다. KST 벽시계 시각이 저장된다.
 
 ## 작업 항목
@@ -43,8 +43,9 @@
 
 ### 3. 이 phase 를 검증하는 테스트
 
-- `RecurringExpenseServiceTest` 나 컨트롤러 테스트 중 기존에 있는 곳에 케이스를 더한다(없으면 `backend/src/test/java/com/bifos/accountbook/recurring/application/service/RecurringExpenseServiceClockTest.java` 를 새로 만든다): `@Primary Clock` 을 UTC 2026-03-31T16:00:00Z(KST 4월 1일 01:00)로 고정했을 때 반복 지출의 「이번 달」 이 `2026-04` 다.
-- 같은 고정 Clock 에서 날짜 없이 지출을 만들면 날짜가 2026-04-01 이다.
+- `backend/src/test/java/com/bifos/accountbook/config/BusinessClockIntegrationTest.java`를 추가한다. `@Primary Clock`을 UTC 2026-03-31T16:00:00Z, Asia/Seoul로 고정한다. 반복 지출 create, update의 이번 달 생성 여부와 getAll의 연월 기본값이 `2026-04`를 사용하는지 저장 상태와 응답으로 검증한다.
+- 같은 고정 Clock에서 날짜 없이 지출과 수입을 만들면 2026-04-01 01:00이고, 대시보드 기본 연월 조회가 4월 금액을 반환하는지 검증한다. 명시적으로 전달한 날짜와 연월은 그대로 사용하는지도 확인한다.
+- `backend/src/test/java/com/bifos/accountbook/config/ClockConfigTest.java`에서 production Clock의 zone이 Asia/Seoul인지 단언한다.
 - 스케줄러 cron zone 은 애너테이션 값이라 리플렉션으로 `zone` 이 `Asia/Seoul` 인지 단언하는 단위 테스트를 둔다.
 
 ## 검증
@@ -52,7 +53,7 @@
 `backend/` 에서 실행한다. `gradle/wrapper/gradle-wrapper.jar` 가 없으면 먼저 `mise exec gradle@9.8.0 -- gradle wrapper --gradle-version 9.8.0` 을 돌린다. jar 는 커밋하지 않는다.
 
 ```bash
-./gradlew test --tests "com.bifos.accountbook.recurring.*" --tests "com.bifos.accountbook.expense.*" --tests "com.bifos.accountbook.dashboard.*" --no-daemon
+./gradlew test --tests "com.bifos.accountbook.recurring.*" --tests "com.bifos.accountbook.expense.*" --tests "com.bifos.accountbook.dashboard.*" --tests "com.bifos.accountbook.config.*" --tests "com.bifos.accountbook.income.*" --no-daemon
 ./gradlew checkstyleMain checkstyleTest test --no-daemon
 ```
 
@@ -68,4 +69,6 @@
 | `backend/src/main/java/com/bifos/accountbook/dashboard/presentation/controller/DashboardController.java` | 수정 |
 | `backend/src/main/java/com/bifos/accountbook/expense/application/service/ExpenseService.java` | 수정 |
 | `backend/src/main/java/com/bifos/accountbook/income/application/service/IncomeService.java` | 수정 |
-| `backend/src/test/java/com/bifos/accountbook/**/*Test.java` | 수정 |
+| `backend/src/test/java/com/bifos/accountbook/config/BusinessClockIntegrationTest.java` | 신규 |
+| `backend/src/test/java/com/bifos/accountbook/config/ClockConfigTest.java` | 신규 |
+| `backend/src/test/java/com/bifos/accountbook/recurring/application/service/RecurringExpenseSchedulerTest.java` | 수정 |
