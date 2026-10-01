@@ -41,7 +41,7 @@ export async function IncomeList({
   if (!result.success) {
     return (
       <Card>
-        <CardContent className="py-8">
+        <CardContent className="py-6 md:py-8">
           <p className="text-center text-gray-500">{result.error?.message}</p>
         </CardContent>
       </Card>
