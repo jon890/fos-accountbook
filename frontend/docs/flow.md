@@ -164,6 +164,7 @@
     ├─ getFamilyMembersAction() → 선택된 가족 구성원 → 목록 Client의 작성자 이름과 색 점
     ├─ TransactionsTabs (segmented role=tablist, bg-bg-muted / bg-bg-elev)
     ├─ FilterChips (카테고리 / 기간 / AmountRangeFilter / SearchBar)
+    ├─ ExpenseSummaryWrapper → CategoryExpenseSummary (접힌 채 시작, 머리에 총액과 비중 막대, 펼치면 한 줄씩 상위 5개와 「전체 N개 보기」, 행 탭 → ?categoryId=)
     │     ├─ SearchBar (300ms debounce, ?q= URL 동기화, 모바일 expand)
     │     └─ AmountRangeFilter (Popover, amountMin/Max URL param)
     └─ ExpenseListClient / IncomeListClient / RecurringExpenseList (tab 별)

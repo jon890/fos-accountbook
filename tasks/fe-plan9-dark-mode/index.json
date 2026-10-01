@@ -1,14 +1,30 @@
 {
   "name": "fe-plan9-dark-mode",
-  "description": "다크 모드에서 라이트 전용 색이 남는 문제를 토큰과 화면 코드에서 정리하고, 설정에서 테마를 고르게 한다",
+  "description": "다크 모드에서 라이트 전용 색이 남는 문제를 토큰과 화면 코드에서 정리하고, 카테고리별 지출 박스를 압축하고, 설정에서 테마를 고르게 한다",
   "status": "pending",
   "created_at": "2026-10-01",
   "total_phases": 4,
   "current_phase": 1,
   "phases": [
-    { "number": 1, "file": "phase-01.md", "execution_profile": "standard" },
-    { "number": 2, "file": "phase-02.md", "execution_profile": "fast" },
-    { "number": 3, "file": "phase-03.md", "execution_profile": "fast" },
-    { "number": 4, "file": "phase-04.md", "execution_profile": "standard" }
+    {
+      "number": 1,
+      "file": "phase-01.md",
+      "execution_profile": "standard"
+    },
+    {
+      "number": 2,
+      "file": "phase-02.md",
+      "execution_profile": "standard"
+    },
+    {
+      "number": 3,
+      "file": "phase-03.md",
+      "execution_profile": "fast"
+    },
+    {
+      "number": 4,
+      "file": "phase-04.md",
+      "execution_profile": "standard"
+    }
   ]
 }
