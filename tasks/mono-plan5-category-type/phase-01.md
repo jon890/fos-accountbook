@@ -90,6 +90,7 @@
 | `backend/src/main/java/com/bifos/accountbook/category/application/dto/*.java` | 수정 |
 | `backend/src/main/java/com/bifos/accountbook/category/application/service/CategoryService.java` | 수정 |
 | `backend/src/main/java/com/bifos/accountbook/expense/application/service/ExpenseService.java` | 수정 |
+| `backend/src/main/java/com/bifos/accountbook/recurring/application/service/RecurringExpenseService.java` | 수정 |
 | `backend/src/test/java/com/bifos/accountbook/category/infra/CategoryTypeMigrationTest.java` | 신규 |
 | `backend/src/test/java/com/bifos/accountbook/category/presentation/controller/CategoryControllerTest.java` | 수정 |
 | `backend/src/test/java/com/bifos/accountbook/**/*Test.java` | 수정 |
