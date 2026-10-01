@@ -1,16 +1,10 @@
 package com.bifos.accountbook.recurring.application.service;
 
 import com.bifos.accountbook.recurring.application.event.RecurringExpenseCreatedEvent;
-import com.bifos.accountbook.expense.domain.entity.Expense;
-import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.recurring.domain.entity.RecurringExpense;
-import com.bifos.accountbook.expense.domain.repository.ExpenseRepository;
-import com.bifos.accountbook.family.domain.repository.FamilyRepository;
 import com.bifos.accountbook.recurring.domain.repository.RecurringExpenseRepository;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import java.time.Clock;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
@@ -20,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
@@ -31,8 +24,7 @@ public class RecurringExpenseScheduler {
       DateTimeFormatter.ofPattern("yyyy-MM");
 
   private final RecurringExpenseRepository recurringExpenseRepository;
-  private final ExpenseRepository expenseRepository;
-  private final FamilyRepository familyRepository;
+  private final RecurringExpenseGenerator recurringExpenseGenerator;
   private final ApplicationEventPublisher eventPublisher;
   private final Clock clock;
 
@@ -56,7 +48,15 @@ public class RecurringExpenseScheduler {
     Map<String, Integer> familyCountMap = new HashMap<>();
 
     for (RecurringExpense template : templates) {
-      processTemplate(template, yearMonth, today, familyCountMap);
+      try {
+        boolean generated = recurringExpenseGenerator.generate(template, yearMonth, today);
+        if (generated) {
+          familyCountMap.merge(template.getFamilyUuid(), 1, Integer::sum);
+        }
+      } catch (Exception exception) {
+        log.warn("Failed to generate recurring expense: recurringUuid={}, message={}",
+            template.getUuid().getValue(), exception.getMessage());
+      }
     }
 
     // 가족별 이벤트 발행
@@ -72,44 +72,4 @@ public class RecurringExpenseScheduler {
         familyCountMap.values().stream().mapToInt(Integer::intValue).sum());
   }
 
-  @Transactional
-  public void processTemplate(RecurringExpense template, String yearMonth,
-                              LocalDate today, Map<String, Integer> familyCountMap) {
-    String recurringUuid = template.getUuid().getValue();
-
-    if (recurringExpenseRepository.existsByRecurringExpenseUuidAndYearMonth(
-        recurringUuid, yearMonth)) {
-      log.warn("Recurring expense already generated: recurringUuid={}, yearMonth={}",
-          recurringUuid, yearMonth);
-      return;
-    }
-
-    Family family = familyRepository.findActiveByUuid(
-        CustomUuid.from(template.getFamilyUuid())).orElse(null);
-    if (family == null) {
-      log.warn("Family not found for recurring expense: familyUuid={}",
-          template.getFamilyUuid());
-      return;
-    }
-
-    LocalDateTime expenseDate = today.atTime(0, 0);
-
-    Expense expense = Expense.builder()
-        .family(family)
-        .categoryUuid(CustomUuid.from(template.getCategoryUuid()))
-        .userUuid(CustomUuid.from(template.getUserUuid()))
-        .amount(template.getAmount())
-        .description(template.getName())
-        .date(expenseDate)
-        .recurringExpenseUuid(recurringUuid)
-        .yearMonth(yearMonth)
-        .build();
-
-    expenseRepository.save(expense);
-
-    familyCountMap.merge(template.getFamilyUuid(), 1, Integer::sum);
-
-    log.info("Generated expense from recurring template: recurringUuid={}, familyUuid={}, amount={}",
-        recurringUuid, template.getFamilyUuid(), template.getAmount());
-  }
 }

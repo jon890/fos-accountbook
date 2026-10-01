@@ -1,6 +1,9 @@
 package com.bifos.accountbook.recurring.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.willAnswer;
 
 import com.bifos.accountbook.recurring.application.event.RecurringExpenseCreatedEvent;
 import com.bifos.accountbook.shared.TestFixturesSupport;
@@ -19,6 +22,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,6 +33,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.test.context.event.RecordApplicationEvents;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 @DisplayName("RecurringExpenseScheduler 통합 테스트")
 @RecordApplicationEvents
@@ -52,6 +57,12 @@ class RecurringExpenseSchedulerTest extends TestFixturesSupport {
   private RecurringExpenseScheduler scheduler;
 
   @Autowired
+  private RecurringExpenseGenerator generator;
+
+  @MockitoSpyBean
+  private RecurringExpenseGenerator recurringExpenseGenerator;
+
+  @Autowired
   private ExpenseRepository expenseRepository;
 
   @Autowired
@@ -72,6 +83,11 @@ class RecurringExpenseSchedulerTest extends TestFixturesSupport {
     user = fixtures.getDefaultUser();
     family = fixtures.getDefaultFamily();
     category = fixtures.getDefaultCategory();
+  }
+
+  @AfterEach
+  void resetGeneratorSpy() {
+    org.mockito.Mockito.reset(recurringExpenseGenerator);
   }
 
   @Test
@@ -219,5 +235,70 @@ class RecurringExpenseSchedulerTest extends TestFixturesSupport {
         .orElseThrow();
     assertThat(event.familyUuid()).isEqualTo(family.getUuid().getValue());
     assertThat(event.count()).isEqualTo(1);
+  }
+
+  @Test
+  @DisplayName("한 템플릿이 실패해도 다른 템플릿의 지출과 이벤트는 생성한다")
+  void shouldContinueWhenOneTemplateFails() {
+    RecurringExpense failedTemplate = fixtures.recurringExpenses
+        .recurringExpense(family, category)
+        .dayOfMonth(15)
+        .name("실패할 지출")
+        .build();
+    RecurringExpense successfulTemplate = fixtures.recurringExpenses
+        .recurringExpense(family, category)
+        .dayOfMonth(15)
+        .name("생성할 지출")
+        .build();
+
+    willAnswer(invocation -> {
+      boolean generated = (Boolean) invocation.callRealMethod();
+      RecurringExpense template = invocation.getArgument(0);
+      if (template.getUuid().equals(failedTemplate.getUuid())) {
+        throw new IllegalStateException("template generation failed");
+      }
+      return generated;
+    }).given(recurringExpenseGenerator).generate(any(RecurringExpense.class), any(), any());
+
+    scheduler.generateRecurringExpenses();
+
+    List<Expense> expenses = expenseRepository.findByFamilyUuidAndDateBetween(
+        family.getUuid(),
+        FIXED_DATE.atStartOfDay(),
+        FIXED_DATE.plusDays(1).atStartOfDay());
+    assertThat(expenses).extracting(Expense::getRecurringExpenseUuid)
+        .containsExactly(successfulTemplate.getUuid().getValue());
+
+    RecurringExpenseCreatedEvent event = events
+        .stream(RecurringExpenseCreatedEvent.class)
+        .findFirst()
+        .orElseThrow();
+    assertThat(event.count()).isEqualTo(1);
+  }
+
+  @Test
+  @DisplayName("생성기 안에서 저장 뒤 예외가 나면 지출과 멱등성 키가 롤백된다")
+  void shouldRollbackExpenseWhenGeneratorFailsAfterSave() {
+    RecurringExpense template = fixtures.recurringExpenses
+        .recurringExpense(family, category)
+        .dayOfMonth(15)
+        .build();
+
+    willAnswer(invocation -> {
+      invocation.callRealMethod();
+      throw new IllegalStateException("failure after expense save");
+    }).given(recurringExpenseGenerator).generate(any(RecurringExpense.class), any(), any());
+
+    assertThatThrownBy(() -> generator.generate(template, "2025-03", FIXED_DATE))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("failure after expense save");
+
+    List<Expense> expenses = expenseRepository.findByFamilyUuidAndDateBetween(
+        family.getUuid(),
+        FIXED_DATE.atStartOfDay(),
+        FIXED_DATE.plusDays(1).atStartOfDay());
+    assertThat(expenses).isEmpty();
+    assertThat(recurringExpenseRepository.existsByRecurringExpenseUuidAndYearMonth(
+        template.getUuid().getValue(), "2025-03")).isFalse();
   }
 }
