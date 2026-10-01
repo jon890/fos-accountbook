@@ -12,6 +12,14 @@ import { auth } from "@/lib/server/auth";
 import { getSelectedFamilyUuid } from "@/lib/server/auth/auth-helpers";
 import { redirect } from "next/navigation";
 import { ReactNode, Suspense } from "react";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 interface AuthenticatedLayoutProps {
   children: ReactNode;
