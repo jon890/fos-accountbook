@@ -105,6 +105,7 @@ grep -rn "useRouter" src --include='*.tsx' --include='*.ts' | grep -v __tests__ 
 | `frontend/src/__tests__/app/transactions/page.test.tsx` | 수정 |
 | `frontend/src/__tests__/components/calendar/CalendarHome.test.tsx` | 수정 |
 | `frontend/src/__tests__/components/expenses/ExpensePagination.test.tsx` | 수정 |
+| `frontend/src/__tests__/components/expenses/CategoryExpenseSummary.test.tsx` | 수정 |
 | `frontend/src/__tests__/components/invite/InvitePageClient.test.tsx` | 수정 |
 | `frontend/src/__tests__/components/layout/BottomNavigation.test.tsx` | 수정 |
 | `frontend/src/__tests__/components/layout/Header.test.tsx` | 수정 |
