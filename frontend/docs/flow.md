@@ -77,11 +77,12 @@
     └─ AddTransactionDialog (responsive: mobile Sheet bottom / md+ Dialog 720px)
             │
             ├─ Segmented 3 토글: 지출 / 수입 / 고정지출
-            │       (gradient-expense / gradient-income / gradient-budget)
+            │       (gradient-expense / gradient-income / gradient-primary)
             │
             ├─ TransactionFormFields (type 분기)
             │   ├─ AmountInput (₩ + 56/64px num, 빠른 추가 칩 +1k/+5k/+10k, md+ +50k)
             │   ├─ CategoryGrid (5×2 mobile / 10×1 desktop, role=radiogroup, --color-cat-*-bg/-fg 톤)
+            │   ├─ [expense 일 때] 예산에서 제외 스위치
             │   ├─ Description input (메모, name="description")
             │   ├─ [expense/income 일 때] Date input (type="date", default: defaultDate ?? 오늘)
             │   └─ [recurring 일 때]  Name input + DayOfMonth (1~28)
@@ -96,6 +97,11 @@
 거래 종류를 바꿔도 금액, 카테고리, 설명과 선택한 날짜를 유지한다.
 고정지출을 거쳐 지출이나 수입으로 돌아와도 날짜는 그대로다.
 고정지출 이름과 결제일은 종류를 바꿀 때 초기화한다.
+
+예산 제외 카테고리는 선택 타일의 배지와 접근 이름으로 구분한다.
+지출의 「예산에서 제외」 스위치는 카테고리가 제외되면 켜진 상태로 잠긴다.
+이때 지출 자체 플래그는 false로 전송하고, 카테고리를 바꾸면 사용자가 고른 이전 값으로 돌아간다.
+수입과 고정지출에는 이 스위치를 표시하지 않는다.
 
 ---
 
@@ -116,6 +122,9 @@
 행 안에는 수정이나 삭제 버튼을 두지 않는다. 삭제는 수정 시트 안의 확인창에서만 수행한다.
 수정 창이 열린 동안에는 서버 조회 결과가 갱신돼도 작성 중인 폼 값을 유지한다. 창을 닫고 다시 열면 최신 거래 값으로 초기화한다. 수정 요청 중에는 같은 거래의 삭제를 막는다.
 
+지출 수정 스위치는 기존 지출의 예산 제외 값으로 초기화한다.
+켜기와 끄기 모두 저장할 수 있으며, 카테고리 제외에 따른 잠금은 등록과 같다.
+
 ---
 
 ## 5. 달력 홈 (`/calendar`)
@@ -131,7 +140,7 @@
             ├─ /expenses?startDate&endDate&size=1000   → 그 달 지출 목록 (날짜 목록 표시용)
             ├─ /incomes?startDate&endDate&size=1000    → 그 달 수입 목록
             ├─ /families/{uuid}/members                → 구성원 이름, 사진, 가입 순서
-            └─ getCachedFamilyCategories              → categoryUuid로 카테고리 이름과 아이콘 연결
+            └─ getCachedFamilyCategories              → 카테고리 이름, 아이콘과 예산 제외 정보 연결
     │
     └─ CalendarHome ("use client")
             ├─ MonthHeader: ‹ 2026년 9월 ›  (월 이동 = URL month 변경, 서버 다시 조회)
@@ -153,6 +162,7 @@
 - 등록, 수정, 삭제 뒤에는 Server Action 의 `revalidatePath("/calendar")` 로 같은 달을 다시 받는다.
 - 같은 달을 다시 받아도 초기 날짜가 같으면 선택 날짜를 유지한다. 초기 날짜가 바뀌면 선택을 초기화해 서버가 지정한 날짜로 돌아간다.
 - 하단 달력 탭으로 돌아와 URL의 `date`가 제거되면, 초기 날짜가 같아도 선택 날짜를 초기화한다.
+- 내역과 달력의 지출 행은 지출 자체 플래그나 카테고리 플래그가 켜지면 보조 줄에 「예산 제외」를 표시한다.
 - `/dashboard` 는 없앤다. 예전 주소로 들어오면 `/analytics` 로 보낸다. 대시보드의 예산 카드, 이번 달 수입·지출, 고정비 카드는 `/analytics` 위쪽으로 옮긴다(「5-3」). 최근 내역과 빠른 메뉴는 달력과 전체 메뉴가 대신하므로 옮기지 않는다.
 
 ---
