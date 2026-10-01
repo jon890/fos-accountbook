@@ -13,7 +13,7 @@
 
 ## 도메인: 프론트엔드 (Next.js App Router / React / TypeScript)
 
-가계부 서비스의 프론트엔드. 백엔드(Spring Boot)는 같은 저장소의 `backend/` 에 있다. API 를 함께 바꾸는 변경은 PR 하나로 낸다(루트 `docs/adr.md` 의 ADR-M01).
+가계부 서비스의 프론트엔드. 백엔드(Spring Boot)는 같은 저장소의 `backend/` 에 있다. API 를 함께 바꾸는 변경은 PR 하나로 낸다(루트 `docs/adr/INDEX.md` 의 ADR-M01).
 
 - **3단계 (호출/사용자 흐름)**: 시니어 UX 리서처 관점.
     - 화면 전환·사용자 액션·시스템 반응을 구체화한다.
@@ -41,7 +41,7 @@ phase 프런트매터의 `**Domain**:` 태그는 `frontend/.claude/skills/_share
 | DB 스키마 / TypeScript 타입 / API 구조 | `docs/data-schema.md` | ADR 은 결정 근거만 |
 | 디렉터리 / 레이어 분리 / API 전략 | `docs/code-architecture.md` | ADR 은 결정 근거만 |
 | 테스트 범위·전략·우선순위 | `docs/testing-strategy.md` | — |
-| 기술 결정 근거 (왜) | `docs/adr.md` (단일 파일, append) | 다른 docs 는 `ADR-FNN` 번호 링크 |
+| 기술 결정 근거 (왜) | `docs/adr/ADR-FNN-{slug}.md` 파일 하나와 `docs/adr/INDEX.md` 한 줄 | 다른 docs 는 해당 ADR 파일 링크 |
 
 ### ADR 자명성 점검 (작성 전 필수 자문)
 
@@ -66,8 +66,8 @@ phase 프런트매터의 `**Domain**:` 태그는 `frontend/.claude/skills/_share
 여기에는 이 레포가 실제로 다르게 쓰는 것만 둔다.
 
 - **번호 접두어**: 프론트 ADR 은 `ADR-FNN` 을 쓴다.
-    - 백엔드 결정은 `backend/docs/adr.md` 의 ADR-B, 저장소 전체 결정은 루트 `docs/adr.md` 의 ADR-M 이 소유한다. 여기에는 쓰지 않는다.
-- **앵커**: 다른 문서가 번호로 링크하므로 제목 바로 위에 `<a id="adr-fnn"></a>` 를 둔다.
+    - 백엔드 결정은 `backend/docs/adr/INDEX.md` 의 ADR-B, 저장소 전체 결정은 루트 `docs/adr/INDEX.md` 의 ADR-M 이 소유한다. 여기에는 쓰지 않는다.
+- **파일과 목록**: `docs/adr/ADR-FNN-{slug}.md` 를 만들고 `docs/adr/INDEX.md` 표에 한 줄을 더한다. 링크는 앵커 없이 파일로 연결한다.
 - **제목 날짜**: 제목 끝에 `(YYYY-MM-DD)` 를 붙인다.
     - ADR-F24 이후로 굳은 관행이다.
 
@@ -79,10 +79,10 @@ phase 프런트매터의 `**Domain**:` 태그는 `frontend/.claude/skills/_share
 
 | 무엇을 보려면 | 어느 ADR |
 | --- | --- |
-| 대안 기각을 어느 수준으로 쓰나 | [ADR-F13](../docs/adr.md#adr-f13) — 기각 2건을 각각 한두 줄로, 왜 아닌지까지 남긴다 |
-| 트레이드오프를 어떻게 쓰나 | [ADR-F28](../docs/adr.md#adr-f28) — 감수한 비용과 그것이 생긴 원인을 짝지어 적는다 |
-| 실측으로 기각한 근거를 어떻게 남기나 | [ADR-F29](../docs/adr.md#adr-f29) — 미채택 이유를 별 항목으로 빼고 재현 날짜와 함정 코드를 붙인다 |
-| 적용 범위를 어디까지 적나 | [ADR-F14](../docs/adr.md#adr-f14) — 파일 경로와 토큰 이름까지만, 코드 블록 없이 |
+| 대안 기각을 어느 수준으로 쓰나 | [ADR-F13](../docs/adr/ADR-F13-oklch-color-system.md) — 기각 2건을 각각 한두 줄로, 왜 아닌지까지 남긴다 |
+| 트레이드오프를 어떻게 쓰나 | [ADR-F28](../docs/adr/ADR-F28-toss-blue-brand-color.md) — 감수한 비용과 그것이 생긴 원인을 짝지어 적는다 |
+| 실측으로 기각한 근거를 어떻게 남기나 | [ADR-F29](../docs/adr/ADR-F29-tailwind-markdown-scan.md) — 미채택 이유를 별 항목으로 빼고 재현 날짜와 함정 코드를 붙인다 |
+| 적용 범위를 어디까지 적나 | [ADR-F14](../docs/adr/ADR-F14-pretendard-variable-font.md) — 파일 경로와 토큰 이름까지만, 코드 블록 없이 |
 
 ADR-F01 부터 ADR-F12 는 코어 뼈대가 정착하기 전에 작성됐다.
 `맥락` 대신 `이유` 를 쓰고 `대안 기각` 이 없는 것이 많아 예시로 삼지 않는다.
@@ -100,7 +100,7 @@ ADR-F01 부터 ADR-F12 는 코어 뼈대가 정착하기 전에 작성됐다.
 # cwd: <repo root>
 # 완료된 계획서는 지우므로 사용한 번호는 git 이력에서 찾는다
 bash ~/.claude/skills/planning/scripts/plan_number.sh --prefix fe- | tail -1
-grep "^## ADR-F{후보번호}" frontend/docs/adr.md
+find frontend/docs/adr -maxdepth 1 -name 'ADR-F*.md' | sed -E 's/.*ADR-F([0-9]+)-.*/\1/' | sort -n | tail -1
 gh pr list --state open --json number,headRefName,title --jq '.[] | "\(.headRefName) \(.title)"'
 ```
 

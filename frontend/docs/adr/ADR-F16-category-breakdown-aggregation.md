@@ -1,7 +1,7 @@
 # ADR-F16: 카테고리 월 분포는 Server Action 측 집계
 
 - **status**: `superseded`
-- **대체된 부분**: 결정 전체. 월 합계는 [ADR-F30](#adr-f30) 에 따라 백엔드 집계 API 로 받는다. 아래는 2026-05 당시의 맥락이다.
+- **대체된 부분**: 결정 전체. 월 합계는 [ADR-F30](ADR-F30-backend-monthly-aggregation.md) 에 따라 백엔드 집계 API 로 받는다. 아래는 2026-05 당시의 맥락이다.
 - **결정**: 대시보드의 카테고리별 월 합계는 backend 신규 endpoint 없이 기존 `GET /expenses?month=YYYY-MM` 응답을 `services/dashboard/dashboard-service.ts` 의 `getMonthlyCategoryBreakdown(familyUuid, year, month)` 에서 집계한다.
 - **맥락**: handoff dashboard 의 "카테고리 분포" 가 핵심 강조 요소. backend 에 신규 endpoint 신설 시 frontend plan002 이 backend 일정에 묶임. 1가구 월 거래 100~300건 추정 → 응답 사이즈 50~150KB 수준, Server Action 집계로 충분.
 - **대안 기각**:

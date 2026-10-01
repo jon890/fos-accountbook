@@ -50,7 +50,7 @@ docker compose -f docker/compose.yml up -d
 |---|---|
 | [docs/prd.md](docs/prd.md) | 제품 요구사항 |
 | [docs/flow.md](docs/flow.md) | 사용자 흐름 |
-| [docs/adr.md](docs/adr.md) | 기술 의사결정 (ADR-B01~B16) |
+| [docs/adr/INDEX.md](docs/adr/INDEX.md) | 기술 의사결정 (ADR-B01~B16) |
 | [docs/code-architecture.md](docs/code-architecture.md) | 패키지 구조, 레이어 규칙 |
 | [docs/data-schema.md](docs/data-schema.md) | DB 스키마 |
 | [docs/testing-strategy.md](docs/testing-strategy.md) | 테스트 전략 |

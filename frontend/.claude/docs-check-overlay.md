@@ -16,26 +16,23 @@
 
 ```bash
 # cwd: frontend
-ls docs/*.md
+ls docs/*.md docs/adr/*.md
 ```
 
-- 백엔드 ADR(`backend/docs/adr.md`)과 루트 ADR(`docs/adr.md`)은 이 오버레이의 감사 범위가 아니다.
+- 백엔드 ADR(`backend/docs/adr/INDEX.md`)과 루트 ADR(`docs/adr/INDEX.md`)은 이 오버레이의 감사 범위가 아니다.
 - 문서 간 책임 분리 표와 ADR 자명성 점검은 `planning-overlay.md` 의 「docs 컨벤션」 이 소유한다.
 
 ## ADR 구조
 
-- 단일 파일 `docs/adr.md` 다. 디렉터리가 아니다.
-- 상단 `## ADR Index` 가 링크 목록이고, 본문은 `## ADR-FNN: ...` 헤딩이다.
-- 제목 바로 위에 `<a id="adr-fnn"></a>` 앵커를 둔다.
-    - 규칙은 `planning-overlay.md` 의 「ADR 표기 중 이 레포에서만 다른 것」 이 소유한다.
+- 결정 하나당 `docs/adr/ADR-FNN-{slug}.md` 파일 하나를 둔다.
+- `docs/adr/INDEX.md` 표에 번호, 결정, 상태를 한 줄로 기록한다.
+- 파일과 목록의 작성 규칙은 `planning-overlay.md` 의 「ADR 표기 중 이 레포에서만 다른 것」 이 소유한다.
 
 ## ADR Index 동기화 검증
 
 ```bash
 # cwd: frontend
-BODY=$(grep -oE '^## ADR-F[0-9]+' docs/adr.md | grep -oE 'ADR-F[0-9]+' | sort -u)
-INDEX=$(grep -oE '\[ADR-F[0-9]+\]' docs/adr.md | grep -oE 'ADR-F[0-9]+' | sort -u)
-diff <(echo "$BODY") <(echo "$INDEX") && echo "OK: ADR Index synced"
+python3 ../scripts/check-adr-links.py
 ```
 
 ## 코드 대조 grep

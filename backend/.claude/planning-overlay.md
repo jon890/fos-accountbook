@@ -19,7 +19,7 @@
 
 ## docs 컨벤션
 
-갱신 대상 문서 (모두 `docs/` 아래 단일 파일, 디렉터리 분리 없음):
+갱신 대상 문서는 `docs/` 아래에 두고, ADR 은 `docs/adr/` 에 결정별 파일로 둔다.
 
 | 내용 유형 | 단일 소스 | 다른 문서 |
 |---|---|---|
@@ -27,7 +27,7 @@
 | 호출 흐름 / 시나리오 | `docs/flow.md` | prd 는 목표만, ADR 은 결정만 |
 | DB 테이블 / 관계 / 제약 | `docs/data-schema.md` | ADR 은 결정 근거만 |
 | 디렉터리 / 레이어 / API 전략 | `docs/code-architecture.md` | ADR 은 결정 근거만 |
-| 기술 결정 근거 (왜) | `docs/adr.md` (append, 개별 파일 신설 금지) | 다른 docs 는 `ADR-BNN` 번호 링크 |
+| 기술 결정 근거 (왜) | `docs/adr/ADR-BNN-{slug}.md` 파일 하나와 `docs/adr/INDEX.md` 한 줄 | 다른 docs 는 해당 ADR 파일 링크 |
 
 ### ADR 자명성 점검 (작성 전 필수 자문)
 
@@ -46,7 +46,7 @@
 뼈대만 보고 쓰면 항목마다 분량과 구체성이 매번 달라지므로, 새 ADR 을 쓰기 전에 아래를 먼저 읽고 그 수준을 맞춘다.
 예시 본문을 이 문서에 복제하지 않는다. 복제본은 원본이 바뀔 때 낡는다.
 
-아래 ADR 은 모두 [`docs/adr.md`](../docs/adr.md) 안에 있다.
+아래 ADR 은 [`docs/adr/INDEX.md`](../docs/adr/INDEX.md) 목록에서 찾는다.
 
 | 무엇을 보려면 | 어느 ADR |
 | --- | --- |
@@ -69,11 +69,13 @@
 ```bash
 # cwd: backend
 bash ~/.claude/skills/planning/scripts/plan_number.sh --prefix be-
-grep "^## ADR-B{후보번호}" docs/adr.md
+find docs/adr -maxdepth 1 -name 'ADR-B*.md' | sed -E 's/.*ADR-B([0-9]+)-.*/\1/' | sort -n | tail -1
 gh pr list --state open --json number,headRefName,title --jq '.[] | "\(.headRefName) \(.title)"'
 ```
 
 ADR 번호는 `ADR-B` 접두어(backend 전용, 프론트엔드 `fos-accountbook` 과 번호 공간 분리).
+새 결정은 `docs/adr/ADR-BNN-{slug}.md` 를 만들고 `docs/adr/INDEX.md` 표에 한 줄을 더한다.
+링크는 앵커 없이 파일로 연결한다.
 
 ## index.json 스키마 (레포 특화 — 코어 예시와 필드명 다름)
 

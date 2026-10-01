@@ -330,7 +330,7 @@ PR이 생성되면 Claude가 자동으로 코드 리뷰를 수행합니다 (`.gi
 - **위험 라벨**: `scripts/pr-risk-labels.sh` 가 바뀐 경로로 `위험:인증`, `위험:권한`, `위험:배포설정` 라벨을 단다
 - 다시 돌리려면 PR 에 `/review` 댓글을 단다 (저장소 주인과 협업자만)
 
-설계와 근거는 [ADR-F11](docs/adr.md#adr-f11) 에 있다.
+설계와 근거는 [ADR-F11](docs/adr/ADR-F11-ci-code-review.md) 에 있다.
 
 ## 🔗 관련 프로젝트
 

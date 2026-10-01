@@ -1,6 +1,6 @@
 ### 백엔드 지침에서 특히 볼 곳 (backend/)
 
-백엔드 점검 기준은 저장소의 지침이 소유한다. `backend/CLAUDE.md` 와 `backend/docs/` 이고, 기술 결정은 `backend/docs/adr.md` 의 ADR-B01 부터 이어지는 기록이다.
+백엔드 점검 기준은 저장소의 지침이 소유한다. `backend/CLAUDE.md` 와 `backend/docs/` 이고, 기술 결정은 `backend/docs/adr/INDEX.md` 의 ADR-B01 부터 이어지는 기록이다.
 diff 가 건드리는 영역의 지침을 먼저 읽는다. `backend/CLAUDE.md` 의 「상황별 ADR 필수 참조」 표가 작업별로 읽을 ADR 을 정한다.
 판정 기준을 이 프롬프트에 옮겨 적지 않는다. 아래는 그 지침 가운데 리뷰에서 특히 볼 곳을 가리킬 뿐이다.
 

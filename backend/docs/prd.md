@@ -1,7 +1,7 @@
 # PRD — fos-accountbook-backend
 
 > 가족 가계부 백엔드 서비스의 제품 요구사항 문서.
-> 기술 구현 세부사항은 `code-architecture.md`, 기술 결정은 `adr.md` 참고.
+> 기술 구현 세부사항은 `code-architecture.md`, 기술 결정은 `adr/INDEX.md` 참고.
 
 ---
 

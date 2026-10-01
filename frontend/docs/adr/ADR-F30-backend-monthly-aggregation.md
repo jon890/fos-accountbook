@@ -3,7 +3,7 @@
 - **status**: `accepted`
 - **결정**: 일별 합계, 카테고리 월 분포와 전월 대비, 월별 추이는 백엔드의 `/dashboard/daily-stats`, `/dashboard/stats/category-breakdown`, `/dashboard/stats/monthly-trend` 로 받는다.
   지출과 수입 목록을 `size=1000` 으로 받아 프론트에서 더하지 않는다.
-  [ADR-F16](#adr-f16) 을 대체한다.
+  [ADR-F16](ADR-F16-category-breakdown-aggregation.md) 을 대체한다.
 - **맥락**: 2026-09-30 운영에서 사용자가 느리다고 보고했다.
   분석 화면을 한 번 열 때 1000건 목록 조회가 기간 `y1` 기준 15회 넘게 나갔다. 월별 추이가 달마다 한 번, 전월 대비가 두 번, 일별 합계가 두 번 불렀다.
   같은 시점에 백엔드는 위 세 집계 API 를 이미 제공하고 있었고 처리 시간은 평균 6~30ms 였다.

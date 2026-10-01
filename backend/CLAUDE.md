@@ -23,7 +23,7 @@ Claude Code가 항상 따라야 할 규칙과 참조 문서 포인터.
 |---|---|---|
 | [`docs/prd.md`](docs/prd.md) | 제품 요구사항, 도메인 구조, 기능/비기능 요구사항 | 새 기능 추가 전 |
 | [`docs/flow.md`](docs/flow.md) | 핵심 사용자 시나리오별 흐름, 도메인 간 이벤트 흐름 | 도메인 간 흐름 변경 시 |
-| [`docs/adr.md`](docs/adr.md) | 기술 의사결정 기록 (ADR-B01~B16) | 기술 결정 시, 아키텍처 질문 시 |
+| [`docs/adr/INDEX.md`](docs/adr/INDEX.md) | 기술 의사결정 기록 (ADR-B01~B16) | 기술 결정 시, 아키텍처 질문 시 |
 | [`docs/code-architecture.md`](docs/code-architecture.md) | 도메인 기반 패키지 구조, 의존성 맵, 핵심 패턴 | 새 도메인 추가, 레이어 경계 검토 |
 | [`docs/data-schema.md`](docs/data-schema.md) | DB 스키마 canonical (도메인별 그룹핑, 프론트와 공유) | 스키마 변경, API 응답 설계 |
 | [`docs/testing-strategy.md`](docs/testing-strategy.md) | 테스트 피라미드, OpenAPI 계약 검증, Spring Profiles | 테스트 추가/삭제 |

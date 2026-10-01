@@ -381,4 +381,4 @@ RecurringExpense:  POST /families/{uuid}/recurring-expenses
                    DELETE /families/{uuid}/recurring-expenses/{uuid}
 ```
 
-> Breaking Change 시 `/api/v2/` 신설. 자세한 버전 정책은 [`backend/docs/adr.md`](../../backend/docs/adr.md) 의 ADR-B11 참고.
+> Breaking Change 시 `/api/v2/` 신설. 자세한 버전 정책은 [ADR-B11](../../backend/docs/adr/ADR-B11-api-versioning-strategy.md) 참고.

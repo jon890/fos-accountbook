@@ -4,7 +4,7 @@
 
 **status**: superseded
 
-**대체된 부분**: 리뷰 워크플로가 모노레포 하나로 합쳐져 결정 전체를 [ADR-F11](../../frontend/docs/adr.md#adr-f11) 이 소유한다.
+**대체된 부분**: 리뷰 워크플로가 모노레포 하나로 합쳐져 결정 전체를 [ADR-F11](../../../frontend/docs/adr/ADR-F11-ci-code-review.md) 이 소유한다.
 
 **핵심 결정 사항**:
 

@@ -35,4 +35,4 @@ review-fix 의 학습 누적 단계에서 **재현 가능한 코드 패턴**을 
 - 1회성 오타, 특정 PR 한정 지적, 칭찬은 기록하지 않는다.
     - 기준은 common-pitfalls.md 끝의 「코드 패턴 누적 규칙」 이다.
 
-ADR 급 결정(라이브러리와 스택 의사결정)은 `frontend/docs/adr.md` 에 `## ADR-FXX` 형식으로 기록한다.
+ADR 급 결정(라이브러리와 스택 의사결정)은 `frontend/docs/adr/ADR-FNN-{slug}.md` 파일 하나로 기록하고 `frontend/docs/adr/INDEX.md` 표에 한 줄을 더한다.
