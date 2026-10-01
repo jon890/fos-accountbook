@@ -41,7 +41,7 @@ export default async function AuthenticatedLayout({
       <div className="min-h-screen bg-bg">
         <Header session={session} selectedFamilyUuid={selectedFamilyUuid} />
 
-        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-3 md:pt-6 pb-[calc(4rem+env(safe-area-inset-bottom))]">
+        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-3 md:pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom))]">
           {children}
         </main>
 
