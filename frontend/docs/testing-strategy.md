@@ -1,4 +1,4 @@
-# Testing Strategy — fos-accountbook (Frontend)
+# fos-accountbook 프론트엔드 테스트 전략
 
 > 최종 업데이트: 2026-10-01
 
@@ -10,7 +10,7 @@
 ├─────────────────────────────────────┤
 │   Contract (OpenAPI snapshot diff)  │  ← 백엔드 스냅샷 기반 타입 drift 감지
 ├─────────────────────────────────────┤
-│   Component Integration (future)    │  ← Testing Library + Server Component
+│   Component (Testing Library)       │  ← 행, 날짜 머리와 수정 시트의 사용자 동작
 ├─────────────────────────────────────┤
 │   Unit (jest.mock Server Actions)   │  ← 핵심 계층. Action → Service mock
 └─────────────────────────────────────┘
@@ -21,7 +21,7 @@
 | 계층      | 도구                               | 목적                                            | 실행 시점   |
 | --------- | ---------------------------------- | ----------------------------------------------- | ----------- |
 | Unit      | Jest + jest.mock                   | Server Action의 Zod 검증, 인증, revalidate 동작 | `pnpm test` |
-| Component | Testing Library (예정)             | UI 컴포넌트 렌더링 + 사용자 인터랙션            | `pnpm test` |
+| Component | Testing Library                   | UI 컴포넌트 렌더링과 사용자 동작               | `pnpm test` |
 | Contract  | openapi-typescript + tsc           | 백엔드 API 스키마와 프론트 타입 동기화 검증     | CI pipeline |
 | Browser   | Playwright + 가짜 백엔드           | 모바일과 데스크톱 폭에서 화면 배치와 여백 검증  | `pnpm test:browser`, CI browser job |
 
@@ -32,7 +32,7 @@
 ### 2.1 기본 원칙
 
 - **jest.mock 방식** (MSW 아님 — ADR-F09)
-- Service 함수를 mock하고 Action의 **Zod 검증 + 인증 + revalidate** 동작을 테스트
+- Service 함수를 mock하고 Action의 **Zod 검증, 인증, revalidate** 동작을 테스트한다.
 - 테스트 위치: `src/__tests__/actions/`
 
 ### 2.2 필수 테스트 시나리오 (모든 Server Action)
@@ -122,7 +122,7 @@ jobs:
 
 ## 4. 테스트 커버리지 현황
 
-### Server Actions — RecurringExpense (v2)
+### 반복 지출 Server Actions (v2)
 
 | Action                            | 테스트 상태     | 파일                                   |
 | --------------------------------- | --------------- | -------------------------------------- |
@@ -141,17 +141,18 @@ jobs:
 
 ---
 
-## 5. 컴포넌트 통합 테스트 (향후)
+## 5. 컴포넌트 테스트
 
 ### 대상
 
-- `RecurringExpenseList`: 목록 렌더링 + 빈 상태 처리
-- `AddTransactionDialog` / `EditTransactionDialog`: 3 type 토글 + 폼 입력 → submit → Action 호출 (plan014 에서 23 테스트 적용 완료 — 추가 시나리오는 향후)
+- `TransactionRow`: 설명 대체 제목, 작성자, 지출과 수입 금액, 키보드 수정 진입, 날짜 없는 반복 일정과 상태 배지.
+- `DateGroupSection`과 `DayTransactionList`: 달력 날짜 링크, 지출과 수입 합계, 공용 행 표시.
+- `AddTransactionDialog`와 `EditTransactionDialog`: 종류 선택, 입력과 저장, 삭제 확인, 반복 지출 종료 취소와 성공, 실패 후 재시도.
 
 ### 도구
 
-- `@testing-library/react` + `@testing-library/user-event`
-- Server Component 테스트: `next/test` (Next.js 15+ 지원 시)
+- `@testing-library/react`와 `@testing-library/user-event`를 사용한다.
+- Server Component의 데이터 전달은 기존 Jest mock으로 검증하고, 실제 Next 렌더링은 브라우저 테스트로 확인한다.
 
 ---
 
@@ -172,6 +173,7 @@ jobs:
 
 - 여백과 위치는 `boundingBox()` 와 `getComputedStyle()` 로 숫자를 단언한다. 스크린샷 비교는 쓰지 않는다.
 - 폭에 따라 기대값이 다르면 `testInfo.project.name` 으로 나눈다.
+- 거래 목록은 작성자와 날짜 링크, 한 번 눌러 수정, 반복 일정과 반영 상태, 추가 진입 단일화를 두 폭에서 확인한다. 모바일 행의 최소 높이와 가로 넘침도 단언한다.
 
 ### 새 화면을 검사할 때
 

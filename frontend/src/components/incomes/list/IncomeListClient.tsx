@@ -1,18 +1,21 @@
 "use client";
 
 import { DateGroupSection } from "@/components/transactions/DateGroupSection";
+import { EditTransactionDialog } from "@/components/transactions/dialogs/EditTransactionDialog";
+import { TransactionRow } from "@/components/transactions/TransactionRow";
+import { buildMemberColorMap, getMemberColor } from "@/lib/utils/member-color";
 import { groupTransactionsWithTotal } from "@/services/transaction/transaction-service";
 import type { Income } from "@/types/income";
+import type { FamilyMemberSummary } from "@/types/family";
 import { useRouter, useSearchParams } from "next/navigation";
-import { IncomeItem } from "./IncomeItem";
+import { useState } from "react";
 
 interface IncomeListClientProps {
   incomes: Income[];
   familyUuid: string;
-  totalElements: number;
   totalPages: number;
   currentPage: number;
-  limit: number;
+  members: FamilyMemberSummary[];
 }
 
 export function IncomeListClient({
@@ -20,9 +23,12 @@ export function IncomeListClient({
   familyUuid,
   totalPages,
   currentPage,
+  members,
 }: IncomeListClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [editingIncome, setEditingIncome] = useState<Income | null>(null);
+  const memberColors = buildMemberColorMap(members);
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -39,13 +45,23 @@ export function IncomeListClient({
           <DateGroupSection
             key={group.dateKey}
             group={group}
-            renderItem={(income) => (
-              <IncomeItem
-                key={income.uuid}
-                income={income}
-                familyUuid={familyUuid}
-              />
-            )}
+            kind="income"
+            renderItem={(income) => {
+              const member = getMemberColor(memberColors, income.userUuid);
+              return (
+                <div key={income.uuid} className="px-3 md:px-4">
+                  <TransactionRow
+                    tx={{
+                      ...income,
+                      createdBy: { name: member.label, colorClass: member.bgClass },
+                    }}
+                    variant="full"
+                    kind="income"
+                    onEdit={() => setEditingIncome(income)}
+                  />
+                </div>
+              );
+            }}
           />
         ))}
       </div>
@@ -71,6 +87,19 @@ export function IncomeListClient({
             다음
           </button>
         </div>
+      )}
+
+      {editingIncome && (
+        <EditTransactionDialog
+          key={editingIncome.uuid}
+          open={Boolean(editingIncome)}
+          onOpenChange={(open) => {
+            if (!open) setEditingIncome(null);
+          }}
+          type="income"
+          transaction={editingIncome}
+          familyUuid={familyUuid}
+        />
       )}
     </div>
   );

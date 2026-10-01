@@ -3,6 +3,7 @@
  */
 
 export type TransactionType = "expense" | "income" | "recurring";
+export type TransactionRowKind = Exclude<TransactionType, "recurring">;
 
 export interface DateGroupWithTotal<T> {
   dateKey: string;
