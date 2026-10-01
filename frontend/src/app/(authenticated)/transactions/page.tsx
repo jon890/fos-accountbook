@@ -19,7 +19,7 @@ import { getFamilyMembersAction } from "@/actions/family/get-family-members-acti
 import { getFamilyCategoriesAction } from "@/actions/category/get-categories-action";
 import { getMonthRange } from "@/lib/utils/date-timezone";
 import { getCachedSession } from "@/lib/server/cache";
-import { handleActionError } from "@/lib/server/action-result-handler";
+import { getActionDataOrDefault } from "@/lib/server/action-result-handler";
 
 // 쿠키를 사용하므로 동적 렌더링 필요
 export const dynamic = "force-dynamic";
@@ -72,22 +72,22 @@ export default async function TransactionsPage({
   }
   const familyUuid = familyResult.data;
 
-  const membersResult = await getFamilyMembersAction();
-  if (!membersResult.success) {
-    const isAuthError = membersResult.error.code === "A001" || membersResult.error.code === "A002";
-    if (isAuthError) {
-      handleActionError(membersResult);
-    }
-    return (
-      <div role="alert" className="rounded-md border border-border bg-bg-elev p-4 text-sm text-fg-muted">
-        {membersResult.error.message}
-      </div>
-    );
-  }
-  const members = membersResult.data;
+  const shouldFetchMembers = activeTab === "expenses" || activeTab === "incomes";
+  const membersPromise = shouldFetchMembers
+    ? getFamilyMembersAction()
+    : Promise.resolve(null);
+  const categoriesPromise = getFamilyCategoriesAction(familyUuid);
+
+  const [membersResult, categoriesResult] = await Promise.all([
+    membersPromise,
+    categoriesPromise,
+  ]);
+
+  const members = membersResult
+    ? getActionDataOrDefault(membersResult, [])
+    : [];
 
   // 카테고리 목록 조회
-  const categoriesResult = await getFamilyCategoriesAction(familyUuid);
   const categories: CategoryResponse[] = categoriesResult.success
     ? categoriesResult.data
     : [];

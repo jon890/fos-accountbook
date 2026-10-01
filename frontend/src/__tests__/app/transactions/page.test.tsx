@@ -105,6 +105,13 @@ describe("내역 페이지", () => {
     },
   );
 
+  it("고정지출 탭에서는 구성원을 조회하지 않는다", async () => {
+    await TransactionsPage({ searchParams: Promise.resolve({ tab: "recurring" }) });
+
+    expect(mockGetMembers).not.toHaveBeenCalled();
+    expect(mockGetCategories).toHaveBeenCalledWith("family-1");
+  });
+
   it("탭을 생략하면 지출 slot만 전달한다", async () => {
     const page = await TransactionsPage({ searchParams: Promise.resolve({}) });
 
@@ -182,27 +189,75 @@ describe("내역 페이지", () => {
     expect(mockGetMembers).toHaveBeenCalledWith();
   });
 
-  it("구성원 조회 실패 메시지를 페이지에 표시한다", async () => {
-    mockGetMembers.mockResolvedValue({
-      success: false,
-      error: { code: "C003", message: "구성원 조회 실패" },
-    });
+  it.each([
+    [
+      "expenses",
+      (page: Awaited<ReturnType<typeof TransactionsPage>>) =>
+        page.props.expenseListContent.props.children[1].props.children,
+    ],
+    [
+      "incomes",
+      (page: Awaited<ReturnType<typeof TransactionsPage>>) =>
+        page.props.incomeListContent.props.children,
+    ],
+  ] as const)(
+    "%s 탭은 구성원 조회의 일반 실패를 빈 목록으로 처리한다",
+    async (tab, getList) => {
+      mockGetMembers.mockResolvedValue({
+        success: false,
+        error: { code: "C003", message: "구성원 조회 실패" },
+      });
 
-    const page = await TransactionsPage({ searchParams: Promise.resolve({}) });
+      const page = await TransactionsPage({
+        searchParams: Promise.resolve({ tab }),
+      });
+      const list = getList(page);
 
-    expect(page.props.role).toBe("alert");
-    expect(page.props.children).toBe("구성원 조회 실패");
-  });
+      expect(list.props.members).toEqual([]);
+    },
+  );
 
-  it("구성원 조회 인증 실패는 로그인 화면으로 이동한다", async () => {
-    mockGetMembers.mockResolvedValue({
-      success: false,
-      error: { code: "A002", message: "세션이 만료되었습니다" },
-    });
+  it.each(["A001", "A002"] as const)(
+    "구성원 조회 인증 실패 %s는 로그인 화면으로 이동한다",
+    async (code) => {
+      mockGetMembers.mockResolvedValue({
+        success: false,
+        error: { code, message: "세션이 만료되었습니다" },
+      });
 
-    await expect(TransactionsPage({ searchParams: Promise.resolve({}) })).rejects.toThrow("redirect");
-    expect(redirect).toHaveBeenCalledWith(
-      "/auth/signin?error=auth&message=%EC%84%B8%EC%85%98%EC%9D%B4%20%EB%A7%8C%EB%A3%8C%EB%90%98%EC%97%88%EC%8A%B5%EB%8B%88%EB%8B%A4",
+      await expect(
+        TransactionsPage({ searchParams: Promise.resolve({}) }),
+      ).rejects.toThrow("redirect");
+      expect(redirect).toHaveBeenCalledWith(
+        "/auth/signin?error=auth&message=%EC%84%B8%EC%85%98%EC%9D%B4%20%EB%A7%8C%EB%A3%8C%EB%90%98%EC%97%88%EC%8A%B5%EB%8B%88%EB%8B%A4",
+      );
+    },
+  );
+
+  it("구성원과 카테고리 조회를 함께 시작한다", async () => {
+    let resolveMembers:
+      | ((value: Awaited<ReturnType<typeof getFamilyMembersAction>>) => void)
+      | undefined;
+    mockGetMembers.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveMembers = resolve;
+        }),
     );
+
+    const pagePromise = TransactionsPage({
+      searchParams: Promise.resolve({ tab: "expenses" }),
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(mockGetMembers).toHaveBeenCalledTimes(1);
+    expect(mockGetCategories).toHaveBeenCalledWith("family-1");
+
+    resolveMembers?.({
+      success: true,
+      data: [],
+    });
+    await pagePromise;
   });
 });
