@@ -24,12 +24,14 @@ import com.bifos.accountbook.family.infra.repository.jpa.FamilyJpaRepository;
 import com.bifos.accountbook.shared.AbstractControllerTest;
 import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.user.domain.entity.User;
+import com.bifos.accountbook.user.domain.value.UserStatus;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -51,6 +53,9 @@ class ApiTokenAuthenticationFilterTest extends AbstractControllerTest {
 
   @Autowired
   private JwtTokenProvider jwtTokenProvider;
+
+  @Autowired
+  private JdbcTemplate jdbcTemplate;
 
   private User userA;
   private Family familyA;
@@ -155,6 +160,21 @@ class ApiTokenAuthenticationFilterTest extends AbstractControllerTest {
         .andExpect(status().isOk());
 
     apiTokenService.revoke(userA.getUuid(), CustomUuid.from(tokenA.getUuid()));
+
+    perform(get("/api/v1/families"), tokenA.getToken())
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code").value("A002"));
+  }
+
+  @Test
+  @DisplayName("삭제된 토큰 주인으로 부르면 401 A002 이다")
+  void deletedTokenOwnerIsUnauthorized() throws Exception {
+    int updatedRows = jdbcTemplate.update(
+        "UPDATE users SET status = ? WHERE uuid = ?",
+        UserStatus.DELETED.getCode(),
+        userA.getUuid().getValue());
+
+    assertThat(updatedRows).as("토큰 주인 사용자 상태를 한 행만 변경해야 한다").isEqualTo(1);
 
     perform(get("/api/v1/families"), tokenA.getToken())
         .andExpect(status().isUnauthorized())

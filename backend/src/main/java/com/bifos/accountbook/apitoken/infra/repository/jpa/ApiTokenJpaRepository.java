@@ -17,6 +17,12 @@ public interface ApiTokenJpaRepository extends JpaRepository<ApiToken, Long> {
       FROM ApiToken t
       WHERE t.tokenHash = :tokenHash
       AND t.status = com.bifos.accountbook.apitoken.domain.value.ApiTokenStatus.ACTIVE
+      AND EXISTS (
+        SELECT 1
+        FROM User u
+        WHERE u.uuid = t.userUuid
+        AND u.status = com.bifos.accountbook.user.domain.value.UserStatus.ACTIVE
+      )
       """)
   Optional<ApiToken> findActiveByTokenHash(@Param("tokenHash") String tokenHash);
 
