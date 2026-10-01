@@ -17,7 +17,7 @@
 - 빌드: `backend/build.gradle.kts`(Kotlin DSL), 버전은 `backend/gradle/libs.versions.toml` 이 가진다. 지금 Checkstyle 은 `toolVersion = "10.12.5"`, 설정 `backend/config/checkstyle/google_checks.xml`, `maxWarnings = 0` 이다.
 - google_checks 에서 `Indentation`, `CustomImportOrder`, `OperatorWrap`, `AvoidStarImport` 는 주석 처리돼 꺼져 있다. `SeparatorWrap`(점은 줄 앞), `LineLength`(250) 는 켜져 있다.
 - 참고 구현: `/Users/nhn/personal/fos-assistant/backend/build.gradle.kts` 의 `spotless { ... }` 블록과 `libs.versions.toml` 의 `spotless` 플러그인 항목. 그 저장소는 palantir 와 `ratchetFrom` 을 쓰지만 이 저장소는 google-java-format 과 전체 포맷을 쓴다(ADR-B22). 그 저장소 파일은 고치지 않는다.
-- Java 파일은 약 231개다. 같은 시각에 백엔드를 고치는 다른 브랜치는 없다.
+- Java 파일은 현재 234개다. 같은 시각에 백엔드를 고치는 다른 브랜치는 없다.
 
 ## 의도 메모
 

@@ -24,12 +24,12 @@
 
 | 이름 | 뜻 |
 |---|---|
-| `LAYER_DIRECTION` | 각 도메인 안에서 presentation → application → domain ← infra 방향만 허용 |
+| `LAYER_DIRECTION` | presentation은 다른 층에서 접근 금지, application은 presentation만 접근 허용, infra는 다른 층에서 접근 금지, domain은 presentation/application/infra 접근 허용 |
 | `CONTROLLERS_DO_NOT_USE_REPOSITORIES` | `presentation` 은 `domain.repository` 와 `infra` 에 의존하지 않는다 |
 | `SHARED_DOES_NOT_DEPEND_ON_DOMAINS` | `shared` 는 도메인 패키지에 의존하지 않는다 |
-| `TRANSACTIONAL_ONLY_IN_APPLICATION` | `@Transactional` 은 application 층(그리고 이미 쓰는 이벤트 리스너)에만 |
+| `TRANSACTIONAL_ONLY_IN_APPLICATION` | Spring/Jakarta `@Transactional` 클래스와 메서드는 application에만 허용. 현재 이벤트 리스너도 application 안이므로 별도 예외 없음 |
 | `NO_DIRECT_NOW_FOR_BUSINESS_DATE` | application 과 presentation 은 인자 없는 `LocalDate.now()`, `LocalDateTime.now()`, `YearMonth.now()` 를 부르지 않는다 |
-| `NO_LOMBOK_DATA` | `@Data` 를 쓰지 않는다 |
+| `NO_LOMBOK_DATA` | SOURCE retention으로 ArchUnit이 읽지 못하므로 phase 03 Checkstyle의 소스 검사로 `@Data`, `@lombok.Data`, `lombok.Data` import를 금지 |
 | `TESTS_ARE_NOT_TRANSACTIONAL` | 테스트 클래스와 메서드에 `@Transactional` 을 쓰지 않는다(테스트 소스 대상) |
 
 ## 의도 메모
@@ -43,13 +43,14 @@
 ### 1. 의존성과 설정
 
 - `libs.versions.toml` 에 `archunit`(`com.tngtech.archunit:archunit-junit5`, 정확한 버전) 추가, `build.gradle.kts` 의 testImplementation 에 연결.
-- `backend/src/test/resources/archunit.properties`: freeze store 경로 `backend/config/archunit/store`(상대 경로는 참고 구현과 같게), `freeze.store.default.allowStoreCreation=true`, `freeze.refreeze=false`.
+- `backend/src/test/resources/archunit.properties`: 속성값 `freeze.store.default.path=config/archunit/store`, 실제 파일 위치 `backend/config/archunit/store/`. 최종 설정은 `freeze.store.default.allowStoreCreation=false`, `freeze.store.default.allowStoreUpdate=false`, `freeze.refreeze=false`다. 최초 생성 때만 명시적 Gradle 속성으로 JVM 설정을 켠다.
 
 ### 2. 규칙과 테스트
 
-- `backend/src/test/java/com/bifos/accountbook/architecture/ArchitectureRules.java`: 위 표의 규칙 상수.
+- `backend/src/test/java/com/bifos/accountbook/architecture/ArchitectureRules.java`: 위 표 중 `NO_LOMBOK_DATA`를 제외한 여섯 규칙 상수. 테스트의 Transactional 검사도 클래스와 메서드, Spring/Jakarta를 포함한다.
 - `backend/src/test/java/com/bifos/accountbook/architecture/ArchitectureRulesTest.java`: 규칙마다 테스트 하나, `FreezingArchRule.freeze(...)`.
 - `build.gradle.kts` 에 이 테스트만 도는 `archTest` 태스크를 더한다(참고 구현과 같은 방식).
+- `test`, `archTest`의 입력에 기준 파일 디렉터리를 등록한다. `archTest`는 기준 파일 변경 후 반드시 다시 실행한다.
 
 ### 3. 기준 파일 생성과 커밋
 

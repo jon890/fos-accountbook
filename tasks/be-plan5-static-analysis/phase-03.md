@@ -15,7 +15,7 @@
 **근거 문서**: `backend/docs/adr/ADR-B22-static-analysis-tools.md`.
 
 - `.github/workflows/backend-ci.yml` 은 `gradle wrapper` 로 wrapper 를 만들고 `checkstyleMain`, `checkstyleTest`, `test`, `build -x test -x checkstyleMain -x checkstyleTest` 를 따로 돈다.
-- `backend/CLAUDE.md` 의 「Code Conventions」 아래 「코드 스타일 (Google Java Style + Naver Convention)」 절과 「Architecture」 절, 「금지사항」 절이 규칙을 문장으로 적는다. `.github/claude-review-prompt-backend.txt` 가 이 절 이름들을 가리키므로 **절 이름은 바꾸지 않는다**.
+- `backend/CLAUDE.md` 의 「Code Conventions」 아래 「코드 스타일 (`Google Java Style + Naver Convention`)」 절과 「Architecture」 절, 「금지사항」 절이 규칙을 문장으로 적는다. `.github/claude-review-prompt-backend.txt` 가 이 절 이름들을 가리키므로 **절 이름은 바꾸지 않는다**.
 - google_checks 에서 `AvoidStarImport` 가 주석 처리돼 있다. 와일드카드 import 금지는 지침에만 있다.
 - 루트 `CLAUDE.md` 의 로컬 검증 명령은 `cd backend && ./gradlew checkstyleMain checkstyleTest test` 이다.
 
@@ -24,6 +24,7 @@
 ### 1. Checkstyle 에 `AvoidStarImport` 를 켜고 `qualityCheck` 태스크 추가
 
 - `AvoidStarImport`(static import 허용)를 켠다. 위반이 있으면 고친다(포맷 phase 뒤라 IDE 정리로 충분하다).
+- `NO_LOMBOK_DATA`는 Checkstyle 소스 검사로 구현한다. `lombok.Data` import와 `@Data`, `@lombok.Data` 사용을 차단하고 임시 위반으로 실패를 확인한 뒤 되돌린다.
 - `qualityCheck`: `spotlessCheck`, `checkstyleMain`, `checkstyleTest`, `archTest` 에 의존. 파일을 바꾸지 않는다.
 
 ### 2. `backend-ci.yml`
