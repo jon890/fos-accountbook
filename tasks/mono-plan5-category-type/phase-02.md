@@ -67,3 +67,4 @@
 | `backend/src/main/java/com/bifos/accountbook/income/**/*.java` | 수정 |
 | `backend/docs/flow.md` | 수정 |
 | `backend/src/test/java/com/bifos/accountbook/**/*Test.java` | 수정 |
+| `backend/src/test/java/com/bifos/accountbook/shared/fixtures/CategoryFixtures.java` | 수정 |
