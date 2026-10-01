@@ -62,6 +62,15 @@ function renderFields(
 }
 
 describe("TransactionFormFields", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date("2026-10-02T12:00:00+09:00"));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it("수입 등록에는 수입 카테고리만 표시한다", () => {
     renderFields("income");
 
@@ -146,5 +155,53 @@ describe("TransactionFormFields", () => {
     const switchButton = screen.getByRole("switch", { name: "예산에서 제외" });
     expect(switchButton).toBeEnabled();
     expect(switchButton).toBeChecked();
+  });
+
+  it("어제를 누르면 로컬 달력 기준 하루 전 날짜를 전달한다", () => {
+    const onDateChange = jest.fn();
+    render(
+      <TransactionFormFields
+        type="expense"
+        categories={categories}
+        amount={1000}
+        onAmountChange={() => {}}
+        categoryUuid="normal"
+        onCategoryChange={() => {}}
+        description=""
+        onDescriptionChange={() => {}}
+        date="2026-10-02"
+        onDateChange={onDateChange}
+        isLoadingCategories={false}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "어제" }));
+
+    expect(onDateChange).toHaveBeenCalledWith("2026-10-01");
+  });
+
+  it("결제일을 지우면 빈 값을 유지한다", () => {
+    const onDayOfMonthChange = jest.fn();
+    render(
+      <TransactionFormFields
+        type="recurring"
+        categories={categories}
+        amount={1000}
+        onAmountChange={() => {}}
+        categoryUuid="normal"
+        onCategoryChange={() => {}}
+        description=""
+        onDescriptionChange={() => {}}
+        dayOfMonth={15}
+        onDayOfMonthChange={onDayOfMonthChange}
+        isLoadingCategories={false}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("매월 결제일 *"), {
+      target: { value: "" },
+    });
+
+    expect(onDayOfMonthChange).toHaveBeenCalledWith(undefined);
   });
 });

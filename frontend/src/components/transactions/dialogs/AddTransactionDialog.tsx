@@ -70,11 +70,20 @@ async function createRecurringWrapper(
   _prev: FormState,
   fd: FormData,
 ): Promise<FormState> {
+  const dayOfMonth = fd.get("dayOfMonth");
+  if (dayOfMonth === null || dayOfMonth === "") {
+    return {
+      success: false,
+      errors: { dayOfMonth: ["결제일을 1~28 중에서 입력해 주세요"] },
+      message: "",
+    };
+  }
+
   const raw = {
     name: String(fd.get("name") ?? ""),
     categoryUuid: String(fd.get("categoryUuid") ?? ""),
     amount: Number(fd.get("amount")),
-    dayOfMonth: Number(fd.get("dayOfMonth")),
+    dayOfMonth: Number(dayOfMonth),
   };
   const parsed = recurringExpenseSchema.safeParse(raw);
   if (!parsed.success) {

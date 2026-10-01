@@ -343,4 +343,24 @@ describe("AddTransactionDialog", () => {
     // recurring 은 wrapper 가 useActionState 에 등록되므로 모듈 정의 존재만 검증
     expect(mockCreateRecurring).toBeDefined();
   });
+
+  it("빈 결제일 제출은 고정지출 등록 action을 호출하지 않고 오류를 반환한다", async () => {
+    const { useActionState } = jest.requireMock("react");
+    useActionState.mockClear();
+
+    render(
+      <AddTransactionDialog open onOpenChange={onOpenChange} defaultType="recurring" />,
+    );
+    await screen.findByRole("button", { name: "고정지출 추가" });
+
+    const recurringWrapper = useActionState.mock.calls[2][0];
+    const result = await recurringWrapper({ success: false, errors: {}, message: "" }, new FormData());
+
+    expect(result).toEqual({
+      success: false,
+      errors: { dayOfMonth: ["결제일을 1~28 중에서 입력해 주세요"] },
+      message: "",
+    });
+    expect(mockCreateRecurring).not.toHaveBeenCalled();
+  });
 });
