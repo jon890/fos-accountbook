@@ -1,7 +1,7 @@
 # Phase 03. 반복 지출 목록과 추가 버튼 정리
 
 **Execution profile**: standard
-**Domain**: color-token
+**Domain**: color-token, app-router
 
 ## 목표
 
@@ -25,22 +25,27 @@
 
 ## 의도 메모
 
-- 반복 지출의 「종료」 는 지금 있는 `deleteRecurringExpenseAction` 을 쓴다. 백엔드의 삭제가 상태를 바꾸는지(ENDED) 지우는지 확인하고 버튼 문구를 그에 맞춘다(「종료」 또는 「삭제」). 확인창을 거친다.
+- 반복 지출의 「종료」는 기존 `deleteRecurringExpenseAction`을 쓴다. 백엔드는 `entity.end()`로 상태를 ENDED로 바꾸므로 문구는 「종료」로 고정한다. 확인창에서 기존 지출이 유지됨을 알린다. 실패하면 오류를 표시하고 시트와 확인창을 유지하며 다시 시도할 수 있다.
+- 반복 행은 `TransactionRow`에 이름을 description, 기존 category와 amount를 넘긴다. 날짜를 만들지 않고 phase 01의 `metadata`에 `매월 N일`을 넘긴다. `trailing`에는 반영된 경우 「이번 달 반영됨」 배지를 둔다.
 - 반영 상태는 행 오른쪽에 글자 배지(「이번 달 반영됨」)로도 보인다.
-- 추가 버튼을 지운 뒤 빈 상태(`EmptyState` 의 `cta`)가 추가 진입을 안내하는지 본다.
+- 빈 상태는 `EmptyState`를 cta 없이 쓰고 설명에서 하단 가운데 `+` 버튼으로 추가할 수 있음을 안내한다.
 
 ## 작업 항목
 
 ### 1. `RecurringExpenseItem` 을 공용 행으로 바꾸고 `RecurringExpenseList` 정리
 
-### 2. `EditTransactionDialog` 에 반복 지출 종료(또는 삭제)와 확인창
+### 2. `EditTransactionDialog` 에 반복 지출 종료와 확인창
 
 ### 3. 탭 줄의 「+ 지출 추가」, 반복 목록 아래와 `RecurringTabContent` 의 추가 버튼 제거
 
+- `TransactionsPageClient`의 추가 전용 `ExpenseTabContent`, `IncomeTabContent`, `RecurringTabContent` 렌더링을 모두 제거한다. 다른 사용처가 없는 컴포넌트 파일은 삭제한다. 수입 탭의 「수입 추가」도 제거한다. 빈 목록은 하단 가운데 추가 버튼을 안내하고 그 버튼은 계속 동작해야 한다. 달력의 선택 날짜 추가 버튼은 이번 범위 밖이다.
+
 ### 4. 이 phase 를 검증하는 테스트
 
-- Jest: `frontend/src/__tests__/components/transactions/EditTransactionDialog.test.tsx`(신규)에 반복 지출 시트에서 종료 버튼을 누르면 확인창이 뜨고 확인하면 `deleteRecurringExpenseAction` 이 불리는 케이스.
+- Jest: 기존 `frontend/src/__tests__/components/transactions/dialogs/EditTransactionDialog.test.tsx`에 반복 지출 종료 확인, 취소, 성공, 실패 후 재시도 케이스를 보완한다.
 - 브라우저: `frontend/browser/transactions.spec.ts` 에 반복 탭 케이스. 가짜 백엔드에 반복 지출 목록 경로를 더한다. 반복 행을 누르면 「고정지출 수정」 시트가 열린다. 화면에 「+ 지출 추가」, 「고정지출 추가」 버튼이 없다.
+- 지출, 수입, 반복 탭에서 추가 버튼이 제거됐고 하단 `aria-label="지출 추가"` 버튼으로 추가 시트가 열리는지 확인한다. CODE-4부터 CODE-6까지 해당 항목을 점검한다.
+- 반복 탭의 행에 「매월 N일」과 「이번 달 반영됨」이 보이는지 단언한다.
 
 ## 검증
 
@@ -50,7 +55,7 @@
 pnpm install --frozen-lockfile
 pnpm exec playwright install chromium
 pnpm tsc --noEmit && pnpm lint && pnpm lint:md
-pnpm test -- src/__tests__/components/transactions/EditTransactionDialog.test.tsx
+pnpm test -- src/__tests__/components/transactions/dialogs/EditTransactionDialog.test.tsx
 pnpm test
 pnpm test:browser browser/transactions.spec.ts
 pnpm test:browser
@@ -65,8 +70,10 @@ pnpm test:browser
 | `frontend/src/components/recurring-expense/RecurringExpenseItem.tsx` | 수정 |
 | `frontend/src/components/recurring-expense/RecurringExpenseList.tsx` | 수정 |
 | `frontend/src/components/transactions/dialogs/EditTransactionDialog.tsx` | 수정 |
-| `frontend/src/app/(authenticated)/transactions/_components/RecurringTabContent.tsx` | 수정 |
+| `frontend/src/app/(authenticated)/transactions/_components/RecurringTabContent.tsx` | 삭제 |
+| `frontend/src/app/(authenticated)/transactions/_components/ExpenseTabContent.tsx` | 삭제 |
+| `frontend/src/app/(authenticated)/transactions/_components/IncomeTabContent.tsx` | 삭제 |
 | `frontend/src/app/(authenticated)/transactions/_components/TransactionsPageClient.tsx` | 수정 |
-| `frontend/src/__tests__/components/transactions/EditTransactionDialog.test.tsx` | 신규 |
+| `frontend/src/__tests__/components/transactions/dialogs/EditTransactionDialog.test.tsx` | 수정 |
 | `frontend/browser/fake-backend.mjs` | 수정 |
 | `frontend/browser/transactions.spec.ts` | 수정 |

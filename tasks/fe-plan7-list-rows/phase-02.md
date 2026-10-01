@@ -1,7 +1,7 @@
 # Phase 02. 지출과 수입 탭에 공용 행을 쓰고 수정 시트를 하나로
 
-**Execution profile**: standard
-**Domain**: color-token
+**Execution profile**: deep
+**Domain**: color-token, app-router, server-action
 
 ## 목표
 
@@ -36,7 +36,7 @@
 
 ### 1. 구성원 조회 Server Action 과 그 테스트
 
-- `frontend/src/actions/family/get-family-members-action.ts`, `frontend/src/__tests__/actions/family/get-family-members-action.test.ts`(인증 실패, 가족 미선택, 성공).
+- `frontend/src/actions/family/get-family-members-action.ts`, `frontend/src/__tests__/actions/family/get-family-members-action.test.ts`(인증 실패, 가족 미선택, service 실패, 성공). ADR-F25와 CODE-4부터 CODE-6까지 해당 항목을 확인한다.
 
 ### 2. 지출 탭
 
@@ -48,11 +48,14 @@
 
 ### 4. 내역 화면이 구성원을 받아 행에 넘기기
 
-- `frontend/src/app/(authenticated)/transactions/page.tsx` 와 탭 컴포넌트(`frontend/src/app/(authenticated)/transactions/_components/ExpenseTabContent.tsx`, `IncomeTabContent.tsx`)에서 구성원 색 맵을 만들어 넘긴다.
+- `frontend/src/app/(authenticated)/transactions/page.tsx`에서 구성원 조회 Action을 호출하고 구성원 배열을 `ExpenseList`, `IncomeList`를 거쳐 각 Client로 넘긴다. Client가 `buildMemberColorMap`과 `getMemberColor`로 행의 작성자를 만든다. `ExpenseTabContent`, `IncomeTabContent`는 추가 버튼을 소유하며 목록 전달 경로가 아니다.
+- 구성원 조회 실패는 페이지에서 에러 메시지로 표시하고 조용히 빈 구성원 배열로 바꾸지 않는다. Action의 single-family 검증은 기존 인증·선택 가족 규칙을 따른다. 가족 미선택은 F002, 인증 실패는 인증 오류로 구분한다.
+- 기존 `frontend/src/__tests__/app/transactions/page.test.tsx`에 구성원 조회 Action mock과 두 목록으로 전달되는 구성원 값을 검증한다. `ExpenseItem` 삭제 시 이를 직접 import하는 테스트는 삭제하고 해당 행의 사용자 동작은 공용 행과 브라우저 테스트로 검증한다.
 
 ### 5. 이 phase 를 검증하는 브라우저 테스트 `frontend/browser/transactions.spec.ts`
 
 - 가짜 백엔드에 내역 화면이 부르는 경로(지출, 수입 목록, 구성원, 요약 등. 모르는 경로는 fixture 가 실패로 알려 준다)를 더한다.
+- `/api/v1/families`와 `/api/v1/families/{uuid}/categories`의 기존 응답을 유지하고 `/members`, `/expenses`, `/incomes`, `/dashboard/expenses/by-category`를 경로만 덧붙인다. 실제 service와 types에 정의된 응답 타입을 따른다.
 - 390px 에서 `/transactions` 의 첫 지출 행을 한 번 누르면 수정 시트(제목 「지출 수정」)가 열린다. 행 안에 「삭제」 버튼이 없다. 첫 날짜 머리의 href 가 `/calendar?month=...&date=...` 다. 행 보조 줄에 작성자 이름이 있다.
 - 수입 탭에서도 행을 누르면 「수입 수정」 시트가 열린다.
 
@@ -64,7 +67,7 @@
 pnpm install --frozen-lockfile
 pnpm exec playwright install chromium
 pnpm tsc --noEmit && pnpm lint && pnpm lint:md
-pnpm test -- src/__tests__/actions/family/get-family-members-action.test.ts
+pnpm test -- src/__tests__/actions/family/get-family-members-action.test.ts src/__tests__/app/transactions/page.test.tsx
 pnpm test
 pnpm test:browser browser/transactions.spec.ts
 pnpm test:browser
@@ -86,7 +89,7 @@ pnpm test:browser
 | `frontend/src/components/incomes/list/IncomeItem.tsx` | 삭제 |
 | `frontend/src/components/incomes/list/IncomeList.tsx` | 수정 |
 | `frontend/src/app/(authenticated)/transactions/page.tsx` | 수정 |
-| `frontend/src/app/(authenticated)/transactions/_components/ExpenseTabContent.tsx` | 수정 |
-| `frontend/src/app/(authenticated)/transactions/_components/IncomeTabContent.tsx` | 수정 |
+| `frontend/src/__tests__/app/transactions/page.test.tsx` | 수정 |
+| `frontend/src/__tests__/components/expenses/ExpenseItem.test.tsx` | 삭제 |
 | `frontend/browser/fake-backend.mjs` | 수정 |
 | `frontend/browser/transactions.spec.ts` | 신규 |
