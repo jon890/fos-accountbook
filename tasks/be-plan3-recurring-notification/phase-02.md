@@ -36,7 +36,7 @@
 ### 1. `RecurringExpenseEventListener` 를 고친다
 
 - `@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)`.
-- `FamilyMemberRepository.findAllByFamilyUuid` 로 구성원을 받아 구성원마다 `userUuid` 를 채운 알림을 만든다. 구성원이 없으면 debug 로그만 남긴다.
+- `FamilyMemberRepository.findAllActiveByFamilyUuid` 로 `joinedAt, id` 순서의 ACTIVE 구성원을 받아 구성원마다 `userUuid` 를 채운 알림을 만든다. 구성원이 없으면 debug 로그만 남긴다.
 - `Clock` 을 주입받아 연월을 정한다.
 - ADR-B08 에 따라 같은 가족, 알림 타입, 연월에 이미 알림이 있는 구성원은 건너뛴다. 구성원별 조회와 `yearMonth` 비교로 판정한다.
 
@@ -48,7 +48,7 @@
 - LEFT 구성원에게는 알림이 없고, ACTIVE 구성원에게만 알림이 있다.
 - 생성된 템플릿이 없으면 알림이 없다.
 - `TransactionTemplate` 안에서 이벤트를 발행한 직후에는 알림이 0건이고, 커밋된 뒤에는 구성원별 1건임을 확인한다.
-- 알림 저장 실패는 실제 DB 에 임시 CHECK 제약을 만들어 두 번째 구성원의 `user_uuid` 를 거부하는 방식으로 유발한다. Repository 가 반환하는 구성원 순서에서 두 번째 수신자를 고르고, 첫 구성원의 알림 저장 후 두 번째 저장이 실패하도록 만든다. `finally` 에서 제약을 제거한다. 테스트 전용 임시 제약은 운영 스키마 변경이 아니다.
+- 알림 저장 실패는 실제 DB 에 임시 CHECK 제약을 만들어 두 번째 구성원의 `user_uuid` 를 거부하는 방식으로 유발한다. 리스너와 테스트 모두 `findAllActiveByFamilyUuid` 의 명시적 `joinedAt, id` 순서를 사용해 두 번째 수신자를 고르고, 첫 구성원의 알림 저장 후 두 번째 저장이 실패하도록 만든다. `finally` 에서 제약을 제거한다. 테스트 전용 임시 제약은 운영 스키마 변경이 아니다.
 - 실패 뒤 스케줄러가 예외를 내보내지 않고 Expense 와 성공 이벤트는 남으며, 두 구성원의 알림은 모두 0건임을 조회한다. 이후 제약을 제거하고 이벤트를 다시 발행하면 두 구성원의 알림은 각 1건이다.
 
 ## 검증
