@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { BRAND_COLOR_HEX } from "@/lib/utils/brand";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -6,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "우리집 가계부",
     start_url: "/calendar",
     display: "standalone",
-    background_color: "#3289fc",
-    theme_color: "#3289fc",
+    background_color: BRAND_COLOR_HEX,
+    theme_color: BRAND_COLOR_HEX,
     icons: [
       {
         src: "/icon",

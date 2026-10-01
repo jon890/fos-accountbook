@@ -1,9 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
+import { BRAND_COLOR_HEX } from "@/lib/utils/brand";
 
-// ADR-F36: --color-brand-500을 sRGB로 변환한 값이다.
-const brandColorHex = "#3289fc";
 const fontData = readFile(
   join(
     process.cwd(),
@@ -20,7 +19,7 @@ export default async function AppleIcon() {
       <div
         style={{
           alignItems: "center",
-          background: brandColorHex,
+          background: BRAND_COLOR_HEX,
           color: "#ffffff",
           display: "flex",
           fontSize: 104,

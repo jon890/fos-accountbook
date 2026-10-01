@@ -4,9 +4,8 @@ import { connection } from "next/server";
 import "./globals.css";
 import { Providers } from "./providers";
 import { serverEnv } from "@/lib/env/server.env";
+import { BRAND_COLOR_HEX } from "@/lib/utils/brand";
 
-// ADR-F36: --color-brand-500을 sRGB로 변환한 값이다.
-const brandColorHex = "#3289fc";
 
 const pretendard = localFont({
   src: "../../node_modules/pretendard/dist/web/variable/woff2/PretendardVariable.woff2",
@@ -50,7 +49,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   maximumScale: 1,
-  themeColor: brandColorHex,
+  themeColor: BRAND_COLOR_HEX,
 };
 
 export default function RootLayout({
