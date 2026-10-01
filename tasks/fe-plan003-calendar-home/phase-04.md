@@ -89,4 +89,5 @@ grep -n "router.push" src/components/layout/BottomNavigation.tsx   # 결과 없�
 | `frontend/src/components/transactions/dialogs/EditTransactionDialog.tsx` | 수정 |
 | `frontend/src/__tests__/components/layout/BottomNavigation.test.tsx` | 신규 |
 | `frontend/src/__tests__/components/layout/Header.test.tsx` | 수정 |
+| `frontend/src/__tests__/components/transactions/dialogs/AddTransactionDialog.test.tsx` | 안전 영역 공용 클래스 전환에 맞춰 기존 검증 수정 |
 | `frontend/src/__tests__/app/menu/page.test.tsx` | 신규 |
