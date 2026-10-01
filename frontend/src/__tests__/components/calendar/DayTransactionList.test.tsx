@@ -24,9 +24,9 @@ describe("선택 날짜 거래 목록", () => {
       expenses={[calendarExpense({ category: { uuid: "category-1", name: "식비", icon: "🍚", color: "" } })]}
       incomes={[calendarIncome({ category: { uuid: "category-2", name: "급여", icon: "💰", color: "" } })]}
     />);
-    expect(screen.getByText("식비 · 12:00")).toBeInTheDocument();
+    expect(screen.getByText((_, element) => element?.tagName === "P" && element.textContent === "식비 · 아내 · 12:00")).toBeInTheDocument();
     expect(screen.getByText("🍚")).toBeInTheDocument();
-    expect(screen.getByText("급여 · 09:00")).toBeInTheDocument();
+    expect(screen.getByText((_, element) => element?.tagName === "P" && element.textContent === "급여 · 아내 · 09:00")).toBeInTheDocument();
     expect(screen.getByText("💰")).toBeInTheDocument();
     expect(screen.queryByText(/기타/)).not.toBeInTheDocument();
   });
@@ -34,17 +34,19 @@ describe("선택 날짜 거래 목록", () => {
     render(<DayTransactionList {...props} />);
     expect(screen.getByText("9월 14일 (월)")).toBeInTheDocument();
     expect(screen.getByText("₩43,000")).toBeInTheDocument();
+    expect(screen.getAllByText("+₩50,000").some((element) => element.classList.contains("text-income"))).toBe(true);
     expect(screen.queryByText("다음 날 식사")).not.toBeInTheDocument();
     const items = screen.getAllByRole("listitem");
     expect(within(items[0]).getByText("보너스")).toBeInTheDocument();
     expect(within(items[1]).getByText("점심")).toBeInTheDocument();
-    expect(within(items[1]).getByText("아내")).toBeInTheDocument();
+    expect(within(items[1]).getByText((_, element) => element?.tagName === "P" && element.textContent === "기타 · 아내 · 12:00")).toBeInTheDocument();
   });
 
   it("모르는 등록자는 이전 구성원과 회색 점으로 표시한다", () => {
     render(<DayTransactionList {...props} expenses={[calendarExpense({ userUuid: "left" })]} incomes={[]} />);
-    expect(screen.getByText("이전 구성원")).toBeInTheDocument();
-    expect(screen.getByText("이전 구성원").querySelector(".bg-neutral-500")).toBeInTheDocument();
+    const creatorDetail = screen.getByText((_, element) => element?.tagName === "P" && element.textContent === "기타 · 이전 구성원 · 12:00");
+    expect(creatorDetail).toBeInTheDocument();
+    expect(creatorDetail.querySelector(".bg-neutral-500")).toBeInTheDocument();
   });
 
   it("빈 날에도 기록 추가 버튼을 사용할 수 있다", async () => {
@@ -71,8 +73,8 @@ describe("선택 날짜 거래 목록", () => {
     expect(onEdit).toHaveBeenCalledTimes(2);
   });
 
-  it("색이 없는 기존 등록자는 아바타 첫 글자를 유지한다", () => {
+  it("색이 없는 기존 등록자도 보조 줄에 이름을 표시한다", () => {
     render(<TransactionRow tx={{ ...calendarExpense(), createdBy: { name: "아내" } }} variant="compact" />);
-    expect(screen.getByText("아")).toBeInTheDocument();
+    expect(screen.getByText((_, element) => element?.tagName === "P" && element.textContent === "기타 · 아내 · 12:00")).toBeInTheDocument();
   });
 });

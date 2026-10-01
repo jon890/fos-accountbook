@@ -1,16 +1,16 @@
 "use client";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getCategoryToneStyle } from "@/lib/utils/category-tone";
 import { formatCurrency } from "@/lib/utils/format";
+import type { TransactionRowKind } from "@/types/transaction";
 import { format, parseISO } from "date-fns";
-import type { KeyboardEvent } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 
 export interface TxBase {
   uuid: string;
   amount: number;
   description: string | null;
-  date: string;
+  date?: string | null;
   category: {
     uuid: string;
     name: string;
@@ -23,20 +23,36 @@ export interface TxBase {
 interface TransactionRowProps {
   tx: TxBase;
   variant: "compact" | "full";
+  kind?: TransactionRowKind;
+  metadata?: string;
+  trailing?: ReactNode;
   onEdit?: () => void;
 }
 
 export function TransactionRow({
   tx,
   variant,
+  kind = "expense",
+  metadata,
+  trailing,
   onEdit,
 }: TransactionRowProps) {
-  const catName = tx.category?.name ?? "기타";
-  const catIcon = tx.category?.icon ?? "💸";
-  const toneStyle = getCategoryToneStyle(catName);
-  const timeStr = format(parseISO(tx.date), "HH:mm");
-  const absAmount = Math.abs(tx.amount);
-  const isClickable = !!onEdit;
+  const categoryName = tx.category?.name ?? "기타";
+  const categoryIcon = tx.category?.icon ?? "💸";
+  const toneStyle = getCategoryToneStyle(categoryName);
+  const title = tx.description || categoryName;
+  const time = tx.date ? format(parseISO(tx.date), "HH:mm") : undefined;
+  const displayDetail = metadata ?? time;
+  const detailItems = [
+    tx.description ? { label: categoryName, showCreatorMarker: false } : undefined,
+    tx.createdBy?.name
+      ? { label: tx.createdBy.name, showCreatorMarker: Boolean(tx.createdBy.colorClass) }
+      : undefined,
+    displayDetail ? { label: displayDetail, showCreatorMarker: false } : undefined,
+  ].filter((item): item is { label: string; showCreatorMarker: boolean } => Boolean(item));
+  const isIncome = kind === "income";
+  const amount = `${isIncome ? "+" : ""}${formatCurrency(Math.abs(tx.amount))}`;
+  const isClickable = Boolean(onEdit);
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     const isActivationKey = event.key === "Enter" || event.key === " ";
@@ -46,117 +62,81 @@ export function TransactionRow({
     }
   }
 
-  function renderCreator(avatarClass: string) {
-    if (!tx.createdBy?.name) {
-      return <div className={avatarClass} />;
+  function renderDetails(className: string) {
+    if (detailItems.length === 0) {
+      return null;
     }
-    if (tx.createdBy.colorClass) {
-      return (
-        <span className="flex items-center gap-1 text-[11px] text-fg-muted">
-          <span aria-hidden="true" className={`size-1.5 rounded-full ${tx.createdBy.colorClass}`} />
-          {tx.createdBy.name}
-        </span>
-      );
-    }
+
     return (
-      <Avatar className={avatarClass}>
-        <AvatarFallback className="text-[8px] font-medium bg-brand-200 text-brand-800">
-          {tx.createdBy.name.charAt(0)}
-        </AvatarFallback>
-      </Avatar>
-    );
-  }
-
-  if (variant === "compact") {
-    return (
-      <div
-        className="flex items-center gap-3 py-2.5 px-0 focus-visible:outline-2 focus-visible:outline-brand-500 focus-visible:outline-offset-2"
-        onClick={onEdit}
-        onKeyDown={handleKeyDown}
-        role={isClickable ? "button" : undefined}
-        tabIndex={isClickable ? 0 : undefined}
-      >
-        {/* 카테고리 아이콘 */}
-        <div
-          className="size-9 shrink-0 rounded-xl flex items-center justify-center text-base"
-          style={toneStyle}
-        >
-          {catIcon}
-        </div>
-
-        {/* 메모 + 카테고리·시간 */}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-fg truncate">
-            {tx.description || catName}
-          </p>
-          <p className="text-[11.5px] text-fg-muted">
-            {catName} · {timeStr}
-          </p>
-        </div>
-
-        {/* 금액 + 아바타 */}
-        <div className="flex flex-col items-end gap-1 shrink-0">
-          <span className="num text-sm font-bold text-fg">
-            {formatCurrency(absAmount)}
+      <p className={className}>
+        {detailItems.map((item, index) => (
+          <span key={`${item.label}-${index}`}>
+            {index > 0 && " · "}
+            {item.showCreatorMarker && tx.createdBy?.colorClass && (
+              <span
+                aria-hidden="true"
+                className={`mr-1 inline-block size-1.5 rounded-full ${tx.createdBy.colorClass}`}
+              />
+            )}
+            {item.label}
           </span>
-          {renderCreator("size-4")}
-        </div>
-      </div>
+        ))}
+      </p>
     );
   }
 
-  // full: mobile = compact flex / desktop = 5-col grid
   return (
     <div
-      className="flex items-center gap-3 py-2.5 md:grid md:grid-cols-[44px_1fr_110px_28px_140px] md:gap-4 md:items-center md:py-3 focus-visible:outline-2 focus-visible:outline-brand-500 focus-visible:outline-offset-2"
+      className={`flex min-h-14 items-center gap-3 px-0 py-2.5 active:bg-bg-muted focus-visible:outline-2 focus-visible:outline-brand-500 focus-visible:outline-offset-2 ${
+        variant === "full"
+          ? "md:grid md:grid-cols-[44px_1fr_110px_28px_140px] md:gap-4 md:py-3"
+          : ""
+      }`}
       onClick={onEdit}
       onKeyDown={handleKeyDown}
       role={isClickable ? "button" : undefined}
       tabIndex={isClickable ? 0 : undefined}
     >
-      {/* Col 1: 카테고리 아이콘 38px */}
       <div
-        className="size-9 md:size-[38px] shrink-0 rounded-xl flex items-center justify-center text-base"
+        className="flex size-10 shrink-0 items-center justify-center rounded-xl text-base md:size-[38px]"
         style={toneStyle}
       >
-        {catIcon}
+        {categoryIcon}
       </div>
 
-      {/* Col 2: 메모 + 시간 */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-fg truncate">
-          {tx.description || catName}
-        </p>
-        <p className="text-[11.5px] text-fg-muted">
-          <span className="md:hidden">{catName} · </span>
-          {timeStr}
-        </p>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[15px] font-semibold text-fg">{title}</p>
+        {renderDetails(`text-xs text-fg-muted ${variant === "full" ? "md:hidden" : ""}`)}
+        {variant === "full" && renderDetails("hidden text-xs text-fg-muted md:block")}
       </div>
 
-      {/* Col 3: 카테고리 chip — desktop only */}
-      <div className="hidden md:flex items-center">
-        <span
-          className="text-xs font-medium px-2 py-0.5 rounded-full truncate max-w-[104px]"
-          style={toneStyle}
-        >
-          {catName}
-        </span>
-      </div>
-
-      {/* Col 4: 아바타 22px — desktop only */}
-      <div className="hidden md:flex items-center justify-center">
-        {renderCreator("size-[22px]")}
-      </div>
-
-      {/* Col 5: 금액 right-aligned */}
-      <div className="flex flex-col items-end shrink-0">
-        <span className="num text-sm md:text-[15px] font-bold text-fg">
-          {formatCurrency(absAmount)}
-        </span>
-        {/* 모바일에서만 아바타 표시 */}
-        <div className="md:hidden mt-0.5">
-          {renderCreator("size-4")}
+      {variant === "full" && (
+        <div className="hidden items-center md:flex">
+          <span
+            className="max-w-[104px] truncate rounded-full px-2 py-0.5 text-xs font-medium"
+            style={toneStyle}
+          >
+            {categoryName}
+          </span>
         </div>
+      )}
+
+      {variant === "full" && (
+        <div className="hidden items-center justify-center md:flex">
+          {tx.createdBy?.name && tx.createdBy.colorClass && (
+            <span
+              aria-label={tx.createdBy.name}
+              className={`size-2 rounded-full ${tx.createdBy.colorClass}`}
+            />
+          )}
+        </div>
+      )}
+
+      <div className="flex shrink-0 flex-col items-end">
+        <span className={`num text-[15px] font-bold ${isIncome ? "text-income" : "text-expense"}`}>
+          {amount}
+        </span>
+        {trailing}
       </div>
     </div>
   );
