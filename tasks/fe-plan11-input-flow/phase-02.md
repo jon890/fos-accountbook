@@ -30,6 +30,8 @@
 - 빠른 추가 칩은 `min-h-11` 로 키운다.
 - 숫자패드는 기존 ui/Button을 사용한다. 00으로 최대 자리를 넘으면 추가하지 않고, 0의 앞자리 0은 누적하지 않는다. 지우기에서 0은 유지한다.
 - fake-backend는 POST `/api/v1/families/{familyUuid}/expenses`를 기존 Expense 응답 모양으로 지원한다. 요청 상태는 `{ path, body }[]`로 기록하고 GET `/__test/created-transactions`에서 반환한다. `/__test/reset`에서 비운다. 브라우저 테스트는 이 목록의 amount가 숫자패드 입력값인지 단언한다.
+- 등록·수정 Dialog는 max-h-[90dvh], flex flex-col overflow-hidden으로 본문 스크롤과 하단 버튼을 분리하고 하단 버튼은 md:static으로 둔다. 저장 안내가 카테고리 선택을 가리지 않게 한다. 브라우저 저장 테스트는 모바일과 데스크톱 모두 일반 locator.click으로 카테고리 선택과 저장을 검증한다. fake-backend 아이콘은 실제 이모지 형식으로 맞춘다.
+- 같은 add-transaction.spec.ts에 기존 「점심 식사」 행을 눌러 수정 창을 여는 시나리오를 더한다. 금액을 0으로 비워 안내를 표시한 뒤 「교통」을 일반 locator.click으로 선택하고 aria-checked가 true인지 확인한다. 두 화면 폭 모두 실행해 수정 창에서도 저장 안내가 선택을 가리지 않는지 검증한다.
 
 ## 작업 항목
 
@@ -60,6 +62,8 @@ pnpm test:browser browser/add-transaction.spec.ts
 
 | 파일 | 변경 |
 |---|---|
+| `frontend/src/components/transactions/dialogs/AddTransactionDialog.tsx` | 수정 |
+| `frontend/src/components/transactions/dialogs/EditTransactionDialog.tsx` | 수정 |
 | `frontend/src/components/expenses/forms/AmountKeypad.tsx` | 신규 |
 | `frontend/src/__tests__/components/expenses/AmountKeypad.test.tsx` | 신규 |
 | `frontend/src/components/expenses/forms/AmountInput.tsx` | 수정 |
