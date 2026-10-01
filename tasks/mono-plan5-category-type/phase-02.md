@@ -68,3 +68,4 @@
 | `backend/docs/flow.md` | 수정 |
 | `backend/src/test/java/com/bifos/accountbook/**/*Test.java` | 수정 |
 | `backend/src/test/java/com/bifos/accountbook/shared/fixtures/CategoryFixtures.java` | 수정 |
+| `backend/src/test/java/com/bifos/accountbook/expense/presentation/controller/ExpenseControllerTest.java` | 신규 |
