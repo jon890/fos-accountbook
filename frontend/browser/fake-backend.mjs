@@ -7,6 +7,7 @@ let categoriesAreEmpty = false;
 let transactionsAreEmpty = false;
 let categorySummaryIsEmpty = false;
 let notificationsAreHeld = false;
+let extraNotificationCount = 0;
 let notificationHold;
 let budgetIsConfigured = true;
 const responseDelays = new Map();
@@ -229,6 +230,7 @@ const server = createServer(async (request, response) => {
     categorySummaryIsEmpty = false;
     budgetIsConfigured = true;
     responseDelays.clear();
+    extraNotificationCount = 0;
     setNotificationsHeld(false);
     sendJson(response, 200, { success: true });
     return;
@@ -270,6 +272,16 @@ const server = createServer(async (request, response) => {
       return;
     }
     budgetIsConfigured = body.configured;
+    sendJson(response, 200, { success: true });
+    return;
+  }
+  if (method === "POST" && pathname === "/__test/notifications-count") {
+    const body = await readJson(request);
+    if (!Number.isInteger(body?.extra) || body.extra < 0) {
+      sendJson(response, 400, { success: false, message: "Expected a non-negative integer extra" });
+      return;
+    }
+    extraNotificationCount = body.extra;
     sendJson(response, 200, { success: true });
     return;
   }
@@ -443,7 +455,15 @@ const server = createServer(async (request, response) => {
   }
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/notifications`) {
     await waitForNotifications();
-    sendJson(response, 200, { success: true, data: { notifications, unreadCount: 1, totalCount: notifications.length } });
+    const items = [
+      ...notifications,
+      ...Array.from({ length: extraNotificationCount }, (_, index) => ({
+        ...notifications[1],
+        notificationUuid: `55555555-5555-5555-5555-${String(index).padStart(12, "0")}`,
+        title: `추가 알림 ${index + 1}`,
+      })),
+    ];
+    sendJson(response, 200, { success: true, data: { notifications: items, unreadCount: 1, totalCount: items.length } });
     return;
   }
   if (method === "GET" && pathname === `/api/v1/invitations/token/${invitationToken}`) {

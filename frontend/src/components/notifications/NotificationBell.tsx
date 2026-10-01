@@ -71,7 +71,7 @@ export function NotificationBell({ familyUuid }: NotificationBellProps) {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 md:w-96 p-0" align="end">
+      <PopoverContent className="w-80 md:w-96 p-0 overflow-hidden" align="end">
         <NotificationList
           familyUuid={familyUuid}
           onNotificationRead={handleNotificationRead}
