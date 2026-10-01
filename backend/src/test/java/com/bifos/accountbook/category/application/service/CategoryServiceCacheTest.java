@@ -134,6 +134,7 @@ class CategoryServiceCacheTest extends TestFixturesSupport {
     // Given: TestFixtures로 데이터 생성 + 캐시 준비
     User testUser = fixtures.getDefaultUser();
     Family testFamily = fixtures.getDefaultFamily();
+    categoryService.createDefaultCategoriesForFamily(testFamily.getUuid());
     Category category =
         fixtures
             .categories
