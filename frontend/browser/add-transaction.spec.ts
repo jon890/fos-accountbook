@@ -40,7 +40,12 @@ test("다크 테마에서 거래 추가 표면과 고정지출 강조를 표시�
   await page.keyboard.press("Escape");
   await page.goto("/categories");
   await page.getByRole("button", { name: "카테고리 추가" }).click();
-  await expectNonWhiteBackground(page.locator('[data-slot="dialog-content"]'));
+  const categoryForm = page.locator(
+    testInfo.project.name === "mobile"
+      ? '[data-slot="sheet-content"]'
+      : '[data-slot="dialog-content"]',
+  );
+  await expectNonWhiteBackground(categoryForm);
 });
 
 test("예산 제외 스위치는 가로로 긴 막대로 표시하고 터치 영역은 44px 을 유지한다", async ({ page }) => {

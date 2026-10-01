@@ -2,6 +2,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AddCategoryDialog } from "@/app/(authenticated)/categories/_components/AddCategoryDialog";
 import { createCategoryAction } from "@/actions/category/create-category-action";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+
+jest.mock("@/hooks/useMediaQuery", () => ({
+  useMediaQuery: jest.fn(),
+}));
 
 // Mock server action
 jest.mock("@/actions/category/create-category-action", () => ({
@@ -23,6 +28,27 @@ describe("AddCategoryDialog", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.mocked(useMediaQuery).mockReturnValue(true);
+  });
+
+  it.each([
+    [false, "sheet-content"],
+    [true, "dialog-content"],
+  ])("폭에 따라 %s에서 %s를 표시한다", (isDesktop, slot) => {
+    jest.mocked(useMediaQuery).mockReturnValue(isDesktop);
+
+    const { container } = render(
+      <AddCategoryDialog
+        open={true}
+        onOpenChange={mockOnOpenChange}
+        familyUuid={familyUuid}
+        type="EXPENSE"
+        onSuccess={mockOnSuccess}
+      />,
+    );
+
+    expect(container.ownerDocument.querySelector(`[data-slot="${slot}"]`)).toBeInTheDocument();
+    expect(screen.queryByText("oklch(0.560 0.140 35)")).not.toBeInTheDocument();
   });
 
   it("renders correctly", () => {
