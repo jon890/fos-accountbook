@@ -34,9 +34,17 @@ export function CategoryExpenseSummary({
   const sortedCategoryStats = [...categoryStats].sort(
     (left, right) => right.totalAmount - left.totalAmount,
   );
-  const visibleCategoryStats = showAll
-    ? sortedCategoryStats
-    : sortedCategoryStats.slice(0, INITIAL_CATEGORY_COUNT);
+  const selectedCategoryId = searchParams.get("categoryId");
+  // 걸러 보는 카테고리가 상위 5개 밖이면 처음부터 전체를 보여 선택 상태가 가려지지 않게 한다.
+  const selectedIsHidden =
+    selectedCategoryId !== null &&
+    sortedCategoryStats
+      .slice(INITIAL_CATEGORY_COUNT)
+      .some((stat) => stat.categoryUuid === selectedCategoryId);
+  const visibleCategoryStats =
+    showAll || selectedIsHidden
+      ? sortedCategoryStats
+      : sortedCategoryStats.slice(0, INITIAL_CATEGORY_COUNT);
   const hasHiddenCategories =
     sortedCategoryStats.length > INITIAL_CATEGORY_COUNT;
 
@@ -49,7 +57,11 @@ export function CategoryExpenseSummary({
 
   return (
     <Card className="overflow-hidden border-border bg-bg-elev shadow-default">
-      <Accordion type="single" collapsible>
+      <Accordion
+        type="single"
+        collapsible
+        defaultValue={selectedCategoryId ? "category-summary" : undefined}
+      >
         <AccordionItem value="category-summary" className="border-0">
           <AccordionTrigger className="px-4 py-3.5 hover:no-underline md:px-6">
             <div className="w-full pr-2 text-left">
@@ -62,7 +74,7 @@ export function CategoryExpenseSummary({
                 </p>
               </div>
               <div
-                aria-label="카테고리별 지출 비중"
+                aria-hidden="true"
                 className="mt-2 flex h-1.5 overflow-hidden rounded-full bg-bg-muted"
               >
                 {sortedCategoryStats.map((stat) => (

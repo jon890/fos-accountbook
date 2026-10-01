@@ -26,7 +26,8 @@ export function ThemeSettingsCard() {
   const { theme, setTheme } = useTheme();
   const isMounted = useIsMounted();
 
-  const selectedTheme = isMounted ? theme : undefined;
+  // 마운트 전에는 빈 값으로 두어 서버 렌더와 맞추고, 처음부터 controlled 로 둔다.
+  const selectedTheme = isMounted ? (theme ?? "") : "";
 
   return (
     <SettingsCard

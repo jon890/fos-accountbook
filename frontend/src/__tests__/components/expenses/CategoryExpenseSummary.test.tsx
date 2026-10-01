@@ -78,7 +78,11 @@ describe("CategoryExpenseSummary", () => {
     );
     render(<CategoryExpenseSummary summary={summary} />);
 
-    await user.click(screen.getByRole("button", { name: /카테고리별 지출/ }));
+    // 걸러 보는 카테고리가 있으면 펼친 채 시작한다.
+    expect(screen.getByRole("button", { name: /카테고리별 지출/ })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
 
     const category = screen.getByRole("button", { name: /카테고리 1/ });
     expect(category).toHaveAttribute("aria-pressed", "true");
