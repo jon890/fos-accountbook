@@ -61,7 +61,7 @@ type UserProfile = {
   timezone: string; // 'Asia/Seoul'
   language: string; // 'ko' | 'en' | 'ja'
   currency: string; // 'KRW' | 'USD' | 'JPY'
-  defaultFamilyUuid: string;
+  defaultFamilyUuid: string | null; // 가족을 고르기 전에는 null
 };
 
 // NextAuth JWT 확장
@@ -109,7 +109,7 @@ interface Category {
   type: "EXPENSE" | "INCOME";
   name: string;
   color?: string; // #RRGGBB(기존 값, 기본 카테고리) 또는 oklch(L C H)(팔레트에서 고른 값)
-  icon?: string; // 이모지 또는 아이콘 이름
+  icon: string | null; // 이모지 또는 아이콘 이름. 컬럼이 null 을 허용한다
   excludeFromBudget?: boolean;
   isDefault?: boolean; // true = 삭제 불가 (지출 '미분류', 수입 '기타 수입')
   createdAt: string;
@@ -135,7 +135,7 @@ interface Expense {
   userUuid: string; // 등록한 사용자. 이름은 FamilyMemberSummary 에서 찾는다
   categoryUuid: string;
   category: (CategoryInfo & { excludeFromBudget?: boolean }) | null;
-  amount: number; // 백엔드 BigDecimal → 문자열 → Number 변환
+  amount: number; // 백엔드 BigDecimal 이 JSON 숫자로 온다. 변환하지 않는다
   description: string | null;
   date: string; // ISO 8601
   excludeFromBudget: boolean; // 이 지출만 예산에서 뺀다. 카테고리가 제외면 이 값과 관계없이 제외된다
@@ -265,11 +265,11 @@ interface InvitationResponse {
   status: "PENDING" | "ACCEPTED" | "EXPIRED" | "CANCELLED";
   expiresAt: string;
   createdAt: string;
-  isExpired: boolean;
-  isUsed: boolean;
+  familyName: string | null;
+  // 만료와 사용 여부는 응답 키가 아니라 status 와 expiresAt 으로 서비스가 계산한다
   // GET /invitations/token/{token} 에서만 온다. 로그인 전 공개 경로라 이름과 아바타만 싣는다
-  inviter?: { name: string; avatarUrl: string | null } | null;
-  memberCount?: number | null; // ACTIVE 멤버 수
+  inviter: { name: string | null; avatarUrl: string | null } | null;
+  memberCount: number | null; // ACTIVE 멤버 수
 }
 ```
 
@@ -345,7 +345,7 @@ interface CategoryInfo {
   uuid: string;
   name: string;
   color: string;
-  icon: string;
+  icon: string | null;
 }
 
 interface ApiErrorResponse {
