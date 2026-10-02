@@ -5,11 +5,13 @@ jest.mock("@/lib/server/api/client", () => ({
   serverApiPut: jest.fn(),
 }));
 
-import { createExpense, updateExpense } from "@/services/expense/expense-service";
-import { serverApiPost, serverApiPut } from "@/lib/server/api/client";
+import { createExpense, getExpenses, updateExpense } from "@/services/expense/expense-service";
+import { serverApiGet, serverApiPost, serverApiPut } from "@/lib/server/api/client";
+import { getExpensesResponseSchema } from "@/lib/schemas/responses/transaction";
 
 const mockServerApiPost = serverApiPost as jest.MockedFunction<typeof serverApiPost>;
 const mockServerApiPut = serverApiPut as jest.MockedFunction<typeof serverApiPut>;
+const mockServerApiGet = serverApiGet as jest.MockedFunction<typeof serverApiGet>;
 
 describe("expense-service", () => {
   beforeEach(() => {
@@ -48,5 +50,16 @@ describe("expense-service", () => {
   it("누락한 수정 플래그는 요청 객체에 넣지 않는다", async () => {
     await updateExpense("family-1", "expense-1", {});
     expect(mockServerApiPut).toHaveBeenCalledWith("/families/family-1/expenses/expense-1", {});
+  });
+
+  it("목록 조회에 지출 목록 응답 스키마를 넘긴다", async () => {
+    const page = { items: [], totalElements: 0, totalPages: 0, currentPage: 0 };
+    mockServerApiGet.mockResolvedValue(page);
+
+    await expect(getExpenses("family-1", { page: 2, limit: 10 })).resolves.toBe(page);
+    expect(mockServerApiGet).toHaveBeenCalledWith(
+      "/families/family-1/expenses?page=1&size=10",
+      expect.objectContaining({ schema: getExpensesResponseSchema }),
+    );
   });
 });

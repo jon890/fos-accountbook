@@ -201,3 +201,22 @@ export function logNetworkError(endpoint: string, error: unknown): void {
     errorStack: error instanceof Error ? error.stack : undefined,
   });
 }
+
+/**
+ * 응답 계약 오류 로깅 (ADR-F42). 응답 값은 남기지 않고 경로 템플릿과 이슈 경로만 남긴다.
+ */
+export function logResponseValidationError(
+  template: string,
+  issues: ReadonlyArray<{ path: string; code: string }>
+): void {
+  console.error(
+    `[ResponseValidation] ${template} ${issues.map((i) => `${i.path || "(root)"}:${i.code}`).join(", ")}`
+  );
+}
+
+/**
+ * 목록 응답에서 계약에 맞지 않아 뺀 항목 수를 남긴다 (ADR-F42).
+ */
+export function logDroppedResponseItems(listName: string, dropped: number): void {
+  console.error(`[ResponseValidation] ${listName}: 계약에 맞지 않는 항목 ${dropped}건을 뺐다`);
+}

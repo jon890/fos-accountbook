@@ -28,6 +28,7 @@ function category(uuid: string, name: string, type: CategoryResponse["type"]): C
     familyUuid: "f1",
     type,
     name,
+    icon: null,
     createdAt: "2026-10-01T00:00:00Z",
     updatedAt: "2026-10-01T00:00:00Z",
   };

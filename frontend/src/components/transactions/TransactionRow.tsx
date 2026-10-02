@@ -15,7 +15,7 @@ export interface TxBase {
   category: {
     uuid: string;
     name: string;
-    icon: string;
+    icon: string | null;
     color?: string | null;
   } | null;
   createdBy?: { uuid?: string; name: string; colorClass?: string } | null;

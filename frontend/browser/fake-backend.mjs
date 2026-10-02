@@ -67,6 +67,7 @@ const categories = [
     name: "급여",
     icon: "💰",
     color: "oklch(0.650 0.140 145)",
+    excludeFromBudget: false,
     createdAt,
     updatedAt: createdAt,
   },
@@ -208,8 +209,9 @@ const invitation = {
   status: "PENDING",
   expiresAt: "2099-01-02T00:00:00.000Z",
   createdAt,
-  isExpired: false,
-  isUsed: false,
+  // 백엔드 InvitationResponse 의 원시형 boolean isExpired, isUsed 는 Jackson 이 expired, used 로 직렬화한다.
+  expired: false,
+  used: false,
   inviter: {
     name: "초대자",
     avatarUrl: null,
@@ -369,10 +371,13 @@ const server = createServer(async (request, response) => {
     sendJson(response, 200, {
       success: true,
       data: {
+        userUuid: members[0].userUuid,
         timezone: "Asia/Seoul",
         language: "ko",
         currency: "KRW",
         defaultFamilyUuid: FAMILY_UUID,
+        createdAt,
+        updatedAt: createdAt,
       },
     });
     return;
@@ -439,6 +444,8 @@ const server = createServer(async (request, response) => {
           color: categories[0].color,
           totalAmount: 16200,
           percentage: 100,
+          deltaPercent: null,
+          previousAmount: null,
         }],
       },
     });
@@ -515,7 +522,7 @@ const server = createServer(async (request, response) => {
     return;
   }
   if (method === "GET" && pathname === `/api/v1/invitations/token/${invitationToken}`) {
-    sendJson(response, 200, { data: invitation });
+    sendJson(response, 200, { success: true, data: invitation });
     return;
   }
 

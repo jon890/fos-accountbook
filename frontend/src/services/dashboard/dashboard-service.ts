@@ -1,3 +1,6 @@
+import { dailyStatsResponseSchema } from "@/lib/schemas/responses/calendar";
+import { categoryBreakdownResponseSchema } from "@/lib/schemas/responses/dashboard";
+import { getExpensesResponseSchema } from "@/lib/schemas/responses/transaction";
 import { getDatePartsInTimezone } from "@/lib/utils/date-timezone";
 import { serverApiGet } from "@/lib/server/api/client";
 import { ServerApiError } from "@/lib/server/api/types";
@@ -10,8 +13,6 @@ import type {
   RecentExpense,
   MonthlyCategoryBreakdown,
 } from "@/types/dashboard";
-import type { ExpenseResponse } from "@/types/expense";
-import type { PaginationResponse } from "@/types/common";
 
 export interface DailyTransactionSummary {
   date: string;
@@ -32,10 +33,9 @@ export async function getMonthlyDailyStats(
   year: number,
   month: number,
 ): Promise<DailyTransactionSummary[]> {
-  const result = await serverApiGet<{
-    dailyStats: DailyTransactionSummary[];
-  }>(
+  const result = await serverApiGet(
     `/families/${familyUuid}/dashboard/daily-stats?year=${year}&month=${month}`,
+    { schema: dailyStatsResponseSchema },
   );
   return result.dailyStats.map(({ date, income, expense }) => ({
     date,
@@ -44,28 +44,15 @@ export async function getMonthlyDailyStats(
   }));
 }
 
-interface CategoryBreakdownResponse {
-  year: number;
-  month: number;
-  totalExpense: number;
-  items: Array<{
-    categoryUuid: string;
-    name: string | null;
-    icon: string | null;
-    color: string | null;
-    totalAmount: number;
-    percentage: number;
-  }>;
-}
-
 export async function getMonthlyCategoryBreakdown(
   familyUuid: string,
   year: number,
   month: number,
 ): Promise<MonthlyCategoryBreakdown> {
   try {
-    const result = await serverApiGet<CategoryBreakdownResponse>(
+    const result = await serverApiGet(
       `/families/${familyUuid}/dashboard/stats/category-breakdown?year=${year}&month=${month}&compareWithPrev=false`,
+      { schema: categoryBreakdownResponseSchema },
     );
     return {
       year: result.year,
@@ -93,8 +80,9 @@ export async function getRecentExpenses(
   familyUuid: string,
   limit: number = 10,
 ): Promise<RecentExpense[]> {
-  const expensesPage = await serverApiGet<PaginationResponse<ExpenseResponse>>(
+  const expensesPage = await serverApiGet(
     `/families/${familyUuid}/expenses?page=0&size=${limit}&sort=-date`,
+    { schema: getExpensesResponseSchema },
   );
 
   const categories = await getCachedFamilyCategories(familyUuid);
@@ -105,7 +93,7 @@ export async function getRecentExpenses(
     return {
       id: expense.uuid,
       uuid: expense.uuid,
-      amount: expense.amount,
+      amount: String(expense.amount),
       description: expense.description || null,
       date: expense.date,
       category: {

@@ -81,6 +81,7 @@ wrapper 가 `next/dynamic` 의 `ssr: false` 로 본체를 지연 로드해 recha
 
 - **Server Action**: `{ success: false, error }` 반환 → 클라이언트에서 `toast.error`
 - **HTTP 오류**: ky가 `HTTPError` 발생 → 서비스 레이어에서 catch 후 재throw 또는 null 반환
+- **응답 계약 오류**: `serverApiGet` 같은 래퍼에 `schema` 를 넘기면 `data` 를 Zod 로 검증한다. 어긋나면 엔드포인트와 필드 경로를 로그에 남기고 `ResponseValidationError` 를 던진다. Action 은 이를 내부 오류로 돌려준다 (ADR-F42)
 - **필드 검증 실패(400)**: 백엔드 응답의 `errors[0].message` 가 있으면 그 문구를 `INVALID_INPUT` 실패 결과의 메시지로 그대로 돌려준다. 백엔드가 사용자용 문장으로 만든 문구라서다. 없으면 기본 문구로 바꾼다
 - **인증 오류**: `requireAuthOrRedirect()` → `/auth/signin` 리다이렉트
 
@@ -108,6 +109,7 @@ wrapper 가 `next/dynamic` 의 `ssr: false` 로 본체를 지연 로드해 recha
 src/
 ├── actions/{domain}/       Server Action — 인증·검증·revalidatePath
 ├── services/{domain}/      API 호출·변환 함수
+├── lib/schemas/responses/ 백엔드 응답 Zod 스키마 (ADR-F42)
 ├── components/
 │   ├── ui/                 Shadcn 기반 기본 컴포넌트
 │   ├── layout/             Header, BottomNavigation, SettingsCard (페이지 카드 helper)

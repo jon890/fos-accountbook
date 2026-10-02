@@ -1,6 +1,6 @@
 # ADR-F06: Zod 런타임 검증
 
-**결정**: 모든 Server Action 입력값을 Zod로 검증
+**결정**: 모든 Server Action 입력값을 Zod로 검증. services 가 받는 백엔드 응답 검증은 [ADR-F42](ADR-F42-service-response-validation.md) 가 정한다
 
 **이유**:
 

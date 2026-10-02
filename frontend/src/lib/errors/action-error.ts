@@ -4,7 +4,10 @@
  */
 
 import { ERROR_MESSAGES, ErrorCode } from "./error-code";
-import { ServerApiError } from "@/lib/server/api/types";
+import {
+  ResponseValidationError,
+  ServerApiError,
+} from "@/lib/server/api/types";
 
 /**
  * Server Action 에러 정보
@@ -289,6 +292,11 @@ export function handleActionError(
         .addParameter("backendCode", business.code)
         .toFailureResult();
     }
+  }
+
+  // 응답 계약 위반(ADR-F42): message 에 엔드포인트가 있어 cause 로 클라이언트에 싣지 않는다
+  if (error instanceof ResponseValidationError) {
+    return ActionError.internalError(defaultMessage).toFailureResult();
   }
 
   // Error 객체인 경우

@@ -6,7 +6,11 @@ jest.mock("@/lib/server/cache", () => ({
 }));
 
 import { serverApiGet } from "@/lib/server/api/client";
-import { ServerApiError } from "@/lib/server/api/types";
+import { categoryBreakdownResponseSchema } from "@/lib/schemas/responses/dashboard";
+import {
+  ResponseValidationError,
+  ServerApiError,
+} from "@/lib/server/api/types";
 import { getMonthlyCategoryBreakdown } from "@/services/dashboard/dashboard-service";
 
 const api = jest.mocked(serverApiGet);
@@ -63,6 +67,7 @@ describe("getMonthlyCategoryBreakdown", () => {
     });
     expect(api).toHaveBeenCalledWith(
       "/families/family/dashboard/stats/category-breakdown?year=2026&month=3&compareWithPrev=false",
+      expect.objectContaining({ schema: categoryBreakdownResponseSchema }),
     );
   });
 
@@ -76,8 +81,15 @@ describe("getMonthlyCategoryBreakdown", () => {
     });
   });
 
-  it.each([new ServerApiError("failed", 500), new Error("network")])(
-    "일반 실패는 빈 집계로 바꾼다: %s",
+  it.each([
+    new ServerApiError("failed", 500),
+    new Error("network"),
+    new ResponseValidationError(
+      "/families/:uuid/dashboard/stats/category-breakdown",
+      [{ path: "items.0.totalAmount", code: "invalid_type" }],
+    ),
+  ])(
+    "일반 실패와 응답 계약 위반은 빈 집계로 바꾼다: %s",
     async (error) => {
       api.mockRejectedValue(error);
       expect(await getMonthlyCategoryBreakdown("family", 2026, 3)).toEqual({
