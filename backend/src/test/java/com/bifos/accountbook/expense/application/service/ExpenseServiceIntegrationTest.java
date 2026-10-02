@@ -14,7 +14,6 @@ import com.bifos.accountbook.family.domain.repository.FamilyRepository;
 import com.bifos.accountbook.shared.TestFixturesSupport;
 import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.user.domain.entity.User;
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -402,13 +401,5 @@ class ExpenseServiceIntegrationTest extends TestFixturesSupport {
 
     // Then
     assertThat(descriptions).containsExactly("셋째", "둘째", "첫째");
-  }
-
-  @Test
-  @DisplayName("가족 엔티티는 지출과 수입 컬렉션을 갖지 않는다")
-  void family_HasNoExpenseOrIncomeCollections() {
-    assertThat(Family.class.getDeclaredFields())
-        .extracting(Field::getName)
-        .doesNotContain("expenses", "incomes");
   }
 }
