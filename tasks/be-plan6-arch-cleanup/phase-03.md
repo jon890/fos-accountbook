@@ -1,6 +1,6 @@
 # Phase 03. 초대의 인자 없는 now() 를 Clock 으로 (위반 5건)
 
-**Execution profile**: fast
+**Execution profile**: standard
 **Domain**: backend-domain
 
 ## 목표
