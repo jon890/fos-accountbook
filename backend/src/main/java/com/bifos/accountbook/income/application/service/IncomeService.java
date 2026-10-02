@@ -63,16 +63,18 @@ public class IncomeService {
     // 카테고리 확인 + 가족 소속 검증 (캐시 활용, DB 조회 없음)
     categoryService.validateAndFindCached(familyUuid, categoryCustomUuid, CategoryType.INCOME);
 
-    // 수입 생성 (ORM 편의 메서드 활용)
     Income income =
-        family.addIncome(
-            request.getAmount(),
-            categoryCustomUuid,
-            user.getUuid(),
-            request.getDescription(),
-            request.getDate() != null
-                ? request.getDate()
-                : LocalDateTime.now(clock.withZone(BusinessTime.ZONE)));
+        Income.builder()
+            .family(family)
+            .categoryUuid(categoryCustomUuid)
+            .userUuid(user.getUuid())
+            .amount(request.getAmount())
+            .description(request.getDescription())
+            .date(
+                request.getDate() != null
+                    ? request.getDate()
+                    : LocalDateTime.now(clock.withZone(BusinessTime.ZONE)))
+            .build();
 
     income = incomeRepository.save(income);
 

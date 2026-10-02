@@ -1,8 +1,6 @@
 package com.bifos.accountbook.family.domain.entity;
 
-import com.bifos.accountbook.expense.domain.entity.Expense;
 import com.bifos.accountbook.family.domain.value.FamilyStatus;
-import com.bifos.accountbook.income.domain.entity.Income;
 import com.bifos.accountbook.shared.value.CustomUuid;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -69,23 +67,9 @@ public class Family {
   @Builder.Default
   private List<FamilyMember> members = new ArrayList<>();
 
-  @OneToMany(
-      mappedBy = "family",
-      cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-  @Builder.Default
-  private List<Income> incomes = new ArrayList<>();
-
-  @OneToMany(
-      mappedBy = "family",
-      cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-  @Builder.Default
-  private List<Expense> expenses = new ArrayList<>();
-
   /**
-   * JPA 연관관계 정책: - Income/Expense: @OneToMany 사용 (ORM의 장점 활용, 편의 메서드 제공) - Category: 연관관계 없음
-   * (CategoryService 캐시 활용)
-   *
-   * <p>Category만 캐시를 위해 연관관계를 끊었습니다. Income/Expense는 Family와 강한 관계이므로 JPA 연관관계를 사용합니다.
+   * JPA 연관관계 정책: 지출과 수입은 Family 에 컬렉션을 두지 않고 각자 {@code family} 다대일만 가진다. 가족의 지출과 수입은 저장소 조회로 읽는다.
+   * 컬렉션을 두면 등록 경로가 가족의 다른 행에 묶인다. Category 도 캐시를 위해 연관관계가 없다.
    */
   @PrePersist
   public void prePersist() {
@@ -116,89 +100,5 @@ public class Family {
   /** 가족 삭제 (Soft Delete) */
   public void delete() {
     this.status = FamilyStatus.DELETED;
-  }
-
-  // ========== 연관관계 편의 메서드 ==========
-
-  /**
-   * 수입 추가 (연관관계 편의 메서드) 테스트에서 편리하게 데이터를 생성할 수 있습니다.
-   *
-   * @param amount 수입 금액
-   * @param categoryUuid 카테고리 UUID
-   * @param userUuid 사용자 UUID
-   * @return 생성된 Income 엔티티
-   */
-  public Income addIncome(BigDecimal amount, CustomUuid categoryUuid, CustomUuid userUuid) {
-    return addIncome(amount, categoryUuid, userUuid, null, LocalDateTime.now());
-  }
-
-  /**
-   * 수입 추가 (연관관계 편의 메서드 - 전체 파라미터)
-   *
-   * @param amount 수입 금액
-   * @param categoryUuid 카테고리 UUID
-   * @param userUuid 사용자 UUID
-   * @param description 설명
-   * @param date 수입 날짜
-   * @return 생성된 Income 엔티티
-   */
-  public Income addIncome(
-      BigDecimal amount,
-      CustomUuid categoryUuid,
-      CustomUuid userUuid,
-      String description,
-      LocalDateTime date) {
-    Income income =
-        Income.builder()
-            .family(this)
-            .categoryUuid(categoryUuid)
-            .userUuid(userUuid)
-            .amount(amount)
-            .description(description)
-            .date(date)
-            .build();
-    this.incomes.add(income);
-    return income;
-  }
-
-  /**
-   * 지출 추가 (연관관계 편의 메서드) 테스트에서 편리하게 데이터를 생성할 수 있습니다.
-   *
-   * @param amount 지출 금액
-   * @param categoryUuid 카테고리 UUID
-   * @param userUuid 사용자 UUID
-   * @return 생성된 Expense 엔티티
-   */
-  public Expense addExpense(BigDecimal amount, CustomUuid categoryUuid, CustomUuid userUuid) {
-    return addExpense(amount, categoryUuid, userUuid, null, LocalDateTime.now());
-  }
-
-  /**
-   * 지출 추가 (연관관계 편의 메서드 - 전체 파라미터)
-   *
-   * @param amount 지출 금액
-   * @param categoryUuid 카테고리 UUID
-   * @param userUuid 사용자 UUID
-   * @param description 설명
-   * @param date 지출 날짜
-   * @return 생성된 Expense 엔티티
-   */
-  public Expense addExpense(
-      BigDecimal amount,
-      CustomUuid categoryUuid,
-      CustomUuid userUuid,
-      String description,
-      LocalDateTime date) {
-    Expense expense =
-        Expense.builder()
-            .family(this)
-            .categoryUuid(categoryUuid)
-            .userUuid(userUuid)
-            .amount(amount)
-            .description(description)
-            .date(date)
-            .build();
-    this.expenses.add(expense);
-    return expense;
   }
 }
