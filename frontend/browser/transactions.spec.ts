@@ -167,3 +167,30 @@ test("내역 탭은 추가 버튼 없이 하단 추가 시트를 연다", async 
     await page.keyboard.press("Escape");
   }
 });
+
+test("모바일은 필터 버튼이 여는 하단 시트에서 필터를 적용하고 데스크톱은 칩을 보인다", async ({ page }, testInfo) => {
+  await page.goto("/transactions");
+
+  if (testInfo.project.name !== "mobile") {
+    await expect(page.getByRole("button", { name: "필터", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "이번달", exact: true })).toBeVisible();
+    return;
+  }
+
+  await expect(page.getByRole("button", { name: "이번달", exact: true })).toHaveCount(0);
+  await expect(page.getByTestId("filter-badge")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "필터", exact: true }).click();
+  const sheet = page.getByRole("dialog");
+  await expect(sheet).toBeVisible();
+  const box = await sheet.boundingBox();
+  const viewport = page.viewportSize();
+  expect(box).not.toBeNull();
+  expect(Math.round(box!.y + box!.height)).toBe(viewport!.height);
+
+  await sheet.getByRole("spinbutton", { name: "최솟값 금액" }).fill("10000");
+  await sheet.getByRole("button", { name: "적용", exact: true }).click();
+
+  await expect(page).toHaveURL(/amountMin=10000/);
+  await expect(page.getByTestId("filter-badge")).toHaveText("1");
+});
