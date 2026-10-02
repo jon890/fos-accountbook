@@ -177,14 +177,16 @@
 ## 5-2. /transactions 페이지 구조 (plan003)
 
 ```
-[page.tsx (server) — searchParams { tab, categoryId, startDate, endDate, page, q, amountMin, amountMax }]
+[page.tsx (server) — searchParams { tab, categoryId, startDate, endDate, limit, q, amountMin, amountMax }]
     ├─ getFamilyMembersAction() → 선택된 가족 구성원 → 목록 Client의 작성자 이름과 색 점
     ├─ TransactionsTabs (segmented role=tablist, bg-bg-muted / bg-bg-elev)
     ├─ FilterChips (카테고리 / 기간 / AmountRangeFilter / SearchBar)
+    ├─ FilterSheet (모바일, 「필터」 버튼과 적용 개수 배지, 하단 시트)
     ├─ ExpenseSummaryWrapper → CategoryExpenseSummary (접힌 채 시작, 걸러 보는 카테고리가 있으면 펼친 채 시작하고 그 행이 6위 아래면 전체를 보임, 머리에 총액과 비중 막대, 펼치면 한 줄씩 상위 5개와 「전체 N개 보기」, 행 탭 → ?categoryId=)
     │     ├─ SearchBar (300ms debounce, ?q= URL 동기화, 모바일 expand)
     │     └─ AmountRangeFilter (Popover, amountMin/Max URL param)
     └─ ExpenseListClient / IncomeListClient / RecurringExpenseList (tab 별)
+            ├─ LoadMoreButton (더 보기, 3000건 상한 안내)
             └─ DateGroupSection<T> (날짜 링크와 거래 종류별 합계, 반복 목록은 날짜 그룹 없이 표시)
                     └─ TransactionRow (설명, 카테고리·작성자·시각, 금액)
                             └─ 행 탭 → EditTransactionDialog

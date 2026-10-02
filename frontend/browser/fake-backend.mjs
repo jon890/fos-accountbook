@@ -175,7 +175,7 @@ const transactions = {
     categoryUuid: salaryIncomeCategory.uuid,
     category: { ...salaryIncomeCategory, icon: "💳" },
     amount: 3000000,
-    description: "급여",
+    description: "10월 월급",
     date: "2026-10-01T09:00:00.000Z",
     createdAt,
     updatedAt: createdAt,

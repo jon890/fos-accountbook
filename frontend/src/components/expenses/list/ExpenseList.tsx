@@ -6,7 +6,7 @@ import type { FamilyMemberSummary } from "@/types/family";
 import { Inbox } from "lucide-react";
 import { ExpenseListClient } from "./ExpenseListClient";
 import { LoadMoreButton } from "@/components/transactions/LoadMoreButton";
-import { applyClientFilters } from "@/services/transaction/transaction-service";
+import { applyClientFilters, parseAmountFilter } from "@/services/transaction/transaction-service";
 
 interface ExpenseListProps {
   familyId: string;
@@ -132,11 +132,4 @@ export async function ExpenseList({
       />
     </div>
   );
-}
-
-function parseAmountFilter(value: string | undefined): number | undefined {
-  if (!value) return undefined;
-
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }

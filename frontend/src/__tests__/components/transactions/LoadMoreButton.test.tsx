@@ -48,7 +48,7 @@ describe("LoadMoreButton", () => {
     expect(screen.queryByRole("button", { name: /더 보기/ })).not.toBeInTheDocument();
   });
 
-  it("누르면 limit을 300 늘기고 스크롤을 유지한다", async () => {
+  it("누르면 limit을 300 늘리고 스크롤을 유지한다", async () => {
     const user = userEvent.setup();
     render(<LoadMoreButton loadedCount={300} totalElements={601} limit={300} />);
 

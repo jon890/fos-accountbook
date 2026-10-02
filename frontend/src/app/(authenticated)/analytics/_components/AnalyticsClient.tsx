@@ -11,7 +11,6 @@ import { ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Wallet } from "luc
 import { toast } from "sonner";
 import { startTransition, useState, useMemo } from "react";
 import { useNavigationPending } from "@/lib/client/navigation";
-import { useAppRouter } from "@/lib/client/navigation";
 import { AnalyticsPeriodToggle } from "./AnalyticsPeriodToggle";
 import { AnalyticsCategoryDonut } from "./AnalyticsCategoryDonut";
 import { MonthlyTrendBar } from "./MonthlyTrendBar";
@@ -61,9 +60,8 @@ export function AnalyticsClient({
   const [expenses, setExpenses] = useState(initialExpenses);
   const [totalElements, setTotalElements] = useState(initialTotalElements);
   const [isPending, setIsPending] = useState(false);
-  const router = useAppRouter();
   const isNavigationPending = useNavigationPending();
-  const isBusy = isPending || isNavigationPending || router.isPending;
+  const isBusy = isPending || isNavigationPending;
 
   const isCurrentMonth = useMemo(() => {
     const now = new Date();
@@ -147,6 +145,7 @@ export function AnalyticsClient({
         <div className="flex items-center gap-2 bg-bg-elev rounded-xl border border-border shadow-[var(--shadow-subtle)] px-1 py-1">
           <button
             onClick={() => handleMonthChange("prev")}
+            aria-label="이전 달"
             className="p-1.5 rounded-lg hover:bg-bg-muted transition-colors text-fg-muted hover:text-fg"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -156,6 +155,7 @@ export function AnalyticsClient({
           </span>
           <button
             onClick={() => handleMonthChange("next")}
+            aria-label="다음 달"
             disabled={isNextDisabled}
             className="p-1.5 rounded-lg hover:bg-bg-muted transition-colors text-fg-muted hover:text-fg disabled:opacity-30 disabled:cursor-not-allowed"
           >

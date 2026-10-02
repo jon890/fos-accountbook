@@ -5,7 +5,7 @@ import { Inbox } from "lucide-react";
 import type { FamilyMemberSummary } from "@/types/family";
 import { IncomeListClient } from "./IncomeListClient";
 import { LoadMoreButton } from "@/components/transactions/LoadMoreButton";
-import { applyClientFilters } from "@/services/transaction/transaction-service";
+import { applyClientFilters, parseAmountFilter } from "@/services/transaction/transaction-service";
 
 interface IncomeListProps {
   familyId: string;
@@ -122,11 +122,4 @@ export async function IncomeList({
       />
     </div>
   );
-}
-
-function parseAmountFilter(value: string | undefined): number | undefined {
-  if (!value) return undefined;
-
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }

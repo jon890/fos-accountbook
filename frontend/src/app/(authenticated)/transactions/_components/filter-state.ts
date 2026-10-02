@@ -119,7 +119,8 @@ export function buildFilterUrl(currentQuery: string, draft: FilterDraft): string
   setAmount(params, "amountMax", draft.amountMax);
   params.delete("limit");
 
-  return `/transactions?${params.toString()}`;
+  const query = params.toString();
+  return query ? `/transactions?${query}` : "/transactions";
 }
 
 function setAmount(params: URLSearchParams, key: string, value: string) {

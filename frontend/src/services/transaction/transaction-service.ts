@@ -11,6 +11,15 @@ export function groupTransactionsWithTotal<T extends { date: string; amount: num
   }));
 }
 
+/** 금액 필터 URL 값을 숫자로 바꾼다. 빈 값, 공백뿐인 값, 음수, 숫자가 아닌 값은 필터 없음이다. */
+export function parseAmountFilter(value: string | undefined): number | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+}
+
 export function applyClientFilters<
   T extends { amount: number; description?: string | null }
 >(

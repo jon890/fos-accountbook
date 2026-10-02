@@ -1,5 +1,4 @@
 jest.mock("@/lib/client/navigation", () => ({
-  useAppRouter: jest.fn(),
   useNavigationPending: jest.fn(),
 }));
 jest.mock("@/actions/dashboard/get-dashboard-stats-action", () => ({ getDashboardStatsAction: jest.fn() }));
@@ -14,7 +13,7 @@ import { AnalyticsClient } from "@/app/(authenticated)/analytics/_components/Ana
 import { getDashboardStatsAction } from "@/actions/dashboard/get-dashboard-stats-action";
 import { getMonthlyDailyStatsAction } from "@/actions/dashboard/get-monthly-daily-stats-action";
 import { getExpensesAction } from "@/actions/expense/get-expenses-action";
-import { useAppRouter, useNavigationPending } from "@/lib/client/navigation";
+import { useNavigationPending } from "@/lib/client/navigation";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 const defaultProps = {
@@ -33,7 +32,6 @@ const defaultProps = {
 
 describe("AnalyticsClient", () => {
   beforeEach(() => {
-    jest.mocked(useAppRouter).mockReturnValue({ isPending: false } as ReturnType<typeof useAppRouter>);
     jest.mocked(useNavigationPending).mockReturnValue(false);
   });
 
@@ -98,7 +96,7 @@ describe("AnalyticsClient", () => {
     render(<AnalyticsClient {...defaultProps} initialExpenses={thousandInitialExpenses} initialTotalElements={1000} />);
 
     expect(screen.queryByText("최근 1000건 안에서 골랐어요")).not.toBeInTheDocument();
-    fireEvent.click(screen.getAllByRole("button")[0]);
+    fireEvent.click(screen.getByRole("button", { name: "이전 달" }));
 
     await waitFor(() => {
       expect(screen.getByText("최근 1000건 안에서 골랐어요")).toBeInTheDocument();

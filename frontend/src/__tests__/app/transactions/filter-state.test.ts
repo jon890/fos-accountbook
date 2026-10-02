@@ -113,7 +113,7 @@ describe("buildFilterUrl", () => {
       "startDate=2026-09-01&endDate=2026-09-30&categoryId=c1&amountMin=1&amountMax=2",
       resetFilterDraft(TZ)
     );
-    expect(url).toBe("/transactions?");
+    expect(url).toBe("/transactions");
   });
 
   it("이번 달이 아닌 기간은 시작일과 종료일을 넣는다", () => {

@@ -6,6 +6,7 @@
 import {
   groupTransactionsWithTotal,
   applyClientFilters,
+  parseAmountFilter,
 } from "@/services/transaction/transaction-service";
 
 // group-by-date 는 실제 구현 사용 (순수 함수, 의존성 없음)
@@ -140,5 +141,21 @@ describe("applyClientFilters", () => {
   it("amountMin + q 복합 필터", () => {
     const result = applyClientFilters(items, { amountMin: 10000, q: "식사" });
     expect(result.map((i) => i.uuid)).toEqual(["2"]);
+  });
+});
+
+describe("parseAmountFilter", () => {
+  it("빈 값과 공백뿐인 값은 필터 없음이다", () => {
+    expect(parseAmountFilter(undefined)).toBeUndefined();
+    expect(parseAmountFilter("")).toBeUndefined();
+    expect(parseAmountFilter("   ")).toBeUndefined();
+  });
+
+  it("앞뒤 공백을 지우고 0 이상의 유한한 숫자만 받는다", () => {
+    expect(parseAmountFilter(" 5000 ")).toBe(5000);
+    expect(parseAmountFilter("0")).toBe(0);
+    expect(parseAmountFilter("-1")).toBeUndefined();
+    expect(parseAmountFilter("abc")).toBeUndefined();
+    expect(parseAmountFilter("Infinity")).toBeUndefined();
   });
 });

@@ -1,4 +1,4 @@
-const LIST_LIMIT_STEP = 300;
+export const LIST_LIMIT_STEP = 300;
 export const MAX_LIST_LIMIT = 3000;
 
 export function parseListLimit(raw: string | undefined): number {

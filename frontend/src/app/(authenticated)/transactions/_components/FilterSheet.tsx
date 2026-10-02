@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { SlidersHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Sheet,
@@ -253,21 +254,22 @@ export function FilterSheet({
           </div>
 
           <SheetFooter className="flex-row gap-2">
-            <button
+            <Button
               type="button"
+              variant="outline"
+              className="flex-1"
               onClick={() => updateDraft(resetFilterDraft(timezone))}
-              className="flex-1 rounded-md border border-border py-2 text-sm text-fg-muted hover:text-fg transition-colors"
             >
               초기화
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              className="flex-1"
               onClick={apply}
               disabled={isNavigationPending}
-              className="flex-1 rounded-md bg-fg py-2 text-sm font-semibold text-bg hover:opacity-90 transition-opacity"
             >
               적용
-            </button>
+            </Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>

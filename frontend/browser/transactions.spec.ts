@@ -66,7 +66,7 @@ test("빈 지출과 수입 목록은 하단 가운데 추가 버튼 안내와 �
 test("수입 행을 누르면 수입 수정 시트가 열린다", async ({ page }) => {
   await page.goto("/transactions?tab=incomes");
 
-  await page.getByRole("button", { name: /급여/ }).click();
+  await page.getByRole("button", { name: /10월 월급/ }).click();
   await expect(page.getByRole("heading", { name: "수입 수정" })).toBeVisible();
 });
 
@@ -128,7 +128,7 @@ test("검색과 금액 범위는 받은 내역만 거르고 더 보기를 유지
   ).toBeVisible();
 
   await page.goto("/transactions?tab=incomes&q=%EA%B8%89%EC%97%AC");
-  await expect(page.getByRole("button", { name: /급여/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /10월 월급/ })).toBeVisible();
 });
 
 test("3000건을 불러온 뒤에는 더 보기 대신 조회 기간 안내를 표시한다", async ({ page, request }) => {

@@ -50,6 +50,7 @@ export function CategoryItem({
                 size="icon"
                 className="h-6 w-6 md:h-8 md:w-8"
                 onClick={handleEditClick}
+                aria-label="수정"
               >
                 <Edit2 className="w-3 h-3 md:w-4 md:h-4" />
               </Button>
@@ -58,6 +59,7 @@ export function CategoryItem({
                 size="icon"
                 className="h-6 w-6 md:h-8 md:w-8"
                 onClick={handleDeleteClick}
+                aria-label="삭제"
               >
                 <Trash2 className="w-3 h-3 md:w-4 md:h-4 text-expense" />
               </Button>

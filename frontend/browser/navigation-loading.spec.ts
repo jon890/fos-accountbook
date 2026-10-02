@@ -32,7 +32,7 @@ test("수입 탭 전환 중 진행 막대와 목록 대기 상태를 표시한�
 
     await expect(page).toHaveURL(/\/transactions\?.*tab=incomes/);
     await expect(page.getByRole("tab", { name: "수입", selected: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: /급여/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /10월 월급/ })).toBeVisible();
     await expect(page.getByRole("progressbar")).toHaveCount(0);
     await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
   } finally {
