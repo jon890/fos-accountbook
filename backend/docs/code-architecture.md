@@ -16,7 +16,7 @@ com.bifos.accountbook
 │   └── infra/               Repository 구현체 (JPA/QueryDSL)
 ├── income/                  수입 (동일 레이어 구조)
 ├── category/                카테고리
-├── family/                  가족, 멤버십
+├── family/                  가족, 멤버십. application/access/ 에 가족 접근 검증 AOP(@ValidateFamilyAccess, FamilyAccessAspect, FamilyValidationService)
 ├── recurring/               반복 지출, 스케줄러
 ├── invitation/              초대
 ├── notification/            알림, 예산 알림
@@ -31,7 +31,6 @@ com.bifos.accountbook
 ```
 shared/
 ├── auth/           LoginUser, LoginUserDto, LoginUserArgumentResolver
-├── aop/            FamilyAccessAspect, @ValidateFamilyAccess, FamilyValidationService
 ├── dto/            ApiSuccessResponse, ApiErrorResponse, PaginationResponse
 ├── exception/      BusinessException, ErrorCode, GlobalExceptionHandler
 ├── value/          CustomUuid, CodeEnum
