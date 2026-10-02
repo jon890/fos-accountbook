@@ -91,6 +91,46 @@ test("더 보기는 300건을 더 요청하고 쪽 넘김 버튼을 표시하지
   expect(await requestSizesResponse.json()).toContain("600");
 });
 
+test("검색과 금액 범위는 받은 내역만 거르고 더 보기를 유지한다", async ({ page, request }) => {
+  const response = await request.post(`${BACKEND_BASE_URL}/__test/transactions-total`, {
+    data: { totalElements: 4 },
+  });
+  expect(response.ok()).toBe(true);
+
+  await page.goto("/transactions?q=%EB%B2%84%EC%8A%A4");
+  await expect(page.getByRole("button", { name: /버스 요금/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /점심 식사/ })).toHaveCount(0);
+  await expect(page.getByText("불러온 3건 안에서 찾았어요")).toBeVisible();
+  await expect(page.getByRole("button", { name: "더 보기 (1건 남음)" })).toBeVisible();
+
+  await page.goto("/transactions?q=%EC%8B%9D%EB%B9%84");
+  await expect(page.getByRole("button", { name: /점심 식사/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /버스 요금/ })).toHaveCount(0);
+
+  await page.goto("/transactions?amountMin=10000");
+  await expect(page.getByRole("button", { name: /점심 식사/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /버스 요금/ })).toHaveCount(0);
+
+  await page.goto("/transactions?q=%EC%97%86%EB%8A%94%20%EA%B2%80%EC%83%89%EC%96%B4");
+  await expect(
+    page.getByRole("main").getByText("조건에 맞는 거래가 없어요"),
+  ).toBeVisible();
+  const loadMoreButton = page.getByRole("button", { name: "더 보기 (1건 남음)" });
+  await expect(loadMoreButton).toBeVisible();
+  await loadMoreButton.click();
+  await expect(page).toHaveURL(/limit=600/);
+  expect(new URL(page.url()).searchParams.get("q")).toBe("없는 검색어");
+  await expect(
+    page.getByRole("main").getByText("조건에 맞는 거래가 없어요"),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("main").getByText("불러온 3건 안에서 찾았어요"),
+  ).toBeVisible();
+
+  await page.goto("/transactions?tab=incomes&q=%EA%B8%89%EC%97%AC");
+  await expect(page.getByRole("button", { name: /급여/ })).toBeVisible();
+});
+
 test("3000건을 불러온 뒤에는 더 보기 대신 조회 기간 안내를 표시한다", async ({ page, request }) => {
   const response = await request.post(`${BACKEND_BASE_URL}/__test/transactions-total`, {
     data: { totalElements: 3001 },

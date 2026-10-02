@@ -15,17 +15,32 @@ export function applyClientFilters<
   T extends { amount: number; description?: string | null }
 >(
   items: T[],
-  filters: { amountMin?: number; amountMax?: number; q?: string }
+  filters: {
+    amountMin?: number;
+    amountMax?: number;
+    q?: string;
+    categoryNameOf?: (item: T) => string | undefined;
+  }
 ): T[] {
-  const { amountMin, amountMax, q } = filters;
-  const lowerQ = q ? q.toLowerCase() : undefined;
+  const { amountMin, amountMax, q, categoryNameOf } = filters;
+  const lowerQ = q?.trim().toLowerCase();
 
   return items.filter((item) => {
     const abs = Math.abs(item.amount);
     if (amountMin !== undefined && abs < amountMin) return false;
     if (amountMax !== undefined && abs > amountMax) return false;
-    if (lowerQ && !(item.description ?? "").toLowerCase().includes(lowerQ))
-      return false;
+
+    if (lowerQ) {
+      const matchesDescription = (item.description ?? "")
+        .toLowerCase()
+        .includes(lowerQ);
+      const matchesCategory = categoryNameOf?.(item)
+        ?.toLowerCase()
+        .includes(lowerQ);
+
+      if (!matchesDescription && !matchesCategory) return false;
+    }
+
     return true;
   });
 }

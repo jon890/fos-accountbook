@@ -6,6 +6,7 @@ import type { FamilyMemberSummary } from "@/types/family";
 import { Inbox } from "lucide-react";
 import { ExpenseListClient } from "./ExpenseListClient";
 import { LoadMoreButton } from "@/components/transactions/LoadMoreButton";
+import { applyClientFilters } from "@/services/transaction/transaction-service";
 
 interface ExpenseListProps {
   familyId: string;
@@ -32,7 +33,10 @@ export async function ExpenseList({
   amountMin,
   amountMax,
 }: ExpenseListProps) {
-  const hasFilter = !!(categoryId || q || amountMin || amountMax);
+  const amountMinValue = parseAmountFilter(amountMin);
+  const amountMaxValue = parseAmountFilter(amountMax);
+  const hasClientFilter = Boolean(q?.trim()) || amountMinValue !== undefined || amountMaxValue !== undefined;
+  const hasFilter = Boolean(categoryId) || hasClientFilter;
   // Server Action으로 지출 목록 조회
   const result = await getExpensesAction({
     familyUuid: familyId,
@@ -60,6 +64,16 @@ export async function ExpenseList({
     totalElements,
   } = result.data;
 
+  const categoryNamesByUuid = new Map(
+    categories.map((category) => [category.uuid, category.name])
+  );
+  const filteredExpenses = applyClientFilters(expenses, {
+    amountMin: amountMinValue,
+    amountMax: amountMaxValue,
+    q,
+    categoryNameOf: (expense) => categoryNamesByUuid.get(expense.categoryUuid),
+  });
+
   if (expenses.length === 0 && !hasFilter) {
     // IncomeList 와 동일 카피 — 도메인 wording 만 다를 수 있으나 현재 plan 에선 통일
     return (
@@ -75,10 +89,37 @@ export async function ExpenseList({
     );
   }
 
+  if (filteredExpenses.length === 0 && hasFilter) {
+    return (
+      <div className="space-y-3 md:space-y-4">
+        <EmptyState
+          icon={Inbox}
+          title="조건에 맞는 거래가 없어요"
+          description="검색어나 필터 조건을 바꿔 보세요."
+        />
+        {hasClientFilter && expenses.length < totalElements && (
+          <p className="text-xs text-fg-muted">
+            불러온 {expenses.length}건 안에서 찾았어요
+          </p>
+        )}
+        <LoadMoreButton
+          loadedCount={expenses.length}
+          totalElements={totalElements}
+          limit={limit}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3 md:space-y-4">
+      {hasClientFilter && expenses.length < totalElements && (
+        <p className="text-xs text-fg-muted">
+          불러온 {expenses.length}건 안에서 찾았어요
+        </p>
+      )}
       <ExpenseListClient
-        expenses={expenses}
+        expenses={filteredExpenses}
         categories={categories}
         familyUuid={familyId}
         members={members}
@@ -91,4 +132,11 @@ export async function ExpenseList({
       />
     </div>
   );
+}
+
+function parseAmountFilter(value: string | undefined): number | undefined {
+  if (!value) return undefined;
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }

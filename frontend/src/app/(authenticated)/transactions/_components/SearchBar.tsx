@@ -56,7 +56,7 @@ export function SearchBar() {
         />
         <Input
           type="text"
-          placeholder="메모 검색"
+          placeholder="메모, 카테고리 검색"
           value={value}
           onChange={(e) => handleChange(e.target.value)}
           className={inputClass}
@@ -86,7 +86,7 @@ export function SearchBar() {
               <Input
                 autoFocus
                 type="text"
-                placeholder="메모 검색"
+                placeholder="메모, 카테고리 검색"
                 value={value}
                 onChange={(e) => handleChange(e.target.value)}
                 className={cn(inputClass, "w-full")}

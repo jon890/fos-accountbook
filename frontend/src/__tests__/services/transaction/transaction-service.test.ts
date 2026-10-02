@@ -119,6 +119,24 @@ describe("applyClientFilters", () => {
     expect(result.map((i) => i.uuid)).toEqual(["1"]);
   });
 
+  it("q 필터 — 카테고리 이름을 대소문자와 공백 없이 찾는다", () => {
+    const result = applyClientFilters(items, {
+      q: "  FOOD  ",
+      categoryNameOf: (item) => (item.uuid === "2" ? "Food" : undefined),
+    });
+
+    expect(result.map((item) => item.uuid)).toEqual(["2"]);
+  });
+
+  it("금액 경계값은 하한과 상한에 포함한다", () => {
+    const result = applyClientFilters(items, {
+      amountMin: 5000,
+      amountMax: 5000,
+    });
+
+    expect(result.map((item) => item.uuid)).toEqual(["1"]);
+  });
+
   it("amountMin + q 복합 필터", () => {
     const result = applyClientFilters(items, { amountMin: 10000, q: "식사" });
     expect(result.map((i) => i.uuid)).toEqual(["2"]);
