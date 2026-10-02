@@ -123,7 +123,8 @@ GET /families/{familyUuid}/dashboard/stats/category-breakdown?year=2026&month=5&
 DashboardService.getCategoryBreakdown()
     ├─ 월 범위는 [그 달 1일 00:00, 다음 달 1일 00:00) 반열린 구간 (다음 달 1일 00:00 지출은 다음 달)
     ├─ 카테고리별 금액·비율 계산
-    └─ compareWithPrev=true 시 전월 조회 → delta 계산
+    └─ compareWithPrev=true 시 전월 조회 → delta 계산, previousAmount(직전 달 지출 없으면 0) 함께 응답
+        └─ deltaPercent 는 전월 0원이면 null. previousAmount 로 「비교 안 함」 과 「이번 달 새로 생김」 을 구분한다
 ```
 
 ## 6. 인증 갱신

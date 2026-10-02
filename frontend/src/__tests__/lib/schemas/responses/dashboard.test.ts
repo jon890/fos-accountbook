@@ -14,6 +14,7 @@ const breakdownItem = {
   totalAmount: 16200,
   percentage: 100.0,
   deltaPercent: null,
+  previousAmount: null,
 };
 
 function breakdown(items: unknown[]) {
@@ -51,16 +52,21 @@ describe("categoryBreakdownResponseSchema", () => {
     expect(categoryBreakdownResponseSchema.safeParse(breakdown([])).success).toBe(true);
   });
 
-  it("previousAmount 가 없어도 받고, 모르는 필드는 버린다", () => {
+  it("previousAmount 가 null 이거나 0 이어도 받고, 모르는 필드는 버린다", () => {
     const result = categoryBreakdownResponseSchema.safeParse(
       breakdown([{ ...breakdownItem, unknownField: 1 }])
     );
 
     expect(result.success).toBe(true);
     expect(result.data?.items[0]).not.toHaveProperty("unknownField");
+    expect(
+      categoryBreakdownResponseSchema.safeParse(
+        breakdown([{ ...breakdownItem, previousAmount: 0 }])
+      ).success
+    ).toBe(true);
   });
 
-  it.each(["deltaPercent", "totalAmount", "categoryUuid"])(
+  it.each(["deltaPercent", "previousAmount", "totalAmount", "categoryUuid"])(
     "항목의 %s 키가 없으면 거부한다",
     (key) => {
       const result = categoryBreakdownResponseSchema.safeParse(

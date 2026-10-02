@@ -445,6 +445,7 @@ const server = createServer(async (request, response) => {
           totalAmount: 16200,
           percentage: 100,
           deltaPercent: null,
+          previousAmount: null,
         }],
       },
     });

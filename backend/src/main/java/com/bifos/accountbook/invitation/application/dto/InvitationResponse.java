@@ -40,8 +40,8 @@ public class InvitationResponse {
     }
   }
 
-  public static InvitationResponse from(Invitation invitation) {
-    boolean isExpired = invitation.getExpiresAt().isBefore(LocalDateTime.now());
+  public static InvitationResponse from(Invitation invitation, LocalDateTime now) {
+    boolean isExpired = invitation.getExpiresAt().isBefore(now);
     boolean isUsed = InvitationStatus.ACCEPTED == invitation.getStatus();
 
     return InvitationResponse.builder()
@@ -56,13 +56,18 @@ public class InvitationResponse {
         .build();
   }
 
-  public static InvitationResponse fromWithFamilyName(Invitation invitation, String familyName) {
-    return from(invitation).toBuilder().familyName(familyName).build();
+  public static InvitationResponse fromWithFamilyName(
+      Invitation invitation, String familyName, LocalDateTime now) {
+    return from(invitation, now).toBuilder().familyName(familyName).build();
   }
 
   public static InvitationResponse fromWithDetails(
-      Invitation invitation, String familyName, User inviterUser, int memberCount) {
-    return from(invitation).toBuilder()
+      Invitation invitation,
+      String familyName,
+      User inviterUser,
+      int memberCount,
+      LocalDateTime now) {
+    return from(invitation, now).toBuilder()
         .familyName(familyName)
         .inviter(inviterUser != null ? InviterInfo.from(inviterUser) : null)
         .memberCount(memberCount)

@@ -14,11 +14,11 @@ import com.bifos.accountbook.expense.application.dto.CategoryExpenseStat;
 import com.bifos.accountbook.expense.application.dto.CategoryExpenseSummaryResponse;
 import com.bifos.accountbook.expense.application.dto.ExpenseSummarySearchRequest;
 import com.bifos.accountbook.expense.domain.repository.projection.CategoryExpenseProjection;
+import com.bifos.accountbook.family.application.access.FamilyUuid;
+import com.bifos.accountbook.family.application.access.UserUuid;
+import com.bifos.accountbook.family.application.access.ValidateFamilyAccess;
 import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.family.domain.repository.FamilyRepository;
-import com.bifos.accountbook.shared.aop.FamilyUuid;
-import com.bifos.accountbook.shared.aop.UserUuid;
-import com.bifos.accountbook.shared.aop.ValidateFamilyAccess;
 import com.bifos.accountbook.shared.exception.BusinessException;
 import com.bifos.accountbook.shared.exception.ErrorCode;
 import com.bifos.accountbook.shared.value.CustomUuid;
@@ -217,8 +217,12 @@ public class DashboardService {
                 p -> {
                   Double percentage = calculatePercentage(p.totalAmount(), totalExpense);
                   Double delta = null;
+                  BigDecimal previousAmount = null;
                   if (compareWithPrev) {
                     BigDecimal prevAmount = prevAmountByCategory.get(p.categoryUuid());
+                    // 직전 달에 지출이 없으면 0 을 준다. deltaPercent 의 null 만으로는
+                    // 「비교 안 함」 과 「이번 달 새로 생김」 을 구분할 수 없다 (#362).
+                    previousAmount = prevAmount != null ? prevAmount : BigDecimal.ZERO;
                     if (prevAmount != null && prevAmount.compareTo(BigDecimal.ZERO) != 0) {
                       delta =
                           p.totalAmount()
@@ -236,6 +240,7 @@ public class DashboardService {
                       .totalAmount(p.totalAmount())
                       .percentage(percentage)
                       .deltaPercent(delta)
+                      .previousAmount(previousAmount)
                       .build();
                 })
             .toList();

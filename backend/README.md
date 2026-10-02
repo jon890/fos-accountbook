@@ -19,7 +19,7 @@ Java 21 과 Spring Boot 4 로 만든 가족 가계부 백엔드 API 서버다.
 
 ```
 com.bifos.accountbook/
-├── shared/                 공통 (auth, aop, dto, exception, filter, utils, value)
+├── shared/                 공통 (auth, dto, exception, filter, utils, value)
 ├── user/ family/ category/ expense/ income/ recurring/
 ├── invitation/ notification/ dashboard/ apitoken/
 │                           각 도메인 내부 presentation/ application/ domain/ infra/

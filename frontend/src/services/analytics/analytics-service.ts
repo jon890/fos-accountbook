@@ -132,7 +132,8 @@ export async function getCategoryBreakdownWithDelta(
       totalAmount: item.totalAmount,
       percentage: Math.round(item.percentage),
       deltaPercent:
-        item.deltaPercent === null ? null : Math.round(item.deltaPercent),
+        item.deltaPercent == null ? null : Math.round(item.deltaPercent),
+      isNew: item.previousAmount === 0 && item.totalAmount > 0,
     };
   });
 

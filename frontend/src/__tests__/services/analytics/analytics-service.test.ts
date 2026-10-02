@@ -35,6 +35,7 @@ const breakdown = {
       totalAmount: 120,
       percentage: 66.67,
       deltaPercent: 20.49,
+      previousAmount: 99.6,
     },
     {
       categoryUuid: "bus",
@@ -43,6 +44,7 @@ const breakdown = {
       totalAmount: 60,
       percentage: 33.33,
       deltaPercent: -25.51,
+      previousAmount: 80.55,
     },
     {
       categoryUuid: "new",
@@ -51,6 +53,16 @@ const breakdown = {
       totalAmount: 0,
       percentage: 0,
       deltaPercent: null,
+      previousAmount: 0,
+    },
+    {
+      categoryUuid: "gift",
+      name: "선물",
+      icon: "🎁",
+      totalAmount: 30,
+      percentage: 0,
+      deltaPercent: null,
+      previousAmount: 0,
     },
   ],
 };
@@ -161,6 +173,7 @@ describe("getCategoryBreakdownWithDelta", () => {
           totalAmount: 120,
           percentage: 67,
           deltaPercent: 20,
+          isNew: false,
         },
         {
           categoryUuid: "bus",
@@ -169,6 +182,7 @@ describe("getCategoryBreakdownWithDelta", () => {
           totalAmount: 60,
           percentage: 33,
           deltaPercent: -26,
+          isNew: false,
         },
         {
           categoryUuid: "new",
@@ -177,6 +191,16 @@ describe("getCategoryBreakdownWithDelta", () => {
           totalAmount: 0,
           percentage: 0,
           deltaPercent: null,
+          isNew: false,
+        },
+        {
+          categoryUuid: "gift",
+          name: "선물",
+          icon: "🎁",
+          totalAmount: 30,
+          percentage: 0,
+          deltaPercent: null,
+          isNew: true,
         },
       ],
     });
@@ -244,7 +268,7 @@ describe("getCategoryBreakdownWithDelta", () => {
     mockResponses(breakdown, new ServerApiError("failed", 500));
     const result = await getCategoryBreakdownWithDelta("family", 2026, 5);
     expect(result.totalExpense).toBe(180);
-    expect(result.items).toHaveLength(3);
+    expect(result.items).toHaveLength(4);
     expect(result.items[0].deltaPercent).toBe(20);
     expect(result.totalDelta).toBeNull();
   });
