@@ -26,9 +26,9 @@
 
 ## 의도 메모
 
-- 서비스가 `Expense.builder().family(family)...build()` 로 만들고 저장소로 저장한다. `addExpense` 가 하던 기본값(날짜, 메모, 예산 제외 등)을 그대로 옮긴다. 날짜 기본값은 서비스에 이미 주입된 `Clock`(`BusinessTime.ZONE`)을 쓴다.
+- 서비스가 `Expense.builder().family(family)...build()` 로 만들고 저장소로 저장한다. `addExpense` 가 하던 기본값(날짜, 메모 등. 예산 제외는 서비스의 `setExcludeFromBudget` 이 이미 처리한다)을 그대로 옮긴다. 날짜 기본값은 서비스에 이미 주입된 `Clock`(`BusinessTime.ZONE`)을 쓴다.
 - Javadoc 의 「JPA 연관관계 정책」 문단을 ADR-B24 에 맞게 고친다.
-- 회귀 확인: 서비스 통합 테스트에서 지출을 하나 등록할 때 같은 가족의 기존 지출을 조회하는 SQL 이 나가지 않는지 확인한다. Hibernate `Statistics` 나 p6spy 로그 대신 가장 단순한 방법을 고른다. 예: 가족에 지출 N건을 만든 뒤 등록하고 `Statistics.getEntityLoadCount()` 가 N 만큼 늘지 않는다.
+- 회귀 확인: 서비스 통합 테스트에서 지출을 하나 등록할 때 같은 가족의 기존 지출을 조회하는 SQL 이 나가지 않는지 확인한다. 방법은 하나로 정한다. 테스트에서 `EntityManagerFactory.unwrap(SessionFactory.class).getStatistics().setStatisticsEnabled(true)` 로 통계를 켜고(저장소에 `hibernate.generate_statistics` 설정이 없다), 가족에 지출 N건을 만든 뒤 영속성 컨텍스트를 비우고 등록해 `getEntityLoadCount()` 가 N 만큼 늘지 않음을 단언한다. 변경 전 코드에서 이 테스트가 실패하는지 먼저 확인하고 결과를 커밋 본문에 적는다. 변경 전에도 통과하면(지연 컬렉션 `add` 가 초기화하지 않는 경우) 회귀 테스트를 `Family` 에 `expenses`, `incomes` 필드가 없다는 리플렉션 단언으로 바꾸고 그 사실을 커밋 본문에 적는다. 수입은 `IncomeService` 등록 후 `Family` 에 컬렉션이 없다는 같은 단언으로 갈음한다.
 
 ## 작업 항목
 

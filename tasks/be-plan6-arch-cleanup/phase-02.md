@@ -28,18 +28,18 @@
 ## 의도 메모
 
 - 새 패키지는 `com.bifos.accountbook.family.application.access`. 다른 도메인의 application 이 이 패키지를 쓰는 것은 기존 규칙(`ExpenseService` 가 `CategoryService` 를 쓰는 것과 같은 도메인 간 application 참조)에 맞는다.
-- AOP 포인트컷이 패키지 이름을 문자열로 가리키면(`@Around("@annotation(com.bifos...shared.aop.ValidateFamilyAccess)")` 같은 것) 함께 고친다. 놓치면 컴파일은 되지만 검증이 조용히 꺼진다. 테스트로 막는다.
+- 포인트컷은 `@Before("@annotation(validateFamilyAccess)")` 로 인자에 묶여 있어 패키지 문자열이 없다. 그래도 옮긴 뒤 `grep -rn "shared.aop" backend/src` 로 문자열 참조가 남지 않았는지 확인한다.
 - 테스트도 `backend/src/test/java/com/bifos/accountbook/family/application/access/FamilyAccessAspectTest.java` 로 옮긴다.
 
 ## 작업 항목
 
 ### 1. 다섯 파일 이동과 패키지 선언, 포인트컷 문자열
 
-### 2. import 하는 14곳 갱신 (`grep -rln "shared.aop" backend/src` 결과 전부)
+### 2. import 갱신 (`grep -rln "shared.aop" backend/src` 결과 중 옮긴 파일 자신과 테스트를 뺀 main 서비스: Category, Dashboard, Expense, Family, Income, Invitation, Notification, RecurringExpense) (`grep -rln "shared.aop" backend/src` 결과 전부)
 
 ### 3. 테스트 이동과 포인트컷 동작 확인
 
-옮긴 `FamilyAccessAspectTest` 가 다른 가족 접근을 실제로 거절하는지(403) 확인하는 경우를 포함한다.
+옮긴 `FamilyAccessAspectTest` 가 기존 거절 케이스(`BusinessException`, `ErrorCode.NOT_FAMILY_MEMBER` 단언)를 그대로 옮겨 통과시킨다. 서비스 수준 테스트라 HTTP 403 은 단언하지 않는다.
 
 ### 4. 기준 파일 줄이기
 

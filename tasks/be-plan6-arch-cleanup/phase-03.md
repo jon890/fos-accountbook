@@ -26,7 +26,10 @@
 ## 의도 메모
 
 - `InvitationService` 생성자에 `Clock` 을 받는다. `InvitationResponse.from` 은 호출하는 쪽이 현재 시각을 넘기게 바꾼다(`from(invitation, now)`).
-- 만료 판정이 들어 있으면 테스트에서 고정 `Clock` 으로 만료 직전과 직후를 확인한다.
+- 시각은 `LocalDateTime.now(clock)` 으로 쓴다. `withZone(BusinessTime.ZONE)` 은 쓰지 않는다. 초대 만료 시각은 업무 날짜가 아니라 저장된 `LocalDateTime` 끼리의 비교값이고, `ClockConfig` 는 `Clock.systemDefaultZone()` 이라 저장값과 같은 시간대를 유지해야 한다(ADR-B21: 저장된 값의 해석은 바꾸지 않는다).
+- `Invitation.accept()`, `isExpired()` 는 도메인 엔티티이고 이 phase 범위 밖이라 바꾸지 않는다. 그래서 `acceptInvitation` 은 고정 `Clock` 으로 만료 직전을 만들 수 없다. 만료 테스트는 `getInvitationByToken` 과 `InvitationResponse` 의 `isExpired` 로 한정한다.
+- `InvitationResponse.from` 은 서비스가 직접 부르지 않고 `fromWithFamilyName`, `fromWithDetails` 안에서 부른다. 이 두 정적 메서드도 `now` 인자를 받게 바꾸고 호출부(서비스)가 `LocalDateTime.now(clock)` 을 넘긴다.
+- `InvitationServiceTest` 는 Mockito 단위 테스트로 만들고 고정 `Clock`(`Clock.fixed`)을 생성자에 넘긴다.
 
 ## 작업 항목
 
@@ -36,7 +39,7 @@
 
 ### 3. 테스트와 기준 파일
 
-- `backend/src/test/java/com/bifos/accountbook/invitation/application/service/InvitationServiceTest.java`(신규): 고정 `Clock` 으로 만료 판정.
+- `backend/src/test/java/com/bifos/accountbook/invitation/application/service/InvitationServiceTest.java`(신규): 고정 `Clock` 으로 `getInvitationByToken` 과 응답의 `isExpired` 만료 직전과 직후.
 - 기준 파일에서 now 규칙 5줄만 지운다.
 
 ## 검증

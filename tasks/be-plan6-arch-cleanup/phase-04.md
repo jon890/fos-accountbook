@@ -20,13 +20,13 @@
 코드에서 확인한 사실:
 
 - `backend/src/main/java/com/bifos/accountbook/user/presentation/dto/` 에 `AuthResponse.java`(중첩 `UserInfo` 포함), `RefreshTokenRequest.java`, `SocialLoginRequest.java`, `UpdateUserProfileRequest.java`, `UserProfileResponse.java` 가 있다.
-- `backend/src/main/java/com/bifos/accountbook/user/application/service/AuthService.java` 가 `SocialLoginRequest`, `AuthResponse`, `UserInfo` 를 쓴다(31건). `backend/src/main/java/com/bifos/accountbook/user/application/service/UserProfileService.java` 가 `UpdateUserProfileRequest`, `UserProfileResponse` 를 쓴다(17건).
+- `backend/src/main/java/com/bifos/accountbook/user/application/service/AuthService.java` 가 `SocialLoginRequest`, `AuthResponse`, `UserInfo` 를 쓴다(33건). `backend/src/main/java/com/bifos/accountbook/user/application/service/UserProfileService.java` 가 `UpdateUserProfileRequest`, `UserProfileResponse` 를 쓴다(15건).
 - 이 DTO 를 import 하는 곳: 위 두 서비스, `backend/src/main/java/com/bifos/accountbook/user/presentation/controller/AuthController.java`, `backend/src/main/java/com/bifos/accountbook/user/presentation/controller/UserProfileController.java`, `backend/src/test/java/com/bifos/accountbook/user/presentation/controller/AuthControllerTest.java`, `backend/src/test/java/com/bifos/accountbook/user/presentation/controller/UserProfileControllerTest.java`.
 - `backend/src/main/java/com/bifos/accountbook/user/application/` 에는 지금 `service/` 만 있다. 다른 도메인은 `category/application/dto/`, `invitation/application/dto/` 처럼 application 에 DTO 를 둔다.
 
 ## 의도 메모
 
-- 서비스가 쓰는 네 파일(`AuthResponse`, `SocialLoginRequest`, `UpdateUserProfileRequest`, `UserProfileResponse`)을 옮긴다. `RefreshTokenRequest` 는 컨트롤러만 쓰면 그대로 둔다(옮길지는 `grep` 으로 확인하고 결과를 커밋 본문에 적는다).
+- 서비스가 쓰는 네 파일(`AuthResponse`, `SocialLoginRequest`, `UpdateUserProfileRequest`, `UserProfileResponse`)을 옮긴다. `RefreshTokenRequest` 는 `AuthController` 만 쓰므로 그대로 둔다.
 - 옮긴 뒤 `archTest` 를 `allowStoreUpdate=true` 로 돌려 층 규칙 기준 파일의 48줄을 지운다. 이 phase 가 끝나면 기준 파일 내용이 모두 비어야 한다. 비지 않으면 남은 항목을 보고에 적는다.
 - `backend/docs/code-architecture.md` 의 DTO 배치 설명이 이 상태와 맞는지 확인하고, 다르면 같은 커밋에서 고친다.
 
@@ -41,7 +41,7 @@
 ### 4. 테스트
 
 - `backend/src/test/java/com/bifos/accountbook/user/presentation/controller/AuthControllerTest.java`(수정), `backend/src/test/java/com/bifos/accountbook/user/presentation/controller/UserProfileControllerTest.java`(수정): import 만 바뀌고 JSON 응답 단언이 그대로 통과한다.
-- `./gradlew archTest` 가 기준 파일 없이도 통과한다(`ArchitectureRulesTest`).
+- `./gradlew archTest` 가 기준 파일이 빈 상태로 통과한다(`ArchitectureRulesTest`).
 
 ## 검증
 
