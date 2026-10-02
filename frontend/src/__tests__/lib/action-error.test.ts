@@ -10,7 +10,10 @@ jest.mock("@/lib/env/server.env", () => ({
 }));
 
 import { handleActionError, ActionError } from "@/lib/errors/action-error";
-import { ServerApiError } from "@/lib/server/api/types";
+import {
+  ResponseValidationError,
+  ServerApiError,
+} from "@/lib/server/api/types";
 
 describe("handleActionError 변환기", () => {
   describe("ServerApiError 401 → A002 변환", () => {
@@ -138,6 +141,31 @@ describe("handleActionError 변환기", () => {
       const error = ActionError.sessionExpired("토큰이 만료되었습니다");
       expect(error.code).toBe("A002");
       expect(error.message).toBe("토큰이 만료되었습니다");
+    });
+  });
+
+  describe("ResponseValidationError 변환", () => {
+    it("내부 오류(C003)로 바꾸고 기본 문구를 쓴다", () => {
+      const error = new ResponseValidationError("/expenses", [
+        { path: "amount", code: "invalid_type" },
+      ]);
+      const result = handleActionError(error, "지출을 불러오지 못했습니다");
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe("C003");
+        expect(result.error.message).toBe("지출을 불러오지 못했습니다");
+      }
+    });
+
+    it("message 를 debugInfo.cause 에 싣지 않는다", () => {
+      const error = new ResponseValidationError("/expenses", []);
+      const result = handleActionError(error, "기본 문구");
+
+      expect(JSON.stringify(result)).not.toContain("응답 계약 위반");
+      if (!result.success) {
+        expect(result.error.debugInfo?.cause).toBeUndefined();
+      }
     });
   });
 });

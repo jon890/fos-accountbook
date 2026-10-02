@@ -13,8 +13,14 @@
 import { serverEnv } from "@/lib/env/server.env";
 import ky, { type Options as KyOptions, HTTPError } from "ky";
 import { cookies } from "next/headers";
-import type { ApiResponse, ServerApiOptions } from "./types";
+import type { z } from "zod";
+import type {
+  ApiResponse,
+  ResponseSchemaOption,
+  ServerApiOptions,
+} from "./types";
 import { ServerApiError } from "./types";
+import { validateResponse } from "./validate-response";
 import {
   LOG_CONFIG,
   formatDuration,
@@ -68,7 +74,10 @@ export async function logAndImproveHttpError<
   const { response } = error;
 
   if (response) {
-    const raw = await response.clone().json().catch(() => null);
+    const raw = await response
+      .clone()
+      .json()
+      .catch(() => null);
     const errorData =
       raw !== null && typeof raw === "object" && !Array.isArray(raw)
         ? (raw as { message?: string; error?: string })
@@ -185,11 +194,7 @@ export async function serverApiClient<T = unknown>(
 ): Promise<T> {
   const { skipAuth = false, ...fetchOptions } = options;
   const method = (fetchOptions.method || "GET").toLowerCase() as
-    | "get"
-    | "post"
-    | "put"
-    | "delete"
-    | "patch";
+    "get" | "post" | "put" | "delete" | "patch";
 
   // endpoint에서 선행 슬래시 제거 (ky prefixUrl과 함께 사용 시)
   const normalizedEndpoint = endpoint.startsWith("/")
@@ -243,16 +248,32 @@ export async function serverApiClient<T = unknown>(
 }
 
 /**
- * GET 요청
+ * 성공 응답의 data 를 꺼낸다. schema 가 있으면 검증한 값을 돌려준다.
  */
-export async function serverApiGet<T>(endpoint: string): Promise<T> {
-  const response = await serverApiClient<ApiResponse<T>>(endpoint, {
-    method: "GET",
-  });
+function unwrapData<T>(
+  endpoint: string,
+  response: ApiResponse<T>,
+  schema?: z.ZodType<T>
+): T {
   if (!response.success) {
     throw new ServerApiError(response.message || response.error || "API 오류");
   }
-  return response.data;
+  return schema
+    ? validateResponse(endpoint, schema, response.data)
+    : response.data;
+}
+
+/**
+ * GET 요청
+ */
+export async function serverApiGet<T>(
+  endpoint: string,
+  { schema }: ResponseSchemaOption<T> = {}
+): Promise<T> {
+  const response = await serverApiClient<ApiResponse<T>>(endpoint, {
+    method: "GET",
+  });
+  return unwrapData(endpoint, response, schema);
 }
 
 /**
@@ -261,17 +282,14 @@ export async function serverApiGet<T>(endpoint: string): Promise<T> {
 export async function serverApiPost<T>(
   endpoint: string,
   body?: unknown,
-  options: ServerApiOptions = {}
+  { schema, ...options }: ServerApiOptions & ResponseSchemaOption<T> = {}
 ): Promise<T> {
   const response = await serverApiClient<ApiResponse<T>>(endpoint, {
     ...options,
     method: "POST",
     body: body ? JSON.stringify(body) : undefined,
   });
-  if (!response.success) {
-    throw new ServerApiError(response.message || response.error || "API 오류");
-  }
-  return response.data;
+  return unwrapData(endpoint, response, schema);
 }
 
 /**
@@ -279,16 +297,14 @@ export async function serverApiPost<T>(
  */
 export async function serverApiPut<T>(
   endpoint: string,
-  body?: unknown
+  body?: unknown,
+  { schema }: ResponseSchemaOption<T> = {}
 ): Promise<T> {
   const response = await serverApiClient<ApiResponse<T>>(endpoint, {
     method: "PUT",
     body: body ? JSON.stringify(body) : undefined,
   });
-  if (!response.success) {
-    throw new ServerApiError(response.message || response.error || "API 오류");
-  }
-  return response.data;
+  return unwrapData(endpoint, response, schema);
 }
 
 /**
@@ -296,16 +312,14 @@ export async function serverApiPut<T>(
  */
 export async function serverApiPatch<T>(
   endpoint: string,
-  body?: unknown
+  body?: unknown,
+  { schema }: ResponseSchemaOption<T> = {}
 ): Promise<T> {
   const response = await serverApiClient<ApiResponse<T>>(endpoint, {
     method: "PATCH",
     body: body ? JSON.stringify(body) : undefined,
   });
-  if (!response.success) {
-    throw new ServerApiError(response.message || response.error || "API 오류");
-  }
-  return response.data;
+  return unwrapData(endpoint, response, schema);
 }
 
 /**
