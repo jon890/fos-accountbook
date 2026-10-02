@@ -223,8 +223,48 @@ jobs:
           # Agent 는 프롬프트의 「거르기는 검토한 쪽이 하지 않는다」가 쓴다 (Task 는 그 레거시 별칭).
           # allowedTools 는 허용 목록이라 여기 없으면 위임 절이 드러나지 않게 자가검토로 바뀐다.
           # 서브 에이전트는 부모 권한을 상속하므로 disallowedTools 의 read-only 도 함께 적용된다.
-          # Bash 는 리뷰 게시에 쓰는 명령만 연다. 체크아웃한 PR 코드를 실행할 길을 두지 않는다.
-          claude_args: '--model opus --allowedTools "Read,Grep,Glob,Agent,Task,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh api:*),Bash(jq:*),Bash(mktemp:*),Bash(cat:*),Bash(rm:*)" --disallowedTools "Write,Edit"'
+          # Bash 는 PR 을 읽는 명령만 연다. 체크아웃한 PR 코드를 실행할 길을 두지 않는다.
+          # 리뷰는 봇이 게시하지 않고 --json-schema 의 구조화된 출력으로 낸다. 아래 「리뷰 게시」 단계가 게시한다.
+          # 예전에는 봇이 REVIEW_JSON=$(mktemp) 처럼 셸 변수와 명령 치환으로 게시했는데, 그 호출이
+          # 허용 목록 접두사와 맞지 않아 거부되면 성공으로 끝나도 리뷰가 없었다(#420, permission_denials 11).
+          claude_args: |
+            --model opus
+            --allowedTools "Read,Grep,Glob,Agent,Task,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh api:*),Bash(jq:*)"
+            --disallowedTools "Write,Edit"
+            --json-schema '{"type":"object","additionalProperties":false,"required":["body","comments"],"properties":{"body":{"type":"string","minLength":1},"comments":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["path","line","body"],"properties":{"path":{"type":"string"},"line":{"type":"integer","minimum":1},"body":{"type":"string"}}}}}}'
+
+      # 구조화된 출력을 리뷰 하나로 게시한다. action 이 쓴 Claude App 토큰으로 게시해 claude[bot] 이름이 유지된다.
+      # 출력이 없거나 게시에 실패하면 이 단계를 실패로 끝낸다. 성공으로 끝났는데 리뷰가 없는 상태를 만들지 않는다.
+      # 인라인 줄 번호가 diff 와 맞지 않아 422 가 나면 인라인을 요약 아래로 옮겨 한 번 더 게시한다.
+      - name: 리뷰 게시
+        if: github.event_name != 'issue_comment' || steps.fork_guard.outputs.review == 'true'
+        env:
+          GH_TOKEN: ${{ steps.review.outputs.github_token || secrets.GITHUB_TOKEN }}
+          STRUCTURED_OUTPUT: ${{ steps.review.outputs.structured_output }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ -z "$STRUCTURED_OUTPUT" ] || ! jq -e '.body | type == "string" and length > 0' <<< "$STRUCTURED_OUTPUT" >/dev/null; then
+            echo "::error title=리뷰 출력 없음::봇이 구조화된 리뷰를 내지 않았다. 실행 기록을 확인한다."
+            exit 1
+          fi
+          REVIEW_JSON="$RUNNER_TEMP/claude-review.json"
+          jq '{event: "COMMENT", body: .body,
+               comments: [.comments[] | {path, line, side: "RIGHT", body}]}' <<< "$STRUCTURED_OUTPUT" > "$REVIEW_JSON"
+          if gh api "repos/$REPO/pulls/$PR_NUMBER/reviews" --method POST \
+               --header "Content-Type: application/json" --input "$REVIEW_JSON" > /dev/null; then
+            echo "리뷰를 게시했다 (인라인 $(jq '.comments | length' "$REVIEW_JSON")건)."
+            exit 0
+          fi
+          echo "::warning title=인라인 게시 거절::인라인을 요약 아래로 옮겨 다시 게시한다."
+          jq '{event: "COMMENT",
+               body: (.body + (if (.comments | length) > 0 then
+                 "\n\n---\n\n### 줄 위치를 찾지 못한 인라인 지적\n\n"
+                 + ([.comments[] | "**\(.path) \(.line)**\n\(.body)"] | join("\n\n"))
+               else "" end)),
+               comments: []}' <<< "$STRUCTURED_OUTPUT" > "$REVIEW_JSON"
+          gh api "repos/$REPO/pulls/$PR_NUMBER/reviews" --method POST \
+            --header "Content-Type: application/json" --input "$REVIEW_JSON" > /dev/null
+          echo "인라인을 요약에 옮겨 리뷰를 게시했다."
 
       # 실행 기록의 init 메시지에서 실제 모델 ID 를 읽어 notice 와 Job Summary 에 남긴다.
       # 리뷰가 실패해도 어떤 모델이었는지 남도록 always 로 돈다. 읽지 못해도 워크플로를 실패시키지 않는다.
@@ -255,6 +295,18 @@ jobs:
             if [ -n "$REASON" ]; then
               echo "::error title=리뷰 실행 실패 원인::$REASON"
               echo "리뷰 실행 실패 원인: $REASON" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          fi
+
+          # 거부된 도구 호출이 있으면 도구 이름과 명령 앞부분만 남긴다(#420). 공개 로그라 본문은 남기지 않는다.
+          if [ -n "$EXECUTION_FILE" ] && [ -f "$EXECUTION_FILE" ]; then
+            DENIED=$(jq -r '(if type == "array" then .[] else . end)
+              | select(.type == "result") | .permission_denials[]?
+              | "\(.tool_name): \((.tool_input.command // .tool_input.file_path // "") | tostring | .[0:80])"' \
+              "$EXECUTION_FILE" 2>/dev/null | sort | uniq -c | head -n 20)
+            if [ -n "$DENIED" ]; then
+              echo "::warning title=거부된 도구 호출::$(echo "$DENIED" | tr '\n' ';')"
+              { echo "거부된 도구 호출:"; echo '```'; echo "$DENIED"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
             fi
           fi
 
