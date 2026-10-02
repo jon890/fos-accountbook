@@ -25,9 +25,11 @@ interface BreakdownResponse {
   month: number;
   totalExpense: number;
   items: Array<
-    Omit<CategoryWithDelta, "name" | "icon"> & {
+    Omit<CategoryWithDelta, "name" | "icon" | "isNew"> & {
       name: string | null;
       icon: string | null;
+      // 직전 달 같은 카테고리 금액. compareWithPrev 일 때만 오고, 직전 달 지출이 없으면 0 이다.
+      previousAmount?: number | null;
     }
   >;
 }
@@ -140,7 +142,8 @@ export async function getCategoryBreakdownWithDelta(
       totalAmount: item.totalAmount,
       percentage: Math.round(item.percentage),
       deltaPercent:
-        item.deltaPercent === null ? null : Math.round(item.deltaPercent),
+        item.deltaPercent == null ? null : Math.round(item.deltaPercent),
+      isNew: item.previousAmount === 0 && item.totalAmount > 0,
     };
   });
 
