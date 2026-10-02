@@ -1,5 +1,8 @@
 package com.bifos.accountbook.invitation.application.service;
 
+import com.bifos.accountbook.family.application.access.FamilyUuid;
+import com.bifos.accountbook.family.application.access.UserUuid;
+import com.bifos.accountbook.family.application.access.ValidateFamilyAccess;
 import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.family.domain.entity.FamilyMember;
 import com.bifos.accountbook.family.domain.repository.FamilyMemberRepository;
@@ -9,9 +12,6 @@ import com.bifos.accountbook.invitation.application.dto.CreateInvitationRequest;
 import com.bifos.accountbook.invitation.application.dto.InvitationResponse;
 import com.bifos.accountbook.invitation.domain.entity.Invitation;
 import com.bifos.accountbook.invitation.domain.repository.InvitationRepository;
-import com.bifos.accountbook.shared.aop.FamilyUuid;
-import com.bifos.accountbook.shared.aop.UserUuid;
-import com.bifos.accountbook.shared.aop.ValidateFamilyAccess;
 import com.bifos.accountbook.shared.exception.BusinessException;
 import com.bifos.accountbook.shared.exception.ErrorCode;
 import com.bifos.accountbook.shared.value.CustomUuid;
@@ -19,6 +19,7 @@ import com.bifos.accountbook.user.application.service.UserService;
 import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.user.domain.repository.UserRepository;
 import java.security.SecureRandom;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,6 +39,7 @@ public class InvitationService {
   private final FamilyMemberRepository familyMemberRepository;
   private final UserService userService;
   private final UserRepository userRepository;
+  private final Clock clock;
 
   private static final String TOKEN_CHARS =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -65,7 +67,8 @@ public class InvitationService {
     // 초대장 생성
     int expirationHours =
         request.getExpirationHours() != null ? request.getExpirationHours() : 72; // 기본 3일
-    LocalDateTime expiresAt = LocalDateTime.now().plusHours(expirationHours);
+    LocalDateTime now = LocalDateTime.now(clock);
+    LocalDateTime expiresAt = now.plusHours(expirationHours);
 
     Invitation invitation =
         Invitation.builder()
@@ -82,7 +85,7 @@ public class InvitationService {
         familyUuid.getValue(),
         userUuid);
 
-    return InvitationResponse.fromWithFamilyName(invitation, family.getName());
+    return InvitationResponse.fromWithFamilyName(invitation, family.getName(), now);
   }
 
   /** 가족의 활성 초대장 목록 조회 */
@@ -97,19 +100,20 @@ public class InvitationService {
                     new BusinessException(ErrorCode.FAMILY_NOT_FOUND)
                         .addParameter("familyUuid", familyUuid.getValue()));
 
-    List<Invitation> invitations =
-        invitationRepository.findActiveByFamilyUuid(familyUuid, LocalDateTime.now());
+    LocalDateTime now = LocalDateTime.now(clock);
+    List<Invitation> invitations = invitationRepository.findActiveByFamilyUuid(familyUuid, now);
 
     return invitations.stream()
-        .map(inv -> InvitationResponse.fromWithFamilyName(inv, family.getName()))
+        .map(inv -> InvitationResponse.fromWithFamilyName(inv, family.getName(), now))
         .collect(Collectors.toList());
   }
 
   /** 초대장으로 가족 정보 조회 (공개 API - 인증 불필요) */
   public InvitationResponse getInvitationByToken(String token) {
+    LocalDateTime now = LocalDateTime.now(clock);
     Invitation invitation =
         invitationRepository
-            .findValidByToken(token, LocalDateTime.now())
+            .findValidByToken(token, now)
             .orElseThrow(
                 () ->
                     new BusinessException(ErrorCode.INVALID_INVITATION_TOKEN)
@@ -127,7 +131,7 @@ public class InvitationService {
     int memberCount = familyMemberRepository.countByFamilyUuid(invitation.getFamilyUuid());
 
     return InvitationResponse.fromWithDetails(
-        invitation, family.getName(), inviterUser, memberCount);
+        invitation, family.getName(), inviterUser, memberCount, now);
   }
 
   /** 초대 수락 */
@@ -137,7 +141,7 @@ public class InvitationService {
 
     Invitation invitation =
         invitationRepository
-            .findValidByToken(token, LocalDateTime.now())
+            .findValidByToken(token, LocalDateTime.now(clock))
             .orElseThrow(
                 () ->
                     new BusinessException(ErrorCode.INVALID_INVITATION_TOKEN)

@@ -5,16 +5,16 @@ import com.bifos.accountbook.category.application.service.CategoryService;
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.category.domain.repository.CategoryRepository;
 import com.bifos.accountbook.category.domain.value.CategoryType;
+import com.bifos.accountbook.family.application.access.FamilyUuid;
+import com.bifos.accountbook.family.application.access.FamilyValidationService;
+import com.bifos.accountbook.family.application.access.UserUuid;
+import com.bifos.accountbook.family.application.access.ValidateFamilyAccess;
 import com.bifos.accountbook.income.application.dto.CreateIncomeRequest;
 import com.bifos.accountbook.income.application.dto.IncomeResponse;
 import com.bifos.accountbook.income.application.dto.IncomeSearchRequest;
 import com.bifos.accountbook.income.application.dto.UpdateIncomeRequest;
 import com.bifos.accountbook.income.domain.entity.Income;
 import com.bifos.accountbook.income.domain.repository.IncomeRepository;
-import com.bifos.accountbook.shared.aop.FamilyUuid;
-import com.bifos.accountbook.shared.aop.FamilyValidationService;
-import com.bifos.accountbook.shared.aop.UserUuid;
-import com.bifos.accountbook.shared.aop.ValidateFamilyAccess;
 import com.bifos.accountbook.shared.exception.BusinessException;
 import com.bifos.accountbook.shared.exception.ErrorCode;
 import com.bifos.accountbook.shared.utils.BusinessTime;
@@ -63,16 +63,18 @@ public class IncomeService {
     // 카테고리 확인 + 가족 소속 검증 (캐시 활용, DB 조회 없음)
     categoryService.validateAndFindCached(familyUuid, categoryCustomUuid, CategoryType.INCOME);
 
-    // 수입 생성 (ORM 편의 메서드 활용)
     Income income =
-        family.addIncome(
-            request.getAmount(),
-            categoryCustomUuid,
-            user.getUuid(),
-            request.getDescription(),
-            request.getDate() != null
-                ? request.getDate()
-                : LocalDateTime.now(clock.withZone(BusinessTime.ZONE)));
+        Income.builder()
+            .family(family)
+            .categoryUuid(categoryCustomUuid)
+            .userUuid(user.getUuid())
+            .amount(request.getAmount())
+            .description(request.getDescription())
+            .date(
+                request.getDate() != null
+                    ? request.getDate()
+                    : LocalDateTime.now(clock.withZone(BusinessTime.ZONE)))
+            .build();
 
     income = incomeRepository.save(income);
 

@@ -1,4 +1,4 @@
-package com.bifos.accountbook.user.presentation.dto;
+package com.bifos.accountbook.user.application.dto;
 
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
