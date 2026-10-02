@@ -20,6 +20,7 @@ com.bifos.accountbook
 ├── recurring/               반복 지출, 스케줄러
 ├── invitation/              초대
 ├── notification/            알림, 예산 알림
+├── budgetitem/              예산 항목 (이름, 월 한도, 카테고리 묶음. ADR-B25)
 ├── dashboard/               대시보드 (read model)
 ├── user/                    사용자, 인증, 프로필
 ├── apitoken/                외부 에이전트 연동 토큰 발급, 조회, 폐기 (ADR-B18)
@@ -79,13 +80,14 @@ user ◄── family ──► category
 | ----------------------- | ------------------------------------------------------------------------- | ------------------------------------ |
 | ExpenseService          | CategoryService, UserService, FamilyValidationService                     |                                      |
 | IncomeService           | CategoryService, UserService, FamilyValidationService                     |                                      |
-| CategoryService         | ExpenseService, RecurringExpenseService, IncomeService (ObjectProvider)   | 카테고리 삭제 시 종류별 이관         |
+| CategoryService         | ExpenseService, RecurringExpenseService, IncomeService, BudgetItemService (ObjectProvider) | 카테고리 삭제 시 종류별 이관과 예산 항목 정리 |
 | FamilyService           | UserService, CategoryService, UserProfileService, FamilyValidationService | 가족 생성 시 카테고리/프로필         |
 | RecurringExpenseService | CategoryService                                                           |                                      |
 | InvitationService       | UserService                                                               | FamilyRepository 직접 참조           |
 | NotificationService     | FamilyValidationService                                                   |                                      |
 | BudgetAlertService      | —                                                                         | Repository 직접 참조 (이벤트 구독자) |
 | DashboardService        | —                                                                         | Repository 직접 참조 (read model)    |
+| BudgetItemService       | CategoryService                                                           | 항목 저장 시 카테고리 검증           |
 | AuthService             | UserService                                                               |                                      |
 
 ### 결합 포인트 (향후 MSA 전환 시 해소 대상)

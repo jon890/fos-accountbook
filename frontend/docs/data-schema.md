@@ -242,6 +242,8 @@ interface RecentExpense {
 
 `RecentExpense` 는 보존된 서비스의 반환 타입이며 현재 화면에서는 사용하지 않는다.
 
+`DashboardStats.monthlyExpense` 는 생활비 합계다. 예산 제외, 반복 지출이 만든 지출, 예산 항목 카테고리의 지출을 뺀다([ADR-B25](../../backend/docs/adr/ADR-B25-budget-items.md)).
+
 집계 API 의 금액은 JSON 숫자로 오며 `number` 로 받는다.
 카테고리가 삭제되면 `name`, `icon`, `color` 는 null 이다.
 
@@ -255,6 +257,38 @@ interface RecentExpense {
 `deltaPercent` 는 비교를 요청하지 않았거나 전월 금액이 없거나 0 이면 null 이다.
 `previousAmount` 는 직전 달 같은 카테고리 금액이다. 비교를 요청하지 않으면 오지 않고, 직전 달 지출이 없으면 0 이다. 분석 화면은 이 값이 0 인 항목을 전월 대비 칸에 「신규」 로 보인다.
 추이 응답에는 지출이 있는 달만 날짜 오름차순으로 포함된다.
+
+### BudgetItem
+
+규칙과 에러 코드는 `backend/docs/data-schema.md` 의 「예산 항목 요청과 응답」, 「예산 요약과 생활비 합계」 가 소유한다.
+
+```typescript
+interface BudgetItem {
+  uuid: string;
+  name: string;
+  monthlyLimit: number; // 0 = 한도 없음
+  categoryUuids: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 생성과 수정의 입력. Zod 스키마 budgetItemInputSchema 가 검증한다
+interface BudgetItemInput {
+  name: string; // trim 뒤 1~30자
+  monthlyLimit: number; // 0 이상 정수
+  categoryUuids: string[]; // UUID 1개 이상
+}
+
+// GET /dashboard/budget-summary. 달력 홈이 쓴다
+interface BudgetSummary {
+  year: number;
+  month: number;
+  living: { spent: number; limit: number }; // limit 0 = 월 예산 미설정
+  items: Array<{ budgetItemUuid: string; name: string; limit: number; spent: number }>;
+}
+```
+
+`CalendarMonth` 는 `budgetSummary: BudgetSummary` 를 함께 담는다.
 
 ### Invitation
 
@@ -381,6 +415,8 @@ Dashboard:         GET  /families/{uuid}/dashboard/stats/monthly
                    GET  /families/{uuid}/dashboard/stats/category-breakdown
                    GET  /families/{uuid}/dashboard/stats/monthly-trend
                    GET  /families/{uuid}/dashboard/expenses/by-category
+                   GET  /families/{uuid}/dashboard/budget-summary    (year, month)
+BudgetItem:        CRUD /families/{uuid}/budget-items[/{uuid}]
 Invitation:        POST /invitations/families/{uuid}
                    GET  /invitations/token/{token}
                    POST /invitations/accept

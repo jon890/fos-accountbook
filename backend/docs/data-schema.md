@@ -246,6 +246,44 @@ CREATE TABLE api_tokens (
 - 만료는 없다. 폐기하면 `status = REVOKED` 가 되고 다시 살릴 수 없다
 - 사용자 한 명이 가질 수 있는 ACTIVE 토큰은 5개까지다
 
+### [budgetitem] budget_items
+
+가족이 만든 예산 항목이다 (ADR-B25).
+
+```sql
+CREATE TABLE budget_items (
+    id            BIGINT          PRIMARY KEY AUTO_INCREMENT,
+    uuid          VARCHAR(36)     NOT NULL UNIQUE,
+    family_uuid   VARCHAR(36)     NOT NULL,   -- FK 없음
+    name          VARCHAR(30)     NOT NULL,   -- 가족의 ACTIVE 항목 안에서 중복 불가 (서비스가 검사)
+    monthly_limit DECIMAL(15, 2)  NOT NULL DEFAULT 0,  -- 0 = 한도 없음
+    status        VARCHAR(20)     NOT NULL DEFAULT 'ACTIVE',  -- ACTIVE | DELETED
+    created_at    DATETIME(3)     NOT NULL,
+    updated_at    DATETIME(3)     NOT NULL,
+    INDEX idx_budget_items_family_uuid (family_uuid)
+);
+```
+
+- 가족당 ACTIVE 항목은 10개까지다
+- 목록과 예산 요약은 만든 순서(`id` 오름차순)로 준다
+
+### [budgetitem] budget_item_categories
+
+항목이 세는 지출 카테고리다.
+
+```sql
+CREATE TABLE budget_item_categories (
+    id               BIGINT      PRIMARY KEY AUTO_INCREMENT,
+    budget_item_uuid VARCHAR(36) NOT NULL,   -- FK 없음
+    category_uuid    VARCHAR(36) NOT NULL,   -- FK 없음. EXPENSE 카테고리만
+    UNIQUE KEY uq_budget_item_categories_category (category_uuid),  -- 카테고리 하나는 항목 하나에만
+    INDEX idx_budget_item_categories_item (budget_item_uuid)
+);
+```
+
+- `status` 가 없다. 항목을 지우거나 카테고리를 지우거나 항목의 카테고리 묶음을 바꾸면 행을 실제로 지운다
+- 그래서 이 테이블에 행이 있는 카테고리는 항상 ACTIVE 항목에 속한다. 생활비 합계 쿼리는 항목의 `status` 를 보지 않고 이 테이블만 본다
+
 ---
 
 ## 마이그레이션 이력 (Flyway)
@@ -268,6 +306,7 @@ CREATE TABLE api_tokens (
 | V14  | recurring_expenses 테이블 생성                                                  |
 | V20260930_1400 | api_tokens 테이블 생성 (이후 타임스탬프 버전, backend CLAUDE.md 「Database」) |
 | V20261001_1200 | categories 에 type 추가, 기존 카테고리 분류, 수입 기본 카테고리 생성 (ADR-B23) |
+| V20261002_1200 | budget_items, budget_item_categories 테이블 생성 (ADR-B25) |
 
 ---
 
@@ -303,6 +342,12 @@ GET    /families/{uuid}/categories            목록
 GET    /families/{uuid}/categories/{uuid}     상세
 PUT    /families/{uuid}/categories/{uuid}     수정
 DELETE /families/{uuid}/categories/{uuid}     삭제 (기본 카테고리 불가)
+
+# [budgetitem] 예산 항목 (ADR-B25)
+POST   /families/{uuid}/budget-items          항목 생성
+GET    /families/{uuid}/budget-items          ACTIVE 항목 목록 (만든 순서)
+PUT    /families/{uuid}/budget-items/{uuid}   수정 (카테고리 묶음은 통째로 바꾼다)
+DELETE /families/{uuid}/budget-items/{uuid}   삭제 (Soft Delete)
 
 # [expense] 지출
 POST   /families/{uuid}/expenses              등록
@@ -344,7 +389,51 @@ GET    /families/{uuid}/dashboard/daily-stats                 일별 통계
 GET    /families/{uuid}/dashboard/expenses/by-category        카테고리별 지출
 GET    /families/{uuid}/dashboard/stats/monthly-trend         월별 지출 추이 (from/to)
 GET    /families/{uuid}/dashboard/stats/category-breakdown    카테고리 분포 + 전월 delta
+GET    /families/{uuid}/dashboard/budget-summary              생활비와 예산 항목별 쓴 금액과 한도 (year, month 필수)
 ```
+
+### 예산 항목 요청과 응답
+
+생성과 수정의 요청 본문은 같다.
+
+| 필드 | 타입 | 규칙 |
+|---|---|---|
+| `name` | 문자열 | 필수. 앞뒤 공백을 뺀 1~30자. 가족의 ACTIVE 항목 안에서 중복 불가 |
+| `monthlyLimit` | 숫자 | 필수. 0 이상. 0 은 한도 없음 |
+| `categoryUuids` | 문자열 배열 | 필수. 1개 이상. 중복 없이. 그 가족의 ACTIVE `EXPENSE` 카테고리만 |
+
+응답 `BudgetItemResponse` 는 `uuid`, `name`, `monthlyLimit`, `categoryUuids`, `createdAt`, `updatedAt` 을 담는다.
+생성은 201, 수정과 삭제는 200 이다. 삭제의 `data` 는 null 이다.
+
+| 에러 코드 | HTTP | 뜻 |
+|---|---|---|
+| `BI001` `BUDGET_ITEM_NOT_FOUND` | 404 | 항목이 없거나 다른 가족의 항목이다 |
+| `BI002` `BUDGET_ITEM_CATEGORY_CONFLICT` | 409 | 카테고리가 이미 다른 항목에 속한다 |
+| `BI003` `BUDGET_ITEM_LIMIT_EXCEEDED` | 400 | 가족의 ACTIVE 항목이 이미 10개다 |
+| `BI004` `BUDGET_ITEM_ALREADY_EXISTS` | 409 | 같은 이름의 ACTIVE 항목이 있다 |
+| `CT001`, `CT005` | 404, 400 | 카테고리가 없다, 수입 카테고리다 |
+| `C001` | 400 | 본문 검증 실패 |
+
+### 예산 요약과 생활비 합계
+
+`budget-summary` 의 응답 `BudgetSummaryResponse` 다.
+
+| 필드 | 타입 | 뜻 |
+|---|---|---|
+| `year`, `month` | 숫자 | 요청한 연월 |
+| `living.spent` | 숫자 | 그 달 생활비 합계 |
+| `living.limit` | 숫자 | `families.monthly_budget`. 0 = 미설정 |
+| `items[]` | `{ budgetItemUuid, name, limit, spent }` | ACTIVE 항목. 만든 순서. `limit` 0 = 한도 없음 |
+
+합계 규칙은 ADR-B25 가 정한다.
+
+| 합계 | 더하는 지출 |
+|---|---|
+| 생활비 | 그 달 ACTIVE 지출 가운데 지출의 예산 제외 표시가 없고, 카테고리가 예산 제외가 아니고, `recurring_expense_uuid` 가 null 이고, 카테고리가 `budget_item_categories` 에 없는 것 |
+| 항목 | 그 달 ACTIVE 지출 가운데 카테고리가 그 항목에 속하고 지출의 예산 제외 표시가 없는 것. 카테고리의 예산 제외 표시와 반복 지출 여부는 보지 않는다 |
+
+`stats/monthly` 의 `monthlyExpense` 와 예산 알림의 기준 금액은 생활비 합계다. `remainingBudget` 은 `budget - monthlyExpense` 다.
+지난달을 조회해도 지금의 항목 구성으로 계산한다.
 
 ### 응답에 담는 등록자
 
