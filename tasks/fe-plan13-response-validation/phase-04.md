@@ -55,7 +55,7 @@
 
 ```bash
 pnpm tsc --noEmit && pnpm lint && pnpm lint:md && pnpm test
-pnpm test src/__tests__/lib/schemas/responses/service-coverage.test.ts src/__tests__/services/invitation/invitation-service.test.ts
+pnpm test src/__tests__/lib/schemas/responses/service-coverage.test.ts src/__tests__/lib/schemas/responses/domain-schemas.test.ts src/__tests__/services/invitation/invitation-service.test.ts src/__tests__/actions/family/update-family-action.test.ts
 pnpm test:browser
 ```
 

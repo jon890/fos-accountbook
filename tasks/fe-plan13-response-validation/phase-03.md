@@ -48,7 +48,7 @@
 
 ```bash
 pnpm tsc --noEmit && pnpm lint && pnpm lint:md && pnpm test
-pnpm test src/__tests__/services/analytics/analytics-service.test.ts src/__tests__/services/dashboard src/__tests__/lib/schemas/responses/dashboard.test.ts
+pnpm test src/__tests__/services/analytics/analytics-service.test.ts src/__tests__/services/dashboard/getMonthlyCategoryBreakdown.test.ts src/__tests__/services/dashboard/getMonthlyDailyStats.test.ts src/__tests__/actions/dashboard/get-monthly-daily-stats-action.test.ts src/__tests__/lib/schemas/responses/dashboard.test.ts
 ```
 
 기대값: 모든 명령이 성공한다.
