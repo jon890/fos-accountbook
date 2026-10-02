@@ -3,6 +3,7 @@ import { getMonthlyDailyStatsAction } from "@/actions/dashboard/get-monthly-dail
 import { requireAuth, getSelectedFamilyUuid } from "@/lib/server/auth/auth-helpers";
 import { serverApiGet } from "@/lib/server/api/client";
 import { ServerApiError } from "@/lib/server/api/types";
+import { dailyStatsResponseSchema } from "@/lib/schemas/responses/calendar";
 import { ActionError, ErrorCode } from "@/lib/errors";
 
 jest.mock("@/lib/server/auth/auth-helpers", () => ({
@@ -28,6 +29,7 @@ it("실제 서비스의 일별 집계 결과를 성공 데이터로 반환한다
   expect(await getMonthlyDailyStatsAction(2026, 10)).toEqual({ success: true, data: dailyStats });
   expect(serverApiGet).toHaveBeenCalledWith(
     "/families/family/dashboard/daily-stats?year=2026&month=10",
+    expect.objectContaining({ schema: dailyStatsResponseSchema }),
   );
 });
 

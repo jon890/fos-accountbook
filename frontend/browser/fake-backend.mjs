@@ -439,6 +439,7 @@ const server = createServer(async (request, response) => {
           color: categories[0].color,
           totalAmount: 16200,
           percentage: 100,
+          deltaPercent: null,
         }],
       },
     });
