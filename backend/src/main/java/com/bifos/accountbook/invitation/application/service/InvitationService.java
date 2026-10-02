@@ -138,10 +138,11 @@ public class InvitationService {
   @Transactional
   public void acceptInvitation(CustomUuid userUuid, String token) {
     User user = userService.getUser(userUuid);
+    LocalDateTime now = LocalDateTime.now(clock);
 
     Invitation invitation =
         invitationRepository
-            .findValidByToken(token, LocalDateTime.now(clock))
+            .findValidByToken(token, now)
             .orElseThrow(
                 () ->
                     new BusinessException(ErrorCode.INVALID_INVITATION_TOKEN)
@@ -167,7 +168,7 @@ public class InvitationService {
             .build();
 
     familyMemberRepository.save(member);
-    invitation.accept();
+    invitation.accept(now);
   }
 
   /** 초대장 삭제/취소 */
