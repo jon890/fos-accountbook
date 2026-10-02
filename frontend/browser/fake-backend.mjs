@@ -413,6 +413,10 @@ const server = createServer(async (request, response) => {
     });
     return;
   }
+  if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/budget-items`) {
+    sendJson(response, 200, { success: true, data: [] });
+    return;
+  }
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/dashboard/budget-summary`) {
     sendJson(response, 200, {
       success: true,
