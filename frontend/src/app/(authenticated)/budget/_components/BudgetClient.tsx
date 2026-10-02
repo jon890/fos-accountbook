@@ -9,7 +9,10 @@ import { formatCurrency } from "@/lib/utils/format";
 import type { CategoryBreakdownItem } from "@/types/dashboard";
 import { AlertTriangle, PiggyBank, Settings } from "lucide-react";
 import { useAppRouter } from "@/lib/client/navigation";
+import type { BudgetItem } from "@/types/budget-item";
+import type { CategoryResponse } from "@/types/category";
 import { BudgetCategoryBars } from "./BudgetCategoryBars";
+import { BudgetItemsSection } from "./BudgetItemsSection";
 import { BudgetCumulativeLine } from "./BudgetCumulativeLine";
 
 interface BudgetClientProps {
@@ -21,6 +24,9 @@ interface BudgetClientProps {
   day: number;
   dailyExpenses: { date: string; income: number; expense: number }[];
   categoryItems: CategoryBreakdownItem[];
+  budgetItems: BudgetItem[];
+  expenseCategories: CategoryResponse[];
+  budgetItemsFailed: boolean;
 }
 
 export function BudgetClient({
@@ -32,6 +38,9 @@ export function BudgetClient({
   day,
   dailyExpenses,
   categoryItems,
+  budgetItems,
+  expenseCategories,
+  budgetItemsFailed,
 }: BudgetClientProps) {
   const router = useAppRouter();
 
@@ -246,6 +255,13 @@ export function BudgetClient({
 
       {/* 카테고리 top 5 */}
       <BudgetCategoryBars items={categoryItems} budget={budget} />
+
+      {/* 예산 항목 */}
+      <BudgetItemsSection
+        items={budgetItems}
+        expenseCategories={expenseCategories}
+        failed={budgetItemsFailed}
+      />
 
       {/* 예산 수정 링크 */}
       {hasBudget && (
