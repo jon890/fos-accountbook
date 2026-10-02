@@ -8,8 +8,9 @@ export const budgetItemInputSchema = z.object({
     .max(30, "이름은 30자까지 쓸 수 있습니다"),
   monthlyLimit: z
     .number()
-    .int("한도는 0 이상이어야 합니다")
-    .min(0, "한도는 0 이상이어야 합니다"),
+    .int("한도는 정수여야 합니다")
+    .min(0, "한도는 0 이상이어야 합니다")
+    .max(9_999_999_999_999, "한도가 너무 큽니다"),
   categoryUuids: z
     .array(z.string().uuid())
     .min(1, "카테고리를 하나 이상 골라 주세요"),

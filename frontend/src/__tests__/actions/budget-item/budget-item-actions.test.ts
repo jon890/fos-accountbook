@@ -103,6 +103,19 @@ describe("예산 항목 액션", () => {
   });
 
   it.each([
+    ["소수 한도", 1000.5, "한도는 정수여야 합니다"],
+    ["상한 초과 한도", 10_000_000_000_000, "한도가 너무 큽니다"],
+  ])("%s 는 서비스를 부르지 않고 C001 과 안내 문구를 반환한다", async (_name, monthlyLimit, message) => {
+    const result = await createBudgetItemAction({ ...input, monthlyLimit });
+
+    expect(result).toMatchObject({
+      success: false,
+      error: { code: "C001", message: expect.stringContaining(message) },
+    });
+    expect(createBudgetItem).not.toHaveBeenCalled();
+  });
+
+  it.each([
     ["수정", () => updateBudgetItemAction("not-a-uuid", input)],
     ["삭제", () => deleteBudgetItemAction("not-a-uuid")],
   ])(

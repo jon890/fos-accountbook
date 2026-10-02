@@ -173,6 +173,21 @@ describe("BudgetItemsSection", () => {
     await waitFor(() => expect(deleteBudgetItemAction).toHaveBeenCalledWith(items[0].uuid));
   });
 
+  it("삭제 액션이 reject 되면 실패 토스트를 보이고 확인 버튼을 다시 활성화한다", async () => {
+    const user = userEvent.setup();
+    jest.mocked(deleteBudgetItemAction).mockRejectedValue(new Error("network"));
+    render(<BudgetItemsSection items={items} expenseCategories={categories} failed={false} />);
+
+    await user.click(screen.getByRole("button", { name: "남편 용돈 삭제" }));
+    const confirm = await screen.findByRole("alertdialog");
+    await user.click(within(confirm).getByRole("button", { name: "삭제" }));
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("예산 항목 삭제에 실패했습니다")
+    );
+    expect(within(screen.getByRole("alertdialog")).getByRole("button", { name: "삭제" })).toBeEnabled();
+  });
+
   it("항목이 없으면 안내 문구를 보인다", () => {
     render(<BudgetItemsSection items={[]} expenseCategories={categories} failed={false} />);
 

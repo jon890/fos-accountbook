@@ -17,7 +17,7 @@ import { formatCurrency } from "@/lib/utils/format";
 import type { BudgetItem } from "@/types/budget-item";
 import type { CategoryResponse } from "@/types/category";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 import { toast } from "sonner";
 import { BudgetItemDialog } from "./BudgetItemDialog";
 
@@ -37,6 +37,7 @@ export function BudgetItemsSection({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<BudgetItem | undefined>();
   const [deleting, setDeleting] = useState<BudgetItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const categoryNames = new Map(
     expenseCategories.map((category) => [category.uuid, category.name]),
@@ -59,15 +60,23 @@ export function BudgetItemsSection({
     setDialogOpen(true);
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (event: MouseEvent) => {
+    // 기본 동작은 확인 즉시 닫으므로, 삭제가 끝날 때까지 열어 둔다
+    event.preventDefault();
     if (!deleting) return;
-    const target = deleting;
-    setDeleting(null);
-    const result = await deleteBudgetItemAction(target.uuid);
-    if (result.success) {
-      toast.success("예산 항목을 삭제했어요");
-    } else {
-      toast.error(result.error.message);
+    try {
+      setIsDeleting(true);
+      const result = await deleteBudgetItemAction(deleting.uuid);
+      if (result.success) {
+        toast.success("예산 항목을 삭제했어요");
+        setDeleting(null);
+      } else {
+        toast.error(result.error.message);
+      }
+    } catch {
+      toast.error("예산 항목 삭제에 실패했습니다");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -177,8 +186,10 @@ export function BudgetItemsSection({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>삭제</AlertDialogAction>
+            <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
+              삭제
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
