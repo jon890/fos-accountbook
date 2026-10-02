@@ -88,7 +88,7 @@ describe("NotificationItem", () => {
     expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it("읽음 처리에 실패하면 오류를 알리고 이동하지 않는다", async () => {
+  it("읽음 처리에 실패해도 오류를 알리고 예산 화면으로 이동한다", async () => {
     mockMarkNotificationReadAction.mockResolvedValue({
       success: false,
       error: { code: ErrorCode.NOTIFICATION_READ_FAILED, message: "읽음 처리 실패" },
@@ -101,8 +101,8 @@ describe("NotificationItem", () => {
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith("알림 읽음 처리에 실패했어요. 다시 시도해 주세요."),
     );
-    expect(mockPush).not.toHaveBeenCalled();
-    expect(onNavigate).not.toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith("/budget");
+    expect(onNavigate).toHaveBeenCalled();
   });
 
   it("이미 읽은 예산 알림은 읽음 처리 없이 바로 예산 화면으로 이동한다", async () => {

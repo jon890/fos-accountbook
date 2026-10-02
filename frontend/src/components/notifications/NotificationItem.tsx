@@ -114,10 +114,6 @@ export function NotificationItem({
       );
       if (result.success) {
         onRead?.(notification.notificationUuid);
-        if (shouldNavigate) {
-          router.push("/budget");
-          onNavigate?.();
-        }
       } else {
         toast.error("알림 읽음 처리에 실패했어요. 다시 시도해 주세요.");
       }
@@ -125,6 +121,12 @@ export function NotificationItem({
       toast.error("알림 읽음 처리에 실패했어요. 다시 시도해 주세요.");
     } finally {
       setIsReading(false);
+    }
+
+    // 읽음 처리가 실패해도 예산 화면으로는 보낸다. 사용자가 가려던 곳은 예산이다.
+    if (shouldNavigate) {
+      router.push("/budget");
+      onNavigate?.();
     }
   };
 
