@@ -32,6 +32,7 @@ const category = {
   familyUuid: "family-1",
   type: "INCOME" as const,
   name: "급여",
+  icon: null,
   createdAt: "2026-10-01T00:00:00Z",
   updatedAt: "2026-10-01T00:00:00Z",
 };

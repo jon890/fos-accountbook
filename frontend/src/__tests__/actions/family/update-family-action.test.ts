@@ -22,6 +22,7 @@ jest.mock("next/cache", () => ({
 }));
 
 import { updateFamilyAction } from "@/actions/family/update-family-action";
+import { familySchema } from "@/lib/schemas/responses/family";
 import { serverApiPut } from "@/lib/server/api/client";
 import { requireAuth } from "@/lib/server/auth/auth-helpers";
 import { revalidatePath } from "next/cache";
@@ -68,10 +69,11 @@ describe("updateFamilyAction", () => {
       expect(result.data.monthlyBudget).toBe(1000000);
     }
 
-    expect(mockServerApiClient).toHaveBeenCalledWith("/families/family-123", {
-      name: "수정된 가족",
-      monthlyBudget: 1000000,
-    });
+    expect(mockServerApiClient).toHaveBeenCalledWith(
+      "/families/family-123",
+      { name: "수정된 가족", monthlyBudget: 1000000 },
+      expect.objectContaining({ schema: familySchema })
+    );
 
     expect(mockRevalidatePath).toHaveBeenCalledWith("/");
     expect(mockRevalidatePath).toHaveBeenCalledWith("/settings");
@@ -104,9 +106,11 @@ describe("updateFamilyAction", () => {
       expect(result.data.monthlyBudget).toBe(2000000);
     }
 
-    expect(mockServerApiClient).toHaveBeenCalledWith("/families/family-123", {
-      monthlyBudget: 2000000,
-    });
+    expect(mockServerApiClient).toHaveBeenCalledWith(
+      "/families/family-123",
+      { monthlyBudget: 2000000 },
+      expect.objectContaining({ schema: familySchema })
+    );
   });
 
   it("가족 UUID가 없으면 실패한다", async () => {

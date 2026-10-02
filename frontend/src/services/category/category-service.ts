@@ -4,6 +4,7 @@ import {
   serverApiDelete,
 } from "@/lib/server/api/client";
 import { getCachedFamilyCategories } from "@/lib/server/cache";
+import { categoryResponseSchema } from "@/lib/schemas/responses/category";
 import type {
   CategoryResponse,
   CreateCategoryInput,
@@ -16,7 +17,8 @@ export async function createCategory(
 ): Promise<CategoryResponse> {
   return serverApiPost<CategoryResponse>(
     `/families/${familyUuid}/categories`,
-    data
+    data,
+    { schema: categoryResponseSchema }
   );
 }
 
@@ -33,7 +35,8 @@ export async function updateCategory(
 ): Promise<CategoryResponse> {
   return serverApiPut<CategoryResponse>(
     `/families/${familyUuid}/categories/${categoryUuid}`,
-    data
+    data,
+    { schema: categoryResponseSchema }
   );
 }
 

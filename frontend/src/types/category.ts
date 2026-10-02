@@ -16,7 +16,7 @@ export interface CategoryResponse {
   familyUuid: string;
   type: "EXPENSE" | "INCOME";
   name: string;
-  icon?: string;
+  icon: string | null;
   color?: string;
   excludeFromBudget?: boolean;
   createdAt: string;
