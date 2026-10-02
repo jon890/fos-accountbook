@@ -142,6 +142,10 @@ public class DashboardController {
       @RequestParam Integer year,
       @RequestParam Integer month) {
 
+    if (month < 1 || month > 12) {
+      throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+    }
+
     BudgetSummaryResponse response =
         dashboardService.getBudgetSummary(loginUser.userUuid(), familyUuid, year, month);
 

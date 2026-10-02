@@ -13,6 +13,7 @@ import com.bifos.accountbook.family.application.dto.FamilyResponse;
 import com.bifos.accountbook.family.application.service.FamilyService;
 import com.bifos.accountbook.family.domain.entity.FamilyMember;
 import com.bifos.accountbook.family.domain.repository.FamilyMemberRepository;
+import com.bifos.accountbook.family.domain.repository.FamilyRepository;
 import com.bifos.accountbook.family.domain.value.FamilyMemberStatus;
 import com.bifos.accountbook.notification.domain.entity.Notification;
 import com.bifos.accountbook.notification.domain.repository.NotificationRepository;
@@ -315,6 +316,30 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
             "항목 카테고리 지출",
             LocalDateTime.now(),
             null));
+    budgetAlertService.checkAndCreateBudgetAlert(familyUuid, LocalDateTime.now());
+
+    // Then: 생활비 합계가 0 이므로 알림이 없다
+    assertThat(notificationRepository.findByFamily(familyUuid)).isEmpty();
+  }
+
+  @Test
+  @DisplayName("반복 지출이 만든 지출은 예산 알림 기준 금액에 들어가지 않는다")
+  void shouldNotCreateNotification_WhenOnlyRecurringExpense() {
+    // Given: 월 예산 100만원 가족에 반복 지출이 만든 90만원 지출
+    TestData data = createTestFamilyWithBudget();
+    CustomUuid familyUuid = CustomUuid.from(data.testFamily.getUuid());
+    var family =
+        applicationContext.getBean(FamilyRepository.class).findByUuid(familyUuid).orElseThrow();
+    fixtures
+        .expenses
+        .expense(family, data.testCategory)
+        .user(data.testUser)
+        .amount(new BigDecimal("900000.00"))
+        .date(LocalDateTime.now())
+        .recurringExpenseUuid(CustomUuid.generate().getValue())
+        .build();
+
+    // When
     budgetAlertService.checkAndCreateBudgetAlert(familyUuid, LocalDateTime.now());
 
     // Then: 생활비 합계가 0 이므로 알림이 없다

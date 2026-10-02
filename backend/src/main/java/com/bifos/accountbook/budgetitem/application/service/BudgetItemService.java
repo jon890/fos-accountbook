@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class BudgetItemService {
 
   private static final int MAX_ACTIVE_ITEMS = 10;
+  private static final int MAX_NAME_LENGTH = 30;
 
   private final BudgetItemRepository budgetItemRepository;
   private final CategoryService categoryService;
@@ -57,7 +58,7 @@ public class BudgetItemService {
       throw new BusinessException(ErrorCode.BUDGET_ITEM_LIMIT_EXCEEDED);
     }
 
-    String name = request.getName().trim();
+    String name = normalizeName(request.getName());
     if (budgetItemRepository.existsActiveByFamilyUuidAndName(familyUuid, name)) {
       throw new BusinessException(ErrorCode.BUDGET_ITEM_ALREADY_EXISTS).addParameter("name", name);
     }
@@ -86,7 +87,7 @@ public class BudgetItemService {
       BudgetItemRequest request) {
     BudgetItem item = findActiveItem(familyUuid, budgetItemUuid);
 
-    String name = request.getName().trim();
+    String name = normalizeName(request.getName());
     if (!name.equals(item.getName())
         && budgetItemRepository.existsActiveByFamilyUuidAndName(familyUuid, name)) {
       throw new BusinessException(ErrorCode.BUDGET_ITEM_ALREADY_EXISTS).addParameter("name", name);
@@ -118,6 +119,15 @@ public class BudgetItemService {
   @Transactional
   public void removeCategory(CustomUuid categoryUuid) {
     budgetItemRepository.deleteCategoriesByCategoryUuid(categoryUuid);
+  }
+
+  /** 앞뒤 공백을 뺀 이름이 비었거나 30자를 넘으면 거부한다. */
+  private String normalizeName(String rawName) {
+    String name = rawName.trim();
+    if (name.isEmpty() || name.length() > MAX_NAME_LENGTH) {
+      throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "예산 항목 이름은 공백을 뺀 1~30자여야 합니다");
+    }
+    return name;
   }
 
   private BudgetItem findActiveItem(CustomUuid familyUuid, CustomUuid budgetItemUuid) {

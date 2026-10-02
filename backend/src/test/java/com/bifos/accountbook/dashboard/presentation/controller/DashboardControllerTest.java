@@ -1088,6 +1088,19 @@ class DashboardControllerTest extends AbstractControllerTest {
         .andExpect(status().isBadRequest());
   }
 
+  @Test
+  @DisplayName("예산 요약 조회 - month 가 1~12 밖이면 400")
+  void getBudgetSummary_MonthOutOfRange() throws Exception {
+    Family family = fixtures.getDefaultFamily();
+
+    mockMvc
+        .perform(get(budgetSummaryPath(family)).param("year", "2026").param("month", "13"))
+        .andExpect(status().isBadRequest());
+    mockMvc
+        .perform(get(budgetSummaryPath(family)).param("year", "2026").param("month", "0"))
+        .andExpect(status().isBadRequest());
+  }
+
   private Expense createExpense(
       CustomUuid familyUuid,
       CustomUuid userUuid,

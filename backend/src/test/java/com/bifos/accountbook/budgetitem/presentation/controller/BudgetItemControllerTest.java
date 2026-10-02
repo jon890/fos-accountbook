@@ -8,20 +8,25 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.bifos.accountbook.budgetitem.application.dto.BudgetItemRequest;
+import com.bifos.accountbook.budgetitem.application.service.BudgetItemService;
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.shared.AbstractControllerTest;
+import com.bifos.accountbook.user.domain.entity.User;
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultActions;
 
 @DisplayName("BudgetItemController 통합 테스트")
 class BudgetItemControllerTest extends AbstractControllerTest {
+
+  @Autowired private BudgetItemService budgetItemService;
 
   private Family family;
   private Category food;
@@ -190,5 +195,92 @@ class BudgetItemControllerTest extends AbstractControllerTest {
                 .content(objectMapper.writeValueAsString(request("없는 항목", 1000, food))))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("BI001"));
+  }
+
+  @Test
+  @DisplayName("다른 가족의 항목은 수정과 삭제에서 BI001 을 돌려준다")
+  void updateAndDelete_fail_whenOtherFamilyItem() throws Exception {
+    User otherUser = fixtures.users.getOtherUser();
+    Family otherFamily = fixtures.families.family().owner(otherUser).build();
+    Category otherCategory = fixtures.categories.category(otherFamily).name("타가족").build();
+    String otherItemUuid =
+        budgetItemService
+            .createBudgetItem(
+                otherUser.getUuid(), otherFamily.getUuid(), request("타가족 항목", 1000, otherCategory))
+            .getUuid();
+
+    mockMvc
+        .perform(
+            put(basePath() + "/" + otherItemUuid)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request("수정", 1000, food))))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("BI001"));
+    mockMvc
+        .perform(delete(basePath() + "/" + otherItemUuid))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("BI001"));
+  }
+
+  @Test
+  @DisplayName("다른 가족의 카테고리로 만들면 CT001 을 돌려준다")
+  void create_fails_whenOtherFamilyCategory() throws Exception {
+    User otherUser = fixtures.users.getOtherUser();
+    Family otherFamily = fixtures.families.family().owner(otherUser).build();
+    Category otherCategory = fixtures.categories.category(otherFamily).name("타가족").build();
+
+    create("타가족 카테고리", 1000, otherCategory)
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("CT001"));
+  }
+
+  @Test
+  @DisplayName("수정에서 다른 항목의 카테고리를 넣으면 BI002 를 돌려준다")
+  void update_fails_whenCategoryConflicts() throws Exception {
+    createdUuid("첫째", 1000, food);
+    String second = createdUuid("둘째", 1000, snack);
+
+    mockMvc
+        .perform(
+            put(basePath() + "/" + second)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request("둘째", 1000, snack, food))))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.code").value("BI002"));
+  }
+
+  @Test
+  @DisplayName("월 한도가 소수이거나 14자리 정수면 400 이다")
+  void create_fails_whenLimitInvalid() throws Exception {
+    for (String limit : List.of("0.5", "10000000000000")) {
+      mockMvc
+          .perform(
+              post(basePath())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(
+                      "{\"name\":\"한도\",\"monthlyLimit\":"
+                          + limit
+                          + ",\"categoryUuids\":[\""
+                          + food.getUuid().getValue()
+                          + "\"]}"))
+          .andExpect(status().isBadRequest());
+    }
+  }
+
+  @Test
+  @DisplayName("공백을 포함해 31자 이상이어도 trim 뒤 30자면 201 이고 trim 한 이름을 저장한다")
+  void create_success_whenNameFitsAfterTrim() throws Exception {
+    String name = "가".repeat(30);
+
+    create("  " + name + "  ", 1000, food)
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.data.name").value(name));
+  }
+
+  @Test
+  @DisplayName("trim 뒤 30자를 넘거나 비어 있으면 400 이다")
+  void create_fails_whenNameInvalidAfterTrim() throws Exception {
+    create("가".repeat(31), 1000, food).andExpect(status().isBadRequest());
+    create("   ", 1000, food).andExpect(status().isBadRequest());
   }
 }

@@ -399,7 +399,7 @@ GET    /families/{uuid}/dashboard/budget-summary              생활비와 예�
 | 필드 | 타입 | 규칙 |
 |---|---|---|
 | `name` | 문자열 | 필수. 앞뒤 공백을 뺀 1~30자. 가족의 ACTIVE 항목 안에서 중복 불가 |
-| `monthlyLimit` | 숫자 | 필수. 0 이상. 0 은 한도 없음 |
+| `monthlyLimit` | 숫자 | 필수. 0 이상 정수, 13자리까지. 0 은 한도 없음 |
 | `categoryUuids` | 문자열 배열 | 필수. 1개 이상. 중복 없이. 그 가족의 ACTIVE `EXPENSE` 카테고리만 |
 
 응답 `BudgetItemResponse` 는 `uuid`, `name`, `monthlyLimit`, `categoryUuids`, `createdAt`, `updatedAt` 을 담는다.
