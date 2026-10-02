@@ -839,7 +839,8 @@ class DashboardControllerTest extends AbstractControllerTest {
         .andExpect(jsonPath("$.data.totalExpense").value(100000))
         .andExpect(jsonPath("$.data.items").isArray())
         .andExpect(jsonPath("$.data.items.length()").value(2))
-        .andExpect(jsonPath("$.data.items[0].deltaPercent").doesNotExist());
+        .andExpect(jsonPath("$.data.items[0].deltaPercent").doesNotExist())
+        .andExpect(jsonPath("$.data.items[0].previousAmount").doesNotExist());
   }
 
   @Test
@@ -868,7 +869,37 @@ class DashboardControllerTest extends AbstractControllerTest {
                 .param("compareWithPrev", "true")
                 .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.items[0].deltaPercent").value(50.0));
+        .andExpect(jsonPath("$.data.items[0].deltaPercent").value(50.0))
+        .andExpect(jsonPath("$.data.items[0].previousAmount").value(50000));
+  }
+
+  @Test
+  @DisplayName("카테고리 분류 통계 - 직전 달 지출이 없으면 previousAmount 0, deltaPercent 없음")
+  void getCategoryBreakdown_NewCategoryThisMonth() throws Exception {
+    User user = fixtures.getDefaultUser();
+    Family family = fixtures.getDefaultFamily();
+    Category giftCategory =
+        fixtures.categories.category(family).name("선물").color("#FF5733").icon("🎁").build();
+
+    createExpense(
+        family.getUuid(),
+        user.getUuid(),
+        giftCategory.getUuid(),
+        BigDecimal.valueOf(30000),
+        LocalDateTime.of(2025, 5, 10, 10, 0));
+
+    mockMvc
+        .perform(
+            get(
+                    "/api/v1/families/{familyUuid}/dashboard/stats/category-breakdown",
+                    family.getUuid().getValue())
+                .param("year", "2025")
+                .param("month", "5")
+                .param("compareWithPrev", "true")
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.items[0].previousAmount").value(0))
+        .andExpect(jsonPath("$.data.items[0].deltaPercent").doesNotExist());
   }
 
   @Test
