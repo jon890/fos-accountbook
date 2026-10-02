@@ -3,6 +3,7 @@ package com.bifos.accountbook.invitation.domain.entity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.bifos.accountbook.invitation.domain.value.InvitationStatus;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,7 @@ class InvitationTest {
 
     invitation.accept(NOW);
 
-    assertThat(invitation.canAccept(NOW)).isFalse();
+    assertThat(invitation.getStatus()).isEqualTo(InvitationStatus.ACCEPTED);
     assertThat(invitation.isExpired(NOW)).isFalse();
   }
 
