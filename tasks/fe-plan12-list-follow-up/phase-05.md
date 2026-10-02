@@ -13,7 +13,7 @@
 
 모든 경로는 저장소 root 기준이다. 명령은 `frontend/` 에서 돌린다.
 
-**근거 문서**: `frontend/docs/flow.md` 의 「5-2」, 「6. 예산 알림 플로우」, `/categories` 절, `frontend/docs/adr/ADR-F39-navigation-pending-feedback.md`(화면 이동은 `useAppRouter`).
+**근거 문서**: `frontend/docs/flow.md`의 「5-3. /analytics 페이지 구조」, `frontend/docs/adr/ADR-F39-navigation-pending-feedback.md`(화면 이동은 `useAppRouter`).
 
 코드에서 확인한 사실:
 
@@ -24,7 +24,8 @@
 ## 의도 메모
 
 - `page.tsx` 가 카테고리 목록을 함께 받아 `AnalyticsClient` 에 넘기고, `categoryUuid` 로 맵을 만들어 찾는다(`ExpenseListClient` 와 같은 방식). 아이콘 바탕은 `getCategoryToneStyle` 을 쓴다.
-- 받은 지출이 1000건이면 TOP 5 제목 옆에 「상위 1000건 안에서 골랐어요」(`text-xs text-fg-muted`)를 보인다.
+- 카테고리 조회 실패는 기존 분석 조회와 같은 오류 처리에 포함한다. 인증·세션 만료는 로그인으로 이동하고 일반 조회 실패는 오류 경계로 전달한다. 페이지 테스트에서 두 실패를 검증한다.
+- 초기 조회와 월 이동 모두 `totalElements`를 전달·보관한다. `totalElements > expenses.length`일 때 TOP 5 제목 옆에 「최근 1000건 안에서 골랐어요」(`text-xs text-fg-muted`)를 보인다. 정확히 1000건인 달은 안내를 보이지 않는다. 날짜 내림차순 조회를 금액 상위 1000건으로 오해하지 않도록 최근 목록임을 밝힌다.
 
 ## 작업 항목
 
@@ -35,7 +36,8 @@
 ### 3. 테스트
 
 - `frontend/src/__tests__/app/analytics/page.test.tsx`(수정): 카테고리 목록을 함께 받는다.
-- `frontend/src/__tests__/components/analytics/AnalyticsTopExpenses.test.tsx`(신규): `categoryUuid` 에 맞는 카테고리 이름과 아이콘이 보이고, 1000건이면 안내가 보인다.
+- `frontend/src/__tests__/components/analytics/AnalyticsTopExpenses.test.tsx`(신규): `categoryUuid`에 맞는 카테고리 이름과 아이콘, 정확히 1000건과 1000건 초과의 안내 차이, 삭제된 카테고리의 기본 표시를 검증한다.
+- `frontend/src/__tests__/components/analytics/AnalyticsClient.test.tsx`(수정): 월 이동 뒤 전체 건수와 받은 목록 기준으로 안내가 갱신된다.
 
 ## 검증
 
@@ -43,7 +45,7 @@
 
 ```bash
 pnpm tsc --noEmit && pnpm lint && pnpm lint:md && pnpm test
-pnpm test src/__tests__/app/analytics/page.test.tsx src/__tests__/components/analytics/AnalyticsTopExpenses.test.tsx
+pnpm test src/__tests__/app/analytics/page.test.tsx src/__tests__/components/analytics/AnalyticsTopExpenses.test.tsx src/__tests__/components/analytics/AnalyticsClient.test.tsx
 pnpm test:browser
 ```
 
@@ -58,3 +60,4 @@ pnpm test:browser
 | `frontend/src/app/(authenticated)/analytics/_components/AnalyticsTopExpenses.tsx` | 신규 |
 | `frontend/src/__tests__/app/analytics/page.test.tsx` | 수정 |
 | `frontend/src/__tests__/components/analytics/AnalyticsTopExpenses.test.tsx` | 신규 |
+| `frontend/src/__tests__/components/analytics/AnalyticsClient.test.tsx` | 수정 |

@@ -27,6 +27,7 @@
 - 요약 행을 다시 누르면 `categoryId` 를 지운다. 버튼 `aria-pressed` 는 토글 의미와 맞게 된다.
 - 카드 전체를 버튼으로 만들지 않는다(안에 수정, 삭제 버튼이 있어 버튼 중첩이 된다). 카드에 `onClick` 으로 수정을 열고, 안쪽 두 버튼은 `event.stopPropagation()` 한다. 키보드 사용자는 지금 수정 버튼을 그대로 쓴다. 카드에 `cursor-pointer`.
 - 예산 알림은 읽음 처리 뒤 `/budget` 으로 간다. 이미 읽은 알림도 이동한다. 헤더 알림 창에서 누르면 창을 닫는다(`NotificationList` 의 `onLinkClick` 과 같은 경로).
+- 안 읽은 예산 알림은 읽음 처리가 성공해야 이동한다. 실패하면 오류를 안내하고 이동하거나 창을 닫지 않는다. 이미 읽은 예산 알림은 바로 이동한다. `NotificationType`에 백엔드의 `RECURRING_EXPENSE_CREATED`를 추가하고 세 예산 타입만 이동 대상으로 삼는다.
 
 ## 작업 항목
 
@@ -37,10 +38,12 @@
 ### 2. 카테고리 카드 탭 수정과 테스트
 
 `frontend/src/__tests__/app/categories/CategoryItem.test.tsx`(신규): 카드를 누르면 `onEdit`, 삭제 버튼을 누르면 `onDelete` 만 불린다.
+수정 버튼은 이벤트 전파를 막아 `onEdit`이 한 번만 불린다.
 
 ### 3. 예산 알림 이동과 테스트
 
 `frontend/src/__tests__/components/notifications/NotificationItem.test.tsx`(신규): 예산 알림을 누르면 읽음 처리 뒤 `/budget` 으로 이동하고, 다른 종류는 이동하지 않는다.
+읽음 실패·이미 읽은 알림도 검증한다. `NotificationList.test.tsx`(신규)에서 이동 콜백이 헤더의 `onLinkClick`을 호출하는지 확인한다.
 
 ## 검증
 
@@ -48,7 +51,7 @@
 
 ```bash
 pnpm tsc --noEmit && pnpm lint && pnpm lint:md && pnpm test
-pnpm test src/__tests__/components/expenses/CategoryExpenseSummary.test.tsx src/__tests__/app/categories/CategoryItem.test.tsx src/__tests__/components/notifications/NotificationItem.test.tsx
+pnpm test src/__tests__/components/expenses/CategoryExpenseSummary.test.tsx src/__tests__/app/categories/CategoryItem.test.tsx src/__tests__/components/notifications/NotificationItem.test.tsx src/__tests__/components/notifications/NotificationList.test.tsx
 ```
 
 기대값: 모든 명령이 성공한다.
@@ -64,3 +67,5 @@ pnpm test src/__tests__/components/expenses/CategoryExpenseSummary.test.tsx src/
 | `frontend/src/components/notifications/NotificationItem.tsx` | 수정 |
 | `frontend/src/components/notifications/NotificationList.tsx` | 수정 |
 | `frontend/src/__tests__/components/notifications/NotificationItem.test.tsx` | 신규 |
+| `frontend/src/__tests__/components/notifications/NotificationList.test.tsx` | 신규 |
+| `frontend/src/types/actions/notification.ts` | 수정 |

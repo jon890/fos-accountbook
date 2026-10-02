@@ -26,6 +26,8 @@
 - `frontend/src/app/(authenticated)/transactions/_components/FilterSheet.tsx`(신규): 시트 안에 기간(칩과 직접 입력), 카테고리(지출 탭은 EXPENSE, 수입 탭은 INCOME 목록), 금액 범위(최소, 최대)를 세로로 놓는다. 하단에 「초기화」, 「적용」. 적용할 때 한 번만 URL 을 바꾼다(`useAppRouter().replace`, `limit` 삭제).
 - 「필터」 버튼 배지는 기본값과 다른 항목 수(기간이 이번 달이 아님, 카테고리 있음, 금액 있음)다.
 - 데스크톱의 `FilterChips` 는 그대로 쓴다. 기간 계산과 검증 로직을 시트와 함께 쓰도록 `frontend/src/app/(authenticated)/transactions/_components/filter-state.ts`(신규)로 뺀다.
+- 시트를 열 때 현재 URL 값으로 draft를 시작하고, 취소·닫기에서는 URL을 바꾸지 않는다. 다시 열거나 외부 URL이 바뀌면 현재 값을 사용한다. 초기화는 draft를 이번 달·전체 카테고리·금액 없음으로 바꾸고 적용 전에는 이동하지 않는다.
+- 날짜는 유효한 시작일·종료일과 시작일 이하가 아닌 종료일을 요구한다. 금액은 빈 값 또는 유한한 0 이상 숫자만 허용하고 최소가 최대보다 크면 거부한다. 실패 시 안내를 보이고 URL을 바꾸지 않는다. 날짜·금액 검증을 공유 함수로 두고 단위 테스트, 취소·재열기·잘못된 범위·초기화 후 적용을 컴포넌트 테스트로 검증한다.
 
 ## 작업 항목
 
@@ -39,7 +41,7 @@ URL 값에서 필터 상태 읽기, 배지 수, 적용할 URL 만들기.
 
 ### 4. 테스트
 
-- `frontend/src/__tests__/components/transactions/FilterSheet.test.tsx`(신규): 「적용」 이 한 번만 replace 하고, 「초기화」 가 기간 외 값을 지운다.
+- `frontend/src/__tests__/components/transactions/FilterSheet.test.tsx`(신규): 「초기화」는 draft를 이번 달·전체 카테고리·금액 없음으로 바꾸고 적용 전에는 이동하지 않는다. 적용하면 `tab`과 `q`를 보존한 URL로 한 번만 replace 한다.
 - `frontend/browser/transactions.spec.ts`(수정): 390px 에서 「필터」 를 눌러 시트가 화면 아래에 붙어 열리고, 금액 하한을 넣고 적용하면 배지가 1 이 된다. 1280px 에서는 「필터」 버튼이 없고 칩이 보인다.
 
 ## 검증

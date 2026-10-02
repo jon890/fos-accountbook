@@ -192,8 +192,11 @@
 
 `services/transaction/transaction-service.ts`의 `groupTransactionsWithTotal`은 날짜별로 묶고 합계를 계산한다.
 지출과 수입은 선택한 기간을 300건씩 받는다(`limit` 300, 600, ...). 더 있으면 목록 끝에 「더 보기」 가 뜨고 쪽 넘김 버튼은 없다 (ADR-F41).
+한 번에 최대 3000건까지 받으며, 그 뒤에도 내역이 남으면 조회 기간을 줄이라는 안내를 보인다. 필터가 바뀌면 다시 300건부터 받는다.
 검색어와 금액 범위는 받은 목록에 `applyClientFilters` 를 적용해 화면이 거른다. 검색어는 메모와 카테고리 이름에서 찾는다. 받지 않은 건이 남으면 「불러온 N건 안에서 찾았어요」 를 함께 보인다.
+검색 결과가 없어도 미수신 건이 남으면 빈 상태와 범위 안내, 더 보기를 함께 보인다.
 모바일에서는 기간, 카테고리, 금액 필터를 「필터」 버튼(적용 개수 배지)이 여는 하단 시트에 모은다.
+시트에서 바꾼 값은 적용할 때 한 번에 반영한다. 초기화는 이번 달·전체 카테고리·금액 없음으로 되돌리며, 취소하면 주소를 바꾸지 않는다. 잘못된 날짜나 금액 범위는 안내하고 적용하지 않는다.
 카테고리별 지출 요약에서 걸러 보는 행을 다시 누르면 카테고리 필터가 풀린다.
 
 page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 탭을 바꾸면 URL 이 바뀌고 서버가 그 탭만 다시 그린다.
@@ -211,12 +214,13 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 ```
 [page.tsx (server) — searchParams { period: m1|m3|m6|y1 }]
     │
-    └─ Promise.all 6 Action:
+    └─ Promise.all 7 Action:
         ├─ getDashboardStatsAction()                          # /dashboard/stats/monthly
         ├─ getMonthlyDailyStatsAction(year, month)            # /dashboard/daily-stats
         ├─ getExpensesAction({ familyUuid, startDate, endDate, limit: 1000 })  # 지출 상위 5건 표시용
         ├─ getCategoryBreakdownWithDeltaAction(year, month)   # /dashboard/stats/category-breakdown?compareWithPrev=true + 두 달 monthly-trend
         ├─ getMonthlyTrendAction(period, year, month)         # /dashboard/stats/monthly-trend?from&to 한 번
+        ├─ getFamilyCategoriesAction(familyUuid)             # TOP 5 카테고리 표시용
         └─ getRecurringExpensesTotalAction()                 # /recurring-expenses/monthly-total
     │
     ├─ 「이번 달 YYYY년 M월」 제목: 아래 차트의 월 이동과 관계없이 이번 달 기준
@@ -228,7 +232,7 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
             ├─ AnalyticsCategoryDonut (172/160px Donut + 중앙 totalDelta ↑/↓)
             ├─ MonthlyTrendBar (순수 CSS bar, 마지막 막대 bg-brand-500 강조)
             ├─ CategoryDetailList (progress + 전월 delta % 2-col grid)
-            └─ 지출 TOP 5: categoryUuid 로 카테고리 목록에서 아이콘과 이름을 찾는다. 받은 건이 1000건이면 「상위 1000건 안에서 골랐어요」 를 보인다
+            └─ 지출 TOP 5: categoryUuid 로 카테고리 목록에서 아이콘과 이름을 찾는다. 전체 건수가 받은 건수보다 많으면 「최근 1000건 안에서 골랐어요」 를 보인다
 ```
 
 데이터 흐름 핵심 (ADR-F30):
@@ -459,7 +463,7 @@ App Router 의 segment 경계에서 일관 표시:
 - **Loading** (`src/app/(authenticated)/{calendar,transactions,analytics,*}/loading.tsx`): 페이지 구조에 맞춘 `Skel`을 표시한다. `globals.css`의 `ab-shimmer` 애니메이션과 `.ab-skel` 클래스를 재사용한다.
 
 - **전환 대기** (ADR-F39): 다른 화면으로 가는 링크는 `loading.tsx` 스켈레톤이 바로 뜬다. 클라이언트에서 `useAppRouter` 의 `push`, `replace`, `refresh` 를 호출하면 150ms 뒤 화면 맨 위에 진행 막대가 뜬다. `back` 은 history 이동의 완료 시점을 알 수 없어 제외한다.
-  - 같은 화면에서 주소 값만 바꾸는 전환(내역 탭, 필터, 검색, 쪽 넘김, 카테고리 요약 행, 달력 월 이동, 분석 기간)은 바뀔 영역이 `aria-busy="true"` 와 흐림으로 대기를 보인다.
+  - 같은 화면에서 주소 값만 바꾸는 전환(내역 탭, 필터, 검색, 더 보기, 카테고리 요약 행, 달력 월 이동, 분석 기간)은 바뀔 영역이 `aria-busy="true"` 와 흐림으로 대기를 보인다.
   - 서버 액션 뒤 이동하는 버튼(가족 선택, 가족 전환, 가족 만들기, 초대 수락)은 이동이 끝날 때까지 비활성이고 진행 표시를 유지한다.
   - 헤더의 가족 전환 시트는 누르면 바로 열리고, 목록을 받는 동안 행 스켈레톤을 보인다.
 
