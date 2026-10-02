@@ -5,7 +5,8 @@ import type { CategoryResponse } from "@/types/category";
 import type { FamilyMemberSummary } from "@/types/family";
 import { Inbox } from "lucide-react";
 import { ExpenseListClient } from "./ExpenseListClient";
-import { ExpensePagination } from "./ExpensePagination";
+import { LoadMoreButton } from "@/components/transactions/LoadMoreButton";
+import { applyClientFilters, parseAmountFilter } from "@/services/transaction/transaction-service";
 
 interface ExpenseListProps {
   familyId: string;
@@ -14,7 +15,6 @@ interface ExpenseListProps {
   categoryId?: string;
   startDate?: string;
   endDate?: string;
-  page?: number;
   limit?: number;
   q?: string;
   amountMin?: string;
@@ -28,20 +28,22 @@ export async function ExpenseList({
   categoryId,
   startDate,
   endDate,
-  page = 1,
-  limit = 25,
+  limit = 300,
   q,
   amountMin,
   amountMax,
 }: ExpenseListProps) {
-  const hasFilter = !!(categoryId || q || amountMin || amountMax);
+  const amountMinValue = parseAmountFilter(amountMin);
+  const amountMaxValue = parseAmountFilter(amountMax);
+  const hasClientFilter = Boolean(q?.trim()) || amountMinValue !== undefined || amountMaxValue !== undefined;
+  const hasFilter = Boolean(categoryId) || hasClientFilter;
   // Server Action으로 지출 목록 조회
   const result = await getExpensesAction({
     familyUuid: familyId,
     categoryId,
     startDate,
     endDate,
-    page,
+    page: 1,
     limit,
   });
 
@@ -59,10 +61,18 @@ export async function ExpenseList({
 
   const {
     items: expenses,
-    totalPages,
     totalElements,
-    currentPage,
   } = result.data;
+
+  const categoryNamesByUuid = new Map(
+    categories.map((category) => [category.uuid, category.name])
+  );
+  const filteredExpenses = applyClientFilters(expenses, {
+    amountMin: amountMinValue,
+    amountMax: amountMaxValue,
+    q,
+    categoryNameOf: (expense) => categoryNamesByUuid.get(expense.categoryUuid),
+  });
 
   if (expenses.length === 0 && !hasFilter) {
     // IncomeList 와 동일 카피 — 도메인 wording 만 다를 수 있으나 현재 plan 에선 통일
@@ -79,26 +89,47 @@ export async function ExpenseList({
     );
   }
 
+  if (filteredExpenses.length === 0 && hasFilter) {
+    return (
+      <div className="space-y-3 md:space-y-4">
+        <EmptyState
+          icon={Inbox}
+          title="조건에 맞는 거래가 없어요"
+          description="검색어나 필터 조건을 바꿔 보세요."
+        />
+        {hasClientFilter && expenses.length < totalElements && (
+          <p className="text-xs text-fg-muted">
+            불러온 {expenses.length}건 안에서 찾았어요
+          </p>
+        )}
+        <LoadMoreButton
+          loadedCount={expenses.length}
+          totalElements={totalElements}
+          limit={limit}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3 md:space-y-4">
+      {hasClientFilter && expenses.length < totalElements && (
+        <p className="text-xs text-fg-muted">
+          불러온 {expenses.length}건 안에서 찾았어요
+        </p>
+      )}
       <ExpenseListClient
-        expenses={expenses}
+        expenses={filteredExpenses}
         categories={categories}
         familyUuid={familyId}
         members={members}
       />
 
-      {/* 페이지네이션 */}
-      {totalPages > 1 && (
-        <ExpensePagination
-          pagination={{
-            page: currentPage + 1, // 백엔드는 0-based, UI는 1-based
-            limit: limit,
-            total: totalElements,
-            totalPages: totalPages,
-          }}
-        />
-      )}
+      <LoadMoreButton
+        loadedCount={expenses.length}
+        totalElements={totalElements}
+        limit={limit}
+      />
     </div>
   );
 }

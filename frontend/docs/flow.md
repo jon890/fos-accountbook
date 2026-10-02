@@ -177,25 +177,33 @@
 ## 5-2. /transactions 페이지 구조 (plan003)
 
 ```
-[page.tsx (server) — searchParams { tab, categoryId, startDate, endDate, page, q, amountMin, amountMax }]
+[page.tsx (server) — searchParams { tab, categoryId, startDate, endDate, limit, q, amountMin, amountMax }]
     ├─ getFamilyMembersAction() → 선택된 가족 구성원 → 목록 Client의 작성자 이름과 색 점
     ├─ TransactionsTabs (segmented role=tablist, bg-bg-muted / bg-bg-elev)
     ├─ FilterChips (카테고리 / 기간 / AmountRangeFilter / SearchBar)
+    ├─ FilterSheet (모바일, 「필터」 버튼과 적용 개수 배지, 하단 시트)
     ├─ ExpenseSummaryWrapper → CategoryExpenseSummary (접힌 채 시작, 걸러 보는 카테고리가 있으면 펼친 채 시작하고 그 행이 6위 아래면 전체를 보임, 머리에 총액과 비중 막대, 펼치면 한 줄씩 상위 5개와 「전체 N개 보기」, 행 탭 → ?categoryId=)
     │     ├─ SearchBar (300ms debounce, ?q= URL 동기화, 모바일 expand)
     │     └─ AmountRangeFilter (Popover, amountMin/Max URL param)
     └─ ExpenseListClient / IncomeListClient / RecurringExpenseList (tab 별)
+            ├─ LoadMoreButton (더 보기, 3000건 상한 안내)
             └─ DateGroupSection<T> (날짜 링크와 거래 종류별 합계, 반복 목록은 날짜 그룹 없이 표시)
                     └─ TransactionRow (설명, 카테고리·작성자·시각, 금액)
                             └─ 행 탭 → EditTransactionDialog
 ```
 
-`services/transaction/transaction-service.ts`의 `groupTransactionsWithTotal`은 날짜별로 묶고 합계를 계산한다. `applyClientFilters`의 금액과 검색어 필터는 현재 사용하지 않는다.
+`services/transaction/transaction-service.ts`의 `groupTransactionsWithTotal`은 날짜별로 묶고 합계를 계산한다.
+지출과 수입은 선택한 기간을 300건씩 받는다(`limit` 300, 600, ...). 더 있으면 목록 끝에 「더 보기」 가 뜨고 쪽 넘김 버튼은 없다 (ADR-F41).
+한 번에 최대 3000건까지 받으며, 그 뒤에도 내역이 남으면 조회 기간을 줄이라는 안내를 보인다. 필터가 바뀌면 다시 300건부터 받는다.
+검색어와 금액 범위는 받은 목록에 `applyClientFilters` 를 적용해 화면이 거른다. 검색어는 메모와 카테고리 이름에서 찾는다. 받지 않은 건이 남으면 「불러온 N건 안에서 찾았어요」 를 함께 보인다.
+검색 결과가 없어도 미수신 건이 남으면 빈 상태와 범위 안내, 더 보기를 함께 보인다.
+모바일에서는 기간, 카테고리, 금액 필터를 「필터」 버튼(적용 개수 배지)이 여는 하단 시트에 모은다.
+시트에서 바꾼 값은 적용할 때 한 번에 반영한다. 초기화는 이번 달·전체 카테고리·금액 없음으로 되돌리며, 취소하면 주소를 바꾸지 않는다. 잘못된 날짜나 금액 범위는 안내하고 적용하지 않는다.
+카테고리별 지출 요약에서 걸러 보는 행을 다시 누르면 카테고리 필터가 풀린다.
 
 page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 탭을 바꾸면 URL 이 바뀌고 서버가 그 탭만 다시 그린다.
 세 탭을 모두 slot props 로 넘기면 RSC 가 보이지 않는 탭까지 렌더링해 조회가 매번 세 배로 나간다.
 시간대는 세션의 `session.user.profile.timezone` 을 쓰고 프로필 API 를 따로 부르지 않는다.
-검색어와 금액 필터는 백엔드 지출·수입 목록 API 가 받지 않아 아직 적용되지 않는다(`prd.md` 「후속 검토」).
 날짜 머리를 누르면 해당 날짜를 선택한 달력으로 이동한다. 지출은 지출 색, 수입은 수입 색과 `+` 부호로 표시한다.
 지출·수입 탭만 구성원을 조회한다.
 구성원 조회의 인증 오류는 로그인으로 이동하고, 일반 조회 실패는 빈 목록으로 처리해 작성자를 「이전 구성원」으로 표시한다.
@@ -208,12 +216,13 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 ```
 [page.tsx (server) — searchParams { period: m1|m3|m6|y1 }]
     │
-    └─ Promise.all 6 Action:
+    └─ Promise.all 7 Action:
         ├─ getDashboardStatsAction()                          # /dashboard/stats/monthly
         ├─ getMonthlyDailyStatsAction(year, month)            # /dashboard/daily-stats
         ├─ getExpensesAction({ familyUuid, startDate, endDate, limit: 1000 })  # 지출 상위 5건 표시용
         ├─ getCategoryBreakdownWithDeltaAction(year, month)   # /dashboard/stats/category-breakdown?compareWithPrev=true + 두 달 monthly-trend
         ├─ getMonthlyTrendAction(period, year, month)         # /dashboard/stats/monthly-trend?from&to 한 번
+        ├─ getFamilyCategoriesAction(familyUuid)             # TOP 5 카테고리 표시용
         └─ getRecurringExpensesTotalAction()                 # /recurring-expenses/monthly-total
     │
     ├─ 「이번 달 YYYY년 M월」 제목: 아래 차트의 월 이동과 관계없이 이번 달 기준
@@ -224,7 +233,8 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
             ├─ AnalyticsPeriodToggle (segmented role=tablist, URL ?period= 단방향)
             ├─ AnalyticsCategoryDonut (172/160px Donut + 중앙 totalDelta ↑/↓)
             ├─ MonthlyTrendBar (순수 CSS bar, 마지막 막대 bg-brand-500 강조)
-            └─ CategoryDetailList (progress + 전월 delta % 2-col grid)
+            ├─ CategoryDetailList (progress + 전월 delta % 2-col grid)
+            └─ 지출 TOP 5: categoryUuid 로 카테고리 목록에서 아이콘과 이름을 찾는다. 전체 건수가 받은 건수보다 많으면 「최근 1000건 안에서 골랐어요」 를 보인다
 ```
 
 데이터 흐름 핵심 (ADR-F30):
@@ -271,6 +281,7 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
                             ├─ BUDGET_50_EXCEEDED / BUDGET_80_EXCEEDED → warning 톤 (bg-warning/10 + text-warning)
                             ├─ BUDGET_100_EXCEEDED                       → expense 톤 (bg-expense/10 + text-expense)
                             └─ default                                    → brand 톤 (bg-brand-50 + text-brand-700)
+                    └─ 항목 탭 → 읽음 처리, 예산 알림(BUDGET_*)이면 /budget 으로 이동
 
 [/notifications 전용 페이지 — plan017]
     └─ 전체 알림 목록 + segmented (전체 / 안 읽음) + pagination
@@ -454,7 +465,7 @@ App Router 의 segment 경계에서 일관 표시:
 - **Loading** (`src/app/(authenticated)/{calendar,transactions,analytics,*}/loading.tsx`): 페이지 구조에 맞춘 `Skel`을 표시한다. `globals.css`의 `ab-shimmer` 애니메이션과 `.ab-skel` 클래스를 재사용한다.
 
 - **전환 대기** (ADR-F39): 다른 화면으로 가는 링크는 `loading.tsx` 스켈레톤이 바로 뜬다. 클라이언트에서 `useAppRouter` 의 `push`, `replace`, `refresh` 를 호출하면 150ms 뒤 화면 맨 위에 진행 막대가 뜬다. `back` 은 history 이동의 완료 시점을 알 수 없어 제외한다.
-  - 같은 화면에서 주소 값만 바꾸는 전환(내역 탭, 필터, 검색, 쪽 넘김, 카테고리 요약 행, 달력 월 이동, 분석 기간)은 바뀔 영역이 `aria-busy="true"` 와 흐림으로 대기를 보인다.
+  - 같은 화면에서 주소 값만 바꾸는 전환(내역 탭, 필터, 검색, 더 보기, 카테고리 요약 행, 달력 월 이동, 분석 기간)은 바뀔 영역이 `aria-busy="true"` 와 흐림으로 대기를 보인다.
   - 서버 액션 뒤 이동하는 버튼(가족 선택, 가족 전환, 가족 만들기, 초대 수락)은 이동이 끝날 때까지 비활성이고 진행 표시를 유지한다.
   - 헤더의 가족 전환 시트는 누르면 바로 열리고, 목록을 받는 동안 행 스켈레톤을 보인다.
 
@@ -546,6 +557,7 @@ Teal 디자인을 적용하고 인라인 style을 제거하며 빈 상태 표시
                 │   └─ CategoryItem
                 │       ├─ 아이콘 영역 정사각형 (w-10 h-10 / w-12 h-12)
                 │       ├─ 동적 색은 CSS variable (--cat-color)
+                │       ├─ 카드 탭 → 수정 창 (Edit 버튼과 같은 동작)
                 │       └─ Edit / Delete (destructive variant, plan020)
                 │
                 ├─ 추가, 수정 창: md 미만 Sheet bottom / md+ Dialog (ADR-F40)

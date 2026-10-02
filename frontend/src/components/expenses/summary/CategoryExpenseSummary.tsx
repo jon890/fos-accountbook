@@ -51,9 +51,14 @@ export function CategoryExpenseSummary({
 
   const handleCategoryClick = (categoryUuid: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("categoryId", categoryUuid);
-    params.set("page", "1");
-    router.push(`/transactions?${params.toString()}`);
+    if (selectedCategoryId === categoryUuid) {
+      params.delete("categoryId");
+    } else {
+      params.set("categoryId", categoryUuid);
+    }
+    params.delete("limit");
+    const query = params.toString();
+    router.push(query ? `/transactions?${query}` : "/transactions");
   };
 
   return (

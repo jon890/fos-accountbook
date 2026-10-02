@@ -23,7 +23,7 @@ export function SearchBar() {
       } else {
         params.delete("q");
       }
-      params.set("page", "1");
+      params.delete("limit");
       router.replace(`/transactions?${params.toString()}`);
     },
     [router, searchParams]
@@ -56,7 +56,7 @@ export function SearchBar() {
         />
         <Input
           type="text"
-          placeholder="메모 검색"
+          placeholder="메모, 카테고리 검색"
           value={value}
           onChange={(e) => handleChange(e.target.value)}
           className={inputClass}
@@ -86,7 +86,7 @@ export function SearchBar() {
               <Input
                 autoFocus
                 type="text"
-                placeholder="메모 검색"
+                placeholder="메모, 카테고리 검색"
                 value={value}
                 onChange={(e) => handleChange(e.target.value)}
                 className={cn(inputClass, "w-full")}

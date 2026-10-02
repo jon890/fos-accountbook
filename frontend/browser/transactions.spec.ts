@@ -66,8 +66,83 @@ test("빈 지출과 수입 목록은 하단 가운데 추가 버튼 안내와 �
 test("수입 행을 누르면 수입 수정 시트가 열린다", async ({ page }) => {
   await page.goto("/transactions?tab=incomes");
 
-  await page.getByRole("button", { name: /급여/ }).click();
+  await page.getByRole("button", { name: /10월 월급/ }).click();
   await expect(page.getByRole("heading", { name: "수입 수정" })).toBeVisible();
+});
+
+test("더 보기는 300건을 더 요청하고 쪽 넘김 버튼을 표시하지 않는다", async ({ page, request }) => {
+  const response = await request.post(`${BACKEND_BASE_URL}/__test/transactions-total`, {
+    data: { totalElements: 4 },
+  });
+  expect(response.ok()).toBe(true);
+
+  await page.goto("/transactions");
+  await expect(page.getByRole("button", { name: "더 보기 (1건 남음)" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "이전" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "다음" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "더 보기 (1건 남음)" }).click();
+  await expect(page).toHaveURL(/limit=600/);
+
+  const requestSizesResponse = await request.get(
+    `${BACKEND_BASE_URL}/__test/transaction-request-sizes`,
+  );
+  expect(requestSizesResponse.ok()).toBe(true);
+  expect(await requestSizesResponse.json()).toContain("600");
+});
+
+test("검색과 금액 범위는 받은 내역만 거르고 더 보기를 유지한다", async ({ page, request }) => {
+  const response = await request.post(`${BACKEND_BASE_URL}/__test/transactions-total`, {
+    data: { totalElements: 4 },
+  });
+  expect(response.ok()).toBe(true);
+
+  await page.goto("/transactions?q=%EB%B2%84%EC%8A%A4");
+  await expect(page.getByRole("button", { name: /버스 요금/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /점심 식사/ })).toHaveCount(0);
+  await expect(page.getByText("불러온 3건 안에서 찾았어요")).toBeVisible();
+  await expect(page.getByRole("button", { name: "더 보기 (1건 남음)" })).toBeVisible();
+
+  await page.goto("/transactions?q=%EC%8B%9D%EB%B9%84");
+  await expect(page.getByRole("button", { name: /점심 식사/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /버스 요금/ })).toHaveCount(0);
+
+  await page.goto("/transactions?amountMin=10000");
+  await expect(page.getByRole("button", { name: /점심 식사/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /버스 요금/ })).toHaveCount(0);
+
+  await page.goto("/transactions?q=%EC%97%86%EB%8A%94%20%EA%B2%80%EC%83%89%EC%96%B4");
+  await expect(
+    page.getByRole("main").getByText("조건에 맞는 거래가 없어요"),
+  ).toBeVisible();
+  const loadMoreButton = page.getByRole("button", { name: "더 보기 (1건 남음)" });
+  await expect(loadMoreButton).toBeVisible();
+  await loadMoreButton.click();
+  await expect(page).toHaveURL(/limit=600/);
+  expect(new URL(page.url()).searchParams.get("q")).toBe("없는 검색어");
+  await expect(
+    page.getByRole("main").getByText("조건에 맞는 거래가 없어요"),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("main").getByText("불러온 3건 안에서 찾았어요"),
+  ).toBeVisible();
+
+  await page.goto("/transactions?tab=incomes&q=%EA%B8%89%EC%97%AC");
+  await expect(page.getByRole("button", { name: /10월 월급/ })).toBeVisible();
+});
+
+test("3000건을 불러온 뒤에는 더 보기 대신 조회 기간 안내를 표시한다", async ({ page, request }) => {
+  const response = await request.post(`${BACKEND_BASE_URL}/__test/transactions-total`, {
+    data: { totalElements: 3001 },
+  });
+  expect(response.ok()).toBe(true);
+
+  await page.goto("/transactions?limit=3000");
+
+  await expect(page.getByRole("button", { name: /더 보기/ })).toHaveCount(0);
+  await expect(
+    page.getByText("최대 3000건까지 불러왔어요. 조회 기간을 줄여 주세요"),
+  ).toBeVisible();
 });
 
 test("반복 행은 일정과 반영 상태를 보이고 수정 시트를 연다", async ({ page }) => {
@@ -91,4 +166,31 @@ test("내역 탭은 추가 버튼 없이 하단 추가 시트를 연다", async 
     await expect(page.getByRole("heading", { name: "거래 추가" })).toBeVisible();
     await page.keyboard.press("Escape");
   }
+});
+
+test("모바일은 필터 버튼이 여는 하단 시트에서 필터를 적용하고 데스크톱은 칩을 보인다", async ({ page }, testInfo) => {
+  await page.goto("/transactions");
+
+  if (testInfo.project.name !== "mobile") {
+    await expect(page.getByRole("button", { name: "필터", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "이번달", exact: true })).toBeVisible();
+    return;
+  }
+
+  await expect(page.getByRole("button", { name: "이번달", exact: true })).toHaveCount(0);
+  await expect(page.getByTestId("filter-badge")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "필터", exact: true }).click();
+  const sheet = page.getByRole("dialog");
+  await expect(sheet).toBeVisible();
+  const box = await sheet.boundingBox();
+  const viewport = page.viewportSize();
+  expect(box).not.toBeNull();
+  expect(Math.round(box!.y + box!.height)).toBe(viewport!.height);
+
+  await sheet.getByRole("spinbutton", { name: "최솟값 금액" }).fill("10000");
+  await sheet.getByRole("button", { name: "적용", exact: true }).click();
+
+  await expect(page).toHaveURL(/amountMin=10000/);
+  await expect(page.getByTestId("filter-badge")).toHaveText("1");
 });

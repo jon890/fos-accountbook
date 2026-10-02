@@ -68,7 +68,7 @@ export function AmountRangeFilter() {
     } else {
       params.delete("amountMax");
     }
-    params.set("page", "1");
+    params.delete("limit");
     router.replace(`/transactions?${params.toString()}`);
     setMinDraft(null);
     setMaxDraft(null);
@@ -83,7 +83,7 @@ export function AmountRangeFilter() {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("amountMin");
     params.delete("amountMax");
-    params.set("page", "1");
+    params.delete("limit");
     router.replace(`/transactions?${params.toString()}`);
     setMinDraft(null);
     setMaxDraft(null);

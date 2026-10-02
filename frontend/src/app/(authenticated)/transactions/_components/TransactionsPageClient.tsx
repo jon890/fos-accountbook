@@ -2,6 +2,7 @@
 
 import { TransactionsTabs } from "@/app/(authenticated)/transactions/_components/TransactionsTabs";
 import { FilterChips } from "@/app/(authenticated)/transactions/_components/FilterChips";
+import { FilterSheet } from "@/app/(authenticated)/transactions/_components/FilterSheet";
 import { SearchBar } from "@/app/(authenticated)/transactions/_components/SearchBar";
 import type { CategoryResponse } from "@/types/category";
 import { useNavigationPending } from "@/lib/client/navigation";
@@ -47,11 +48,23 @@ export function TransactionsPageClient({
       {activeTab !== "recurring" && (
         <div className="flex min-w-0 items-start gap-3">
           <fieldset disabled={isNavigationPending} className="flex-1 min-w-0">
-            <FilterChips
-              categories={categories}
-              defaultStartDate={searchParams.startDate}
-              defaultEndDate={searchParams.endDate}
-            />
+            {/* 폭 판정을 JS 로 하면 서버 렌더가 모바일로 그려져 데스크톱 첫 화면에 「필터」 버튼이 잠깐 뜬다.
+                둘 다 그리고 CSS 로 하나만 보인다. */}
+            <div className="hidden md:block">
+              <FilterChips
+                categories={categories}
+                defaultStartDate={searchParams.startDate}
+                defaultEndDate={searchParams.endDate}
+              />
+            </div>
+            <div className="md:hidden">
+              <FilterSheet
+                categories={categories}
+                categoryType={activeTab === "incomes" ? "INCOME" : "EXPENSE"}
+                defaultStartDate={searchParams.startDate}
+                defaultEndDate={searchParams.endDate}
+              />
+            </div>
           </fieldset>
           {/* 모바일: 검색 아이콘, 데스크톱: 240px 검색 input. 대기 중에도 입력을 받는다 */}
           <div className="shrink-0 pt-0.5">

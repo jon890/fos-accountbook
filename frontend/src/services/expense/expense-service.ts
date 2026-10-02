@@ -37,11 +37,11 @@ export async function getExpenses(
   if (page < 1) {
     throw ActionError.invalidInput("page", page, "1 이상이어야 합니다");
   }
-  if (limit < 1 || limit > 1000) {
+  if (limit < 1 || limit > 3000) {
     throw ActionError.invalidInput(
       "limit",
       limit,
-      "1에서 1000 사이여야 합니다"
+      "1에서 3000 사이여야 합니다"
     );
   }
 

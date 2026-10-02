@@ -1,17 +1,17 @@
 "use client";
 
 import { cn } from "@/lib/client/utils";
-import {
-  getMonthRange,
-  getLastNMonthsRange,
-  getLastYearRange,
-} from "@/lib/utils/date-timezone";
 import { useTimeZone } from "@/lib/client/timezone-context";
 import type { CategoryResponse } from "@/types/category";
 import { useSearchParams } from "next/navigation";
 import { useAppRouter, useNavigationPending } from "@/lib/client/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import {
+  resolveQuickRange,
+  validateDateRange,
+  type QuickRange,
+} from "@/app/(authenticated)/transactions/_components/filter-state";
 import { AmountRangeFilter } from "@/app/(authenticated)/transactions/_components/AmountRangeFilter";
 import { ChevronDown, CalendarDays, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -28,8 +28,6 @@ interface FilterChipsProps {
   defaultStartDate?: string;
   defaultEndDate?: string;
 }
-
-type QuickRange = "thisMonth" | "3months" | "1year" | "custom";
 
 const chipBase =
   "flex items-center gap-1 border px-3 py-1.5 text-xs font-medium transition-all whitespace-nowrap shrink-0 rounded-full md:rounded-md";
@@ -73,7 +71,7 @@ export function FilterChips({
         params.set(key, value);
       }
     }
-    params.set("page", "1");
+    params.delete("limit");
     router.push(`/transactions?${params.toString()}`);
   };
 
@@ -81,33 +79,18 @@ export function FilterChips({
     setActiveRange(range);
     setShowDatePanel(false);
 
-    let startDate = "";
-    let endDate = "";
-
-    if (range === "thisMonth") {
-      const r = getMonthRange(timezone);
-      startDate = r.startDate;
-      endDate = r.endDate;
-    } else if (range === "3months") {
-      const r = getLastNMonthsRange(timezone, 3);
-      startDate = r.startDate;
-      endDate = r.endDate;
-    } else if (range === "1year") {
-      const r = getLastYearRange(timezone);
-      startDate = r.startDate;
-      endDate = r.endDate;
+    if (range === "custom") {
+      return;
     }
 
+    const { startDate, endDate } = resolveQuickRange(range, timezone);
     navigate({ startDate, endDate });
   };
 
   const applyCustomDate = () => {
-    if (!customStart || !customEnd) {
-      toast.error("시작일과 종료일을 모두 입력해주세요");
-      return;
-    }
-    if (customStart > customEnd) {
-      toast.error("종료일은 시작일 이후여야 합니다");
+    const dateError = validateDateRange(customStart, customEnd);
+    if (dateError) {
+      toast.error(dateError);
       return;
     }
     setActiveRange("custom");

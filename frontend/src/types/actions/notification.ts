@@ -8,7 +8,8 @@
 export type NotificationType =
   | "BUDGET_50_EXCEEDED"
   | "BUDGET_80_EXCEEDED"
-  | "BUDGET_100_EXCEEDED";
+  | "BUDGET_100_EXCEEDED"
+  | "RECURRING_EXPENSE_CREATED";
 
 /**
  * 알림 응답 타입
