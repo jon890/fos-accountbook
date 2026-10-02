@@ -248,11 +248,12 @@ interface RecentExpense {
 | 집계 | 요청 인자 | 응답 `data` | 서비스 변환 |
 | --- | --- | --- | --- |
 | 일별 합계 | `year`, `month` | `year`, `month`, `dailyStats: DailyTransactionSummary[]`, `totalIncome`, `totalExpense` | 거래가 있는 날의 날짜 오름차순 배열을 반환한다. |
-| 카테고리 월 분포 | `year`, `month`, `compareWithPrev` | `year`, `month`, `totalExpense`, `items`<br>항목은 `categoryUuid`, `name`, `icon`, `color`, `totalAmount`, `percentage`, `deltaPercent` 를 포함한다. | 이름과 아이콘이 null 이면 기본값을 쓰고 색상 null 은 undefined 로 바꾼다. 비율과 전월 대비는 반올림하며 null 전월 대비는 유지한다. |
+| 카테고리 월 분포 | `year`, `month`, `compareWithPrev` | `year`, `month`, `totalExpense`, `items`<br>항목은 `categoryUuid`, `name`, `icon`, `color`, `totalAmount`, `percentage`, `deltaPercent`, `previousAmount` 를 포함한다. | 이름과 아이콘이 null 이면 기본값을 쓰고 색상 null 은 undefined 로 바꾼다. 비율과 전월 대비는 반올림하며 null 전월 대비는 유지한다. `previousAmount` 가 0 이고 이번 달 금액이 있으면 `isNew` 를 참으로 둔다. |
 | 월별 추이 | `from`, `to` (`YYYY-MM`) | `points: { year, month, totalExpense }[]`, `average` | 없는 달은 0 으로 채운다. 평균은 빈 달도 포함한 요청 개월 수로 다시 계산한다. |
 
 카테고리 항목은 금액 내림차순이다.
 `deltaPercent` 는 비교를 요청하지 않았거나 전월 금액이 없거나 0 이면 null 이다.
+`previousAmount` 는 직전 달 같은 카테고리 금액이다. 비교를 요청하지 않으면 오지 않고, 직전 달 지출이 없으면 0 이다. 분석 화면은 이 값이 0 인 항목을 전월 대비 칸에 「신규」 로 보인다.
 추이 응답에는 지출이 있는 달만 날짜 오름차순으로 포함된다.
 
 ### Invitation

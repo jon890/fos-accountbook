@@ -23,7 +23,8 @@ export interface CategoryWithDelta {
   icon: string;
   totalAmount: number;
   percentage: number;
-  deltaPercent: number | null; // 전월 대비 %, null = 직전 달 데이터 없음
+  deltaPercent: number | null; // 전월 대비 %, null = 비교 불가(직전 달 0원 포함)
+  isNew: boolean; // 직전 달 0원에서 이번 달 새로 생긴 지출
 }
 
 // `getCategoryBreakdownWithDelta` 의 반환 형태
