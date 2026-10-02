@@ -127,4 +127,8 @@ describe("buildFilterUrl", () => {
     expect(params.get("startDate")).toBe("2026-09-05");
     expect(params.get("endDate")).toBe("2026-09-20");
   });
+  it("목록이 무시하는 잘못된 금액 값은 배지에 세지 않는다", () => {
+    const draft = readFilterDraft(new URLSearchParams("amountMin=abc"), TZ);
+    expect(countActiveFilters(draft)).toBe(0);
+  });
 });

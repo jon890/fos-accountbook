@@ -1,3 +1,4 @@
+import { parseAmountFilter } from "@/services/transaction/transaction-service";
 import {
   getLastNMonthsRange,
   getLastYearRange,
@@ -93,7 +94,8 @@ export function countActiveFilters(draft: FilterDraft): number {
   let count = 0;
   if (draft.range !== "thisMonth") count += 1;
   if (draft.categoryId !== ALL_CATEGORIES) count += 1;
-  if (draft.amountMin !== "" || draft.amountMax !== "") count += 1;
+  // 목록이 실제로 적용하는 값만 센다. 주소에 amountMin=abc 같은 값이 있으면 목록은 무시한다.
+  if (parseAmountFilter(draft.amountMin) !== undefined || parseAmountFilter(draft.amountMax) !== undefined) count += 1;
   return count;
 }
 
