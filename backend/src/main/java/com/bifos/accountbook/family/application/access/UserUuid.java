@@ -1,4 +1,4 @@
-package com.bifos.accountbook.shared.aop;
+package com.bifos.accountbook.family.application.access;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -6,9 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 가족 UUID 파라미터를 표시하는 애노테이션
+ * 사용자 UUID 파라미터를 표시하는 애노테이션
  *
- * <p>{@link ValidateFamilyAccess} 애노테이션이 붙은 메서드에서 가족 UUID 파라미터를 명시적으로 표시하기 위해 사용합니다.
+ * <p>{@link ValidateFamilyAccess} 애노테이션이 붙은 메서드에서 사용자 UUID 파라미터를 명시적으로 표시하기 위해 사용합니다.
  *
  * <h3>사용 예시</h3>
  *
@@ -20,8 +20,8 @@ import java.lang.annotation.Target;
  * }</pre>
  *
  * @see ValidateFamilyAccess
- * @see UserUuid
+ * @see FamilyUuid
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface FamilyUuid {}
+public @interface UserUuid {}

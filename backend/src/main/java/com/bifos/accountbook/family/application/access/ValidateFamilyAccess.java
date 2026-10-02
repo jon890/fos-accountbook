@@ -1,4 +1,4 @@
-package com.bifos.accountbook.shared.aop;
+package com.bifos.accountbook.family.application.access;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
  *   <li><b>familyUuid</b>: 가족 UUID (String 타입, 필수)
  * </ul>
  *
- * @see com.bifos.accountbook.shared.aop.FamilyAccessAspect
+ * @see com.bifos.accountbook.family.application.access.FamilyAccessAspect
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

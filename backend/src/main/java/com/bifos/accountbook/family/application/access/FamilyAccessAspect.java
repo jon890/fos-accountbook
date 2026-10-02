@@ -1,4 +1,4 @@
-package com.bifos.accountbook.shared.aop;
+package com.bifos.accountbook.family.application.access;
 
 import com.bifos.accountbook.shared.exception.BusinessException;
 import com.bifos.accountbook.shared.exception.ErrorCode;

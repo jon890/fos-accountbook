@@ -1,13 +1,13 @@
 package com.bifos.accountbook.notification.application.service;
 
+import com.bifos.accountbook.family.application.access.FamilyUuid;
+import com.bifos.accountbook.family.application.access.FamilyValidationService;
+import com.bifos.accountbook.family.application.access.UserUuid;
+import com.bifos.accountbook.family.application.access.ValidateFamilyAccess;
 import com.bifos.accountbook.notification.application.dto.NotificationListResponse;
 import com.bifos.accountbook.notification.application.dto.NotificationResponse;
 import com.bifos.accountbook.notification.domain.entity.Notification;
 import com.bifos.accountbook.notification.domain.repository.NotificationRepository;
-import com.bifos.accountbook.shared.aop.FamilyUuid;
-import com.bifos.accountbook.shared.aop.FamilyValidationService;
-import com.bifos.accountbook.shared.aop.UserUuid;
-import com.bifos.accountbook.shared.aop.ValidateFamilyAccess;
 import com.bifos.accountbook.shared.exception.BusinessException;
 import com.bifos.accountbook.shared.exception.ErrorCode;
 import com.bifos.accountbook.shared.value.CustomUuid;
