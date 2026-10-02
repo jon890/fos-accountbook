@@ -5,7 +5,7 @@ import type { CategoryResponse } from "@/types/category";
 import type { FamilyMemberSummary } from "@/types/family";
 import { Inbox } from "lucide-react";
 import { ExpenseListClient } from "./ExpenseListClient";
-import { ExpensePagination } from "./ExpensePagination";
+import { LoadMoreButton } from "@/components/transactions/LoadMoreButton";
 
 interface ExpenseListProps {
   familyId: string;
@@ -14,7 +14,6 @@ interface ExpenseListProps {
   categoryId?: string;
   startDate?: string;
   endDate?: string;
-  page?: number;
   limit?: number;
   q?: string;
   amountMin?: string;
@@ -28,8 +27,7 @@ export async function ExpenseList({
   categoryId,
   startDate,
   endDate,
-  page = 1,
-  limit = 25,
+  limit = 300,
   q,
   amountMin,
   amountMax,
@@ -41,7 +39,7 @@ export async function ExpenseList({
     categoryId,
     startDate,
     endDate,
-    page,
+    page: 1,
     limit,
   });
 
@@ -59,9 +57,7 @@ export async function ExpenseList({
 
   const {
     items: expenses,
-    totalPages,
     totalElements,
-    currentPage,
   } = result.data;
 
   if (expenses.length === 0 && !hasFilter) {
@@ -88,17 +84,11 @@ export async function ExpenseList({
         members={members}
       />
 
-      {/* 페이지네이션 */}
-      {totalPages > 1 && (
-        <ExpensePagination
-          pagination={{
-            page: currentPage + 1, // 백엔드는 0-based, UI는 1-based
-            limit: limit,
-            total: totalElements,
-            totalPages: totalPages,
-          }}
-        />
-      )}
+      <LoadMoreButton
+        loadedCount={expenses.length}
+        totalElements={totalElements}
+        limit={limit}
+      />
     </div>
   );
 }

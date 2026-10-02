@@ -33,7 +33,7 @@ export function TransactionsTabs({ activeTab, onChange }: TransactionsTabsProps)
     }
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", tab);
-    params.set("page", "1");
+    params.delete("limit");
     router.push(`/transactions?${params.toString()}`);
   };
 

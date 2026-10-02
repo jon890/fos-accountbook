@@ -70,6 +70,41 @@ test("수입 행을 누르면 수입 수정 시트가 열린다", async ({ page 
   await expect(page.getByRole("heading", { name: "수입 수정" })).toBeVisible();
 });
 
+test("더 보기는 300건을 더 요청하고 쪽 넘김 버튼을 표시하지 않는다", async ({ page, request }) => {
+  const response = await request.post(`${BACKEND_BASE_URL}/__test/transactions-total`, {
+    data: { totalElements: 4 },
+  });
+  expect(response.ok()).toBe(true);
+
+  await page.goto("/transactions");
+  await expect(page.getByRole("button", { name: "더 보기 (1건 남음)" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "이전" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "다음" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "더 보기 (1건 남음)" }).click();
+  await expect(page).toHaveURL(/limit=600/);
+
+  const requestSizesResponse = await request.get(
+    `${BACKEND_BASE_URL}/__test/transaction-request-sizes`,
+  );
+  expect(requestSizesResponse.ok()).toBe(true);
+  expect(await requestSizesResponse.json()).toContain("600");
+});
+
+test("3000건을 불러온 뒤에는 더 보기 대신 조회 기간 안내를 표시한다", async ({ page, request }) => {
+  const response = await request.post(`${BACKEND_BASE_URL}/__test/transactions-total`, {
+    data: { totalElements: 3001 },
+  });
+  expect(response.ok()).toBe(true);
+
+  await page.goto("/transactions?limit=3000");
+
+  await expect(page.getByRole("button", { name: /더 보기/ })).toHaveCount(0);
+  await expect(
+    page.getByText("최대 3000건까지 불러왔어요. 조회 기간을 줄여 주세요"),
+  ).toBeVisible();
+});
+
 test("반복 행은 일정과 반영 상태를 보이고 수정 시트를 연다", async ({ page }) => {
   await page.goto("/transactions?tab=recurring");
 

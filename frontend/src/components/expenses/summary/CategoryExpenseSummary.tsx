@@ -52,7 +52,7 @@ export function CategoryExpenseSummary({
   const handleCategoryClick = (categoryUuid: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("categoryId", categoryUuid);
-    params.set("page", "1");
+    params.delete("limit");
     router.push(`/transactions?${params.toString()}`);
   };
 

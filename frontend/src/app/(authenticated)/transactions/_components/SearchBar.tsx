@@ -23,7 +23,7 @@ export function SearchBar() {
       } else {
         params.delete("q");
       }
-      params.set("page", "1");
+      params.delete("limit");
       router.replace(`/transactions?${params.toString()}`);
     },
     [router, searchParams]

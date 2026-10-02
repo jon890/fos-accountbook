@@ -73,7 +73,7 @@ export function FilterChips({
         params.set(key, value);
       }
     }
-    params.set("page", "1");
+    params.delete("limit");
     router.push(`/transactions?${params.toString()}`);
   };
 

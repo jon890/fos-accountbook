@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/empty/EmptyState";
 import { Inbox } from "lucide-react";
 import type { FamilyMemberSummary } from "@/types/family";
 import { IncomeListClient } from "./IncomeListClient";
+import { LoadMoreButton } from "@/components/transactions/LoadMoreButton";
 
 interface IncomeListProps {
   familyId: string;
@@ -11,7 +12,6 @@ interface IncomeListProps {
   categoryId?: string;
   startDate?: string;
   endDate?: string;
-  page?: number;
   limit?: number;
   q?: string;
   amountMin?: string;
@@ -24,8 +24,7 @@ export async function IncomeList({
   categoryId,
   startDate,
   endDate,
-  page = 1,
-  limit = 25,
+  limit = 300,
   q,
   amountMin,
   amountMax,
@@ -37,7 +36,7 @@ export async function IncomeList({
     categoryId,
     startDate,
     endDate,
-    page,
+    page: 1,
     limit,
   });
 
@@ -53,8 +52,7 @@ export async function IncomeList({
 
   const {
     items: incomes,
-    totalPages,
-    currentPage,
+    totalElements,
   } = result.data;
 
   if (incomes.length === 0 && !hasFilter) {
@@ -73,12 +71,17 @@ export async function IncomeList({
   }
 
   return (
-    <IncomeListClient
-      incomes={incomes}
-      familyUuid={familyId}
-      totalPages={totalPages}
-      currentPage={currentPage + 1} // UI는 1-based
-      members={members}
-    />
+    <div className="space-y-3 md:space-y-4">
+      <IncomeListClient
+        incomes={incomes}
+        familyUuid={familyId}
+        members={members}
+      />
+      <LoadMoreButton
+        loadedCount={incomes.length}
+        totalElements={totalElements}
+        limit={limit}
+      />
+    </div>
   );
 }

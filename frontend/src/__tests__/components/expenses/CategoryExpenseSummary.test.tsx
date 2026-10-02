@@ -92,7 +92,7 @@ describe("CategoryExpenseSummary", () => {
     expect(category).toHaveAttribute("aria-pressed", "true");
     await user.click(category);
     expect(mockPush).toHaveBeenCalledWith(
-      "/transactions?tab=expenses&categoryId=category-1&page=1",
+      "/transactions?tab=expenses&categoryId=category-1",
     );
   });
 

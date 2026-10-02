@@ -18,6 +18,7 @@ import { getSelectedFamilyAction } from "@/actions/family/get-selected-family-ac
 import { getFamilyMembersAction } from "@/actions/family/get-family-members-action";
 import { getFamilyCategoriesAction } from "@/actions/category/get-categories-action";
 import { getMonthRange } from "@/lib/utils/date-timezone";
+import { parseListLimit } from "@/lib/utils/list-limit";
 import { getCachedSession } from "@/lib/server/cache";
 import { getActionDataOrDefault } from "@/lib/server/action-result-handler";
 
@@ -29,7 +30,6 @@ interface SearchParams {
   categoryId?: string;
   startDate?: string;
   endDate?: string;
-  page?: string;
   limit?: string;
   q?: string;
   amountMin?: string;
@@ -92,8 +92,7 @@ export default async function TransactionsPage({
     ? categoriesResult.data
     : [];
 
-  const page = parseInt(resolvedSearchParams.page || "1", 10);
-  const limit = parseInt(resolvedSearchParams.limit || "25", 10);
+  const limit = parseListLimit(resolvedSearchParams.limit);
 
   // 현재 월 (YYYY-MM 형식)
   const currentMonth = startDate.slice(0, 7);
@@ -145,7 +144,6 @@ export default async function TransactionsPage({
                 categoryId={resolvedSearchParams.categoryId}
                 startDate={startDate}
                 endDate={endDate}
-                page={page}
                 limit={limit}
                 q={resolvedSearchParams.q}
                 amountMin={resolvedSearchParams.amountMin}
@@ -172,7 +170,6 @@ export default async function TransactionsPage({
               categoryId={resolvedSearchParams.categoryId}
               startDate={startDate}
               endDate={endDate}
-              page={page}
               limit={limit}
               q={resolvedSearchParams.q}
               amountMin={resolvedSearchParams.amountMin}

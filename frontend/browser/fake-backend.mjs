@@ -4,8 +4,10 @@ import { BACKEND_PORT, FAMILY_UUID } from "./settings.ts";
 const createdAt = "2026-01-01T00:00:00.000Z";
 const unhandledRequests = [];
 const createdTransactions = [];
+const transactionRequestSizes = [];
 let categoriesAreEmpty = false;
 let transactionsAreEmpty = false;
+let transactionTotalElements = null;
 let categorySummaryIsEmpty = false;
 let notificationsAreHeld = false;
 let extraNotificationCount = 0;
@@ -222,13 +224,16 @@ function sendJson(response, status, body) {
 
 const server = createServer(async (request, response) => {
   const method = request.method ?? "GET";
-  const pathname = new URL(request.url ?? "/", `http://${request.headers.host}`).pathname;
+  const requestUrl = new URL(request.url ?? "/", `http://${request.headers.host}`);
+  const pathname = requestUrl.pathname;
 
   if (method === "POST" && pathname === "/__test/reset") {
     unhandledRequests.length = 0;
     createdTransactions.length = 0;
+    transactionRequestSizes.length = 0;
     categoriesAreEmpty = false;
     transactionsAreEmpty = false;
+    transactionTotalElements = null;
     categorySummaryIsEmpty = false;
     budgetIsConfigured = true;
     responseDelays.clear();
@@ -239,6 +244,10 @@ const server = createServer(async (request, response) => {
   }
   if (method === "GET" && pathname === "/__test/created-transactions") {
     sendJson(response, 200, createdTransactions);
+    return;
+  }
+  if (method === "GET" && pathname === "/__test/transaction-request-sizes") {
+    sendJson(response, 200, transactionRequestSizes);
     return;
   }
   if (method === "POST" && pathname === "/__test/categories") {
@@ -258,6 +267,16 @@ const server = createServer(async (request, response) => {
       return;
     }
     transactionsAreEmpty = body.empty;
+    sendJson(response, 200, { success: true });
+    return;
+  }
+  if (method === "POST" && pathname === "/__test/transactions-total") {
+    const body = await readJson(request);
+    if (!Number.isInteger(body?.totalElements) || body.totalElements < 0) {
+      sendJson(response, 400, { success: false, message: "Expected a non-negative integer totalElements" });
+      return;
+    }
+    transactionTotalElements = body.totalElements;
     sendJson(response, 200, { success: true });
     return;
   }
@@ -426,11 +445,12 @@ const server = createServer(async (request, response) => {
     return;
   }
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/expenses`) {
+    transactionRequestSizes.push(requestUrl.searchParams.get("size"));
     sendJson(response, 200, {
       success: true,
       data: {
         items: transactionsAreEmpty ? [] : transactions.expenses,
-        totalElements: transactionsAreEmpty ? 0 : transactions.expenses.length,
+        totalElements: transactionsAreEmpty ? 0 : transactionTotalElements ?? transactions.expenses.length,
         totalPages: 1,
         currentPage: 0,
       },
@@ -438,11 +458,12 @@ const server = createServer(async (request, response) => {
     return;
   }
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/incomes`) {
+    transactionRequestSizes.push(requestUrl.searchParams.get("size"));
     sendJson(response, 200, {
       success: true,
       data: {
         items: transactionsAreEmpty ? [] : transactions.incomes,
-        totalElements: transactionsAreEmpty ? 0 : 1,
+        totalElements: transactionsAreEmpty ? 0 : transactionTotalElements ?? transactions.incomes.length,
         totalPages: 1,
         currentPage: 0,
       },
