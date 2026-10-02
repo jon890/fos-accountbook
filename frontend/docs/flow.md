@@ -142,15 +142,17 @@
 [/calendar?month=YYYY-MM&date=YYYY-MM-DD] (Server Component)
     │   month 없음 → 사용자 시간대의 이번 달. date 없음 → 오늘이 그 달이면 오늘, 아니면 그 달 1일
     │
-    └─ getCalendarMonthAction(year, month)  ── Promise.all 5개 호출
+    └─ getCalendarMonthAction(year, month)  ── Promise.all 6개 호출
             ├─ /dashboard/daily-stats?year&month       → 날짜별 합계, memberExpenses, memberExpenseTotals
             ├─ /expenses?startDate&endDate&size=1000   → 그 달 지출 목록 (날짜 목록 표시용)
             ├─ /incomes?startDate&endDate&size=1000    → 그 달 수입 목록
             ├─ /families/{uuid}/members                → 구성원 이름, 사진, 가입 순서
-            └─ getCachedFamilyCategories              → 카테고리 이름, 아이콘과 예산 제외 정보 연결
+            ├─ getCachedFamilyCategories              → 카테고리 이름, 아이콘과 예산 제외 정보 연결
+            └─ /dashboard/budget-summary?year&month    → 생활비와 예산 항목별 쓴 금액과 한도
     │
     └─ CalendarHome ("use client")
             ├─ MonthHeader: ‹ 2026년 9월 ›  (월 이동 = URL month 변경, 서버 다시 조회)
+            ├─ BudgetSummaryCard: 생활비와 예산 항목마다 이름, 쓴 금액 / 한도, 진행 막대. 카드를 누르면 /budget
             ├─ MemberTotals: 구성원별 이번 달 지출 (색 점, 이름, 금액), 가족 합계
             ├─ CalendarGrid: 7열. 칸마다 날짜, 구성원별 지출 한 줄씩(색 점과 줄인 금액)
             │       └─ 날짜 탭 → 선택 날짜 변경 (클라이언트 상태와 history.replaceState, 서버 호출 없음)
@@ -165,7 +167,11 @@
 - 구성원 목록에서 찾지 못한 `userUuid`(가족을 떠난 사람)는 회색 점과 「이전 구성원」 으로 표시한다.
 - 빈 상태: 그 달 거래가 없으면 달력은 그대로 두고 날짜 목록에 「이 날 기록이 없어요」 와 추가 버튼을 둔다.
 - 지출 또는 수입의 `totalElements`가 1000을 넘으면 서버에 종류, 조회 연월, 전체 건수와 받은 건수를 경고로 남긴다. 거래 내용과 가족 식별자는 기록하지 않는다.
-- 실패: 다섯 호출 중 하나라도 실패하면 `(authenticated)/error.tsx` 로 간다. 401은 ADR-F26에 따라 로그인으로, 유효하지 않은 기본 가족의 403/404는 `/families/select`로 보낸다.
+- 예산 요약 카드는 보고 있는 달의 값을 보인다. 한 줄은 이름, 「쓴 금액 / 한도」, 진행 막대와 퍼센트다.
+  생활비 줄이 맨 위이고 항목은 만든 순서다. 한도가 0 이면 쓴 금액만 보이고 막대와 퍼센트는 그리지 않는다.
+  쓴 금액이 한도를 넘으면 금액과 퍼센트를 지출 색(`text-expense`)으로 보이고 막대는 100% 로 채운다. 퍼센트는 실제 값(예: 103%)을 쓴다.
+- 예산 요약의 빈 상태: 월 예산이 0 이고 항목도 없으면 카드 안에 「예산 항목을 만들면 여기서 볼 수 있어요」 한 줄과 /budget 으로 가는 링크만 둔다.
+- 실패: 여섯 호출 중 하나라도 실패하면 `(authenticated)/error.tsx` 로 간다. 401은 ADR-F26에 따라 로그인으로, 유효하지 않은 기본 가족의 403/404는 `/families/select`로 보낸다.
 - 등록, 수정, 삭제 뒤에는 Server Action 의 `revalidatePath("/calendar")` 로 같은 달을 다시 받는다.
 - 같은 달을 다시 받아도 초기 날짜가 같으면 선택 날짜를 유지한다. 초기 날짜가 바뀌면 선택을 초기화해 서버가 지정한 날짜로 돌아간다.
 - 하단 달력 탭으로 돌아와 URL의 `date`가 제거되면, 초기 날짜가 같아도 선택 날짜를 초기화한다.
@@ -262,7 +268,7 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
             │
             └─ BudgetAlertService 수신
                     │
-                    ├─ 해당 월 지출 합계 계산 (excludeFromBudget 제외)
+                    ├─ 해당 월 생활비 합계 계산 (예산 제외, 반복 지출이 만든 지출, 예산 항목 카테고리의 지출을 뺀다. ADR-B25)
                     │
                     ├─ 80% 이상 → BUDGET_WARNING Notification 생성
                     │               (yearMonth 기준 중복 방지)
@@ -301,7 +307,7 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
             │
             ├─ 기본 카테고리(isDefault=true) → 삭제 불가 오류
             │
-            └─ 일반 카테고리 → 종류별 거래 이관 후 Soft Delete
+            └─ 일반 카테고리 → 종류별 거래 이관 후 Soft Delete. 예산 항목에 속해 있었으면 그 항목에서도 빠진다
                     ├─ EXPENSE → 삭제 이력을 포함한 지출과 ACTIVE 고정지출을 '미분류'로 이동
                     ├─ INCOME → 삭제 이력을 포함한 수입을 '기타 수입'으로 이동
                     └─ revalidatePath → 목록 갱신
@@ -496,8 +502,10 @@ App Router 의 segment 경계에서 일관 표시:
 Dashboard BudgetHeroCard 의 확장 전용 페이지. 분석은 /analytics, 예산 소화는 /budget 으로 역할 분리.
 
 ```
-[/budget (server) — Promise.all 3 Action]
-    ├─ getDashboardStatsAction() → { budget, monthlyExpense, remainingBudget, year, month }
+[/budget (server) — Promise.all 5 Action]
+    ├─ getDashboardStatsAction() → { budget, monthlyExpense, remainingBudget, year, month }  (monthlyExpense 는 생활비 합계)
+    ├─ getBudgetItemsAction() → 예산 항목 목록
+    ├─ getFamilyCategoriesAction() → 항목에 넣을 지출 카테고리 선택지
     ├─ getMonthlyDailyStatsAction(year, month) → { items: { date, expense, income }[] }
     └─ getMonthlyCategoryBreakdownAction() → { items: { categoryUuid, name, color?, totalAmount }[] }
             │
@@ -505,8 +513,17 @@ Dashboard BudgetHeroCard 의 확장 전용 페이지. 분석은 /analytics, 예�
                     ├─ 예산 현황 Hero 카드 (Dashboard 와 시각 일치)
                     ├─ 3-col 통계: 일 평균 지출 / 남은 일수 / 권장 일 예산 (남은예산÷남은일수)
                     ├─ BudgetCumulativeLine (recharts LineChart + ReferenceLine 예산선)
-                    └─ BudgetCategoryBars (수평 bar top 5 + 예산 대비 % + ↑많음 라벨)
+                    ├─ BudgetCategoryBars (수평 bar top 5 + 예산 대비 % + ↑많음 라벨)
+                    └─ BudgetItemsSection: 예산 항목 목록(이름, 월 한도, 카테고리 이름들)과 「항목 추가」
+                            ├─ 추가, 수정 → BudgetItemDialog (이름, 월 한도, 지출 카테고리 여러 개 선택)
+                            │       └─ 다른 항목에 이미 속한 카테고리는 고를 수 없게 비활성으로 보인다
+                            └─ 삭제 → AlertDialog 확인 뒤 deleteBudgetItemAction
 ```
+
+- 예산 항목 구역은 월 예산이 0 이어도 보인다. 항목이 없으면 「용돈처럼 따로 관리할 지출을 예산 항목으로 만들어 보세요」 와 「항목 추가」 버튼을 둔다.
+- 저장과 삭제가 성공하면 sonner 토스트를 띄우고 `revalidatePath` 로 `/budget`, `/calendar`, `/analytics` 를 다시 받는다.
+- 저장 실패: 이름 중복(BI004), 카테고리 충돌(BI002), 10개 초과(BI003)는 백엔드 메시지를 토스트로 보이고 대화상자를 닫지 않는다.
+- 누적 선과 카테고리 막대는 모든 지출을 더한 값을 쓴다. 위쪽 카드의 생활비 합계와 기준이 다르다(ADR-B25 의 「감당할 것」).
 
 예산이 0이면 EmptyState 카드와 /settings로 가는 "예산 설정하기"를 표시한다. 라인 차트와 카테고리 bar는 렌더링하지 않는다.
 

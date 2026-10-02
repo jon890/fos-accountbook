@@ -61,14 +61,24 @@ public interface DashboardRepository {
       LocalDateTime endDate);
 
   /**
-   * 특정 월의 지출 합계 조회 (QueryDSL) - YEAR(date), MONTH(date) 조건 사용 - ACTIVE 상태만 집계
+   * 특정 월의 생활비 합계 조회 (QueryDSL) - YEAR(date), MONTH(date) 조건 사용 - ACTIVE 상태만 집계
+   *
+   * <p>예산 제외 지출, 예산 제외 카테고리의 지출, 반복 지출이 만든 지출, 예산 항목에 속한 카테고리의 지출은 뺀다 (ADR-B25).
    *
    * @param familyUuid 가족 UUID (필수)
    * @param year 연도 (예: 2025)
    * @param month 월 (1~12)
-   * @return 지출 합계 (없으면 0)
+   * @return 생활비 합계 (없으면 0)
    */
   BigDecimal getMonthlyExpenseAmount(CustomUuid familyUuid, int year, int month);
+
+  /**
+   * 특정 월의 예산 항목별 지출 합계 조회. ACTIVE 지출 가운데 카테고리가 항목에 속하고 지출 자체에 예산 제외 표시가 없는 것을 더한다 (ADR-B25).
+   *
+   * @return 예산 항목 UUID 값별 합계. 지출이 없는 항목은 키가 없다
+   */
+  Map<String, BigDecimal> getMonthlyExpenseAmountsByBudgetItem(
+      CustomUuid familyUuid, int year, int month);
 
   /**
    * 특정 월의 수입 합계 조회 (QueryDSL) - YEAR(date), MONTH(date) 조건 사용 - ACTIVE 상태만 집계

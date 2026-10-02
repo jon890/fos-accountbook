@@ -15,6 +15,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -89,6 +90,22 @@ public class GlobalExceptionHandler {
                     .code("INVALID_TYPE")
                     .field(ex.getName())
                     .rejectedValue(ex.getValue())
+                    .build()));
+  }
+
+  /** 필수 Request Parameter 누락은 400 으로 응답한다. 처리하지 않으면 일반 예외로 잡혀 500 이 된다. */
+  @ExceptionHandler(MissingServletRequestParameterException.class)
+  public ResponseEntity<ApiErrorResponse> handleMissingServletRequestParameterException(
+      MissingServletRequestParameterException ex) {
+    log.warn("Missing request parameter: {}", ex.getParameterName());
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(
+            ApiErrorResponse.of(
+                String.format("'%s' 파라미터는 필수입니다", ex.getParameterName()),
+                ApiErrorResponse.ErrorDetails.builder()
+                    .code("MISSING_PARAMETER")
+                    .field(ex.getParameterName())
                     .build()));
   }
 

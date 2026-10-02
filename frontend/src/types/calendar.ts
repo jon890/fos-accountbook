@@ -1,3 +1,4 @@
+import type { BudgetSummary } from "./budget-item";
 import type { DailyStatsWithMembers } from "./dashboard";
 import type { Expense } from "./expense";
 import type { FamilyMemberSummary } from "./family";
@@ -10,4 +11,5 @@ export interface CalendarMonth {
   expenses: Expense[];
   incomes: Income[];
   members: FamilyMemberSummary[];
+  budgetSummary: BudgetSummary;
 }

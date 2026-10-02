@@ -4,12 +4,20 @@ import { auth } from "@/lib/server/auth";
 import { getDashboardStatsAction } from "@/actions/dashboard/get-dashboard-stats-action";
 import { getMonthlyCategoryBreakdownAction } from "@/actions/dashboard/get-monthly-category-breakdown-action";
 import { getMonthlyDailyStatsAction } from "@/actions/dashboard/get-monthly-daily-stats-action";
+import { getBudgetItemsAction } from "@/actions/budget-item/get-budget-items-action";
+import { getFamilyCategoriesAction } from "@/actions/category/get-categories-action";
 
 jest.mock("@/lib/server/auth", () => ({ auth: jest.fn() }));
 jest.mock("@/lib/server/auth/auth-helpers", () => ({ getSelectedFamilyUuid: jest.fn().mockResolvedValue("family") }));
 jest.mock("@/actions/dashboard/get-dashboard-stats-action", () => ({ getDashboardStatsAction: jest.fn() }));
 jest.mock("@/actions/dashboard/get-monthly-category-breakdown-action", () => ({ getMonthlyCategoryBreakdownAction: jest.fn() }));
 jest.mock("@/actions/dashboard/get-monthly-daily-stats-action", () => ({ getMonthlyDailyStatsAction: jest.fn() }));
+jest.mock("@/actions/budget-item/get-budget-items-action", () => ({ getBudgetItemsAction: jest.fn() }));
+jest.mock("@/actions/budget-item/create-budget-item-action", () => ({ createBudgetItemAction: jest.fn() }));
+jest.mock("@/actions/budget-item/update-budget-item-action", () => ({ updateBudgetItemAction: jest.fn() }));
+jest.mock("@/actions/budget-item/delete-budget-item-action", () => ({ deleteBudgetItemAction: jest.fn() }));
+jest.mock("@/actions/category/get-categories-action", () => ({ getFamilyCategoriesAction: jest.fn() }));
+jest.mock("@/hooks/useMediaQuery", () => ({ useMediaQuery: jest.fn().mockReturnValue(true) }));
 jest.mock("@/app/(authenticated)/budget/_components/BudgetCumulativeLine", () => ({
   BudgetCumulativeLine: ({ dailyExpenses }: { dailyExpenses: unknown[] }) => (
     <div data-testid="daily-chart">일별 데이터 {dailyExpenses.length}개</div>
@@ -30,6 +38,8 @@ beforeEach(() => {
   jest.mocked(getDashboardStatsAction).mockResolvedValue({ success: false, error: { code: "C001", message: "조회 실패" } });
   jest.mocked(getMonthlyCategoryBreakdownAction).mockResolvedValue({ success: false, error: { code: "C001", message: "조회 실패" } });
   jest.mocked(getMonthlyDailyStatsAction).mockResolvedValue({ success: true, data: [] });
+  jest.mocked(getBudgetItemsAction).mockResolvedValue({ success: true, data: [] });
+  jest.mocked(getFamilyCategoriesAction).mockResolvedValue({ success: true, data: [] });
   jest.spyOn(console, "error").mockImplementation(() => {});
 });
 
@@ -120,5 +130,40 @@ it("일별 통계의 인증 만료는 빈 차트로 숨기지 않고 로그인�
 
 it("통계 인증 만료는 로그인으로 보낸다", async () => {
   jest.mocked(getDashboardStatsAction).mockResolvedValue({ success: false, error: { code: "A002", message: "만료" } });
+  await expect(BudgetPage()).rejects.toThrow("redirect:/auth/signin?error=auth");
+});
+
+it("예산 항목 조회가 실패하면 항목 구역에만 실패 문구를 보이고 나머지는 그린다", async () => {
+  jest.mocked(getBudgetItemsAction).mockResolvedValue({ success: false, error: { code: "C001", message: "조회 실패" } });
+
+  render(await BudgetPage());
+
+  expect(screen.getByText("예산 항목을 불러오지 못했어요")).toBeInTheDocument();
+  expect(screen.getByText("2026년 10월")).toBeInTheDocument();
+});
+
+it("예산 항목과 지출 카테고리를 구역에 넘긴다", async () => {
+  jest.mocked(getBudgetItemsAction).mockResolvedValue({
+    success: true,
+    data: [{ uuid: "00000000-0000-4000-8000-000000000101", name: "남편 용돈", monthlyLimit: 400000, categoryUuids: ["c1"], createdAt: "2026-10-01T00:00:00", updatedAt: "2026-10-01T00:00:00" }],
+  });
+  jest.mocked(getFamilyCategoriesAction).mockResolvedValue({
+    success: true,
+    data: [
+      { uuid: "c1", familyUuid: "family", type: "EXPENSE", name: "식비", icon: null, createdAt: "", updatedAt: "" },
+      { uuid: "c2", familyUuid: "family", type: "INCOME", name: "월급", icon: null, createdAt: "", updatedAt: "" },
+    ],
+  });
+
+  render(await BudgetPage());
+
+  expect(screen.getByText("남편 용돈")).toBeInTheDocument();
+  expect(screen.getByText("식비")).toBeInTheDocument();
+  expect(screen.queryByText("월급")).not.toBeInTheDocument();
+});
+
+it("예산 항목 조회의 인증 만료는 로그인으로 보낸다", async () => {
+  jest.mocked(getBudgetItemsAction).mockResolvedValue({ success: false, error: { code: "A002", message: "만료" } });
+
   await expect(BudgetPage()).rejects.toThrow("redirect:/auth/signin?error=auth");
 });

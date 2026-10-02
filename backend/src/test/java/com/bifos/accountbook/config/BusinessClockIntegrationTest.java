@@ -226,7 +226,8 @@ class BusinessClockIntegrationTest extends AbstractControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.year").value(2026))
         .andExpect(jsonPath("$.data.month").value(4))
-        .andExpect(jsonPath("$.data.monthlyExpense").value(300))
+        // 반복 지출이 만든 100 은 생활비 합계에서 빠진다 (ADR-B25)
+        .andExpect(jsonPath("$.data.monthlyExpense").value(200))
         .andExpect(jsonPath("$.data.monthlyIncome").value(300));
 
     mockMvc

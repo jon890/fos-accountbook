@@ -249,7 +249,7 @@ function firstFieldError(
  * 백엔드 업무 오류 응답의 최상위 code 와 message 를 꺼낸다.
  * 둘 중 하나라도 비어 있으면 null. code 없이 내부 예외 문구만 담은 응답은 걸러진다.
  */
-function businessError(
+export function businessError(
   errorData: unknown
 ): { code: string; message: string } | null {
   if (typeof errorData !== "object" || errorData === null) return null;

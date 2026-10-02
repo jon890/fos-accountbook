@@ -2,9 +2,11 @@ package com.bifos.accountbook.dashboard.presentation.controller;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.bifos.accountbook.budgetitem.application.dto.BudgetItemRequest;
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.expense.domain.entity.Expense;
 import com.bifos.accountbook.expense.domain.repository.ExpenseRepository;
@@ -975,6 +977,129 @@ class DashboardControllerTest extends AbstractControllerTest {
   }
 
   // ===== Helper Methods =====
+
+  private String budgetSummaryPath(Family family) {
+    return "/api/v1/families/" + family.getUuid().getValue() + "/dashboard/budget-summary";
+  }
+
+  private void createBudgetItem(Family family, String name, int limit, Category... categories)
+      throws Exception {
+    BudgetItemRequest request =
+        new BudgetItemRequest(
+            name,
+            BigDecimal.valueOf(limit),
+            java.util.Arrays.stream(categories).map(c -> c.getUuid().getValue()).toList());
+    mockMvc
+        .perform(
+            post("/api/v1/families/" + family.getUuid().getValue() + "/budget-items")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isCreated());
+  }
+
+  @Test
+  @DisplayName("예산 요약 조회 - 생활비와 항목별 쓴 금액과 한도를 돌려준다")
+  void getBudgetSummary_Success() throws Exception {
+    Family family = fixtures.families.family().budget(BigDecimal.valueOf(1000000)).build();
+    Category allowance = fixtures.categories.category(family).name("남편 용돈 카테고리").build();
+    Category food = fixtures.categories.category(family).name("식비").build();
+    createBudgetItem(family, "남편 용돈", 400000, allowance);
+
+    LocalDateTime date = LocalDateTime.of(2026, 10, 5, 12, 0);
+    fixtures
+        .expenses
+        .expense(family, allowance)
+        .amount(BigDecimal.valueOf(150000))
+        .date(date)
+        .build();
+    fixtures.expenses.expense(family, food).amount(BigDecimal.valueOf(620000)).date(date).build();
+    fixtures
+        .expenses
+        .expense(family, food)
+        .amount(BigDecimal.valueOf(50000))
+        .date(date)
+        .recurringExpenseUuid(CustomUuid.generate().getValue())
+        .build();
+
+    mockMvc
+        .perform(get(budgetSummaryPath(family)).param("year", "2026").param("month", "10"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.year").value(2026))
+        .andExpect(jsonPath("$.data.month").value(10))
+        .andExpect(jsonPath("$.data.living.spent").value(620000))
+        .andExpect(jsonPath("$.data.living.limit").value(1000000))
+        .andExpect(jsonPath("$.data.items.length()").value(1))
+        .andExpect(jsonPath("$.data.items[0].name").value("남편 용돈"))
+        .andExpect(jsonPath("$.data.items[0].spent").value(150000))
+        .andExpect(jsonPath("$.data.items[0].limit").value(400000));
+  }
+
+  @Test
+  @DisplayName("예산 요약 조회 - 항목이 없고 월 예산이 0 이면 빈 배열과 한도 0 이다")
+  void getBudgetSummary_Empty() throws Exception {
+    Family family = fixtures.families.family().budget(BigDecimal.ZERO).build();
+
+    mockMvc
+        .perform(get(budgetSummaryPath(family)).param("year", "2026").param("month", "10"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.items.length()").value(0))
+        .andExpect(jsonPath("$.data.living.limit").value(0))
+        .andExpect(jsonPath("$.data.living.spent").value(0));
+  }
+
+  @Test
+  @DisplayName("예산 요약 조회 - 지출에 예산 제외 표시가 있으면 항목 합계에서 빠진다")
+  void getBudgetSummary_ExcludedExpenseIsNotCounted() throws Exception {
+    Family family = fixtures.families.family().budget(BigDecimal.valueOf(1000000)).build();
+    Category allowance = fixtures.categories.category(family).name("용돈 카테고리").build();
+    createBudgetItem(family, "용돈", 400000, allowance);
+
+    LocalDateTime date = LocalDateTime.of(2026, 10, 5, 12, 0);
+    fixtures
+        .expenses
+        .expense(family, allowance)
+        .amount(BigDecimal.valueOf(30000))
+        .date(date)
+        .build();
+    fixtures
+        .expenses
+        .expense(family, allowance)
+        .amount(BigDecimal.valueOf(70000))
+        .date(date)
+        .excludeFromBudget(true)
+        .build();
+
+    mockMvc
+        .perform(get(budgetSummaryPath(family)).param("year", "2026").param("month", "10"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.items[0].spent").value(30000));
+  }
+
+  @Test
+  @DisplayName("예산 요약 조회 - year 나 month 가 없으면 400")
+  void getBudgetSummary_MissingParams() throws Exception {
+    Family family = fixtures.getDefaultFamily();
+
+    mockMvc
+        .perform(get(budgetSummaryPath(family)).param("month", "10"))
+        .andExpect(status().isBadRequest());
+    mockMvc
+        .perform(get(budgetSummaryPath(family)).param("year", "2026"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("예산 요약 조회 - month 가 1~12 밖이면 400")
+  void getBudgetSummary_MonthOutOfRange() throws Exception {
+    Family family = fixtures.getDefaultFamily();
+
+    mockMvc
+        .perform(get(budgetSummaryPath(family)).param("year", "2026").param("month", "13"))
+        .andExpect(status().isBadRequest());
+    mockMvc
+        .perform(get(budgetSummaryPath(family)).param("year", "2026").param("month", "0"))
+        .andExpect(status().isBadRequest());
+  }
 
   private Expense createExpense(
       CustomUuid familyUuid,

@@ -8,6 +8,7 @@ import { EditTransactionDialog } from "@/components/transactions/dialogs/EditTra
 import { buildMemberColorMap } from "@/lib/utils/member-color";
 import type { CalendarMonth } from "@/types/calendar";
 import { MonthHeader } from "./MonthHeader";
+import { BudgetSummaryCard } from "./BudgetSummaryCard";
 import { MemberTotals } from "./MemberTotals";
 import { CalendarGrid } from "./CalendarGrid";
 import { DayTransactionList, type CalendarTransaction } from "./DayTransactionList";
@@ -91,6 +92,7 @@ function CalendarMonthContent({ data, initialDate, today, familyUuid }: Calendar
         onMove={moveMonth}
         isNavigationPending={isNavigationPending}
       />
+      <BudgetSummaryCard summary={data.budgetSummary} />
       <MemberTotals daily={data.daily} colors={colors} />
       <div
         aria-busy={isNavigationPending}

@@ -57,7 +57,8 @@ test("다음 달 전환 중 진행 막대와 달력 대기 상태를 표시한�
 
     await expect(page).toHaveURL(/\/calendar\?month=2026-11/);
     await expect(page.getByRole("heading", { name: /2026년 11월/ })).toBeVisible();
-    await expect(page.getByRole("progressbar")).toHaveCount(0);
+    // 예산 요약 카드의 사용률 막대도 progressbar 라서 화면 로딩 막대만 이름으로 가린다
+    await expect(page.getByRole("progressbar", { name: "화면을 불러오는 중" })).toHaveCount(0);
     await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
   } finally {
     await setDelay(request, dailyStatsPath, 0);

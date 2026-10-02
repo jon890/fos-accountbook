@@ -39,7 +39,7 @@ ExpenseService.create()
             │
             ▼  (트랜잭션 커밋 후, 비동기)
         BudgetAlertEventListener
-            ├─ 월 예산 대비 지출 비율 계산
+            ├─ 월 예산 대비 생활비 합계 비율 계산 (생활비 합계는 「8. 예산 항목과 예산 요약」)
             ├─ 50% / 80% / 100% 초과 시 Notification 생성
             └─ 실패해도 지출 저장에 영향 없음
 ```
@@ -91,6 +91,7 @@ CategoryService.deleteCategory()
     ├─ 종류별 기본 카테고리 조회 (지출: 미분류, 수입: 기타 수입)
     ├─ EXPENSE → 지출 전체 이력과 ACTIVE 반복 지출을 미분류로 이관
     ├─ INCOME → 수입 전체 이력을 기타 수입으로 이관
+    ├─ EXPENSE → 예산 항목에서 이 카테고리를 뺀다 (budget_item_categories 행 삭제)
     └─ Category status → DELETED + 캐시 무효화
 ```
 
@@ -101,7 +102,7 @@ GET /families/{familyUuid}/dashboard/stats/monthly?year=2026&month=4
     │
     ▼
 DashboardService.getMonthlyStats()
-    ├─ 해당 월 총 지출 (exclude_from_budget 제외)
+    ├─ 해당 월 생활비 합계 (「8. 예산 항목과 예산 요약」)
     ├─ 해당 월 총 수입
     ├─ 월 예산 대비 비율
     └─ 가족 멤버 수
@@ -125,6 +126,15 @@ DashboardService.getCategoryBreakdown()
     ├─ 카테고리별 금액·비율 계산
     └─ compareWithPrev=true 시 전월 조회 → delta 계산, previousAmount(직전 달 지출 없으면 0) 함께 응답
         └─ deltaPercent 는 전월 0원이면 null. previousAmount 로 「비교 안 함」 과 「이번 달 새로 생김」 을 구분한다
+```
+
+```
+GET /families/{familyUuid}/dashboard/budget-summary?year=2026&month=10
+    │
+    ▼
+DashboardService.getBudgetSummary()
+    ├─ 생활비: 그 달 생활비 합계와 families.monthly_budget
+    └─ 항목: 가족의 ACTIVE 예산 항목마다 그 항목 카테고리의 그 달 지출 합계와 monthly_limit (만든 순서)
 ```
 
 ## 6. 인증 갱신
@@ -180,6 +190,39 @@ API 인증 필터(`JwtAuthenticationFilter`)는 `typ=access` 인 토큰만 인�
 
 ---
 
+## 8. 예산 항목과 예산 요약
+
+결정 근거는 ADR-B25 다.
+
+```mermaid
+flowchart TD
+    E[그 달의 ACTIVE 지출] --> X{지출의 예산 제외 표시}
+    X -- 켜짐 --> N[어디에도 세지 않는다]
+    X -- 꺼짐 --> I{카테고리가 예산 항목에 속하나}
+    I -- 속한다 --> ITEM[그 항목의 지출 합계]
+    I -- 아니다 --> C{예산 제외 카테고리이거나 반복 지출이 만든 지출인가}
+    C -- 그렇다 --> F[고정지출. 생활비에 세지 않는다]
+    C -- 아니다 --> L[생활비 합계]
+```
+
+```
+POST /families/{familyUuid}/budget-items
+    │  body: { name, monthlyLimit, categoryUuids }
+    ▼
+BudgetItemService.createBudgetItem()
+    ├─ 가족 구성원 검증 (@ValidateFamilyAccess)
+    ├─ ACTIVE 항목이 이미 10개 → 400 BI003
+    ├─ 같은 이름의 ACTIVE 항목 → 409 BI004
+    ├─ 카테고리마다 가족 소속과 EXPENSE 종류 검증 → 없으면 404 CT001, 수입 카테고리면 400 CT005
+    ├─ 다른 항목에 이미 속한 카테고리 → 409 BI002
+    └─ budget_items 와 budget_item_categories 저장
+```
+
+- 수정(`PUT`)은 이름과 한도를 바꾸고 카테고리 묶음을 통째로 바꾼다. 검증은 생성과 같고, 자기 항목에 이미 있던 카테고리는 충돌로 보지 않는다.
+- 삭제(`DELETE`)는 항목을 `DELETED` 로 바꾸고 `budget_item_categories` 행을 지운다. 그 카테고리의 지출은 다시 생활비에 들어간다.
+- 두 사람이 동시에 같은 카테고리를 서로 다른 항목에 넣으면 `uq_budget_item_categories_category` 가 뒤 요청을 막고 409 BI002 로 응답한다.
+- 항목이 하나도 없으면 예산 요약의 `items` 는 빈 배열이다. 월 예산이 0 이면 `living.limit` 은 0 이다.
+
 ## 도메인 간 이벤트 흐름 요약
 
 | 이벤트                         | 발행자    | 구독자       | 트리거             |
@@ -192,4 +235,6 @@ API 인증 필터(`JwtAuthenticationFilter`)는 `typ=access` 인 토큰만 인�
 
 - `family → category`: 가족 생성 시 기본 카테고리 생성
 - `category → expense/recurring/income`: 카테고리 삭제 시 종류별 기본 카테고리로 이동
+- `category → budgetitem`: 카테고리 삭제 시 예산 항목에서 그 카테고리를 뺀다
+- `budgetitem → category`: 항목 저장 시 카테고리의 가족 소속과 종류 검증
 - `family → user`: 가족 생성 시 기본 가족 설정

@@ -413,6 +413,27 @@ const server = createServer(async (request, response) => {
     });
     return;
   }
+  if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/budget-items`) {
+    sendJson(response, 200, { success: true, data: [] });
+    return;
+  }
+  if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/dashboard/budget-summary`) {
+    sendJson(response, 200, {
+      success: true,
+      data: {
+        year: 2026,
+        month: 10,
+        living: { spent: 16200, limit: family.monthlyBudget },
+        items: [{
+          budgetItemUuid: "00000000-0000-4000-8000-0000000000b1",
+          name: "용돈",
+          limit: 400000,
+          spent: 150000,
+        }],
+      },
+    });
+    return;
+  }
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/dashboard/stats/monthly`) {
     const budget = budgetIsConfigured ? family.monthlyBudget : 0;
     const monthlyExpense = budgetIsConfigured ? 16200 : 0;

@@ -55,5 +55,7 @@ class OpenApiSnapshotTest {
 
     String saved = Files.readString(output);
     assertThat(saved).contains("/api/v1/families/{familyUuid}/recurring-expenses");
+    assertThat(saved).contains("/api/v1/families/{familyUuid}/budget-items");
+    assertThat(saved).contains("/api/v1/families/{familyUuid}/dashboard/budget-summary");
   }
 }

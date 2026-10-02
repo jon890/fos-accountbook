@@ -1,5 +1,6 @@
 package com.bifos.accountbook.dashboard.presentation.controller;
 
+import com.bifos.accountbook.dashboard.application.dto.BudgetSummaryResponse;
 import com.bifos.accountbook.dashboard.application.dto.CategoryBreakdownResponse;
 import com.bifos.accountbook.dashboard.application.dto.DailyStatsResponse;
 import com.bifos.accountbook.dashboard.application.dto.MonthlyStatsResponse;
@@ -125,6 +126,28 @@ public class DashboardController {
     CategoryBreakdownResponse response =
         dashboardService.getCategoryBreakdown(
             loginUser.userUuid(), familyUuid, year, month, compareWithPrev);
+
+    return ResponseEntity.ok(ApiSuccessResponse.of(response));
+  }
+
+  @Operation(
+      summary = "예산 요약 조회",
+      description = "생활비와 예산 항목별로 해당 월에 쓴 금액과 한도를 조회합니다. year 와 month 는 필수입니다.")
+  @ApiResponse(responseCode = "200", description = "조회 성공")
+  @ApiResponse(responseCode = "400", description = "year 또는 month 누락")
+  @GetMapping("/budget-summary")
+  public ResponseEntity<ApiSuccessResponse<BudgetSummaryResponse>> getBudgetSummary(
+      @LoginUser LoginUserDto loginUser,
+      @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid,
+      @RequestParam Integer year,
+      @RequestParam Integer month) {
+
+    if (month < 1 || month > 12) {
+      throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+    }
+
+    BudgetSummaryResponse response =
+        dashboardService.getBudgetSummary(loginUser.userUuid(), familyUuid, year, month);
 
     return ResponseEntity.ok(ApiSuccessResponse.of(response));
   }

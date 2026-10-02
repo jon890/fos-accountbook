@@ -13,6 +13,7 @@ const data: CalendarMonth = {
   year: 2026, month: 1,
   daily: { year: 2026, month: 1, dailyStats: [], totalIncome: 0, totalExpense: 0, memberExpenseTotals: [] },
   expenses: [], incomes: [], members: [],
+  budgetSummary: { year: 2026, month: 1, living: { spent: 0, limit: 0 }, items: [] },
 };
 
 beforeEach(() => {
