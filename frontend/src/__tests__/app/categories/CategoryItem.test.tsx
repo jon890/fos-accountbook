@@ -30,7 +30,7 @@ describe("CategoryItem", () => {
     const onDelete = jest.fn();
     render(<CategoryItem category={category} onEdit={onEdit} onDelete={onDelete} />);
 
-    await userEvent.setup().click(screen.getByRole("button", { name: "삭제" }));
+    await userEvent.setup().click(screen.getByRole("button", { name: "식비 삭제" }));
 
     expect(onDelete).toHaveBeenCalledWith(category);
     expect(onEdit).not.toHaveBeenCalled();
@@ -40,7 +40,7 @@ describe("CategoryItem", () => {
     const onEdit = jest.fn();
     render(<CategoryItem category={category} onEdit={onEdit} onDelete={jest.fn()} />);
 
-    await userEvent.setup().click(screen.getByRole("button", { name: "수정" }));
+    await userEvent.setup().click(screen.getByRole("button", { name: "식비 수정" }));
 
     expect(onEdit).toHaveBeenCalledTimes(1);
     expect(onEdit).toHaveBeenCalledWith(category);
