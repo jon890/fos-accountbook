@@ -170,14 +170,22 @@ describe("알림 응답 스키마", () => {
     expect(failedPaths(result)).toEqual([]);
   });
 
-  it("알림에 isRead 가 빠지면 실패한다", () => {
+  it("계약에 맞지 않는 알림은 그 항목만 빼고 개수를 로그에 남긴다", () => {
+    const error = jest.spyOn(console, "error").mockImplementation(() => {});
     const result = notificationListSchema.safeParse({
-      notifications: [without(notification, "isRead")],
+      notifications: [
+        notification,
+        without(notification, "isRead"),
+        { ...notification, type: "NEW_KIND_FROM_BACKEND" },
+      ],
       unreadCount: 1,
-      totalCount: 1,
+      totalCount: 3,
     });
 
-    expect(failedPaths(result)).toEqual(["notifications.0.isRead"]);
+    expect(result.success).toBe(true);
+    expect(result.success && result.data.notifications).toHaveLength(1);
+    expect(error).toHaveBeenCalledWith(expect.stringContaining("2건"));
+    error.mockRestore();
   });
 
   it("읽지 않은 수 0 을 통과시키고 키가 없으면 실패한다", () => {

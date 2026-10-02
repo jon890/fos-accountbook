@@ -4,6 +4,7 @@ import type {
   NotificationListResponse,
   UnreadCountResponse,
 } from "@/types/actions/notification";
+import { logDroppedResponseItems } from "@/lib/server/api/logging";
 import { isoDateString, uuidString } from "./common";
 
 /**
@@ -35,8 +36,24 @@ export const notificationSchema = z.object({
   createdAt: isoDateString,
 }) satisfies z.ZodType<Notification>;
 
+/**
+ * 알림은 항목마다 따로 검증한다. 백엔드가 알림 종류를 새로 더하면 그 항목만 빠지고
+ * 나머지 목록과 헤더 알림 창은 그대로 뜬다. 뺀 개수는 로그에 남긴다.
+ */
+const notificationItemsSchema = z.array(z.unknown()).transform((items) => {
+  const valid: Notification[] = [];
+  for (const item of items) {
+    const parsed = notificationSchema.safeParse(item);
+    if (parsed.success) valid.push(parsed.data);
+  }
+  if (valid.length < items.length) {
+    logDroppedResponseItems("notifications", items.length - valid.length);
+  }
+  return valid;
+});
+
 export const notificationListSchema = z.object({
-  notifications: z.array(notificationSchema),
+  notifications: notificationItemsSchema,
   unreadCount: z.number(),
   totalCount: z.number(),
 }) satisfies z.ZodType<NotificationListResponse>;
