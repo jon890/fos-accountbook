@@ -21,7 +21,7 @@
 
 - `backend/src/main/java/com/bifos/accountbook/invitation/application/dto/InvitationResponse.java` 44행 `from` 이 `now()` 를 쓴다.
 - `backend/src/main/java/com/bifos/accountbook/invitation/application/service/InvitationService.java` 68행 `createInvitation`, 101행 `getFamilyInvitations`, 112행 `getInvitationByToken`, 140행 `acceptInvitation` 이 `now()` 를 쓴다.
-- `ExpenseService` 가 `Clock` 을 주입받아 `BusinessTime.ZONE` 으로 업무 날짜를 만든다(ADR-B21). 같은 방식을 쓴다.
+- `ExpenseService` 가 `Clock` 을 주입받아 `BusinessTime.ZONE` 으로 업무 날짜를 만든다(ADR-B21). `Clock` 을 주입받는 방식만 따르고, 시간대는 의도 메모를 따른다.
 
 ## 의도 메모
 
@@ -39,7 +39,7 @@
 
 ### 3. 테스트와 기준 파일
 
-- `backend/src/test/java/com/bifos/accountbook/invitation/application/service/InvitationServiceTest.java`(신규): 고정 `Clock` 으로 `getInvitationByToken` 과 응답의 `isExpired` 만료 직전과 직후.
+- `backend/src/test/java/com/bifos/accountbook/invitation/application/service/InvitationServiceTest.java`(신규): 고정 `Clock` 으로 `getInvitationByToken` 과 응답의 `isExpired` 만료 직전과 직후. `ArgumentCaptor` 로 `findValidByToken` 에 넘긴 `now` 가 `LocalDateTime.now(fixedClock)` 와 같은지도 단언한다.
 - 기준 파일에서 now 규칙 5줄만 지운다.
 
 ## 검증

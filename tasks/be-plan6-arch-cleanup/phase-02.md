@@ -35,7 +35,7 @@
 
 ### 1. 다섯 파일 이동과 패키지 선언, 포인트컷 문자열
 
-### 2. import 갱신 (`grep -rln "shared.aop" backend/src` 결과 중 옮긴 파일 자신과 테스트를 뺀 main 서비스: Category, Dashboard, Expense, Family, Income, Invitation, Notification, RecurringExpense) (`grep -rln "shared.aop" backend/src` 결과 전부)
+### 2. import 갱신 (`grep -rln "shared.aop" backend/src` 결과 중 옮긴 파일 자신과 테스트를 뺀 main 서비스: Category, Dashboard, Expense, Family, Income, Invitation, Notification, RecurringExpense)
 
 ### 3. 테스트 이동과 포인트컷 동작 확인
 
