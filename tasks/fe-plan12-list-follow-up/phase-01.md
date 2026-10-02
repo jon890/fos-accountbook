@@ -84,5 +84,6 @@ pnpm test:browser browser/transactions.spec.ts
 | `frontend/src/app/(authenticated)/transactions/_components/SearchBar.tsx` | 수정 |
 | `frontend/src/app/(authenticated)/transactions/_components/TransactionsTabs.tsx` | 수정 |
 | `frontend/src/components/expenses/summary/CategoryExpenseSummary.tsx` | 수정 |
+| `frontend/src/__tests__/components/expenses/CategoryExpenseSummary.test.tsx` | 수정 |
 | `frontend/browser/transactions.spec.ts` | 수정 |
 | `frontend/browser/fake-backend.mjs` | 수정 |
