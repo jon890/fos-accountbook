@@ -2,6 +2,8 @@ package com.bifos.accountbook.notification.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.bifos.accountbook.budgetitem.application.dto.BudgetItemRequest;
+import com.bifos.accountbook.budgetitem.application.service.BudgetItemService;
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.category.domain.repository.CategoryRepository;
 import com.bifos.accountbook.expense.application.dto.CreateExpenseRequest;
@@ -34,6 +36,10 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
   @Autowired private FamilyService familyService;
 
   @Autowired private NotificationRepository notificationRepository;
+
+  @Autowired private BudgetItemService budgetItemService;
+
+  @Autowired private BudgetAlertService budgetAlertService;
 
   /**
    * 예산이 설정된 가족 + 기본 카테고리 생성 헬퍼 메서드
@@ -285,6 +291,34 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
         notificationRepository.findByFamily(CustomUuid.from(noBudgetFamily.getUuid()));
 
     assertThat(notifications).isEmpty();
+  }
+
+  @Test
+  @DisplayName("예산 항목 카테고리의 지출은 생활비 예산 알림 기준 금액에 들어가지 않는다")
+  void shouldNotCreateNotification_WhenOnlyBudgetItemCategoryExpense() {
+    // Given: 월 예산 100만원, 카테고리를 예산 항목에 넣는다
+    TestData data = createTestFamilyWithBudget();
+    CustomUuid familyUuid = CustomUuid.from(data.testFamily.getUuid());
+    budgetItemService.createBudgetItem(
+        data.testUser.getUuid(),
+        familyUuid,
+        new BudgetItemRequest(
+            "용돈", new BigDecimal("400000"), List.of(data.testCategory.getUuid().getValue())));
+
+    // When: 그 카테고리에 예산의 90% 지출
+    expenseService.createExpense(
+        data.testUser.getUuid(),
+        familyUuid,
+        new CreateExpenseRequest(
+            data.testCategory.getUuid().getValue(),
+            new BigDecimal("900000.00"),
+            "항목 카테고리 지출",
+            LocalDateTime.now(),
+            null));
+    budgetAlertService.checkAndCreateBudgetAlert(familyUuid, LocalDateTime.now());
+
+    // Then: 생활비 합계가 0 이므로 알림이 없다
+    assertThat(notificationRepository.findByFamily(familyUuid)).isEmpty();
   }
 
   @Test

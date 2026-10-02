@@ -1,5 +1,6 @@
 package com.bifos.accountbook.category.application.service;
 
+import com.bifos.accountbook.budgetitem.application.service.BudgetItemService;
 import com.bifos.accountbook.category.application.dto.CategoryResponse;
 import com.bifos.accountbook.category.application.dto.CreateCategoryRequest;
 import com.bifos.accountbook.category.application.dto.UpdateCategoryRequest;
@@ -37,6 +38,7 @@ public class CategoryService {
   private final ObjectProvider<ExpenseService> expenseServiceProvider;
   private final ObjectProvider<RecurringExpenseService> recurringExpenseServiceProvider;
   private final ObjectProvider<IncomeService> incomeServiceProvider;
+  private final ObjectProvider<BudgetItemService> budgetItemServiceProvider;
   private final FamilyValidationService familyValidationService; // 가족 검증 로직
   private final CacheManager cacheManager; // 캐시 관리자
 
@@ -305,6 +307,9 @@ public class CategoryService {
       recurringExpenseServiceProvider
           .getObject()
           .moveRecurringExpensesToDefaultCategory(category.getFamilyUuid(), category.getUuid());
+
+      // 예산 항목의 카테고리 묶음에서도 뺀다 (항목은 남는다)
+      budgetItemServiceProvider.getObject().removeCategory(category.getUuid());
     } else {
       incomeServiceProvider
           .getObject()

@@ -40,6 +40,8 @@ public class ExpenseFixtures {
     private String description = "Test Expense";
     private LocalDateTime date = LocalDateTime.now();
     private User user;
+    private String recurringExpenseUuid;
+    private boolean excludeFromBudget = false;
 
     private final ExpenseRepository expenseRepository;
     private final Family family;
@@ -73,6 +75,16 @@ public class ExpenseFixtures {
       return this;
     }
 
+    public ExpenseBuilder recurringExpenseUuid(String recurringExpenseUuid) {
+      this.recurringExpenseUuid = recurringExpenseUuid;
+      return this;
+    }
+
+    public ExpenseBuilder excludeFromBudget(boolean excludeFromBudget) {
+      this.excludeFromBudget = excludeFromBudget;
+      return this;
+    }
+
     public Expense build() {
       // Expense 직접 생성 (@Transactional 없이도 동작)
       Expense expense =
@@ -84,6 +96,8 @@ public class ExpenseFixtures {
               .description(description)
               .date(date)
               .status(ExpenseStatus.ACTIVE)
+              .recurringExpenseUuid(recurringExpenseUuid)
+              .excludeFromBudget(excludeFromBudget)
               .build();
       return expenseRepository.save(expense);
     }

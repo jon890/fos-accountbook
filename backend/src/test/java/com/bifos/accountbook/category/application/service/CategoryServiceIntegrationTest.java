@@ -3,6 +3,9 @@ package com.bifos.accountbook.category.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.bifos.accountbook.budgetitem.application.dto.BudgetItemRequest;
+import com.bifos.accountbook.budgetitem.application.dto.BudgetItemResponse;
+import com.bifos.accountbook.budgetitem.application.service.BudgetItemService;
 import com.bifos.accountbook.category.application.dto.CreateCategoryRequest;
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.category.domain.repository.CategoryRepository;
@@ -30,6 +33,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 class CategoryServiceIntegrationTest extends TestFixturesSupport {
 
   @Autowired private CategoryService categoryService;
+
+  @Autowired private BudgetItemService budgetItemService;
 
   @Autowired private CategoryRepository categoryRepository;
 
@@ -135,6 +140,33 @@ class CategoryServiceIntegrationTest extends TestFixturesSupport {
             categoryRepository.findAllByFamilyUuid(family.getUuid()).stream()
                 .filter(Category::isDefault))
         .isEmpty();
+  }
+
+  @Test
+  @DisplayName("예산 항목에 속한 카테고리를 삭제하면 항목의 카테고리 묶음에서 빠지고 항목은 남는다")
+  void deleteCategoryRemovesItFromBudgetItem() {
+    // given
+    User user = fixtures.users.user().buildAndSetSecurityContext();
+    Family family = fixtures.families.family().owner(user).build();
+    categoryService.createDefaultCategoriesForFamily(family.getUuid());
+    Category kept = fixtures.categories.category(family).name("남는 카테고리").build();
+    Category removed = fixtures.categories.category(family).name("지울 카테고리").build();
+    budgetItemService.createBudgetItem(
+        user.getUuid(),
+        family.getUuid(),
+        new BudgetItemRequest(
+            "용돈",
+            BigDecimal.valueOf(400000),
+            List.of(kept.getUuid().getValue(), removed.getUuid().getValue())));
+
+    // when
+    categoryService.deleteCategory(user.getUuid(), family.getUuid(), removed.getUuid().getValue());
+
+    // then
+    List<BudgetItemResponse> items =
+        budgetItemService.getBudgetItems(user.getUuid(), family.getUuid());
+    assertThat(items).hasSize(1);
+    assertThat(items.getFirst().getCategoryUuids()).containsExactly(kept.getUuid().getValue());
   }
 
   @Test

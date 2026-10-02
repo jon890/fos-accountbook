@@ -114,6 +114,12 @@ public class BudgetItemService {
     budgetItemRepository.deleteCategoriesByBudgetItemUuid(budgetItemUuid);
   }
 
+  /** 카테고리가 삭제될 때 예산 항목에서 뺀다. 삭제 권한은 CategoryService.deleteCategory 가 이미 검증했다. */
+  @Transactional
+  public void removeCategory(CustomUuid categoryUuid) {
+    budgetItemRepository.deleteCategoriesByCategoryUuid(categoryUuid);
+  }
+
   private BudgetItem findActiveItem(CustomUuid familyUuid, CustomUuid budgetItemUuid) {
     return budgetItemRepository
         .findActiveByUuidAndFamilyUuid(budgetItemUuid, familyUuid)

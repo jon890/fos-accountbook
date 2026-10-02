@@ -1,5 +1,6 @@
 package com.bifos.accountbook.dashboard.infra.repository.impl;
 
+import com.bifos.accountbook.budgetitem.domain.entity.QBudgetItemCategory;
 import com.bifos.accountbook.category.domain.entity.QCategory;
 import com.bifos.accountbook.category.domain.value.CategoryStatus;
 import com.bifos.accountbook.dashboard.domain.repository.DashboardRepository;
@@ -15,6 +16,7 @@ import com.bifos.accountbook.shared.value.CustomUuid;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -164,14 +166,17 @@ public class DashboardRepositoryImpl implements DashboardRepository {
   }
 
   /**
-   * 특정 월의 지출 합계 조회 (QueryDSL) - YEAR(date), MONTH(date) 조건 사용 - ACTIVE 상태만 집계 - 예산 제외 플래그가 true인 지출
-   * 제외 - 카테고리의 예산 제외 플래그가 true인 지출도 제외
+   * 특정 월의 생활비 합계 조회 (QueryDSL) - YEAR(date), MONTH(date) 조건 사용 - ACTIVE 상태만 집계 - 예산 제외 플래그가 true인
+   * 지출 제외 - 카테고리의 예산 제외 플래그가 true인 지출도 제외 - 반복 지출이 만든 지출 제외 - 예산 항목에 속한 카테고리의 지출 제외
+   *
+   * <p>같은 규칙이 ExpenseJpaRepository.sumAmountByFamilyUuidAndDateBetween 에도 있다. 함께 고친다 (ADR-B25).
    */
   @Override
   public BigDecimal getMonthlyExpenseAmount(CustomUuid familyUuid, int year, int month) {
 
     QExpense expense = QExpense.expense;
     QCategory category = QCategory.category;
+    QBudgetItemCategory budgetItemCategory = QBudgetItemCategory.budgetItemCategory;
 
     BigDecimal result =
         queryFactory
@@ -195,7 +200,12 @@ public class DashboardRepositoryImpl implements DashboardRepository {
                         category
                             .excludeFromBudget
                             .isNull()
-                            .or(category.excludeFromBudget.eq(false))))
+                            .or(category.excludeFromBudget.eq(false))),
+                expense.recurringExpenseUuid.isNull(),
+                JPAExpressions.selectOne()
+                    .from(budgetItemCategory)
+                    .where(budgetItemCategory.categoryUuid.eq(expense.categoryUuid))
+                    .notExists())
             .fetchOne();
 
     return result != null ? result : BigDecimal.ZERO;

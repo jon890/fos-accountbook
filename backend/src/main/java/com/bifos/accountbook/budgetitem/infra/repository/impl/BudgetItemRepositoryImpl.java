@@ -72,4 +72,9 @@ public class BudgetItemRepositoryImpl implements BudgetItemRepository {
   public void deleteCategoriesByBudgetItemUuid(CustomUuid budgetItemUuid) {
     categoryJpaRepository.deleteAllByBudgetItemUuid(budgetItemUuid);
   }
+
+  @Override
+  public void deleteCategoriesByCategoryUuid(CustomUuid categoryUuid) {
+    categoryJpaRepository.deleteAllByCategoryUuid(categoryUuid);
+  }
 }

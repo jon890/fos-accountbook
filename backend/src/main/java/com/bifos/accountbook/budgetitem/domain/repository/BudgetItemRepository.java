@@ -28,4 +28,7 @@ public interface BudgetItemRepository {
 
   /** 항목의 카테고리 행을 DB 에 즉시 반영해 지운다. 같은 트랜잭션에서 다시 넣어도 유니크 키에 걸리지 않는다. */
   void deleteCategoriesByBudgetItemUuid(CustomUuid budgetItemUuid);
+
+  /** 카테고리가 속한 항목의 행을 지운다. 카테고리를 삭제할 때 쓴다. */
+  void deleteCategoriesByCategoryUuid(CustomUuid categoryUuid);
 }
