@@ -1,6 +1,7 @@
 import { endOfMonth, format } from "date-fns";
 import { serverApiGet } from "@/lib/server/api/client";
 import { getCachedFamilyCategories } from "@/lib/server/cache";
+import { getBudgetSummary } from "@/services/budget-item/budget-item-service";
 import { getFamilyMembers } from "@/services/family/family-service";
 import type { CalendarMonth } from "@/types/calendar";
 import { dailyStatsResponseSchema } from "@/lib/schemas/responses/calendar";
@@ -20,7 +21,7 @@ export async function getCalendarMonth(
   const startDate = format(firstOfMonth, "yyyy-MM-dd");
   const endDate = format(endOfMonth(firstOfMonth), "yyyy-MM-dd");
   const range = `startDate=${startDate}&endDate=${endDate}&size=${MONTH_TRANSACTION_LIMIT}`;
-  const [daily, expenses, incomes, members, categories] = await Promise.all([
+  const [daily, expenses, incomes, members, categories, budgetSummary] = await Promise.all([
     serverApiGet(
       `/families/${familyUuid}/dashboard/daily-stats?year=${year}&month=${month}`,
       { schema: dailyStatsResponseSchema }
@@ -33,6 +34,7 @@ export async function getCalendarMonth(
     }),
     getFamilyMembers(familyUuid),
     getCachedFamilyCategories(familyUuid),
+    getBudgetSummary(familyUuid, year, month),
   ]);
   const lists = [
     { type: "expense", response: expenses },
@@ -72,5 +74,6 @@ export async function getCalendarMonth(
       category: categoryMap.get(income.categoryUuid) ?? null,
     })),
     members,
+    budgetSummary,
   };
 }

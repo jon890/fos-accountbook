@@ -50,6 +50,14 @@ export function calendarMonth(overrides: Partial<CalendarMonth> = {}): CalendarM
     ],
     expenses: [calendarExpense(), calendarExpense({ uuid: "expense-2", description: "다음 날 식사", date: "2026-09-15T12:00:00" })],
     incomes: [calendarIncome()],
+    budgetSummary: {
+      year: 2026,
+      month: 9,
+      living: { spent: 620000, limit: 1000000 },
+      items: [
+        { budgetItemUuid: "item-1", name: "남편 용돈", limit: 400000, spent: 150000 },
+      ],
+    },
     ...overrides,
   };
 }
