@@ -1,5 +1,9 @@
 package com.bifos.accountbook.dashboard.application.service;
 
+import com.bifos.accountbook.budgetitem.domain.repository.BudgetItemRepository;
+import com.bifos.accountbook.dashboard.application.dto.BudgetSummaryItem;
+import com.bifos.accountbook.dashboard.application.dto.BudgetSummaryLiving;
+import com.bifos.accountbook.dashboard.application.dto.BudgetSummaryResponse;
 import com.bifos.accountbook.dashboard.application.dto.CategoryBreakdownItem;
 import com.bifos.accountbook.dashboard.application.dto.CategoryBreakdownResponse;
 import com.bifos.accountbook.dashboard.application.dto.DailyStat;
@@ -48,6 +52,7 @@ public class DashboardService {
 
   private final DashboardRepository dashboardRepository;
   private final FamilyRepository familyRepository;
+  private final BudgetItemRepository budgetItemRepository;
 
   /**
    * 카테고리별 지출 요약 조회 - 전체 지출 합계 - 카테고리별 지출 통계 (금액, 건수, 비율)
@@ -173,6 +178,41 @@ public class DashboardService {
         .budget(budget)
         .year(year)
         .month(month)
+        .build();
+  }
+
+  /** 생활비와 예산 항목별 쓴 금액과 한도를 준다. 항목 순서는 만든 순서다 (ADR-B25). */
+  @ValidateFamilyAccess
+  public BudgetSummaryResponse getBudgetSummary(
+      @UserUuid CustomUuid userUuid, @FamilyUuid CustomUuid familyUuid, int year, int month) {
+    Family family =
+        familyRepository
+            .findByUuid(familyUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND));
+
+    BigDecimal livingLimit =
+        family.getMonthlyBudget() != null ? family.getMonthlyBudget() : BigDecimal.ZERO;
+    BigDecimal livingSpent = dashboardRepository.getMonthlyExpenseAmount(familyUuid, year, month);
+
+    Map<String, BigDecimal> spentByItem =
+        dashboardRepository.getMonthlyExpenseAmountsByBudgetItem(familyUuid, year, month);
+    List<BudgetSummaryItem> items =
+        budgetItemRepository.findAllActiveByFamilyUuid(familyUuid).stream()
+            .map(
+                item ->
+                    BudgetSummaryItem.builder()
+                        .budgetItemUuid(item.getUuid().getValue())
+                        .name(item.getName())
+                        .limit(item.getMonthlyLimit())
+                        .spent(spentByItem.getOrDefault(item.getUuid().getValue(), BigDecimal.ZERO))
+                        .build())
+            .toList();
+
+    return BudgetSummaryResponse.builder()
+        .year(year)
+        .month(month)
+        .living(BudgetSummaryLiving.builder().spent(livingSpent).limit(livingLimit).build())
+        .items(items)
         .build();
   }
 

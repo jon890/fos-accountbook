@@ -165,6 +165,39 @@ public class DashboardRepositoryImpl implements DashboardRepository {
     return endDate != null ? expense.date.lt(endDate) : null;
   }
 
+  /** 특정 월의 예산 항목별 지출 합계 조회 (QueryDSL). 카테고리의 예산 제외 표시와 반복 지출 여부는 보지 않는다 (ADR-B25). */
+  @Override
+  public Map<String, BigDecimal> getMonthlyExpenseAmountsByBudgetItem(
+      CustomUuid familyUuid, int year, int month) {
+    QExpense expense = QExpense.expense;
+    QBudgetItemCategory budgetItemCategory = QBudgetItemCategory.budgetItemCategory;
+
+    List<Tuple> rows =
+        queryFactory
+            .select(budgetItemCategory.budgetItemUuid, expense.amount.sum())
+            .from(expense)
+            .join(budgetItemCategory)
+            .on(budgetItemCategory.categoryUuid.eq(expense.categoryUuid))
+            .where(
+                expense.family.uuid.eq(familyUuid),
+                expense.status.eq(ExpenseStatus.ACTIVE),
+                expense.date.year().eq(year),
+                expense.date.month().eq(month),
+                expense.excludeFromBudget.eq(false))
+            .groupBy(budgetItemCategory.budgetItemUuid)
+            .fetch();
+
+    Map<String, BigDecimal> amounts = new HashMap<>();
+    for (Tuple row : rows) {
+      CustomUuid budgetItemUuid = row.get(budgetItemCategory.budgetItemUuid);
+      BigDecimal amount = row.get(expense.amount.sum());
+      if (budgetItemUuid != null && amount != null) {
+        amounts.put(budgetItemUuid.getValue(), amount);
+      }
+    }
+    return amounts;
+  }
+
   /**
    * 특정 월의 생활비 합계 조회 (QueryDSL) - YEAR(date), MONTH(date) 조건 사용 - ACTIVE 상태만 집계 - 예산 제외 플래그가 true인
    * 지출 제외 - 카테고리의 예산 제외 플래그가 true인 지출도 제외 - 반복 지출이 만든 지출 제외 - 예산 항목에 속한 카테고리의 지출 제외
