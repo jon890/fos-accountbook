@@ -1,6 +1,6 @@
 # ADR-F11: CI 코드 리뷰 워크플로 설계 (개정)
 
-**결정**: Claude Code Action 기반 자동 코드 리뷰 워크플로를 아래 방침으로 운영. fos-blog 정착 패턴과 동일화 (2026-05-09 개정, 2026-06-02 단일 opus 리뷰어로 모델 전환, 2026-09-01 요약을 리뷰 body 로 통합, 2026-09-29 fos-assistant 판에 맞춰 호출 경계와 등급과 위험 라벨 추가).
+**결정**: Claude Code Action 기반 자동 코드 리뷰 워크플로를 아래 방침으로 운영. fos-blog 정착 패턴과 동일화 (2026-05-09 개정, 2026-06-02 단일 opus 리뷰어로 모델 전환, 2026-09-01 요약을 리뷰 body 로 통합, 2026-09-29 fos-assistant 판에 맞춰 호출 경계와 등급과 위험 라벨 추가, 2026-10-02 게시를 워크플로 단계로 옮김).
 
 **적용 범위**: 모노레포의 리뷰 워크플로 하나가 프론트엔드와 백엔드를 함께 리뷰한다([ADR-M01](../../../docs/adr/ADR-M01-frontend-backend-monorepo.md)). 백엔드의 ADR-B14 는 이 ADR 로 대체된다.
 
@@ -11,13 +11,13 @@
 | 트리거 | `opened` + `/review` 수동 | `synchronize` 제거 — 매 push마다 토큰 소비 방지 |
 | 호출 경계 | PR 은 이 저장소 브랜치에서 연 것만. `/review` 는 댓글이 그 명령으로 시작하고 OWNER / MEMBER / COLLABORATOR 가 단 것만. 포크 PR 은 댓글 트리거에서도 첫 단계에서 제외 | 공개 저장소라 누구나 PR 과 댓글을 남길 수 있다. 본문에 `/review` 가 들어 있기만 해도 우리 토큰으로 리뷰가 돌던 것을 막는다 |
 | 체크아웃 | `refs/pull/N/head` | 리뷰어가 PR 에서 바뀐 파일과 지침을 Read / Grep 으로 읽는다. `issue_comment` 의 기본 체크아웃은 main 이다 |
-| 도구 허용 | Read / Grep / Glob / Agent / Task 와 게시용 Bash(`gh`, `jq`, `mktemp`, `cat`, `rm`)만. Write / Edit 금지 | Agent 가 없으면 거르기 위임이 드러나지 않게 자가검토로 바뀐다. Bash 를 열어 두면 체크아웃한 PR 코드를 실행할 길이 생긴다 |
+| 도구 허용 | Read / Grep / Glob / Agent / Task 와 읽기용 Bash(`gh pr diff`, `gh pr view`, `gh api`, `jq`)만. Write / Edit 금지 | Agent 가 없으면 거르기 위임이 드러나지 않게 자가검토로 바뀐다. Bash 를 열어 두면 체크아웃한 PR 코드를 실행할 길이 생긴다 |
 | 등급 | 🔴 P1 치명 ~ ⚪ P5 참고 다섯 단계. P4 와 P5 는 리뷰당 세 개까지 | 두 단계로는 꼭 고칠 것과 참고할 것 사이가 비었다. 등급은 반영하지 않았을 때 깨지는 것으로 정한다 |
 | 거르기 | 수집한 지적의 통과 여부를 서브 에이전트가 판정. 맡기지 못하면 리뷰 본문 끝에 그 사실을 남긴다 | 지적을 만든 쪽이 판정하면 통과시키는 쪽으로 기운다 |
 | 위험 라벨 | main 의 `scripts/pr-risk-labels.sh` 하나가 프론트와 백엔드 경로 규칙을 함께 보고 라벨을 달아 프롬프트에 넘긴다. 머지 규칙은 바꾸지 않는다 | LLM 위험 점수는 실행마다 달라 기준이 못 된다. PR head 의 스크립트를 쓰면 PR 이 자기 규칙을 바꿔 피할 수 있다 |
 | Review Event | 항상 `COMMENT` (🔴 있어도 차단 안 함) | 리뷰는 권고. 머지 차단은 인간 reviewer 책임. `REQUEST_CHANGES` 사고 회피 |
 | 요약 게시 | 인라인과 같은 리뷰의 `body` 로 통합 — `reviews` POST 1회 | 요약과 인라인이 리뷰 단위로 접힘. 일반 댓글로 분리하면 Conversation 탭에서 흩어짐 |
-| 리뷰 요청 본문 전달 | `mktemp` 임시 파일 + `--input` | 인자로 직접 쓰면 shell 이 `\n` 을 literal 두 글자로 전달. 체크아웃 밖에 만들어 wrapper 의 `git add -A` 회피 |
+| 게시 주체 | 봇은 `--json-schema` 구조화된 출력(`body`, `comments[path, line, body]`)만 낸다. 「리뷰 게시」 단계가 action 의 `github_token`(claude[bot])으로 POST 한다. 출력이 없거나 POST 가 실패하면 단계가 실패로 끝난다. 인라인 줄이 맞지 않아 거절되면 인라인을 요약 아래로 옮겨 한 번 더 게시한다 | 봇이 `REVIEW_JSON=$(mktemp)` 같은 셸 변수와 명령 치환으로 게시하면 그 호출이 허용 목록과 맞지 않아 거부되고, 실행은 성공인데 리뷰가 없었다(#420, PR #412, #415, #418, #425, #430 등). 거부된 도구 호출은 이름과 명령 앞부분만 Job Summary 에 남긴다 |
 | 댓글 정리 | 일반 댓글과 인라인은 DELETE (REST) | minimize 누적 시 PR 스레드 시각 답답. 이력은 GitHub event log 로 충분 |
 | 리뷰 정리 | 리뷰 본문만 GraphQL `minimizeComment` (OUTDATED) | 제출된 COMMENT 리뷰는 REST 삭제가 없고 dismiss 도 APPROVED / CHANGES_REQUESTED 에만 가능. 실행당 1개라 누적량이 인라인과 다름 |
 | Dummy 댓글 자동 정리 | post-step 에서 `jq` 로 길이, placeholder, 등급 표시(색 원과 P1~P5) 부재를 검사해 삭제 | Claude action 이 자연어 sanity check 무시하고 placeholder 게시하는 사고 (fos-blog PR #114) 강제 차단. 판정을 `jq` 안에서 해야 여러 줄 본문이 `while read` 를 깨뜨리지 않는다 |
@@ -38,11 +38,10 @@
 - 요약을 `gh pr comment` 일반 댓글로 분리 (2026-09-01 기각): 요약과 인라인이 Conversation 탭에서 흩어지고 등록 호출이 2회로 늘어남. 리뷰 `body` 도 Conversation 탭에 그대로 노출되므로 분리 이유가 없었음.
 - 리뷰까지 포함해 전부 minimize: DELETE 결정을 뒤집게 되고 minimized 블록이 누적됨. REST 로 지울 수 없는 리뷰 본문 한 종류에만 예외를 둠.
 
-**요청 본문 전달 강제 (실측 사고)**:
-- 리뷰 요청 JSON 은 `mktemp` 로 만든 임시 파일에 담아 `--input` 으로 넘긴다.
-- `--field body="...\n..."` 패턴은 shell 이 `\n` 을 literal 두 글자로 전달해 본문 줄바꿈이 깨진다.
-- JSON 문자열 안의 `\n` 은 JSON parser 가 해석하므로 정상.
-- 임시 파일은 체크아웃 밖에 만든다. action wrapper 의 `git add -A` 가 체크아웃 안 파일을 PR 브랜치 commit 으로 흘려보낸다 (fos-blog PR #83 사고).
+**요청 본문 전달 (실측 사고)**:
+- 리뷰 요청 JSON 은 「리뷰 게시」 단계가 구조화된 출력을 `jq` 로 바꿔 `$RUNNER_TEMP` 파일에 담고 `--input` 으로 넘긴다. 봇은 파일을 만들지 않는다.
+- `--field body="...\n..."` 패턴은 shell 이 `\n` 을 literal 두 글자로 전달해 본문 줄바꿈이 깨진다. 남은 보정 단계는 예전 사고 대비로 유지한다.
+- 체크아웃 안에는 파일을 만들지 않는다. action wrapper 의 `git add -A` 가 체크아웃 안 파일을 PR 브랜치 commit 으로 흘려보낸다 (fos-blog PR #83 사고).
 
 ---
 
