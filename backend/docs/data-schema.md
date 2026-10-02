@@ -265,6 +265,7 @@ CREATE TABLE budget_items (
 ```
 
 - 가족당 ACTIVE 항목은 10개까지다
+- 두 테이블은 `utf8mb4_unicode_ci` 로 만든다. `category_uuid` 를 `expenses`, `categories` 와 비교하므로 collation 이 같아야 한다
 - 목록과 예산 요약은 만든 순서(`id` 오름차순)로 준다
 
 ### [budgetitem] budget_item_categories

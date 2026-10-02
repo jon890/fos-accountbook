@@ -10,7 +10,7 @@ CREATE TABLE `budget_items` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `uq_budget_items_uuid` (`uuid`),
     INDEX `idx_budget_items_family_uuid` (`family_uuid`)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `budget_item_categories` (
     `id`               BIGINT      NOT NULL AUTO_INCREMENT,
@@ -19,4 +19,4 @@ CREATE TABLE `budget_item_categories` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `uq_budget_item_categories_category` (`category_uuid`),
     INDEX `idx_budget_item_categories_item` (`budget_item_uuid`)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
