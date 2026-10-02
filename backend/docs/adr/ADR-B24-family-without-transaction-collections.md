@@ -9,4 +9,4 @@
 - **결과**:
   - 얻는 것: 지출, 수입 등록이 가족의 다른 행을 읽지 않는다. 집합체 경계가 저장소 단위로 맞춰진다.
   - 감당할 것: 가족 삭제 시 지출, 수입 정리는 지금처럼 저장소의 `softDeleteAllByFamilyUuid` 가 맡는다. cascade 에 기대지 않는다.
-- **적용 범위**: `family/domain/entity/Family.java`, `expense/application/service/ExpenseService.java`, `income/application/service/IncomeService.java`.
+- **적용 범위**: `Family` 엔티티와 지출, 수입 등록 서비스.
