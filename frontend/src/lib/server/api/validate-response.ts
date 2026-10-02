@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import { logResponseValidationError } from "./logging";
 import { ResponseValidationError } from "./types";
 
 const UUID_PATTERN =
@@ -29,8 +30,6 @@ export function validateResponse<T>(
     path: issue.path.map(String).join(".").replace(UUID_PATTERN, ":uuid"),
     code: issue.code,
   }));
-  console.error(
-    `[ResponseValidation] ${template} ${issues.map((i) => `${i.path || "(root)"}:${i.code}`).join(", ")}`
-  );
+  logResponseValidationError(template, issues);
   throw new ResponseValidationError(template, issues);
 }
