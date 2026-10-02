@@ -92,7 +92,7 @@ docker compose -f docker/compose.yml up -d
 
 ```
 com.bifos.accountbook/
-├── shared/                 공통 (auth, aop, converter, dto, exception, filter, utils, value)
+├── shared/                 공통 (auth, converter, dto, exception, filter, utils, value)
 ├── user/ family/ category/ expense/ income/ recurring/
 ├── invitation/ notification/ dashboard/ apitoken/
 │                           각 도메인 내부 presentation/ application/ domain/ infra/
