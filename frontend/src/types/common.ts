@@ -49,7 +49,7 @@ export interface CategoryInfo {
   uuid: string;
   name: string;
   color: string;
-  icon: string;
+  icon: string | null;
 }
 
 /**

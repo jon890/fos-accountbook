@@ -32,7 +32,7 @@ export interface Expense {
     uuid: string;
     name: string;
     color: string;
-    icon: string;
+    icon: string | null;
     excludeFromBudget?: boolean;
   } | null;
   amount: number;

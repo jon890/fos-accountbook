@@ -1,5 +1,6 @@
 import { serverApiDelete, serverApiGet, serverApiPost, serverApiPut } from "@/lib/server/api/client";
 import { ActionError } from "@/lib/errors";
+import { getExpensesResponseSchema } from "@/lib/schemas/responses/transaction";
 import type {
   CreateExpenseRequest,
   GetExpensesParams,
@@ -51,7 +52,8 @@ export async function getExpenses(
   if (endDate) queryParams += `&endDate=${endDate}`;
 
   return serverApiGet<GetExpensesResponse>(
-    `/families/${familyUuid}/expenses?${queryParams}`
+    `/families/${familyUuid}/expenses?${queryParams}`,
+    { schema: getExpensesResponseSchema }
   );
 }
 

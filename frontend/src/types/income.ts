@@ -31,7 +31,7 @@ export interface Income {
     uuid: string;
     name: string;
     color: string;
-    icon: string;
+    icon: string | null;
   } | null;
   amount: number;
   description: string | null;

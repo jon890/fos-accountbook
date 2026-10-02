@@ -5,6 +5,7 @@ import type {
   GetIncomesResponse,
 } from "@/types/income";
 import { ActionError } from "@/lib/errors";
+import { getIncomesResponseSchema } from "@/lib/schemas/responses/transaction";
 
 export async function createIncome(
   familyUuid: string,
@@ -45,7 +46,9 @@ export async function getIncomes(
     queryString ? `?${queryString}` : ""
   }`;
 
-  return serverApiGet<GetIncomesResponse>(endpoint);
+  return serverApiGet<GetIncomesResponse>(endpoint, {
+    schema: getIncomesResponseSchema,
+  });
 }
 
 export async function updateIncome(

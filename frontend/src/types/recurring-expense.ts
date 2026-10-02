@@ -1,10 +1,10 @@
-import type { CategoryResponse } from "@/types/category";
+import type { CategoryInfo } from "@/types/common";
 
 export interface RecurringExpense {
   uuid: string;
   familyUuid: string;
   categoryUuid: string;
-  category: CategoryResponse | null;
+  category: CategoryInfo | null;
   name: string;
   amount: number;
   dayOfMonth: number;
