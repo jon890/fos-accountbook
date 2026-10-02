@@ -105,7 +105,6 @@ export async function getInvitationInfo(
   );
 
   if (
-    !invitation ||
     invitation.status === "EXPIRED" ||
     invitation.status === "CANCELLED"
   ) {
