@@ -41,20 +41,12 @@ describe("TransactionsPageClient", () => {
     expect(screen.getByRole("textbox", { name: "거래 내역 검색" })).toBeEnabled();
   });
 
-  it("768px 미만에서는 필터 버튼만 보이고 칩은 숨긴다", () => {
-    jest.mocked(useNavigationPending).mockReturnValue(false);
-    jest.mocked(useMediaQuery).mockReturnValue(false);
-    render(<TransactionsPageClient categories={[]} activeTab="expenses" searchParams={{}} expenseListContent={null} incomeListContent={null} recurringListContent={null} />);
-
-    expect(screen.getByRole("button", { name: "필터" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "이번달" })).toBeNull();
-  });
-
-  it("768px 이상에서는 칩을 보이고 필터 버튼은 없다", () => {
+  it("필터 칩과 필터 버튼을 함께 그리고 폭에 따라 CSS 로 하나만 보인다", () => {
     jest.mocked(useNavigationPending).mockReturnValue(false);
     render(<TransactionsPageClient categories={[]} activeTab="expenses" searchParams={{}} expenseListContent={null} incomeListContent={null} recurringListContent={null} />);
 
-    expect(screen.getByRole("button", { name: "이번달" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "필터" })).toBeNull();
+    // 폭별로 실제 하나만 보이는지는 browser/transactions.spec.ts 가 390px, 1280px 에서 확인한다.
+    expect(screen.getByRole("button", { name: "이번달" }).closest(".hidden.md\\:block")).not.toBeNull();
+    expect(screen.getByRole("button", { name: "필터" }).closest(".md\\:hidden")).not.toBeNull();
   });
 });
