@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { CategoryResponse } from "@/types/category";
 import { Edit2, EyeOff, Trash2 } from "lucide-react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, MouseEvent } from "react";
 
 interface CategoryItemProps {
   category: CategoryResponse;
@@ -22,8 +22,22 @@ export function CategoryItem({
     "--cat-color": category.color ?? "var(--color-brand-500)",
   } as CSSProperties;
 
+  const handleEditClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    onEdit(category);
+  };
+
+  const handleDeleteClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    onDelete(category);
+  };
+
   return (
-    <Card className="hover:shadow-md transition-shadow" style={colorStyle}>
+    <Card
+      className="cursor-pointer transition-shadow hover:shadow-md"
+      style={colorStyle}
+      onClick={() => onEdit(category)}
+    >
       <CardContent className="p-3 md:p-4">
         <div className="flex flex-col justify-between h-full gap-2 md:gap-3">
           <div className="flex items-start justify-between">
@@ -35,7 +49,7 @@ export function CategoryItem({
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 md:h-8 md:w-8"
-                onClick={() => onEdit(category)}
+                onClick={handleEditClick}
               >
                 <Edit2 className="w-3 h-3 md:w-4 md:h-4" />
               </Button>
@@ -43,7 +57,7 @@ export function CategoryItem({
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 md:h-8 md:w-8"
-                onClick={() => onDelete(category)}
+                onClick={handleDeleteClick}
               >
                 <Trash2 className="w-3 h-3 md:w-4 md:h-4 text-expense" />
               </Button>

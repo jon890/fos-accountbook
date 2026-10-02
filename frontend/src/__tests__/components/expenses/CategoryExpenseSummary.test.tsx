@@ -73,7 +73,7 @@ describe("CategoryExpenseSummary", () => {
     expect(screen.getByRole("button", { name: /카테고리 6/ })).toBeInTheDocument();
   });
 
-  it("URL에 선택된 카테고리 행을 눌린 버튼으로 표시하고 필터를 유지한다", async () => {
+  it("선택된 카테고리 행을 다시 누르면 필터를 해제한다", async () => {
     const user = userEvent.setup();
     mockUseSearchParams.mockReturnValue(
       new URLSearchParams("tab=expenses&categoryId=category-1") as unknown as ReturnType<
@@ -91,9 +91,7 @@ describe("CategoryExpenseSummary", () => {
     const category = screen.getByRole("button", { name: /카테고리 1/ });
     expect(category).toHaveAttribute("aria-pressed", "true");
     await user.click(category);
-    expect(mockPush).toHaveBeenCalledWith(
-      "/transactions?tab=expenses&categoryId=category-1",
-    );
+    expect(mockPush).toHaveBeenCalledWith("/transactions?tab=expenses");
   });
 
   it("카테고리 통계가 비면 카테고리 박스를 표시하지 않는다", () => {

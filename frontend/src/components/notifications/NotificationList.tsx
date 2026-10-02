@@ -114,6 +114,7 @@ export function NotificationList({
                 key={notification.notificationUuid}
                 notification={notification}
                 onRead={handleNotificationRead}
+                onNavigate={onLinkClick}
               />
             ))}
           </div>
