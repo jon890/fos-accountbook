@@ -190,12 +190,15 @@
                             └─ 행 탭 → EditTransactionDialog
 ```
 
-`services/transaction/transaction-service.ts`의 `groupTransactionsWithTotal`은 날짜별로 묶고 합계를 계산한다. `applyClientFilters`의 금액과 검색어 필터는 현재 사용하지 않는다.
+`services/transaction/transaction-service.ts`의 `groupTransactionsWithTotal`은 날짜별로 묶고 합계를 계산한다.
+지출과 수입은 선택한 기간을 300건씩 받는다(`limit` 300, 600, ...). 더 있으면 목록 끝에 「더 보기」 가 뜨고 쪽 넘김 버튼은 없다 (ADR-F41).
+검색어와 금액 범위는 받은 목록에 `applyClientFilters` 를 적용해 화면이 거른다. 검색어는 메모와 카테고리 이름에서 찾는다. 받지 않은 건이 남으면 「불러온 N건 안에서 찾았어요」 를 함께 보인다.
+모바일에서는 기간, 카테고리, 금액 필터를 「필터」 버튼(적용 개수 배지)이 여는 하단 시트에 모은다.
+카테고리별 지출 요약에서 걸러 보는 행을 다시 누르면 카테고리 필터가 풀린다.
 
 page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 탭을 바꾸면 URL 이 바뀌고 서버가 그 탭만 다시 그린다.
 세 탭을 모두 slot props 로 넘기면 RSC 가 보이지 않는 탭까지 렌더링해 조회가 매번 세 배로 나간다.
 시간대는 세션의 `session.user.profile.timezone` 을 쓰고 프로필 API 를 따로 부르지 않는다.
-검색어와 금액 필터는 백엔드 지출·수입 목록 API 가 받지 않아 아직 적용되지 않는다(`prd.md` 「후속 검토」).
 날짜 머리를 누르면 해당 날짜를 선택한 달력으로 이동한다. 지출은 지출 색, 수입은 수입 색과 `+` 부호로 표시한다.
 지출·수입 탭만 구성원을 조회한다.
 구성원 조회의 인증 오류는 로그인으로 이동하고, 일반 조회 실패는 빈 목록으로 처리해 작성자를 「이전 구성원」으로 표시한다.
@@ -224,7 +227,8 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
             ├─ AnalyticsPeriodToggle (segmented role=tablist, URL ?period= 단방향)
             ├─ AnalyticsCategoryDonut (172/160px Donut + 중앙 totalDelta ↑/↓)
             ├─ MonthlyTrendBar (순수 CSS bar, 마지막 막대 bg-brand-500 강조)
-            └─ CategoryDetailList (progress + 전월 delta % 2-col grid)
+            ├─ CategoryDetailList (progress + 전월 delta % 2-col grid)
+            └─ 지출 TOP 5: categoryUuid 로 카테고리 목록에서 아이콘과 이름을 찾는다. 받은 건이 1000건이면 「상위 1000건 안에서 골랐어요」 를 보인다
 ```
 
 데이터 흐름 핵심 (ADR-F30):
@@ -271,6 +275,7 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
                             ├─ BUDGET_50_EXCEEDED / BUDGET_80_EXCEEDED → warning 톤 (bg-warning/10 + text-warning)
                             ├─ BUDGET_100_EXCEEDED                       → expense 톤 (bg-expense/10 + text-expense)
                             └─ default                                    → brand 톤 (bg-brand-50 + text-brand-700)
+                    └─ 항목 탭 → 읽음 처리, 예산 알림(BUDGET_*)이면 /budget 으로 이동
 
 [/notifications 전용 페이지 — plan017]
     └─ 전체 알림 목록 + segmented (전체 / 안 읽음) + pagination
@@ -546,6 +551,7 @@ Teal 디자인을 적용하고 인라인 style을 제거하며 빈 상태 표시
                 │   └─ CategoryItem
                 │       ├─ 아이콘 영역 정사각형 (w-10 h-10 / w-12 h-12)
                 │       ├─ 동적 색은 CSS variable (--cat-color)
+                │       ├─ 카드 탭 → 수정 창 (Edit 버튼과 같은 동작)
                 │       └─ Edit / Delete (destructive variant, plan020)
                 │
                 ├─ 추가, 수정 창: md 미만 Sheet bottom / md+ Dialog (ADR-F40)
