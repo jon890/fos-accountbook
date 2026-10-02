@@ -6,6 +6,7 @@
 import { getDashboardStatsAction } from "@/actions/dashboard/get-dashboard-stats-action";
 import { getMonthlyDailyStatsAction } from "@/actions/dashboard/get-monthly-daily-stats-action";
 import { getExpensesAction } from "@/actions/expense/get-expenses-action";
+import { getFamilyCategoriesAction } from "@/actions/category/get-categories-action";
 import { getCategoryBreakdownWithDeltaAction } from "@/actions/analytics/get-category-breakdown-with-delta-action";
 import { getMonthlyTrendAction } from "@/actions/analytics/get-monthly-trend-action";
 import { getSelectedFamilyUuid } from "@/lib/server/auth/auth-helpers";
@@ -60,10 +61,11 @@ export default async function AnalyticsPage({
   const lastDay = new Date(year, month, 0).getDate();
   const endDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
-  const [statsResult, dailyResult, expensesResult, breakdownResult, trendResult, recurringResult] = await Promise.all([
+  const [statsResult, dailyResult, expensesResult, categoriesResult, breakdownResult, trendResult, recurringResult] = await Promise.all([
     getDashboardStatsAction(),
     getMonthlyDailyStatsAction(year, month),
     getExpensesAction({ familyUuid: familyUuid, startDate, endDate, limit: 1000 }),
+    getFamilyCategoriesAction(familyUuid),
     getCategoryBreakdownWithDeltaAction(year, month),
     getMonthlyTrendAction(period, year, month),
     getRecurringExpensesTotalAction(),
@@ -73,6 +75,7 @@ export default async function AnalyticsPage({
     statsResult,
     dailyResult,
     expensesResult,
+    categoriesResult,
     breakdownResult,
     trendResult,
     recurringResult,
@@ -89,6 +92,7 @@ export default async function AnalyticsPage({
   const stats = getAnalyticsData(statsResult);
   const daily = getAnalyticsData(dailyResult);
   const expenses = getAnalyticsData(expensesResult);
+  const categories = getAnalyticsData(categoriesResult);
   const breakdown = getAnalyticsData(breakdownResult);
   const trend = getAnalyticsData(trendResult);
   const recurringTotal = getAnalyticsData(recurringResult);
@@ -126,6 +130,8 @@ export default async function AnalyticsPage({
         initialStats={stats}
         initialDailyStats={daily}
         initialExpenses={expenses.items}
+        initialTotalElements={expenses.totalElements}
+        categories={categories}
         familyUuid={familyUuid}
         period={period}
         initialBreakdown={breakdown}
