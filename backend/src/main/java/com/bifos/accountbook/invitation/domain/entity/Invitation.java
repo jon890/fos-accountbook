@@ -91,24 +91,26 @@ public class Invitation {
 
   // ========== 비즈니스 메서드 ==========
 
-  /** 초대 수락 */
-  public void accept() {
+  /**
+   * 초대 수락. 현재 시각은 호출하는 쪽이 주입한 Clock 에서 넘긴다(ADR-B21). 엔티티가 시스템 시계를 직접 읽지 않아 테스트에서 만료 경계를 고정할 수 있다.
+   */
+  public void accept(LocalDateTime now) {
     if (this.status != InvitationStatus.PENDING) {
       throw new IllegalStateException("수락할 수 없는 초대 상태입니다");
     }
-    if (LocalDateTime.now().isAfter(this.expiresAt)) {
+    if (isExpired(now)) {
       throw new IllegalStateException("만료된 초대입니다");
     }
     this.status = InvitationStatus.ACCEPTED;
   }
 
   /** 초대 만료 여부 확인 */
-  public boolean isExpired() {
-    return LocalDateTime.now().isAfter(this.expiresAt);
+  public boolean isExpired(LocalDateTime now) {
+    return now.isAfter(this.expiresAt);
   }
 
   /** 초대 수락 가능 여부 확인 */
-  public boolean canAccept() {
-    return this.status == InvitationStatus.PENDING && !isExpired();
+  public boolean canAccept(LocalDateTime now) {
+    return this.status == InvitationStatus.PENDING && !isExpired(now);
   }
 }
