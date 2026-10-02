@@ -8,10 +8,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.bifos.accountbook.shared.AbstractControllerTest;
+import com.bifos.accountbook.user.application.dto.UpdateUserProfileRequest;
 import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.user.domain.entity.UserProfile;
 import com.bifos.accountbook.user.domain.repository.UserProfileRepository;
-import com.bifos.accountbook.user.presentation.dto.UpdateUserProfileRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

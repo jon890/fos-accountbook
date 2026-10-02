@@ -1,4 +1,4 @@
-package com.bifos.accountbook.user.presentation.dto;
+package com.bifos.accountbook.user.application.dto;
 
 import com.bifos.accountbook.user.domain.entity.UserProfile;
 import java.time.LocalDateTime;

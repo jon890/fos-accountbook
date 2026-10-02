@@ -10,7 +10,7 @@
 com.bifos.accountbook
 ├── shared/                  도메인 공통 — 아래 상세
 ├── expense/                 지출
-│   ├── presentation/        Controller, Request/Response DTO
+│   ├── presentation/        Controller, Controller 만 쓰는 Request DTO
 │   ├── application/         Service, DTO, Event
 │   ├── domain/              Entity, Repository 인터페이스, Value Object, Converter
 │   └── infra/               Repository 구현체 (JPA/QueryDSL)
@@ -49,6 +49,7 @@ shared/
 | 이벤트 리스너                  | **구독자** 도메인의 `application/event/`                    |
 | Projection (read model DTO)    | **사용하는** 도메인의 `domain/repository/projection/`       |
 | CategoryInfo DTO               | `category/application/dto/` (다른 도메인이 category를 참조) |
+| Service 가 받거나 돌려주는 DTO | 해당 도메인의 `application/dto/`                            |
 
 **의존성 방향**: `presentation → application → domain ← infra`
 하위 레이어는 상위 레이어를 참조하지 않는다.
@@ -243,7 +244,7 @@ static class TestClockConfig {
 1. `{domain}/domain/`: Entity (`@Entity`, `@Builder`), Repository 인터페이스, Value Object
 2. `{domain}/infra/`: Repository 구현체 (JPA와 QueryDSL)
 3. `{domain}/application/`: Service (`@Transactional(readOnly=true)` 기본)와 DTO
-4. `{domain}/presentation/`: Controller와 Request/Response DTO
+4. `{domain}/presentation/`: Controller와 Controller만 쓰는 Request DTO
 5. `db/migration/` — Flyway SQL (`V{N}__{description}.sql`)
 6. `docs/data-schema.md`: 스키마와 API 엔드포인트 업데이트
 7. 기존 삭제/이관 로직에 새 도메인 반영 (예: 카테고리 삭제 시 새 도메인 데이터도 기본 카테고리로 이동)
