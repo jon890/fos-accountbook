@@ -11,6 +11,7 @@ const mockPush = jest.fn();
 const mockEditLoadError = jest.fn();
 const mockSearchParams = jest.fn();
 const mockNavigationPending = jest.fn();
+const mockScrollIntoView = jest.fn();
 jest.mock("next/navigation", () => ({
   useSearchParams: () => mockSearchParams(),
 }));
@@ -38,6 +39,10 @@ const props = { data, initialDate: "2026-09-14", today: "2026-09-14", familyUuid
 
 beforeEach(() => {
   jest.clearAllMocks();
+  Object.defineProperty(Element.prototype, "scrollIntoView", {
+    configurable: true,
+    value: mockScrollIntoView,
+  });
   mockSearchParams.mockImplementation(() => new URLSearchParams(window.location.search));
   mockNavigationPending.mockReturnValue(false);
   window.history.replaceState({}, "", "/calendar?month=2026-09&date=2026-09-14");
@@ -45,6 +50,26 @@ beforeEach(() => {
 });
 
 describe("달력 홈", () => {
+  it("날짜를 누르면 선택 날짜의 목록 제목에 포커스를 준다", async () => {
+    render(<CalendarHome {...props} />);
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "9월 15일" }));
+
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "9월 15일 (화)" }));
+  });
+
+  it("처음 렌더와 월 이동에는 스크롤이나 제목 포커스를 하지 않는다", async () => {
+    const view = render(<CalendarHome {...props} />);
+    expect(mockScrollIntoView).not.toHaveBeenCalled();
+    expect(screen.getByRole("heading", { name: "9월 14일 (월)" })).not.toHaveFocus();
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "다음 달" }));
+    view.rerender(<CalendarHome {...props} data={calendarMonth({ month: 10 })} initialDate="2026-10-01" />);
+
+    expect(mockScrollIntoView).not.toHaveBeenCalled();
+    expect(screen.getByRole("heading", { name: "10월 1일 (목)" })).not.toHaveFocus();
+  });
+
   it("월 전환 중 달력 격자와 날짜 목록 영역을 흐리게 하고 aria-busy를 표시한다", () => {
     mockNavigationPending.mockReturnValue(true);
     const { container } = render(<CalendarHome {...props} />);
