@@ -6,12 +6,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/** 예산 요약의 생활비. limit 은 가족의 월 예산이다. */
+/** 예산 요약의 한 줄(예산 또는 생활비). limit 이 0 이면 한도 없음이다. */
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BudgetSummaryLiving {
+public class BudgetSummaryAmount {
 
   private BigDecimal spent;
 

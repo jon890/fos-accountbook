@@ -199,13 +199,53 @@ public class DashboardRepositoryImpl implements DashboardRepository {
   }
 
   /**
-   * 특정 월의 생활비 합계 조회 (QueryDSL) - YEAR(date), MONTH(date) 조건 사용 - ACTIVE 상태만 집계 - 예산 제외 플래그가 true인
-   * 지출 제외 - 카테고리의 예산 제외 플래그가 true인 지출도 제외 - 반복 지출이 만든 지출 제외 - 예산 항목에 속한 카테고리의 지출 제외
+   * 특정 월의 예산 합계 조회 (QueryDSL) - YEAR(date), MONTH(date) 조건 사용 - ACTIVE 상태만 집계 - 예산 제외 플래그가 true인 지출
+   * 제외 - 카테고리의 예산 제외 플래그가 true인 지출도 제외 - 반복 지출이 만든 지출 제외. 예산 항목에 속한 카테고리의 지출은 포함한다 (ADR-B26).
    *
-   * <p>같은 규칙이 ExpenseJpaRepository.sumAmountByFamilyUuidAndDateBetween 에도 있다. 함께 고친다 (ADR-B25).
+   * <p>같은 규칙이 ExpenseJpaRepository.sumAmountByFamilyUuidAndDateBetween 에도 있다. 함께 고친다.
    */
   @Override
   public BigDecimal getMonthlyExpenseAmount(CustomUuid familyUuid, int year, int month) {
+
+    QExpense expense = QExpense.expense;
+    QCategory category = QCategory.category;
+
+    BigDecimal result =
+        queryFactory
+            .select(expense.amount.sum().coalesce(BigDecimal.ZERO))
+            .from(expense)
+            .leftJoin(category)
+            .on(
+                expense
+                    .categoryUuid
+                    .eq(category.uuid)
+                    .and(category.status.eq(CategoryStatus.ACTIVE)))
+            .where(
+                expense.family.uuid.eq(familyUuid),
+                expense.status.eq(ExpenseStatus.ACTIVE),
+                expense.date.year().eq(year),
+                expense.date.month().eq(month),
+                expense
+                    .excludeFromBudget
+                    .eq(false)
+                    .and(
+                        category
+                            .excludeFromBudget
+                            .isNull()
+                            .or(category.excludeFromBudget.eq(false))),
+                expense.recurringExpenseUuid.isNull())
+            .fetchOne();
+
+    return result != null ? result : BigDecimal.ZERO;
+  }
+
+  /**
+   * 특정 월의 생활비 합계 조회 (QueryDSL). 예산 합계 규칙에 「카테고리가 예산 항목에 속하지 않음」 을 더한 것이다 (ADR-B26).
+   *
+   * <p>예산 합계 규칙은 getMonthlyExpenseAmount 와 같다. 함께 고친다.
+   */
+  @Override
+  public BigDecimal getMonthlyLivingExpenseAmount(CustomUuid familyUuid, int year, int month) {
 
     QExpense expense = QExpense.expense;
     QCategory category = QCategory.category;

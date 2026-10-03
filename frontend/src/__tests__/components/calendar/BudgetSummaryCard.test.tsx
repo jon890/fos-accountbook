@@ -5,7 +5,9 @@ import type { BudgetSummary } from "@/types/budget-item";
 const summary: BudgetSummary = {
   year: 2026,
   month: 10,
+  total: { spent: 1180000, limit: 1800000 },
   living: { spent: 620000, limit: 1000000 },
+  allocationExceeded: false,
   items: [
     { budgetItemUuid: "item-1", name: "남편 용돈", limit: 400000, spent: 150000 },
     { budgetItemUuid: "item-2", name: "아내 용돈", limit: 400000, spent: 410000 },
@@ -13,11 +15,12 @@ const summary: BudgetSummary = {
 };
 
 describe("BudgetSummaryCard", () => {
-  it("생활비를 첫 줄에 두고 항목을 순서대로 보여 퍼센트를 계산한다", () => {
+  it("예산을 첫 줄, 생활비를 둘째 줄에 두고 항목을 순서대로 보여 퍼센트를 계산한다", () => {
     render(<BudgetSummaryCard summary={summary} />);
 
-    const names = screen.getAllByText(/^(생활비|남편 용돈|아내 용돈)$/).map((el) => el.textContent);
-    expect(names).toEqual(["생활비", "남편 용돈", "아내 용돈"]);
+    const names = screen.getAllByText(/^(예산|생활비|남편 용돈|아내 용돈)$/).map((el) => el.textContent);
+    expect(names).toEqual(["예산", "생활비", "남편 용돈", "아내 용돈"]);
+    expect(screen.getByText("66%")).toBeInTheDocument();
     expect(screen.getByText("62%")).toBeInTheDocument();
     expect(screen.getByText("38%")).toBeInTheDocument();
     expect(screen.getByText("₩620,000")).toBeInTheDocument();
@@ -36,16 +39,46 @@ describe("BudgetSummaryCard", () => {
       <BudgetSummaryCard
         summary={{
           ...summary,
+          total: { spent: 100000, limit: 0 },
           living: { spent: 30000, limit: 0 },
           items: [{ budgetItemUuid: "item-1", name: "여행", limit: 0, spent: 70000 }],
         }}
       />
     );
 
+    expect(screen.getByText("₩100,000")).toBeInTheDocument();
     expect(screen.getByText("₩30,000")).toBeInTheDocument();
     expect(screen.getByText("₩70,000")).toBeInTheDocument();
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
     expect(screen.queryByText(/%$/)).not.toBeInTheDocument();
+  });
+
+  it("월 예산이 있으면 생활비 한도가 0 이어도 한도로 보고 쓴 금액이 있으면 초과로 보인다", () => {
+    render(
+      <BudgetSummaryCard
+        summary={{
+          ...summary,
+          total: { spent: 850000, limit: 800000 },
+          living: { spent: 50000, limit: 0 },
+        }}
+      />
+    );
+
+    const living = screen.getByText("생활비").closest("div")!.parentElement!;
+    expect(within(living).getByText("₩50,000")).toHaveClass("text-expense");
+    expect(within(living).getByText("초과")).toHaveClass("text-expense");
+    expect(within(living).getByRole("progressbar")).toBeInTheDocument();
+  });
+
+  it("생활비 한도가 0 이고 쓴 금액도 0 이면 0% 로 보인다", () => {
+    render(
+      <BudgetSummaryCard
+        summary={{ ...summary, total: { spent: 800000, limit: 800000 }, living: { spent: 0, limit: 0 } }}
+      />
+    );
+
+    const living = screen.getByText("생활비").closest("div")!.parentElement!;
+    expect(within(living).getByText("0%")).not.toHaveClass("text-expense");
   });
 
   it("한도 있는 줄만 progressbar 를 그린다", () => {
@@ -64,10 +97,23 @@ describe("BudgetSummaryCard", () => {
     expect(within(trip).queryByRole("progressbar")).not.toBeInTheDocument();
   });
 
+  it("allocationExceeded 면 항목 한도 초과 문구를 text-expense 로 보인다", () => {
+    const { rerender } = render(<BudgetSummaryCard summary={summary} />);
+    expect(screen.queryByText("항목 한도가 예산을 넘었어요")).not.toBeInTheDocument();
+
+    rerender(<BudgetSummaryCard summary={{ ...summary, allocationExceeded: true }} />);
+    expect(screen.getByText("항목 한도가 예산을 넘었어요")).toHaveClass("text-expense");
+  });
+
   it("빈 상태에는 안내 한 줄만 보이고 링크는 /budget 이다", () => {
     render(
       <BudgetSummaryCard
-        summary={{ ...summary, living: { spent: 0, limit: 0 }, items: [] }}
+        summary={{
+          ...summary,
+          total: { spent: 0, limit: 0 },
+          living: { spent: 0, limit: 0 },
+          items: [],
+        }}
       />
     );
 

@@ -422,18 +422,23 @@ GET    /families/{uuid}/dashboard/budget-summary              생활비와 예�
 | 필드 | 타입 | 뜻 |
 |---|---|---|
 | `year`, `month` | 숫자 | 요청한 연월 |
+| `total.spent` | 숫자 | 그 달 예산 합계 |
+| `total.limit` | 숫자 | `families.monthly_budget`(전체 예산). 0 = 미설정 |
 | `living.spent` | 숫자 | 그 달 생활비 합계 |
-| `living.limit` | 숫자 | `families.monthly_budget`. 0 = 미설정 |
+| `living.limit` | 숫자 | `total.limit` 에서 ACTIVE 항목 `limit` 의 합을 뺀 값. 0 보다 작으면 0 |
+| `allocationExceeded` | 불리언 | `total.limit` 이 0 보다 크고 항목 `limit` 의 합이 그보다 크면 true |
 | `items[]` | `{ budgetItemUuid, name, limit, spent }` | ACTIVE 항목. 만든 순서. `limit` 0 = 한도 없음 |
 
-합계 규칙은 ADR-B25 가 정한다.
+합계 규칙은 ADR-B25 와 ADR-B26 이 정한다.
+고정지출은 지출의 예산 제외 표시가 있거나, 카테고리가 예산 제외이거나, `recurring_expense_uuid` 가 있는 지출이다.
 
 | 합계 | 더하는 지출 |
 |---|---|
-| 생활비 | 그 달 ACTIVE 지출 가운데 지출의 예산 제외 표시가 없고, 카테고리가 예산 제외가 아니고, `recurring_expense_uuid` 가 null 이고, 카테고리가 `budget_item_categories` 에 없는 것 |
+| 예산 | 그 달 ACTIVE 지출 가운데 고정지출이 아닌 것. 항목 카테고리의 지출도 포함한다 |
+| 생활비 | 예산 합계의 지출 가운데 카테고리가 `budget_item_categories` 에 없는 것 |
 | 항목 | 그 달 ACTIVE 지출 가운데 카테고리가 그 항목에 속하고 지출의 예산 제외 표시가 없는 것. 카테고리의 예산 제외 표시와 반복 지출 여부는 보지 않는다 |
 
-`stats/monthly` 의 `monthlyExpense` 와 예산 알림의 기준 금액은 생활비 합계다. `remainingBudget` 은 `budget - monthlyExpense` 다.
+`stats/monthly` 의 `monthlyExpense` 와 예산 알림의 기준 금액은 예산 합계다. `remainingBudget` 은 `budget - monthlyExpense` 다.
 지난달을 조회해도 지금의 항목 구성으로 계산한다.
 
 ### 응답에 담는 등록자

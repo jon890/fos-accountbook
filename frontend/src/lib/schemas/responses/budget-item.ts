@@ -23,7 +23,9 @@ export const budgetItemListResponseSchema = z.array(budgetItemResponseSchema);
 export const budgetSummaryResponseSchema = z.object({
   year: z.number(),
   month: z.number(),
+  total: z.object({ spent: z.number(), limit: z.number() }),
   living: z.object({ spent: z.number(), limit: z.number() }),
+  allocationExceeded: z.boolean(),
   items: z.array(
     z.object({
       budgetItemUuid: uuidString,

@@ -39,7 +39,7 @@ ExpenseService.create()
             │
             ▼  (트랜잭션 커밋 후, 비동기)
         BudgetAlertEventListener
-            ├─ 월 예산 대비 생활비 합계 비율 계산 (생활비 합계는 「8. 예산 항목과 예산 요약」)
+            ├─ 월 예산 대비 예산 합계 비율 계산 (예산 합계는 「8. 예산 항목과 예산 요약」)
             ├─ 50% / 80% / 100% 초과 시 Notification 생성
             └─ 실패해도 지출 저장에 영향 없음
 ```
@@ -102,7 +102,7 @@ GET /families/{familyUuid}/dashboard/stats/monthly?year=2026&month=4
     │
     ▼
 DashboardService.getMonthlyStats()
-    ├─ 해당 월 생활비 합계 (「8. 예산 항목과 예산 요약」)
+    ├─ 해당 월 예산 합계 (「8. 예산 항목과 예산 요약」)
     ├─ 해당 월 총 수입
     ├─ 월 예산 대비 비율
     └─ 가족 멤버 수
@@ -133,7 +133,8 @@ GET /families/{familyUuid}/dashboard/budget-summary?year=2026&month=10
     │
     ▼
 DashboardService.getBudgetSummary()
-    ├─ 생활비: 그 달 생활비 합계와 families.monthly_budget
+    ├─ 예산: 그 달 예산 합계와 families.monthly_budget
+    ├─ 생활비: 그 달 생활비 합계와 monthly_budget 에서 항목 한도 합을 뺀 값 (0 미만이면 0)
     └─ 항목: 가족의 ACTIVE 예산 항목마다 그 항목 카테고리의 그 달 지출 합계와 monthly_limit (만든 순서)
 ```
 
@@ -192,7 +193,7 @@ API 인증 필터(`JwtAuthenticationFilter`)는 `typ=access` 인 토큰만 인�
 
 ## 8. 예산 항목과 예산 요약
 
-결정 근거는 ADR-B25 다.
+결정 근거는 ADR-B25 와 ADR-B26 이다.
 
 ```mermaid
 flowchart TD
@@ -201,9 +202,13 @@ flowchart TD
     X -- 꺼짐 --> I{카테고리가 예산 항목에 속하나}
     I -- 속한다 --> ITEM[그 항목의 지출 합계]
     I -- 아니다 --> C{예산 제외 카테고리이거나 반복 지출이 만든 지출인가}
-    C -- 그렇다 --> F[고정지출. 생활비에 세지 않는다]
+    C -- 그렇다 --> F[고정지출. 예산과 생활비에 세지 않는다]
     C -- 아니다 --> L[생활비 합계]
+    ITEM --> T[예산 합계]
+    L --> T
 ```
+
+항목 카테고리의 지출 가운데 카테고리가 예산 제외이거나 반복 지출이 만든 것은 항목 합계에는 들어가고 예산 합계에는 들어가지 않는다.
 
 ```
 POST /families/{familyUuid}/budget-items

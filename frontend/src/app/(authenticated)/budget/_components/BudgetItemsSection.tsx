@@ -25,12 +25,14 @@ const MAX_BUDGET_ITEMS = 10;
 
 interface BudgetItemsSectionProps {
   items: BudgetItem[];
+  monthlyBudget: number;
   expenseCategories: CategoryResponse[];
   failed: boolean;
 }
 
 export function BudgetItemsSection({
   items,
+  monthlyBudget,
   expenseCategories,
   failed,
 }: BudgetItemsSectionProps) {
@@ -49,6 +51,9 @@ export function BudgetItemsSection({
       .flatMap((item) => item.categoryUuids),
   );
   const isFull = items.length >= MAX_BUDGET_ITEMS;
+  // 예산 요약 API 의 living.limit 과 같은 식이다 (ADR-B26)
+  const itemLimitSum = items.reduce((sum, item) => sum + item.monthlyLimit, 0);
+  const livingLimit = Math.max(monthlyBudget - itemLimitSum, 0);
 
   const openCreate = () => {
     setEditing(undefined);
@@ -107,6 +112,20 @@ export function BudgetItemsSection({
         {!failed && isFull && (
           <p className="text-xs text-fg-muted">
             예산 항목은 10개까지 만들 수 있어요
+          </p>
+        )}
+
+        {!failed && monthlyBudget > 0 && itemLimitSum <= monthlyBudget && (
+          <p className="num text-xs text-fg-muted">
+            생활비 {formatCurrency(livingLimit)} = 예산 {formatCurrency(monthlyBudget)} −
+            항목 {formatCurrency(itemLimitSum)}
+          </p>
+        )}
+
+        {!failed && monthlyBudget > 0 && itemLimitSum > monthlyBudget && (
+          <p className="num text-xs text-expense">
+            항목 한도가 예산을 넘었어요. 예산 {formatCurrency(monthlyBudget)}, 항목{" "}
+            {formatCurrency(itemLimitSum)}
           </p>
         )}
 

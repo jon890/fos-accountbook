@@ -295,8 +295,8 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
   }
 
   @Test
-  @DisplayName("예산 항목 카테고리의 지출은 생활비 예산 알림 기준 금액에 들어가지 않는다")
-  void shouldNotCreateNotification_WhenOnlyBudgetItemCategoryExpense() {
+  @DisplayName("예산 항목 카테고리의 지출도 예산 알림 기준 금액에 들어간다")
+  void shouldCreateNotification_WhenOnlyBudgetItemCategoryExpense() {
     // Given: 월 예산 100만원, 카테고리를 예산 항목에 넣는다
     TestData data = createTestFamilyWithBudget();
     CustomUuid familyUuid = CustomUuid.from(data.testFamily.getUuid());
@@ -318,8 +318,9 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
             null));
     budgetAlertService.checkAndCreateBudgetAlert(familyUuid, LocalDateTime.now());
 
-    // Then: 생활비 합계가 0 이므로 알림이 없다
-    assertThat(notificationRepository.findByFamily(familyUuid)).isEmpty();
+    // Then: 예산 합계에 항목 지출이 들어가므로 90% 알림이 생긴다
+    assertThat(notificationRepository.findByFamily(familyUuid))
+        .anyMatch(n -> n.getType().getCode().equals("BUDGET_80_EXCEEDED"));
   }
 
   @Test
@@ -342,7 +343,7 @@ class BudgetAlertServiceIntegrationTest extends TestFixturesSupport {
     // When
     budgetAlertService.checkAndCreateBudgetAlert(familyUuid, LocalDateTime.now());
 
-    // Then: 생활비 합계가 0 이므로 알림이 없다
+    // Then: 예산 합계가 0 이므로 알림이 없다
     assertThat(notificationRepository.findByFamily(familyUuid)).isEmpty();
   }
 

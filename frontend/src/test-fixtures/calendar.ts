@@ -53,7 +53,9 @@ export function calendarMonth(overrides: Partial<CalendarMonth> = {}): CalendarM
     budgetSummary: {
       year: 2026,
       month: 9,
+      total: { spent: 1180000, limit: 1800000 },
       living: { spent: 620000, limit: 1000000 },
+      allocationExceeded: false,
       items: [
         { budgetItemUuid: "item-1", name: "남편 용돈", limit: 400000, spent: 150000 },
       ],

@@ -20,7 +20,9 @@ const daily = {
 
 const budgetSummary = {
   year: 2024, month: 2,
+  total: { spent: 1180000, limit: 1800000 },
   living: { spent: 620000, limit: 1000000 },
+  allocationExceeded: false,
   items: [{ budgetItemUuid: "item-1", name: "남편 용돈", limit: 400000, spent: 150000 }],
 };
 
@@ -108,7 +110,7 @@ describe("달력 월 조회", () => {
   });
 
   it("빈 월 응답과 12월 말일을 유지한다", async () => {
-    const emptySummary = { year: 2026, month: 12, living: { spent: 0, limit: 0 }, items: [] };
+    const emptySummary = { year: 2026, month: 12, total: { spent: 0, limit: 0 }, living: { spent: 0, limit: 0 }, allocationExceeded: false, items: [] };
     mockGet.mockImplementation(async (path) => {
       if (path.includes("budget-summary")) return emptySummary;
       if (path.includes("daily-stats")) return { year: 2026, month: 12, dailyStats: [], totalIncome: 0, totalExpense: 0, memberExpenseTotals: [] };
