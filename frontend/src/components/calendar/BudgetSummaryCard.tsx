@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Fragment } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/client/utils";
@@ -17,8 +18,9 @@ interface BudgetLine {
 }
 
 export function BudgetSummaryCard({ summary }: BudgetSummaryCardProps) {
-  const isEmpty = summary.living.limit === 0 && summary.items.length === 0;
+  const isEmpty = summary.total.limit === 0 && summary.items.length === 0;
   const lines: BudgetLine[] = [
+    { key: "total", name: "예산", ...summary.total },
     { key: "living", name: "생활비", ...summary.living },
     ...summary.items.map((item) => ({
       key: item.budgetItemUuid,
@@ -39,7 +41,14 @@ export function BudgetSummaryCard({ summary }: BudgetSummaryCardProps) {
           {isEmpty ? (
             <p className="text-sm text-fg-muted">예산 항목을 만들면 여기서 볼 수 있어요</p>
           ) : (
-            lines.map((line) => <BudgetSummaryLine key={line.key} line={line} />)
+            lines.map((line) => (
+              <Fragment key={line.key}>
+                <BudgetSummaryLine line={line} />
+                {line.key === "living" && summary.allocationExceeded && (
+                  <p className="text-xs text-expense">항목 한도가 예산을 넘었어요</p>
+                )}
+              </Fragment>
+            ))
           )}
         </CardContent>
       </Card>

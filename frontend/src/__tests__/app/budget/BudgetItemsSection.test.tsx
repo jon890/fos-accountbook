@@ -59,7 +59,7 @@ beforeEach(() => {
 
 describe("BudgetItemsSection", () => {
   it("항목의 이름, 한도, 카테고리 이름을 보인다", () => {
-    render(<BudgetItemsSection items={items} expenseCategories={categories} failed={false} />);
+    render(<BudgetItemsSection monthlyBudget={0} items={items} expenseCategories={categories} failed={false} />);
 
     expect(screen.getByText("남편 용돈")).toBeInTheDocument();
     expect(screen.getByText("₩400,000")).toBeInTheDocument();
@@ -67,10 +67,32 @@ describe("BudgetItemsSection", () => {
     expect(screen.getByText("한도 없음")).toBeInTheDocument();
   });
 
+  it("월 예산에서 항목 한도 합을 뺀 생활비 한도를 보인다", () => {
+    const limited = [item(1, "남편 용돈", 400000, [uuid(1)]), item(2, "아내 용돈", 400000, [uuid(2)])];
+    render(
+      <BudgetItemsSection
+        monthlyBudget={1800000}
+        items={limited}
+        expenseCategories={categories}
+        failed={false}
+      />
+    );
+
+    expect(
+      screen.getByText("생활비 ₩1,000,000 = 예산 ₩1,800,000 − 항목 ₩800,000")
+    ).toBeInTheDocument();
+  });
+
+  it("월 예산이 0 이면 생활비 한도 줄을 그리지 않는다", () => {
+    render(<BudgetItemsSection monthlyBudget={0} items={items} expenseCategories={categories} failed={false} />);
+
+    expect(screen.queryByText(/^생활비/)).not.toBeInTheDocument();
+  });
+
   it("항목 추가 대화상자에서 입력해 저장하면 생성 액션을 부른다", async () => {
     const user = userEvent.setup();
     jest.mocked(createBudgetItemAction).mockResolvedValue({ success: true, data: items[0] });
-    render(<BudgetItemsSection items={items} expenseCategories={categories} failed={false} />);
+    render(<BudgetItemsSection monthlyBudget={0} items={items} expenseCategories={categories} failed={false} />);
 
     await user.click(screen.getByRole("button", { name: "항목 추가" }));
     const dialog = screen.getByRole("dialog");
@@ -92,7 +114,7 @@ describe("BudgetItemsSection", () => {
 
   it("다른 항목이 쓰는 카테고리 버튼은 비활성이고, 수정 중인 항목 자신의 카테고리는 고를 수 있다", async () => {
     const user = userEvent.setup();
-    render(<BudgetItemsSection items={items} expenseCategories={categories} failed={false} />);
+    render(<BudgetItemsSection monthlyBudget={0} items={items} expenseCategories={categories} failed={false} />);
 
     await user.click(screen.getByRole("button", { name: "항목 추가" }));
     let dialog = screen.getByRole("dialog");
@@ -111,7 +133,7 @@ describe("BudgetItemsSection", () => {
   it("수정하면 수정 액션을 항목 uuid 로 부른다", async () => {
     const user = userEvent.setup();
     jest.mocked(updateBudgetItemAction).mockResolvedValue({ success: true, data: items[0] });
-    render(<BudgetItemsSection items={items} expenseCategories={categories} failed={false} />);
+    render(<BudgetItemsSection monthlyBudget={0} items={items} expenseCategories={categories} failed={false} />);
 
     await user.click(screen.getByRole("button", { name: "남편 용돈 수정" }));
     const dialog = await screen.findByRole("dialog");
@@ -132,7 +154,7 @@ describe("BudgetItemsSection", () => {
       success: false,
       error: { code: "C001", message: "이미 존재하는 예산 항목입니다" },
     });
-    render(<BudgetItemsSection items={items} expenseCategories={categories} failed={false} />);
+    render(<BudgetItemsSection monthlyBudget={0} items={items} expenseCategories={categories} failed={false} />);
 
     await user.click(screen.getByRole("button", { name: "항목 추가" }));
     const dialog = screen.getByRole("dialog");
@@ -148,7 +170,7 @@ describe("BudgetItemsSection", () => {
 
   it("이름이 비었거나 카테고리를 고르지 않으면 저장 버튼이 비활성이다", async () => {
     const user = userEvent.setup();
-    render(<BudgetItemsSection items={[]} expenseCategories={categories} failed={false} />);
+    render(<BudgetItemsSection monthlyBudget={0} items={[]} expenseCategories={categories} failed={false} />);
 
     await user.click(screen.getAllByRole("button", { name: "항목 추가" })[0]);
     const dialog = screen.getByRole("dialog");
@@ -163,7 +185,7 @@ describe("BudgetItemsSection", () => {
   it("삭제는 확인을 누르면 그 uuid 로 삭제 액션을 부른다", async () => {
     const user = userEvent.setup();
     jest.mocked(deleteBudgetItemAction).mockResolvedValue({ success: true, data: undefined });
-    render(<BudgetItemsSection items={items} expenseCategories={categories} failed={false} />);
+    render(<BudgetItemsSection monthlyBudget={0} items={items} expenseCategories={categories} failed={false} />);
 
     await user.click(screen.getByRole("button", { name: "남편 용돈 삭제" }));
     const confirm = await screen.findByRole("alertdialog");
@@ -176,7 +198,7 @@ describe("BudgetItemsSection", () => {
   it("삭제 액션이 reject 되면 실패 토스트를 보이고 확인 버튼을 다시 활성화한다", async () => {
     const user = userEvent.setup();
     jest.mocked(deleteBudgetItemAction).mockRejectedValue(new Error("network"));
-    render(<BudgetItemsSection items={items} expenseCategories={categories} failed={false} />);
+    render(<BudgetItemsSection monthlyBudget={0} items={items} expenseCategories={categories} failed={false} />);
 
     await user.click(screen.getByRole("button", { name: "남편 용돈 삭제" }));
     const confirm = await screen.findByRole("alertdialog");
@@ -189,7 +211,7 @@ describe("BudgetItemsSection", () => {
   });
 
   it("항목이 없으면 안내 문구를 보인다", () => {
-    render(<BudgetItemsSection items={[]} expenseCategories={categories} failed={false} />);
+    render(<BudgetItemsSection monthlyBudget={0} items={[]} expenseCategories={categories} failed={false} />);
 
     expect(
       screen.getByText("용돈처럼 따로 관리할 지출을 예산 항목으로 만들어 보세요")
@@ -199,14 +221,14 @@ describe("BudgetItemsSection", () => {
 
   it("항목이 10개면 항목 추가가 비활성이고 안내를 보인다", () => {
     const many = Array.from({ length: 10 }, (_, i) => item(i + 1, `항목${i + 1}`, 1000, []));
-    render(<BudgetItemsSection items={many} expenseCategories={categories} failed={false} />);
+    render(<BudgetItemsSection monthlyBudget={0} items={many} expenseCategories={categories} failed={false} />);
 
     expect(screen.getByRole("button", { name: "항목 추가" })).toBeDisabled();
     expect(screen.getByText("예산 항목은 10개까지 만들 수 있어요")).toBeInTheDocument();
   });
 
   it("불러오기에 실패하면 구역 안에 실패 문구를 보인다", () => {
-    render(<BudgetItemsSection items={[]} expenseCategories={[]} failed />);
+    render(<BudgetItemsSection monthlyBudget={0} items={[]} expenseCategories={[]} failed />);
 
     expect(screen.getByText("예산 항목을 불러오지 못했어요")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "항목 추가" })).not.toBeInTheDocument();

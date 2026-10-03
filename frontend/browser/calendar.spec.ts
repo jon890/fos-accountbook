@@ -17,6 +17,7 @@ test("달력 위쪽에 생활비와 예산 항목의 쓴 금액과 한도를 보
 
   const summary = page.getByRole("link", { name: "예산 요약, 예산 화면으로 이동" });
 
+  await expect(summary).toContainText("예산");
   await expect(summary).toContainText("생활비");
   await expect(summary).toContainText("용돈");
   await expect(summary).toContainText("₩150,000");

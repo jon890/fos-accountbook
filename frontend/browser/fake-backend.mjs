@@ -423,7 +423,9 @@ const server = createServer(async (request, response) => {
       data: {
         year: 2026,
         month: 10,
-        living: { spent: 16200, limit: family.monthlyBudget },
+        total: { spent: 166200, limit: family.monthlyBudget },
+        living: { spent: 16200, limit: Math.max(family.monthlyBudget - 400000, 0) },
+        allocationExceeded: family.monthlyBudget > 0 && 400000 > family.monthlyBudget,
         items: [{
           budgetItemUuid: "00000000-0000-4000-8000-0000000000b1",
           name: "용돈",

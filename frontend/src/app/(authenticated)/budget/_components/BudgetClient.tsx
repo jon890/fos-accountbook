@@ -259,6 +259,7 @@ export function BudgetClient({
       {/* 예산 항목 */}
       <BudgetItemsSection
         items={budgetItems}
+        monthlyBudget={budget}
         expenseCategories={expenseCategories}
         failed={budgetItemsFailed}
       />
