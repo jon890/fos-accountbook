@@ -12,7 +12,8 @@ BACKEND_DIR="$(cd "$(dirname "$0")/.." && pwd -P)"
 CONTAINER="accountbook-migcheck-$$"
 DB_PORT="${MIGCHECK_DB_PORT:-13399}"
 APP_PORT="${MIGCHECK_APP_PORT:-18089}"
-LOG="$(mktemp -t accountbook-migcheck)"
+# BSD 와 GNU mktemp 가 함께 받는 형식이다. -t 접두사만 주면 GNU 에서 실패한다
+LOG="$(mktemp "${TMPDIR:-/tmp}/accountbook-migcheck.XXXXXX")" || exit 2
 APP_PID=""
 
 cleanup() {
