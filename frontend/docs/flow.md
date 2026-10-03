@@ -148,11 +148,11 @@
             ├─ /incomes?startDate&endDate&size=1000    → 그 달 수입 목록
             ├─ /families/{uuid}/members                → 구성원 이름, 사진, 가입 순서
             ├─ getCachedFamilyCategories              → 카테고리 이름, 아이콘과 예산 제외 정보 연결
-            └─ /dashboard/budget-summary?year&month    → 생활비와 예산 항목별 쓴 금액과 한도
+            └─ /dashboard/budget-summary?year&month    → 전체 예산, 생활비, 예산 항목별 쓴 금액과 한도
     │
     └─ CalendarHome ("use client")
             ├─ MonthHeader: ‹ 2026년 9월 ›  (월 이동 = URL month 변경, 서버 다시 조회)
-            ├─ BudgetSummaryCard: 생활비와 예산 항목마다 이름, 쓴 금액 / 한도, 진행 막대. 카드를 누르면 /budget
+            ├─ BudgetSummaryCard: 예산, 생활비, 예산 항목마다 이름, 쓴 금액 / 한도, 진행 막대. 카드를 누르면 /budget
             ├─ MemberTotals: 구성원별 이번 달 지출 (색 점, 이름, 금액), 가족 합계
             ├─ CalendarGrid: 7열. 칸마다 날짜, 구성원별 지출 한 줄씩(색 점과 줄인 금액)
             │       └─ 날짜 탭 → 선택 날짜 변경 (클라이언트 상태와 history.replaceState, 서버 호출 없음)
@@ -168,7 +168,8 @@
 - 빈 상태: 그 달 거래가 없으면 달력은 그대로 두고 날짜 목록에 「이 날 기록이 없어요」 와 추가 버튼을 둔다.
 - 지출 또는 수입의 `totalElements`가 1000을 넘으면 서버에 종류, 조회 연월, 전체 건수와 받은 건수를 경고로 남긴다. 거래 내용과 가족 식별자는 기록하지 않는다.
 - 예산 요약 카드는 보고 있는 달의 값을 보인다. 한 줄은 이름, 「쓴 금액 / 한도」, 진행 막대와 퍼센트다.
-  생활비 줄이 맨 위이고 항목은 만든 순서다. 한도가 0 이면 쓴 금액만 보이고 막대와 퍼센트는 그리지 않는다.
+  「예산」 줄이 맨 위, 「생활비」 줄이 그다음이고 항목은 만든 순서다. 생활비 한도는 월 예산에서 항목 한도를 뺀 값이다.
+  항목 한도 합이 월 예산을 넘으면(`allocationExceeded`) 생활비 줄 아래에 「항목 한도가 예산을 넘었어요」 를 지출 색으로 보인다. 한도가 0 이면 쓴 금액만 보이고 막대와 퍼센트는 그리지 않는다.
   쓴 금액이 한도를 넘으면 금액과 퍼센트를 지출 색(`text-expense`)으로 보이고 막대는 100% 로 채운다. 퍼센트는 실제 값(예: 103%)을 쓴다.
 - 예산 요약의 빈 상태: 월 예산이 0 이고 항목도 없으면 카드 안에 「예산 항목을 만들면 여기서 볼 수 있어요」 한 줄과 /budget 으로 가는 링크만 둔다.
 - 실패: 여섯 호출 중 하나라도 실패하면 `(authenticated)/error.tsx` 로 간다. 401은 ADR-F26에 따라 로그인으로, 유효하지 않은 기본 가족의 403/404는 `/families/select`로 보낸다.
@@ -268,7 +269,7 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
             │
             └─ BudgetAlertService 수신
                     │
-                    ├─ 해당 월 생활비 합계 계산 (예산 제외, 반복 지출이 만든 지출, 예산 항목 카테고리의 지출을 뺀다. ADR-B25)
+                    ├─ 해당 월 예산 합계 계산 (예산 제외와 반복 지출이 만든 지출을 뺀다. 예산 항목의 지출은 포함한다. ADR-B26)
                     │
                     ├─ 80% 이상 → BUDGET_WARNING Notification 생성
                     │               (yearMonth 기준 중복 방지)
@@ -503,7 +504,7 @@ Dashboard BudgetHeroCard 의 확장 전용 페이지. 분석은 /analytics, 예�
 
 ```
 [/budget (server) — Promise.all 5 Action]
-    ├─ getDashboardStatsAction() → { budget, monthlyExpense, remainingBudget, year, month }  (monthlyExpense 는 생활비 합계)
+    ├─ getDashboardStatsAction() → { budget, monthlyExpense, remainingBudget, year, month }  (monthlyExpense 는 예산 합계)
     ├─ getBudgetItemsAction() → 예산 항목 목록
     ├─ getFamilyCategoriesAction() → 항목에 넣을 지출 카테고리 선택지
     ├─ getMonthlyDailyStatsAction(year, month) → { items: { date, expense, income }[] }
@@ -523,7 +524,8 @@ Dashboard BudgetHeroCard 의 확장 전용 페이지. 분석은 /analytics, 예�
 - 예산 항목 구역은 월 예산이 0 이어도 보인다. 항목이 없으면 「용돈처럼 따로 관리할 지출을 예산 항목으로 만들어 보세요」 와 「항목 추가」 버튼을 둔다.
 - 저장과 삭제가 성공하면 sonner 토스트를 띄우고 `revalidatePath` 로 `/budget`, `/calendar`, `/analytics` 를 다시 받는다.
 - 저장 실패: 이름 중복(BI004), 카테고리 충돌(BI002), 10개 초과(BI003)는 백엔드 메시지를 토스트로 보이고 대화상자를 닫지 않는다.
-- 누적 선과 카테고리 막대는 모든 지출을 더한 값을 쓴다. 위쪽 카드의 생활비 합계와 기준이 다르다(ADR-B25 의 「감당할 것」).
+- 누적 선과 카테고리 막대는 고정지출을 포함한 모든 지출을 더한 값을 쓴다. 위쪽 카드의 예산 합계와 기준이 다르다(ADR-B25 의 「감당할 것」).
+- 예산 항목 구역 위에 「생활비 한도 = 예산 − 항목 한도 합」 을 금액으로 한 줄 보인다(예: 「생활비 1,000,000 = 예산 1,800,000 − 항목 800,000」). 월 예산이 0 이면 이 줄을 그리지 않는다.
 
 예산이 0이면 EmptyState 카드와 /settings로 가는 "예산 설정하기"를 표시한다. 라인 차트와 카테고리 bar는 렌더링하지 않는다.
 

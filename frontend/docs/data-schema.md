@@ -242,7 +242,7 @@ interface RecentExpense {
 
 `RecentExpense` 는 보존된 서비스의 반환 타입이며 현재 화면에서는 사용하지 않는다.
 
-`DashboardStats.monthlyExpense` 는 생활비 합계다. 예산 제외, 반복 지출이 만든 지출, 예산 항목 카테고리의 지출을 뺀다([ADR-B25](../../backend/docs/adr/ADR-B25-budget-items.md)).
+`DashboardStats.monthlyExpense` 는 예산 합계다. 고정지출(예산 제외, 반복 지출이 만든 지출)을 빼고 예산 항목의 지출은 포함한다([ADR-B26](../../backend/docs/adr/ADR-B26-monthly-budget-is-total.md)).
 
 집계 API 의 금액은 JSON 숫자로 오며 `number` 로 받는다.
 카테고리가 삭제되면 `name`, `icon`, `color` 는 null 이다.
@@ -283,7 +283,9 @@ interface BudgetItemInput {
 interface BudgetSummary {
   year: number;
   month: number;
-  living: { spent: number; limit: number }; // limit 0 = 월 예산 미설정
+  total: { spent: number; limit: number }; // limit = 월 예산. 0 = 미설정
+  living: { spent: number; limit: number }; // limit = 월 예산 - 항목 한도 합. 0 미만이면 0
+  allocationExceeded: boolean; // 항목 한도 합이 월 예산보다 크다
   items: Array<{ budgetItemUuid: string; name: string; limit: number; spent: number }>;
 }
 ```
