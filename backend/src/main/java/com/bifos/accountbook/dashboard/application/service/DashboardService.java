@@ -1,8 +1,8 @@
 package com.bifos.accountbook.dashboard.application.service;
 
 import com.bifos.accountbook.budgetitem.domain.repository.BudgetItemRepository;
+import com.bifos.accountbook.dashboard.application.dto.BudgetSummaryAmount;
 import com.bifos.accountbook.dashboard.application.dto.BudgetSummaryItem;
-import com.bifos.accountbook.dashboard.application.dto.BudgetSummaryLiving;
 import com.bifos.accountbook.dashboard.application.dto.BudgetSummaryResponse;
 import com.bifos.accountbook.dashboard.application.dto.CategoryBreakdownItem;
 import com.bifos.accountbook.dashboard.application.dto.CategoryBreakdownResponse;
@@ -181,7 +181,9 @@ public class DashboardService {
         .build();
   }
 
-  /** 생활비와 예산 항목별 쓴 금액과 한도를 준다. 항목 순서는 만든 순서다 (ADR-B25). */
+  /**
+   * 예산, 생활비, 예산 항목별 쓴 금액과 한도를 준다. 생활비 한도는 월 예산에서 항목 한도 합을 뺀 값이다 (ADR-B26). 항목 순서는 만든 순서다 (ADR-B25).
+   */
   @ValidateFamilyAccess
   public BudgetSummaryResponse getBudgetSummary(
       @UserUuid CustomUuid userUuid, @FamilyUuid CustomUuid familyUuid, int year, int month) {
@@ -190,9 +192,11 @@ public class DashboardService {
             .findByUuid(familyUuid)
             .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND));
 
-    BigDecimal livingLimit =
+    BigDecimal totalLimit =
         family.getMonthlyBudget() != null ? family.getMonthlyBudget() : BigDecimal.ZERO;
-    BigDecimal livingSpent = dashboardRepository.getMonthlyExpenseAmount(familyUuid, year, month);
+    BigDecimal totalSpent = dashboardRepository.getMonthlyExpenseAmount(familyUuid, year, month);
+    BigDecimal livingSpent =
+        dashboardRepository.getMonthlyLivingExpenseAmount(familyUuid, year, month);
 
     Map<String, BigDecimal> spentByItem =
         dashboardRepository.getMonthlyExpenseAmountsByBudgetItem(familyUuid, year, month);
@@ -208,10 +212,17 @@ public class DashboardService {
                         .build())
             .toList();
 
+    BigDecimal itemLimitSum =
+        items.stream().map(BudgetSummaryItem::getLimit).reduce(BigDecimal.ZERO, BigDecimal::add);
+    BigDecimal livingLimit = totalLimit.subtract(itemLimitSum).max(BigDecimal.ZERO);
+    boolean allocationExceeded = totalLimit.signum() > 0 && itemLimitSum.compareTo(totalLimit) > 0;
+
     return BudgetSummaryResponse.builder()
         .year(year)
         .month(month)
-        .living(BudgetSummaryLiving.builder().spent(livingSpent).limit(livingLimit).build())
+        .total(BudgetSummaryAmount.builder().spent(totalSpent).limit(totalLimit).build())
+        .living(BudgetSummaryAmount.builder().spent(livingSpent).limit(livingLimit).build())
+        .allocationExceeded(allocationExceeded)
         .items(items)
         .build();
   }

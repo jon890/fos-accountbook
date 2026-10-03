@@ -997,21 +997,23 @@ class DashboardControllerTest extends AbstractControllerTest {
         .andExpect(status().isCreated());
   }
 
-  @Test
-  @DisplayName("예산 요약 조회 - 생활비와 항목별 쓴 금액과 한도를 돌려준다")
-  void getBudgetSummary_Success() throws Exception {
-    Family family = fixtures.families.family().budget(BigDecimal.valueOf(1000000)).build();
-    Category allowance = fixtures.categories.category(family).name("남편 용돈 카테고리").build();
-    Category food = fixtures.categories.category(family).name("식비").build();
-    createBudgetItem(family, "남편 용돈", 400000, allowance);
+  /** 월 예산과 두 항목(한도 각 400,000)을 가진 가족에 예산 요약 시나리오의 지출을 넣는다. */
+  private Family familyWithTwoItems(int monthlyBudget) throws Exception {
+    Family family = fixtures.families.family().budget(BigDecimal.valueOf(monthlyBudget)).build();
+    Category husband = fixtures.categories.category(family).name("남편 용돈 카테고리").build();
+    Category wife = fixtures.categories.category(family).name("아내 용돈 카테고리").build();
+    createBudgetItem(family, "남편 용돈", 400000, husband);
+    createBudgetItem(family, "아내 용돈", 400000, wife);
 
+    Category food = fixtures.categories.category(family).name("식비").build();
     LocalDateTime date = LocalDateTime.of(2026, 10, 5, 12, 0);
     fixtures
         .expenses
-        .expense(family, allowance)
+        .expense(family, husband)
         .amount(BigDecimal.valueOf(150000))
         .date(date)
         .build();
+    fixtures.expenses.expense(family, wife).amount(BigDecimal.valueOf(410000)).date(date).build();
     fixtures.expenses.expense(family, food).amount(BigDecimal.valueOf(620000)).date(date).build();
     fixtures
         .expenses
@@ -1020,18 +1022,56 @@ class DashboardControllerTest extends AbstractControllerTest {
         .date(date)
         .recurringExpenseUuid(CustomUuid.generate().getValue())
         .build();
+    return family;
+  }
+
+  @Test
+  @DisplayName("예산 요약 조회 - 예산, 생활비, 항목별 쓴 금액과 한도를 돌려준다")
+  void getBudgetSummary_Success() throws Exception {
+    Family family = familyWithTwoItems(1800000);
 
     mockMvc
         .perform(get(budgetSummaryPath(family)).param("year", "2026").param("month", "10"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.year").value(2026))
         .andExpect(jsonPath("$.data.month").value(10))
+        .andExpect(jsonPath("$.data.total.spent").value(1180000))
+        .andExpect(jsonPath("$.data.total.limit").value(1800000))
         .andExpect(jsonPath("$.data.living.spent").value(620000))
         .andExpect(jsonPath("$.data.living.limit").value(1000000))
-        .andExpect(jsonPath("$.data.items.length()").value(1))
+        .andExpect(jsonPath("$.data.allocationExceeded").value(false))
+        .andExpect(jsonPath("$.data.items.length()").value(2))
         .andExpect(jsonPath("$.data.items[0].name").value("남편 용돈"))
         .andExpect(jsonPath("$.data.items[0].spent").value(150000))
-        .andExpect(jsonPath("$.data.items[0].limit").value(400000));
+        .andExpect(jsonPath("$.data.items[0].limit").value(400000))
+        .andExpect(jsonPath("$.data.items[1].name").value("아내 용돈"))
+        .andExpect(jsonPath("$.data.items[1].spent").value(410000));
+  }
+
+  @Test
+  @DisplayName("예산 요약 조회 - 항목 한도 합이 월 예산을 넘으면 생활비 한도는 0 이고 allocationExceeded 는 true 다")
+  void getBudgetSummary_AllocationExceeded() throws Exception {
+    Family family = familyWithTwoItems(500000);
+
+    mockMvc
+        .perform(get(budgetSummaryPath(family)).param("year", "2026").param("month", "10"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.total.limit").value(500000))
+        .andExpect(jsonPath("$.data.living.limit").value(0))
+        .andExpect(jsonPath("$.data.allocationExceeded").value(true));
+  }
+
+  @Test
+  @DisplayName("예산 요약 조회 - 월 예산이 0 이면 생활비 한도는 0 이고 allocationExceeded 는 false 다")
+  void getBudgetSummary_ZeroBudgetWithItems() throws Exception {
+    Family family = familyWithTwoItems(0);
+
+    mockMvc
+        .perform(get(budgetSummaryPath(family)).param("year", "2026").param("month", "10"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.total.limit").value(0))
+        .andExpect(jsonPath("$.data.living.limit").value(0))
+        .andExpect(jsonPath("$.data.allocationExceeded").value(false));
   }
 
   @Test
@@ -1043,8 +1083,11 @@ class DashboardControllerTest extends AbstractControllerTest {
         .perform(get(budgetSummaryPath(family)).param("year", "2026").param("month", "10"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.items.length()").value(0))
+        .andExpect(jsonPath("$.data.total.limit").value(0))
+        .andExpect(jsonPath("$.data.total.spent").value(0))
         .andExpect(jsonPath("$.data.living.limit").value(0))
-        .andExpect(jsonPath("$.data.living.spent").value(0));
+        .andExpect(jsonPath("$.data.living.spent").value(0))
+        .andExpect(jsonPath("$.data.allocationExceeded").value(false));
   }
 
   @Test

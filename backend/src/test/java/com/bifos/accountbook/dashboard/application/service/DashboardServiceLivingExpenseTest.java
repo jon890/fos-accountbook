@@ -23,8 +23,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-/** 월 통계의 monthlyExpense 가 생활비 합계 규칙을 따르는지 검증한다 (ADR-B25). */
-@DisplayName("DashboardService 생활비 합계 통합 테스트")
+/** 월 통계의 monthlyExpense 가 예산 합계 규칙을 따르는지 검증한다 (ADR-B26). */
+@DisplayName("DashboardService 예산 합계 통합 테스트")
 class DashboardServiceLivingExpenseTest extends TestFixturesSupport {
 
   @Autowired private DashboardService dashboardService;
@@ -72,8 +72,8 @@ class DashboardServiceLivingExpenseTest extends TestFixturesSupport {
   }
 
   @Test
-  @DisplayName("반복 지출이 만든 지출과 예산 항목 카테고리의 지출은 생활비에서 빠진다")
-  void monthlyExpense_excludesRecurringAndBudgetItemExpenses() {
+  @DisplayName("반복 지출이 만든 지출은 예산 합계에서 빠지고 예산 항목 카테고리의 지출은 들어간다")
+  void monthlyExpense_excludesRecurringButIncludesBudgetItemExpenses() {
     fixtures
         .expenses
         .expense(testFamily, foodCategory)
@@ -101,9 +101,9 @@ class DashboardServiceLivingExpenseTest extends TestFixturesSupport {
             new BudgetItemRequest(
                 "용돈", new BigDecimal("400000"), List.of(allowanceCategory.getUuid().getValue())));
 
-    assertThat(monthlyExpense()).isEqualByComparingTo("10000");
+    assertThat(monthlyExpense()).isEqualByComparingTo("40000");
 
-    // 항목을 지우면 그 카테고리의 지출이 다시 생활비에 들어간다
+    // 항목을 지워도 예산 합계는 그대로다
     budgetItemService.deleteBudgetItem(
         testUser.getUuid(), testFamily.getUuid(), CustomUuid.from(item.getUuid()));
 

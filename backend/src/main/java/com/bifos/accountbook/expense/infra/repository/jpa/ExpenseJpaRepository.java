@@ -68,10 +68,10 @@ public interface ExpenseJpaRepository extends JpaRepository<Expense, Long> {
   int countByFamilyUuid(@Param("familyUuid") CustomUuid familyUuid);
 
   /**
-   * 가족 UUID와 날짜 범위로 생활비 합계 조회 예산 알림 체크용 - 예산 제외 플래그가 true인 지출 제외 - 카테고리의 예산 제외 플래그가 true인 지출도 제외 -
-   * 반복 지출이 만든 지출 제외 - 예산 항목에 속한 카테고리의 지출 제외
+   * 가족 UUID와 날짜 범위로 예산 합계 조회 예산 알림 체크용 - 예산 제외 플래그가 true인 지출 제외 - 카테고리의 예산 제외 플래그가 true인 지출도 제외 -
+   * 반복 지출이 만든 지출 제외. 예산 항목에 속한 카테고리의 지출은 포함한다 (ADR-B26).
    *
-   * <p>같은 규칙이 DashboardRepositoryImpl.getMonthlyExpenseAmount 에도 있다. 함께 고친다 (ADR-B25).
+   * <p>같은 규칙이 DashboardRepositoryImpl.getMonthlyExpenseAmount 에도 있다. 함께 고친다.
    */
   @Query(
       "SELECT COALESCE(SUM(e.amount), 0) "
@@ -82,8 +82,7 @@ public interface ExpenseJpaRepository extends JpaRepository<Expense, Long> {
           + "AND e.date BETWEEN :startDate AND :endDate "
           + "AND e.excludeFromBudget = false "
           + "AND (c.excludeFromBudget IS NULL OR c.excludeFromBudget = false) "
-          + "AND e.recurringExpenseUuid IS NULL "
-          + "AND NOT EXISTS (SELECT 1 FROM BudgetItemCategory bic WHERE bic.categoryUuid = e.categoryUuid)")
+          + "AND e.recurringExpenseUuid IS NULL")
   BigDecimal sumAmountByFamilyUuidAndDateBetween(
       @Param("familyUuid") CustomUuid familyUuid,
       @Param("startDate") LocalDateTime startDate,
