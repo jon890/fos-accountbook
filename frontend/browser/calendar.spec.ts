@@ -22,3 +22,37 @@ test("달력 위쪽에 생활비와 예산 항목의 쓴 금액과 한도를 보
   await expect(summary).toContainText("용돈");
   await expect(summary).toContainText("₩150,000");
 });
+
+test("날짜를 누르면 가려진 날짜 목록 제목까지 스크롤하고 포커스를 준다", async ({ page }) => {
+  await page.goto("/calendar?month=2026-10&date=2026-10-01");
+  const heading = page.getByRole("heading", { level: 2, name: /^10월 1일/ });
+  await expect(heading).toBeVisible();
+  const scrollBefore = await page.evaluate(() => window.scrollY);
+
+  await page.getByRole("button", { name: /^10월 20일/ }).click();
+
+  const selected = page.getByRole("heading", { level: 2, name: /^10월 20일/ });
+  await expect(selected).toBeFocused();
+  const headerBottom = await page.locator("header").first().evaluate((el) => el.getBoundingClientRect().bottom);
+  const viewportHeight = page.viewportSize()!.height;
+  // 부드러운 스크롤이 끝날 때까지 기다린 뒤, 제목이 헤더 아래와 화면 안에 들어왔는지 본다
+  await expect
+    .poll(async () => {
+      const box = await selected.boundingBox();
+      return box !== null && box.y >= headerBottom && box.y + box.height <= viewportHeight;
+    })
+    .toBe(true);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(scrollBefore);
+});
+
+test("날짜 목록 제목이 이미 다 보이면 스크롤하지 않고 포커스만 준다", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "제목이 처음부터 보이는 큰 화면에서 한 번만 확인한다");
+  await page.setViewportSize({ width: 1280, height: 1800 });
+  await page.goto("/calendar?month=2026-10&date=2026-10-01");
+  await expect(page.getByRole("heading", { level: 2, name: /^10월 1일/ })).toBeVisible();
+
+  await page.getByRole("button", { name: /^10월 20일/ }).click();
+
+  await expect(page.getByRole("heading", { level: 2, name: /^10월 20일/ })).toBeFocused();
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+});
