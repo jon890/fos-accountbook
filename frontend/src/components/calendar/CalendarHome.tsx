@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import { useAppRouter, useNavigationPending } from "@/lib/client/navigation";
 import { revealAndFocus } from "@/lib/client/reveal";
@@ -69,7 +70,8 @@ function CalendarMonthContent({ data, initialDate, today, familyUuid }: Calendar
   }, [selectedDate, urlDate]);
 
   function selectDate(date: string) {
-    setDateDraft(date);
+    // 제목에 새 날짜가 그려진 뒤 포커스를 옮겨야 화면 낭독기가 고른 날짜를 읽는다
+    flushSync(() => setDateDraft(date));
     revealAndFocus(headingRef.current);
   }
 

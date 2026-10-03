@@ -48,6 +48,8 @@ test("날짜를 누르면 가려진 날짜 목록 제목까지 스크롤하고 �
 test("날짜 목록 제목이 이미 다 보이면 스크롤하지 않고 포커스만 준다", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "제목이 처음부터 보이는 큰 화면에서 한 번만 확인한다");
   await page.setViewportSize({ width: 1280, height: 1800 });
+  // 부드러운 스크롤은 다음 프레임부터 움직여 잘못 스크롤해도 바로는 0 이다. 즉시 이동하게 해 판정을 확실히 한다
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/calendar?month=2026-10&date=2026-10-01");
   await expect(page.getByRole("heading", { level: 2, name: /^10월 1일/ })).toBeVisible();
 

@@ -58,6 +58,20 @@ describe("달력 홈", () => {
     expect(document.activeElement).toBe(screen.getByRole("heading", { name: "9월 15일 (화)" }));
   });
 
+  it("제목에 고른 날짜가 그려진 뒤 포커스를 옮긴다", async () => {
+    const focusedTexts: string[] = [];
+    const focus = jest.spyOn(HTMLElement.prototype, "focus").mockImplementation(function (this: HTMLElement) {
+      focusedTexts.push(this.textContent ?? "");
+    });
+    render(<CalendarHome {...props} />);
+
+    await userEvent.setup().click(screen.getByRole("button", { name: /^9월 15일/ }));
+
+    expect(focusedTexts).toContain("9월 15일 (화)");
+    expect(focusedTexts).not.toContain("9월 14일 (월)");
+    focus.mockRestore();
+  });
+
   it("처음 렌더와 월 이동에는 스크롤이나 제목 포커스를 하지 않는다", async () => {
     const view = render(<CalendarHome {...props} />);
     expect(mockScrollIntoView).not.toHaveBeenCalled();
