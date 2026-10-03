@@ -19,9 +19,11 @@
 ```bash
 # cwd: <repo root>
 # 완료된 계획서는 지우므로 사용한 번호는 git 이력에서 찾는다
-bash ~/.claude/skills/planning/scripts/plan_number.sh --prefix <접두사> | tail -1
+bash "$SKILL_DIR/scripts/plan_number.sh" --prefix <접두사> | tail -1
 gh pr list --state open --json number,headRefName,title --jq '.[] | "\(.headRefName) \(.title)"'
 ```
+
+`$SKILL_DIR` 는 planning 스킬 번들 경로다. 스킬을 열 때 「Base directory for this skill」 로 나온다. `~/.claude/skills/planning` 은 없다.
 
 ## 커밋과 핸드오프
 
