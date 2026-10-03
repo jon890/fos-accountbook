@@ -115,10 +115,17 @@ export function BudgetItemsSection({
           </p>
         )}
 
-        {!failed && monthlyBudget > 0 && (
+        {!failed && monthlyBudget > 0 && itemLimitSum <= monthlyBudget && (
           <p className="num text-xs text-fg-muted">
             생활비 {formatCurrency(livingLimit)} = 예산 {formatCurrency(monthlyBudget)} −
             항목 {formatCurrency(itemLimitSum)}
+          </p>
+        )}
+
+        {!failed && monthlyBudget > 0 && itemLimitSum > monthlyBudget && (
+          <p className="num text-xs text-expense">
+            항목 한도가 예산을 넘었어요. 예산 {formatCurrency(monthlyBudget)}, 항목{" "}
+            {formatCurrency(itemLimitSum)}
           </p>
         )}
 

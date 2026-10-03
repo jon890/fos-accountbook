@@ -53,6 +53,34 @@ describe("BudgetSummaryCard", () => {
     expect(screen.queryByText(/%$/)).not.toBeInTheDocument();
   });
 
+  it("월 예산이 있으면 생활비 한도가 0 이어도 한도로 보고 쓴 금액이 있으면 초과로 보인다", () => {
+    render(
+      <BudgetSummaryCard
+        summary={{
+          ...summary,
+          total: { spent: 850000, limit: 800000 },
+          living: { spent: 50000, limit: 0 },
+        }}
+      />
+    );
+
+    const living = screen.getByText("생활비").closest("div")!.parentElement!;
+    expect(within(living).getByText("₩50,000")).toHaveClass("text-expense");
+    expect(within(living).getByText("초과")).toHaveClass("text-expense");
+    expect(within(living).getByRole("progressbar")).toBeInTheDocument();
+  });
+
+  it("생활비 한도가 0 이고 쓴 금액도 0 이면 0% 로 보인다", () => {
+    render(
+      <BudgetSummaryCard
+        summary={{ ...summary, total: { spent: 800000, limit: 800000 }, living: { spent: 0, limit: 0 } }}
+      />
+    );
+
+    const living = screen.getByText("생활비").closest("div")!.parentElement!;
+    expect(within(living).getByText("0%")).not.toHaveClass("text-expense");
+  });
+
   it("한도 있는 줄만 progressbar 를 그린다", () => {
     render(
       <BudgetSummaryCard

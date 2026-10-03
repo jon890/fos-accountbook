@@ -83,6 +83,16 @@ describe("BudgetItemsSection", () => {
     ).toBeInTheDocument();
   });
 
+  it("항목 한도 합이 월 예산을 넘으면 식 대신 초과 안내를 보인다", () => {
+    const limited = [item(1, "남편 용돈", 400000, [uuid(1)]), item(2, "아내 용돈", 400000, [uuid(2)])];
+    render(
+      <BudgetItemsSection monthlyBudget={500000} items={limited} expenseCategories={categories} failed={false} />
+    );
+
+    expect(screen.queryByText(/^생활비/)).not.toBeInTheDocument();
+    expect(screen.getByText(/항목 한도가 예산을 넘었어요/)).toHaveClass("text-expense");
+  });
+
   it("월 예산이 0 이면 생활비 한도 줄을 그리지 않는다", () => {
     render(<BudgetItemsSection monthlyBudget={0} items={items} expenseCategories={categories} failed={false} />);
 
