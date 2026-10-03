@@ -1,8 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import { useAppRouter, useNavigationPending } from "@/lib/client/navigation";
+import { revealAndFocus } from "@/lib/client/reveal";
 import { AddTransactionDialog } from "@/components/transactions/dialogs/AddTransactionDialog";
 import { EditTransactionDialog } from "@/components/transactions/dialogs/EditTransactionDialog";
 import { buildMemberColorMap } from "@/lib/utils/member-color";
@@ -29,6 +31,7 @@ function CalendarMonthContent({ data, initialDate, today, familyUuid }: Calendar
   const isNavigationPending = useNavigationPending();
   const urlDate = useSearchParams().get("date");
   const [dateDraft, setDateDraft] = useState<string | null>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const [previousInitialDate, setPreviousInitialDate] = useState(initialDate);
   const [previousUrlDate, setPreviousUrlDate] = useState(urlDate);
   const [addOpen, setAddOpen] = useState(false);
@@ -67,7 +70,9 @@ function CalendarMonthContent({ data, initialDate, today, familyUuid }: Calendar
   }, [selectedDate, urlDate]);
 
   function selectDate(date: string) {
-    setDateDraft(date);
+    // 제목에 새 날짜가 그려진 뒤 포커스를 옮겨야 화면 낭독기가 고른 날짜를 읽는다
+    flushSync(() => setDateDraft(date));
+    revealAndFocus(headingRef.current);
   }
 
   function moveMonth(direction: -1 | 1) {
@@ -108,6 +113,7 @@ function CalendarMonthContent({ data, initialDate, today, familyUuid }: Calendar
           onSelect={selectDate}
         />
         <DayTransactionList
+          headingRef={headingRef}
           selectedDate={selectedDate}
           expenseTotal={expenseTotal}
           expenses={data.expenses}

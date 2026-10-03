@@ -10,6 +10,7 @@ import type { Income } from "@/types/income";
 export type CalendarTransaction = { type: "expense"; transaction: Expense } | { type: "income"; transaction: Income };
 
 interface DayTransactionListProps {
+  headingRef?: React.Ref<HTMLHeadingElement>;
   selectedDate: string;
   expenseTotal: number;
   expenses: Expense[];
@@ -19,7 +20,7 @@ interface DayTransactionListProps {
   onEdit: (transaction: CalendarTransaction) => void;
 }
 
-export function DayTransactionList({ selectedDate, expenseTotal, expenses, incomes, colors, onAdd, onEdit }: DayTransactionListProps) {
+export function DayTransactionList({ headingRef, selectedDate, expenseTotal, expenses, incomes, colors, onAdd, onEdit }: DayTransactionListProps) {
   const [year, month, day] = selectedDate.split("-").map(Number);
   const weekday = ["일", "월", "화", "수", "목", "금", "토"][new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
   const dayExpenses = expenses.filter((transaction) => transaction.date.slice(0, 10) === selectedDate);
@@ -34,7 +35,13 @@ export function DayTransactionList({ selectedDate, expenseTotal, expenses, incom
   return (
     <section className="space-y-3 border-t border-border pt-5">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-base font-bold text-fg">{month}월 {day}일 ({weekday})</h2>
+        <h2
+          ref={headingRef}
+          tabIndex={-1}
+          className="scroll-mt-[4.5rem] scroll-mb-[7rem] text-base font-bold text-fg focus:outline-none md:scroll-mt-[5rem]"
+        >
+          {month}월 {day}일 ({weekday})
+        </h2>
         <span className="flex items-center gap-2 text-xs text-fg-muted">
           <span>지출 <span className="num font-semibold text-expense">{formatCurrency(expenseTotal)}</span></span>
           {incomeTotal > 0 && <span>수입 <span className="num font-semibold text-income">+{formatCurrency(incomeTotal)}</span></span>}
