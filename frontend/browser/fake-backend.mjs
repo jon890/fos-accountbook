@@ -199,6 +199,45 @@ const recurringExpenses = [
   },
 ];
 
+const installments = [
+  {
+    uuid: "77777777-7777-4777-8777-777777777771",
+    userUuid: "22222222-2222-2222-2222-222222222222",
+    name: "노트북",
+    totalAmount: 1200000,
+    installmentMonths: 12,
+    startMonth: "2026-08",
+    endMonth: "2027-07",
+    memo: null,
+    monthlyAmount: 100000,
+    firstMonthAmount: 100000,
+    currentRound: 3,
+    thisMonthAmount: 100000,
+    remainingAmount: 900000,
+    progress: "IN_PROGRESS",
+    createdAt,
+    updatedAt: createdAt,
+  },
+  {
+    uuid: "77777777-7777-4777-8777-777777777772",
+    userUuid: "22222222-2222-2222-2222-222222222222",
+    name: "청소기",
+    totalAmount: 600000,
+    installmentMonths: 6,
+    startMonth: "2026-03",
+    endMonth: "2026-08",
+    memo: null,
+    monthlyAmount: 100000,
+    firstMonthAmount: 100000,
+    currentRound: 6,
+    thisMonthAmount: 0,
+    remainingAmount: 0,
+    progress: "COMPLETED",
+    createdAt,
+    updatedAt: createdAt,
+  },
+];
+
 const invitationToken = "55555555-5555-4555-8555-555555555555";
 
 const invitation = {
@@ -505,6 +544,10 @@ const server = createServer(async (request, response) => {
       success: true,
       data: { items: recurringExpenses, totalMonthlyAmount: 850000 },
     });
+    return;
+  }
+  if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/installments`) {
+    sendJson(response, 200, { success: true, data: installments });
     return;
   }
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/dashboard/expenses/by-category`) {

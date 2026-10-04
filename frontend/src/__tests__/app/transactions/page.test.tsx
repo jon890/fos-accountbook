@@ -28,6 +28,12 @@ jest.mock("@/actions/user/get-user-profile-action", () => ({
 jest.mock("@/actions/recurring-expense", () => ({
   getRecurringExpensesAction: jest.fn(),
 }));
+jest.mock("@/actions/installment/get-installments-action", () => ({
+  getInstallmentsAction: jest.fn(),
+}));
+jest.mock("@/components/installment/InstallmentList", () => ({
+  InstallmentList: jest.fn(() => null),
+}));
 jest.mock("@/components/expenses/list/ExpenseList", () => ({
   ExpenseList: jest.fn(() => null),
 }));
@@ -82,7 +88,7 @@ describe("내역 페이지", () => {
     });
   });
 
-  it.each(["expenses", "incomes", "recurring"] as const)(
+  it.each(["expenses", "incomes", "recurring", "installments"] as const)(
     "%s 탭의 slot만 서버 컴포넌트를 전달한다",
     async (tab) => {
       const page = await TransactionsPage({
@@ -92,6 +98,7 @@ describe("내역 페이지", () => {
         expenses: page.props.expenseListContent,
         incomes: page.props.incomeListContent,
         recurring: page.props.recurringListContent,
+        installments: page.props.installmentListContent,
       };
 
       expect(page.props.activeTab).toBe(tab);
@@ -112,6 +119,13 @@ describe("내역 페이지", () => {
     expect(mockGetCategories).toHaveBeenCalledWith("family-1");
   });
 
+  it("할부 탭에서는 구성원을 조회하지 않는다", async () => {
+    await TransactionsPage({ searchParams: Promise.resolve({ tab: "installments" }) });
+
+    expect(mockGetMembers).not.toHaveBeenCalled();
+    expect(mockGetCategories).toHaveBeenCalledWith("family-1");
+  });
+
   it("탭을 생략하면 지출 slot만 전달한다", async () => {
     const page = await TransactionsPage({ searchParams: Promise.resolve({}) });
 
@@ -119,6 +133,7 @@ describe("내역 페이지", () => {
     expect(page.props.expenseListContent).not.toBeNull();
     expect(page.props.incomeListContent).toBeNull();
     expect(page.props.recurringListContent).toBeNull();
+    expect(page.props.installmentListContent).toBeNull();
   });
 
   it.each(["unknown", "", "INCOMES", ["incomes", "recurring"]])(
@@ -132,6 +147,7 @@ describe("내역 페이지", () => {
       expect(page.props.expenseListContent).not.toBeNull();
       expect(page.props.incomeListContent).toBeNull();
       expect(page.props.recurringListContent).toBeNull();
+      expect(page.props.installmentListContent).toBeNull();
     },
   );
 

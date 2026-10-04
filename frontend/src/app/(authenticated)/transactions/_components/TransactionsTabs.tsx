@@ -4,12 +4,13 @@ import { cn } from "@/lib/client/utils";
 import { useSearchParams } from "next/navigation";
 import { useAppRouter, useNavigationPending } from "@/lib/client/navigation";
 
-type TabType = "expenses" | "incomes" | "recurring";
+export type TabType = "expenses" | "incomes" | "recurring" | "installments";
 
 const TABS: { id: TabType; label: string }[] = [
   { id: "expenses", label: "지출" },
   { id: "incomes", label: "수입" },
   { id: "recurring", label: "반복지출" },
+  { id: "installments", label: "할부" },
 ];
 
 interface TransactionsTabsProps {
