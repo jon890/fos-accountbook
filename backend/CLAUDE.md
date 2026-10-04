@@ -90,19 +90,10 @@ docker compose -f docker/compose.yml up -d
 
 도메인 기반 패키지 구조 (ADR-B16). 패키지 경로: `com.bifos.accountbook`.
 
-```
-com.bifos.accountbook/
-├── shared/                 공통 (auth, converter, dto, exception, filter, utils, value)
-├── user/ family/ category/ expense/ income/ recurring/
-├── invitation/ notification/ dashboard/ apitoken/
-│                           각 도메인 내부 presentation/ application/ domain/ infra/
-└── config/                 Spring 설정 (캐시, 보안, CORS, Security)
-```
-
 각 도메인 내부 의존성은 `presentation → application → domain ← infra` 이다.
 infra 는 domain 인터페이스를 구현한다. Controller 는 Repository 를 직접 주입받지 않는다.
 
-상세 구조·레이어 책임은 `docs/code-architecture.md` 참조.
+도메인 목록, 상세 구조, 레이어 책임은 [`docs/code-architecture.md`](docs/code-architecture.md) 의 「패키지 구조」 가 소유한다.
 
 ---
 

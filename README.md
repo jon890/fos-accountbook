@@ -63,7 +63,7 @@ cd frontend && pnpm install && pnpm dev
 
 ```bash
 cd frontend && pnpm lint && pnpm test
-cd backend && ./gradlew checkstyleMain checkstyleTest test
+cd backend && ./gradlew qualityCheck test
 ```
 
 ## CI와 배포
