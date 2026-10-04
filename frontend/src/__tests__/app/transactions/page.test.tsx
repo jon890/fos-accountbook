@@ -126,6 +126,13 @@ describe("내역 페이지", () => {
     expect(mockGetCategories).toHaveBeenCalledWith("family-1");
   });
 
+  it("할부 탭의 첫 결제 월 기본값은 세션 시간대가 아닌 서울 기준 월이다", async () => {
+    await TransactionsPage({ searchParams: Promise.resolve({ tab: "installments" }) });
+
+    expect(mockGetMonthRange).toHaveBeenCalledWith("America/New_York");
+    expect(mockGetMonthRange).toHaveBeenCalledWith("Asia/Seoul");
+  });
+
   it("탭을 생략하면 지출 slot만 전달한다", async () => {
     const page = await TransactionsPage({ searchParams: Promise.resolve({}) });
 

@@ -73,7 +73,7 @@ export function InstallmentList({
           {active.length > 0 && (
             <Card className="border border-border bg-bg-elev shadow-xl">
               <CardContent className="p-3 md:p-6">
-                <h3 className="mb-1 text-sm font-semibold text-fg">진행 중</h3>
+                <h3 className="mb-1 text-sm font-semibold text-fg">진행 중과 예정</h3>
                 <div className="divide-y divide-border">
                   {active.map((installment) => (
                     <InstallmentItem

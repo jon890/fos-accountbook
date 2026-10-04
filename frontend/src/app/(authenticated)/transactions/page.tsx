@@ -208,7 +208,8 @@ export default async function TransactionsPage({
             }
           >
             <InstallmentListWrapper
-              defaultStartMonth={defaultStartDate.slice(0, 7)}
+              // 백엔드의 「이번 달」 은 Asia/Seoul 기준이라(ADR-B21) 사용자 시간대가 아닌 서울 기준 월을 쓴다
+              defaultStartMonth={getMonthRange("Asia/Seoul").startDate.slice(0, 7)}
             />
           </Suspense>
         ) : null
