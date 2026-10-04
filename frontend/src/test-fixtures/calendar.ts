@@ -42,7 +42,6 @@ export function calendarMonth(overrides: Partial<CalendarMonth> = {}): CalendarM
       dailyStats: [{ date: "2026-09-14", income: 50000, expense: 43000, memberExpenses: [{ userUuid: "wife", amount: 32000 }, { userUuid: "husband", amount: 11000 }] }],
       totalExpense: 99000,
       totalIncome: 120000,
-      memberExpenseTotals: [{ userUuid: "husband", amount: 66000 }, { userUuid: "wife", amount: 33000 }],
     },
     members: [
       { userUuid: "wife", name: "아내", email: null, image: null, role: "OWNER", joinedAt: "2026-01-01" },

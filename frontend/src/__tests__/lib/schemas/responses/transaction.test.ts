@@ -108,20 +108,23 @@ describe("달력 일별 통계 응답 스키마", () => {
     }],
     totalIncome: 3000000,
     totalExpense: 16200,
-    memberExpenseTotals: [{ userUuid: USER_UUID, amount: 16200 }],
   };
 
-  it("백엔드 DailyStatsResponse 를 그대로 통과시킨다", () => {
+  it("백엔드 DailyStatsResponse 를 통과시킨다", () => {
     const result = dailyStatsResponseSchema.safeParse(dailyStats);
 
     expect(failedPaths(result)).toEqual([]);
     expect(result.data).toEqual(dailyStats);
   });
 
-  it("memberExpenseTotals 가 빠지면 실패한다", () => {
-    expect(failedPaths(dailyStatsResponseSchema.safeParse(without(dailyStats, "memberExpenseTotals")))).toEqual([
-      "memberExpenseTotals",
-    ]);
+  it("memberExpenseTotals 가 있어도 통과하고 결과에서 빠진다", () => {
+    const result = dailyStatsResponseSchema.safeParse({
+      ...dailyStats,
+      memberExpenseTotals: [{ userUuid: USER_UUID, amount: 16200 }],
+    });
+
+    expect(failedPaths(result)).toEqual([]);
+    expect(result.data).toEqual(dailyStats);
   });
 });
 

@@ -255,11 +255,21 @@ describe("달력 홈", () => {
     expect(screen.queryByRole("dialog", { name: "수정" })).not.toBeInTheDocument();
   });
 
-  it("구성원 합계는 목록 금액 대신 서버 합계를 가입 순서로 표시한다", () => {
+  it("구성원 색 범례는 가입 순서로 이름만 보이고 금액은 보이지 않는다", () => {
     render(<CalendarHome {...props} />);
-    const totals = screen.getAllByRole("list")[0];
-    expect(totals.textContent).toBe("아내₩33,000남편₩66,000");
-    expect(screen.getByText("₩99,000")).toBeInTheDocument();
-    expect(screen.getByText("₩120,000")).toBeInTheDocument();
+    const legend = screen.getByRole("list", { name: "구성원 색상" });
+
+    expect(legend.textContent).toBe("아내남편");
+    expect(screen.queryByText("₩99,000")).toBeNull();
+    expect(screen.queryByText("₩120,000")).toBeNull();
+    expect(legend.querySelectorAll('[aria-hidden="true"]')).toHaveLength(2);
+    expect(legend.querySelector('[aria-hidden="true"]')).toHaveClass("bg-member-1");
+    expect(legend.querySelectorAll('[aria-hidden="true"]')[1]).toHaveClass("bg-member-2");
+  });
+
+  it("구성원이 없으면 색 범례를 그리지 않는다", () => {
+    render(<CalendarHome {...props} data={calendarMonth({ members: [] })} />);
+
+    expect(screen.queryByRole("list", { name: "구성원 색상" })).toBeNull();
   });
 });

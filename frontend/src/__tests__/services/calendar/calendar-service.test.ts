@@ -15,7 +15,6 @@ const daily = {
   year: 2024, month: 2,
   dailyStats: [{ date: "2024-02-01", income: 12000, expense: 3000, memberExpenses: [{ userUuid: "user-1", amount: 3000 }] }],
   totalIncome: 12000, totalExpense: 5000,
-  memberExpenseTotals: [{ userUuid: "user-1", amount: 5000 }],
 };
 
 const budgetSummary = {
@@ -88,7 +87,6 @@ describe("달력 월 조회", () => {
       year: 2024, month: 2,
       dailyStats: [{ date: "2024-02-01", income: 12000, expense: 3000, memberExpenses: [{ userUuid: "user-1", amount: 3000 }] }],
       totalIncome: 12000, totalExpense: 5000,
-      memberExpenseTotals: [{ userUuid: "user-1", amount: 5000 }],
     });
     expect(result.expenses[0]).toEqual({ ...calendarExpense(), amount: 2000, category: { uuid: "category-1", name: "식비", icon: "🍚", color: "", excludeFromBudget: true } });
     expect(result.incomes[0]).toEqual({ ...calendarIncome(), amount: 2000, category: { uuid: "category-2", name: "급여", icon: "💰", color: "", excludeFromBudget: false } });
@@ -113,14 +111,14 @@ describe("달력 월 조회", () => {
     const emptySummary = { year: 2026, month: 12, total: { spent: 0, limit: 0 }, living: { spent: 0, limit: 0 }, allocationExceeded: false, items: [] };
     mockGet.mockImplementation(async (path) => {
       if (path.includes("budget-summary")) return emptySummary;
-      if (path.includes("daily-stats")) return { year: 2026, month: 12, dailyStats: [], totalIncome: 0, totalExpense: 0, memberExpenseTotals: [] };
+      if (path.includes("daily-stats")) return { year: 2026, month: 12, dailyStats: [], totalIncome: 0, totalExpense: 0 };
       if (path.endsWith("members")) return [];
       if (path.endsWith("categories")) return [];
       return { items: [] };
     });
     expect(await getCalendarMonth("family-1", 2026, 12)).toEqual({
       year: 2026, month: 12,
-      daily: { year: 2026, month: 12, dailyStats: [], totalIncome: 0, totalExpense: 0, memberExpenseTotals: [] },
+      daily: { year: 2026, month: 12, dailyStats: [], totalIncome: 0, totalExpense: 0 },
       expenses: [], incomes: [], members: [], budgetSummary: emptySummary,
     });
     expect(mockGet).toHaveBeenCalledWith(

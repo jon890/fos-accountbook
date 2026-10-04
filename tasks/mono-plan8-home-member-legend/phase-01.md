@@ -66,6 +66,10 @@ cd frontend && pnpm exec jest src/__tests__/components/calendar/CalendarHome.tes
 ```
 
 ```bash
+cd frontend && pnpm test:browser browser/calendar.spec.ts
+```
+
+```bash
 # 저장소 루트에서 실행한다. 운영 코드와 가짜 백엔드에 남은 참조가 없어야 한다. 테스트는 배포 순서를 고정하려고 이 이름을 담으므로 뺀다
 ! git grep -n "memberExpenseTotals\|MemberTotals" -- frontend/src frontend/browser ':!frontend/src/__tests__'
 ```
@@ -85,3 +89,4 @@ cd frontend && pnpm exec jest src/__tests__/components/calendar/CalendarHome.tes
 | `frontend/src/__tests__/lib/schemas/responses/transaction.test.ts` | 수정 |
 | `frontend/src/__tests__/services/calendar/calendar-service.test.ts` | 수정 |
 | `frontend/src/__tests__/actions/calendar/get-calendar-month-action.test.ts` | 수정 |
+| `frontend/browser/calendar.spec.ts` | 수정 |
