@@ -21,7 +21,7 @@ git fetch origin
 git worktree add .claude/worktrees/{접두사}{N} plan/{접두사}{N}-{slug}
 ```
 
-- 예: `plan/fe-001-login` 은 `.claude/worktrees/fe-001` 에 만든다.
+- 예: `plan/mono-9-installments` 는 `.claude/worktrees/mono-9` 에 만든다.
 - 의존성 설치는 대상 하위 프로젝트 오버레이의 설치 절을 따른다.
 - `.claude/worktrees/` 는 `.gitignore` 에 있다.
 - 끝나면 `git worktree remove .claude/worktrees/{접두사}{N}` 로 정리한다.

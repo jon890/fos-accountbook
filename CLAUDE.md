@@ -61,11 +61,11 @@ jar 가 없으면 먼저 `cd backend && mise exec gradle@9.8.0 -- gradle wrapper
 
 | 단계 | 브랜치 | 내용 |
 |---|---|---|
-| 계획+구현 | `plan/{접두사}{N}-{slug}` (예 `plan/fe-001-login`) | `/planning` 이 task+docs commit + push (**PR 생성 안 함**) → `/build-with-teams` 가 **같은 브랜치**에서 구현 → `plan/{접두사}{N}`→main **단일 PR** |
+| 계획+구현 | `plan/{접두사}{N}-{slug}` (예 `plan/mono-9-installments`) | `/planning` 이 task+docs commit + push (**PR 생성 안 함**) → `/build-with-teams` 가 **같은 브랜치**에서 구현 → `plan/{접두사}{N}`→main **단일 PR** |
 | 기타 | `chore/...` · `fix/...` · `refactor/...` · `docs/...` | 일반 작업 |
 
 계획과 구현을 **단일 PR** 로 묶는다 (2026-06-02 갱신).
-계획 PR 을 따로 머지하면 그 사이 main 변경과 구현 브랜치가 충돌하기 때문 (plan026 사례: #308 계획 PR 머지 → #311 구현 PR conflict).
+계획 PR 을 따로 머지하면 그 사이 main 변경과 구현 브랜치가 충돌하기 때문이다 (#308 계획 PR 을 머지한 뒤 #311 구현 PR 이 충돌했다).
 `/planning` 은 `plan/{접두사}{N}` 브랜치 push 까지만, PR 은 `/build-with-teams` 가 계획+구현 완료 후 1개만 생성한다.
 
 ### 예시

@@ -45,7 +45,7 @@
     │   └─ (인증 안 한 상태면 callbackUrl 보존해 /auth/signin — 인증 후 invite 재진입)
     │   └─ getInvitationInfoAction(token) — skipAuth (로그인 전 미리보기 허용), token Zod uuid 검증 (ADR-F06)
     │           ├─ 만료/사용됨/취소 → /?error=invalid_invitation (단일 코드 — 토큰 상태 열거 차단, 상세 사유는 서버 로그만)
-    │           └─ 유효 → InvitePageClient (plan015 centered card 패턴)
+    │           └─ 유효 → InvitePageClient (centered card 패턴)
     │                   │
     │                   ├─ 96px 원형: 초대자가 있으면 초대자 아바타(사진이 없으면 이름 첫 글자), 없으면 gradient-family + Users 아이콘
     │                   ├─ 설명: 「{초대자}님이 가계부를 함께 관리하자고 초대했어요」. 초대자가 없으면 「가계부를 함께 관리하도록 초대받았어요」
@@ -66,7 +66,7 @@
 
 ---
 
-## 3. 거래 등록 플로우 (plan014 통합)
+## 3. 거래 등록 플로우
 
 달력의 「이 날짜에 추가」와 하단 탭 가운데 추가 버튼이 동일한 `AddTransactionDialog`를 부른다(ADR-F21, ADR-F37).
 달력의 추가 버튼은 선택한 날짜를 넘긴다. 하단 탭 가운데 버튼은 지출을 기본으로 열며, 달력에서는 선택 날짜를, 그 밖에서는 오늘을 사용한다. 두 진입점 모두 시트 안에서 거래 종류를 바꿀 수 있다.
@@ -190,7 +190,7 @@
 
 ---
 
-## 5-2. /transactions 페이지 구조 (plan003)
+## 5-2. /transactions 페이지 구조
 
 ```
 [page.tsx (server) — searchParams { tab, categoryId, startDate, endDate, limit, q, amountMin, amountMax }]
@@ -229,7 +229,7 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 
 ---
 
-## 5-3. /analytics 페이지 구조 (plan006)
+## 5-3. /analytics 페이지 구조
 
 ```
 [page.tsx (server) — searchParams { period: m1|m3|m6|y1 }]
@@ -288,7 +288,7 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
                     └─ 100% 이상 → BUDGET_EXCEEDED Notification 생성
                                     (yearMonth 기준 중복 방지)
 
-[프론트엔드 — plan017]
+[프론트엔드]
     └─ Header 의 NotificationBell (Popover trigger)
             ├─ getUnreadCountAction() (1분 폴링) → bg-expense Badge (count > 99 시 "99+")
             └─ 클릭 → Popover (NotificationList, max-h-[500px])
@@ -301,10 +301,10 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
                             └─ default                                    → brand 톤 (bg-brand-50 + text-brand-700)
                     └─ 항목 탭 → 읽음 처리, 예산 알림(BUDGET_*)이면 /budget 으로 이동
 
-[/notifications 전용 페이지 — plan017]
+[/notifications 전용 페이지]
     └─ 전체 알림 목록 + segmented (전체 / 안 읽음) + pagination
-            ├─ Skel skeleton (plan012 .ab-skel 재사용) — loading 상태
-            ├─ EmptyState (plan012 EmptyState 재사용) — "알림이 없어요"
+            ├─ Skel skeleton (.ab-skel 재사용) — loading 상태
+            ├─ EmptyState (공용 컴포넌트 재사용) — "알림이 없어요"
             └─ "모두 읽음" 버튼 (페이지 최상단)
 ```
 
@@ -445,7 +445,7 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 
 ---
 
-## 14-1. Header / TopBar 구조 (plan019)
+## 14-1. Header / TopBar 구조
 
 `src/components/layout/Header.tsx`는 `(authenticated)/layout.tsx`의 sticky top bar로, 모든 인증 페이지에 표시한다.
 
@@ -457,7 +457,7 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
     │
     └─ 우 (md+ 전용 / 모바일 별도 진입점):
             ├─ FamilySelectorDropdown (md+ 전용 표시, 모바일은 Avatar dropdown 안 진입)
-            ├─ NotificationBell (Popover trigger — plan017)
+            ├─ NotificationBell (Popover trigger)
             └─ Avatar dropdown
                     ├─ 프로필 (이름 + 이메일)
                     ├─ [모바일 전용] 가족 전환 → Sheet bottom + FamilySelectorList
@@ -474,7 +474,7 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 
 ---
 
-## 14-2. 빈 상태 / 에러 / 로딩 (plan012)
+## 14-2. 빈 상태 / 에러 / 로딩
 
 App Router 의 segment 경계에서 일관 표시:
 
@@ -491,7 +491,7 @@ App Router 의 segment 경계에서 일관 표시:
 
 ---
 
-## 14-2-2. 404 / 403 / 500 상태 카드 (plan018)
+## 14-2-2. 404 / 403 / 500 상태 카드
 
 `StatusCard` 공용 helper 가 3 상태를 톤으로 구분:
 
@@ -509,7 +509,7 @@ App Router 의 segment 경계에서 일관 표시:
 
 ---
 
-## 14-3. /budget 페이지 (plan013)
+## 14-3. /budget 페이지
 
 Dashboard BudgetHeroCard 의 확장 전용 페이지. 분석은 /analytics, 예산 소화는 /budget 으로 역할 분리.
 
@@ -542,7 +542,7 @@ Dashboard BudgetHeroCard 의 확장 전용 페이지. 분석은 /analytics, 예�
 
 ---
 
-## 14-4. Toast / AlertDialog 시각 시스템 (plan020)
+## 14-4. Toast / AlertDialog 시각 시스템
 
 sonner Toaster와 Radix AlertDialog의 색 토큰은 OKLCH 시스템을 따른다(ADR-F24).
 
@@ -565,7 +565,7 @@ AlertDialog:
 
 ---
 
-## 14-5. /categories 페이지 구조 (plan024)
+## 14-5. /categories 페이지 구조
 
 Teal 디자인을 적용하고 인라인 style을 제거하며 빈 상태 표시를 통일한다.
 
@@ -588,12 +588,12 @@ Teal 디자인을 적용하고 인라인 style을 제거하며 빈 상태 표시
                 │       ├─ 아이콘 영역 정사각형 (w-10 h-10 / w-12 h-12)
                 │       ├─ 동적 색은 CSS variable (--cat-color)
                 │       ├─ 카드 탭 → 수정 창 (Edit 버튼과 같은 동작)
-                │       └─ Edit / Delete (destructive variant, plan020)
+                │       └─ Edit / Delete (destructive variant)
                 │
                 ├─ 추가, 수정 창: md 미만 Sheet bottom / md+ Dialog (ADR-F40)
                 │   └─ 이모지 격자 8열, 색은 견본 원과 접근 이름으로만 보이고 색 문자열은 숨김
                 │
-                └─ Empty → EmptyState 공용 (plan012)
+                └─ Empty → EmptyState 공용
 ```
 
 핵심 변경:
@@ -604,7 +604,7 @@ Teal 디자인을 적용하고 인라인 style을 제거하며 빈 상태 표시
 
 ---
 
-## 15. /settings 페이지 구조 (plan021)
+## 15. /settings 페이지 구조
 
 ```
 [/settings (server)]
