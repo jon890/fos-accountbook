@@ -23,6 +23,17 @@ test("달력 위쪽에 생활비와 예산 항목의 쓴 금액과 한도를 보
   await expect(summary).toContainText("₩150,000");
 });
 
+test("달력 위쪽에 구성원 색 범례를 금액 없이 보인다", async ({ page }) => {
+  await page.goto("/calendar?month=2026-10&date=2026-10-01");
+
+  const legend = page.getByRole("list", { name: "구성원 색상" });
+
+  await expect(legend).toBeVisible();
+  await expect(legend).toContainText("민지");
+  await expect(legend).not.toContainText("₩16,200");
+  await expect(legend).not.toContainText("₩3,000,000");
+});
+
 test("날짜를 누르면 가려진 날짜 목록 제목까지 스크롤하고 포커스를 준다", async ({ page }) => {
   await page.goto("/calendar?month=2026-10&date=2026-10-01");
   const heading = page.getByRole("heading", { level: 2, name: /^10월 1일/ });

@@ -11,7 +11,7 @@ import { buildMemberColorMap } from "@/lib/utils/member-color";
 import type { CalendarMonth } from "@/types/calendar";
 import { MonthHeader } from "./MonthHeader";
 import { BudgetSummaryCard } from "./BudgetSummaryCard";
-import { MemberTotals } from "./MemberTotals";
+import { MemberLegend } from "./MemberLegend";
 import { CalendarGrid } from "./CalendarGrid";
 import { DayTransactionList, type CalendarTransaction } from "./DayTransactionList";
 
@@ -98,7 +98,7 @@ function CalendarMonthContent({ data, initialDate, today, familyUuid }: Calendar
         isNavigationPending={isNavigationPending}
       />
       <BudgetSummaryCard summary={data.budgetSummary} />
-      <MemberTotals daily={data.daily} colors={colors} />
+      <MemberLegend colors={colors} />
       <div
         aria-busy={isNavigationPending}
         className={`space-y-4 transition-opacity ${isNavigationPending ? "pointer-events-none opacity-60" : ""}`}

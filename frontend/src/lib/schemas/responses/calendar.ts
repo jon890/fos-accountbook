@@ -28,5 +28,4 @@ export const dailyStatsResponseSchema = z.object({
   ),
   totalIncome: z.number(),
   totalExpense: z.number(),
-  memberExpenseTotals: z.array(memberAmountSchema),
 }) satisfies z.ZodType<DailyStatsWithMembers>;

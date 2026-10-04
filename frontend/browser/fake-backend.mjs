@@ -408,7 +408,6 @@ const server = createServer(async (request, response) => {
         }],
         totalIncome: 3000000,
         totalExpense: 16200,
-        memberExpenseTotals: [{ userUuid: members[0].userUuid, amount: 16200 }],
       },
     });
     return;

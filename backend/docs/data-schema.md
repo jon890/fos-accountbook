@@ -451,7 +451,7 @@ GET    /families/{uuid}/dashboard/budget-summary              생활비와 예�
 `name`과 `image`는 null일 수 있고, `email`은 사용자에게 있으면 담는다.
 `ACTIVE` 구성원만 가입 시각 오름차순으로 반환하며 가족 구성원만 조회할 수 있다.
 
-`daily-stats` 는 날짜별 합계와 함께 등록자별 지출 합계를 준다.
+`daily-stats` 는 날짜별 합계와 함께 날짜마다 등록자별 지출을 준다.
 
 | 필드 | 타입 | 뜻 |
 |---|---|---|
@@ -459,7 +459,6 @@ GET    /families/{uuid}/dashboard/budget-summary              생활비와 예�
 | `dailyStats[].income`, `dailyStats[].expense` | 숫자 | 그날 가족 전체 합계 |
 | `dailyStats[].memberExpenses[]` | `{ userUuid, amount }` | 그날 지출이 있는 등록자만. `userUuid` 오름차순 |
 | `totalIncome`, `totalExpense` | 숫자 | 그 달 가족 전체 합계 |
-| `memberExpenseTotals[]` | `{ userUuid, amount }` | 그 달 등록자별 지출 합계. 지출이 있는 등록자만. `userUuid` 오름차순 |
 
 합계는 삭제되지 않은(`ACTIVE`) 지출과 수입을 모두 더한다. 예산 제외 표시는 보지 않는다.
-등록자별 수입 합계는 담지 않는다. 달력은 등록자별로 지출만 비교하고, 수입은 날짜를 눌러 목록에서 본다.
+그 달 등록자별 누적 합계와 등록자별 수입 합계는 담지 않는다. 홈은 누적 금액 대신 예산 카드를 보여 준다. 달력은 등록자별로 지출만 비교하고, 수입은 날짜를 눌러 목록에서 본다.

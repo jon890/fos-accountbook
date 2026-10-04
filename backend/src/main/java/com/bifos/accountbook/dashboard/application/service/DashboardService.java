@@ -353,15 +353,12 @@ public class DashboardService {
     List<DailyStat> dailyStats = new ArrayList<>();
     BigDecimal totalIncome = BigDecimal.ZERO;
     BigDecimal totalExpense = BigDecimal.ZERO;
-    Map<String, BigDecimal> expenseByMember = new HashMap<>();
 
     for (Integer day : daysWithTransactions) {
       BigDecimal income = incomeByDay.getOrDefault(day, BigDecimal.ZERO);
       Map<String, BigDecimal> memberExpenses = expenseByDay.getOrDefault(day, Map.of());
       BigDecimal expense =
           memberExpenses.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-      memberExpenses.forEach(
-          (memberUuid, amount) -> expenseByMember.merge(memberUuid, amount, BigDecimal::add));
 
       dailyStats.add(
           DailyStat.builder()
@@ -383,7 +380,6 @@ public class DashboardService {
         .dailyStats(dailyStats)
         .totalIncome(totalIncome)
         .totalExpense(totalExpense)
-        .memberExpenseTotals(toMemberAmounts(expenseByMember))
         .build();
   }
 
