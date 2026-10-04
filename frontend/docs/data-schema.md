@@ -197,7 +197,8 @@ interface CreateIncomeRequest {
 
 이 API의 월 통계는 분석 위쪽 카드와 예산 화면이 사용한다.
 현재 연월은 사용자 시간대로 선택하고 시간대가 없거나 잘못되면 서울을 사용한다.
-공유 일별 조회는 분석과 예산에 날짜, 수입과 지출만 전달하며 달력 홈은 구성원별 합계도 받는다.
+공유 일별 조회는 분석과 예산에 날짜, 수입과 지출만 전달하며 달력 홈은 날짜별 구성원 지출도 받는다.
+홈은 구성원별 월 누적 금액을 보이지 않는다. 예산 카드와 예산 항목이 같은 정보를 더 쓸모 있게 보여 주기 때문이다.
 
 ```typescript
 interface DashboardStats {
@@ -228,7 +229,6 @@ interface DailyStatsWithMembers {
   dailyStats: Array<DailyTransactionSummary & { memberExpenses: MemberAmount[] }>;
   totalIncome: number;
   totalExpense: number;
-  memberExpenseTotals: MemberAmount[];
 }
 
 interface RecentExpense {

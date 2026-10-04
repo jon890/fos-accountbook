@@ -143,7 +143,7 @@
     │   month 없음 → 사용자 시간대의 이번 달. date 없음 → 오늘이 그 달이면 오늘, 아니면 그 달 1일
     │
     └─ getCalendarMonthAction(year, month)  ── Promise.all 6개 호출
-            ├─ /dashboard/daily-stats?year&month       → 날짜별 합계, memberExpenses, memberExpenseTotals
+            ├─ /dashboard/daily-stats?year&month       → 날짜별 합계, memberExpenses
             ├─ /expenses?startDate&endDate&size=1000   → 그 달 지출 목록 (날짜 목록 표시용)
             ├─ /incomes?startDate&endDate&size=1000    → 그 달 수입 목록
             ├─ /families/{uuid}/members                → 구성원 이름, 사진, 가입 순서
@@ -153,7 +153,7 @@
     └─ CalendarHome ("use client")
             ├─ MonthHeader: ‹ 2026년 9월 ›  (월 이동 = URL month 변경, 서버 다시 조회)
             ├─ BudgetSummaryCard: 예산, 생활비, 예산 항목마다 이름, 쓴 금액 / 한도, 진행 막대. 카드를 누르면 /budget
-            ├─ MemberTotals: 구성원별 이번 달 지출 (색 점, 이름, 금액), 가족 합계
+            ├─ MemberLegend: 구성원 색 범례 (색 점과 이름). 달력 칸의 색이 누구인지 알려 준다. 금액은 보이지 않는다
             ├─ CalendarGrid: 7열. 칸마다 날짜, 구성원별 지출 한 줄씩(색 점과 줄인 금액)
             │       └─ 날짜 탭 → 선택 날짜 변경 (클라이언트 상태와 history.replaceState, 서버 호출 없음)
             │               └─ 날짜 목록 제목이 화면에 다 보이지 않으면 그 제목까지 스크롤하고, 제목에 포커스를 준다
