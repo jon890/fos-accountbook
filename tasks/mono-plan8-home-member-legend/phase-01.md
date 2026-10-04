@@ -66,7 +66,7 @@ cd frontend && pnpm exec jest src/__tests__/components/calendar/CalendarHome.tes
 ```
 
 ```bash
-# 운영 코드와 가짜 백엔드에 남은 참조가 없어야 한다. 테스트는 배포 순서를 고정하려고 이 이름을 담으므로 뺀다
+# 저장소 루트에서 실행한다. 운영 코드와 가짜 백엔드에 남은 참조가 없어야 한다. 테스트는 배포 순서를 고정하려고 이 이름을 담으므로 뺀다
 ! git grep -n "memberExpenseTotals\|MemberTotals" -- frontend/src frontend/browser ':!frontend/src/__tests__'
 ```
 

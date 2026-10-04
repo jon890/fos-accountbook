@@ -39,7 +39,8 @@ phase 01 이후 이 필드를 읽는 곳이 없다.
 - `getDailyStats_MemberExpenseTotals` 테스트의 `$.data.memberExpenseTotals...` 단언 다섯 줄을 지운다. 날짜별 `memberExpenses` 단언은 남긴다.
 - 테스트 이름을 `getDailyStats_MemberExpensesByDay` 로, `@DisplayName` 을 「일별 통계는 날짜마다 등록자 순서로 지출을 반환하고 삭제 및 다른 기간과 가족은 제외한다」 로 바꾼다.
 - 같은 테스트 끝에 `.andExpect(jsonPath("$.data.memberExpenseTotals").doesNotExist())` 를 더한다.
-- 다른 두 테스트의 `jsonPath("$.data.memberExpenseTotals").isEmpty()` 단언은 지운다.
+- 단언을 지우면 같은 테스트의 지역 변수 `earlierMonthlyAmount`, `laterMonthlyAmount` 가 쓰이지 않게 된다. 두 변수와 그 대입을 지운다.
+- 다른 두 테스트의 `jsonPath("$.data.memberExpenseTotals").isEmpty()` 단언은 지운다. `getDailyStats_IncomeOnly` 의 `@DisplayName` 에서 「등록자별 지출 합계가 빈 배열이다」 를 날짜별 등록자 지출에 맞는 말로 고친다.
 
 ## 검증
 
@@ -51,7 +52,7 @@ cd backend && ./gradlew qualityCheck test
 ```
 
 ```bash
-# 운영 코드에 남은 참조가 없어야 한다. 테스트에는 doesNotExist 단언 한 곳만 남는다
+# 저장소 루트에서 실행한다. 운영 코드에 남은 참조가 없어야 한다. 테스트에는 doesNotExist 단언 한 곳만 남는다
 ! git grep -n "memberExpenseTotals" -- backend/src/main
 ```
 
