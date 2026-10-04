@@ -357,6 +357,42 @@ interface CreateRecurringExpenseRequest {
 }
 ```
 
+### Installment
+
+할부 한 건이다. 계산 필드는 백엔드가 업무 날짜의 이번 달로 채운다. 규칙은 `backend/docs/data-schema.md` 「할부 요청과 응답」 이 소유한다.
+
+```typescript
+type InstallmentProgress = "UPCOMING" | "IN_PROGRESS" | "COMPLETED";
+
+interface Installment {
+  uuid: string;
+  userUuid: string;          // 등록한 사람
+  name: string;
+  totalAmount: number;
+  installmentMonths: number; // 2~60
+  startMonth: string;        // YYYY-MM
+  endMonth: string;          // YYYY-MM
+  memo: string | null;
+  monthlyAmount: number;
+  firstMonthAmount: number;
+  currentRound: number;      // 0 ~ installmentMonths
+  thisMonthAmount: number;
+  remainingAmount: number;
+  progress: InstallmentProgress;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 생성과 수정의 입력
+interface InstallmentInput {
+  name: string;
+  totalAmount: number;
+  installmentMonths: number;
+  startMonth: string;
+  memo?: string;
+}
+```
+
 ### ApiToken
 
 외부 에이전트 연동 토큰 (backend ADR-B18). 원문은 발급 응답에만 실린다.
@@ -419,6 +455,7 @@ Dashboard:         GET  /families/{uuid}/dashboard/stats/monthly
                    GET  /families/{uuid}/dashboard/expenses/by-category
                    GET  /families/{uuid}/dashboard/budget-summary    (year, month)
 BudgetItem:        CRUD /families/{uuid}/budget-items[/{uuid}]
+Installment:       CRUD /families/{uuid}/installments[/{uuid}]
 Invitation:        POST /invitations/families/{uuid}
                    GET  /invitations/token/{token}
                    POST /invitations/accept

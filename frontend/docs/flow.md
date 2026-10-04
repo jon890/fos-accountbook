@@ -200,7 +200,7 @@
     ├─ ExpenseSummaryWrapper → CategoryExpenseSummary (접힌 채 시작, 걸러 보는 카테고리가 있으면 펼친 채 시작하고 그 행이 6위 아래면 전체를 보임, 머리에 총액과 비중 막대, 펼치면 한 줄씩 상위 5개와 「전체 N개 보기」, 행 탭 → ?categoryId=)
     │     ├─ SearchBar (300ms debounce, ?q= URL 동기화, 모바일 expand)
     │     └─ AmountRangeFilter (Popover, amountMin/Max URL param)
-    └─ ExpenseListClient / IncomeListClient / RecurringExpenseList (tab 별)
+    └─ ExpenseListClient / IncomeListClient / RecurringExpenseList / InstallmentList (tab 별)
             ├─ LoadMoreButton (더 보기, 3000건 상한 안내)
             └─ DateGroupSection<T> (날짜 링크와 거래 종류별 합계, 반복 목록은 날짜 그룹 없이 표시)
                     └─ TransactionRow (설명, 카테고리·작성자·시각, 금액)
@@ -217,12 +217,14 @@
 카테고리별 지출 요약에서 걸러 보는 행을 다시 누르면 카테고리 필터가 풀린다.
 
 page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 탭을 바꾸면 URL 이 바뀌고 서버가 그 탭만 다시 그린다.
-세 탭을 모두 slot props 로 넘기면 RSC 가 보이지 않는 탭까지 렌더링해 조회가 매번 세 배로 나간다.
+모든 탭을 slot props 로 넘기면 RSC 가 보이지 않는 탭까지 렌더링해 탭 수만큼 조회가 나간다.
 시간대는 세션의 `session.user.profile.timezone` 을 쓰고 프로필 API 를 따로 부르지 않는다.
 날짜 머리를 누르면 해당 날짜를 선택한 달력으로 이동한다. 지출은 지출 색, 수입은 수입 색과 `+` 부호로 표시한다.
 지출·수입 탭만 구성원을 조회한다.
 구성원 조회의 인증 오류는 로그인으로 이동하고, 일반 조회 실패는 빈 목록으로 처리해 작성자를 「이전 구성원」으로 표시한다.
-내역 화면의 추가 진입은 하단 탭 가운데 버튼 하나다. 현재 탭과 관계없이 지출을 기본으로 열며, 시트에서 수입이나 고정지출로 바꿀 수 있다.
+거래 추가 진입은 하단 탭 가운데 버튼 하나다. 현재 탭과 관계없이 지출을 기본으로 열며, 시트에서 수입이나 고정지출로 바꿀 수 있다.
+할부는 거래가 아니라서 이 버튼으로 만들지 않는다. 할부 탭의 「할부 추가」 버튼으로 만든다(「17. 할부 탭」).
+지출·수입 탭이 아니면 필터와 검색을 숨긴다.
 
 ---
 
@@ -676,7 +678,7 @@ Teal 디자인을 적용하고 인라인 style을 제거하며 빈 상태 표시
     └─ 전체  → /menu
 
 [/menu] 전체 메뉴 (Server Component, 목록형)
-    ├─ 가계부: 카테고리 → /categories, 예산 → /budget, 고정지출 → /transactions?tab=recurring
+    ├─ 가계부: 카테고리 → /categories, 예산 → /budget, 고정지출 → /transactions?tab=recurring, 할부 → /transactions?tab=installments
     ├─ 가족: 가족 전환(Sheet), 구성원 초대(InviteFamilyDialog)
     ├─ 알림 → /notifications
     └─ 설정 → /settings (프로필, 기본 가족, 예산, 외부 연동)
@@ -686,3 +688,33 @@ Teal 디자인을 적용하고 인라인 style을 제거하며 빈 상태 표시
 - 하위 화면(`/categories`, `/budget`, `/notifications`, `/settings`, `/invite/*`)은 Header 왼쪽에 뒤로 가기 버튼을 둔다. `document.referrer`의 origin이 현재 사이트와 같으면 `router.back()`으로 돌아가고, 비었거나 외부 사이트이면 `/menu`로 간다.
 - 가족 생성, 선택, 초대 수락 화면(`/families/*`, `/invite/*`)에서는 하단 탭을 숨긴다. 가족이 없을 때 거래를 추가하지 못하게 하기 위해서다.
 - 설정의 가족 「관리」 버튼은 없는 경로(`/families/{uuid}`)를 가리켜 404 가 났다. 버튼을 없애고 가족 정보는 설정 화면 안에서 보여 준다.
+
+---
+
+## 17. 할부 탭
+
+할부를 기록하고 진행 상황을 본다. 예산, 달력, 분석의 합계에는 들어가지 않는다. 결정 근거는 [ADR-B27](../../backend/docs/adr/ADR-B27-installments-outside-budget.md) 이다.
+
+```mermaid
+flowchart TD
+    IN["/transactions?tab=installments 또는 전체 메뉴의 할부"] --> P[page.tsx 가 getInstallmentsAction 호출]
+    P --> OK{조회 성공}
+    OK -- 실패 --> ERR[「할부를 불러올 수 없습니다」 카드]
+    OK -- 성공 --> SUM[요약 카드: 이번 달 할부, 남은 할부, 예산에 포함되지 않는다는 안내]
+    SUM --> HAS{할부가 있나}
+    HAS -- 없다 --> EMPTY[빈 상태와 「할부 추가」 버튼]
+    HAS -- 있다 --> LIST[진행 중과 예정 목록, 아래에 완료 목록]
+    LIST --> TAP[항목을 누른다] --> EDIT[InstallmentDialog 수정. 삭제 버튼과 확인 창]
+    SUM --> ADD[「할부 추가」 를 누른다] --> NEW[InstallmentDialog 등록]
+    NEW --> SAVE{저장}
+    EDIT --> SAVE
+    SAVE -- 성공 --> RV[토스트, 창 닫기, /transactions 다시 그리기]
+    SAVE -- 실패 --> MSG[문구를 토스트로 보이고 목록을 다시 그린다. 창은 연 채 둔다]
+```
+
+- 요약의 「이번 달 할부」 는 항목의 `thisMonthAmount` 합, 「남은 할부」 는 `remainingAmount` 합이다. 따로 API 를 부르지 않는다.
+- 목록은 `progress` 로 나눈다. `UPCOMING` 과 `IN_PROGRESS` 는 위 목록, `COMPLETED` 는 아래 「완료」 목록에 흐리게 둔다. 순서는 응답 순서(첫 결제 월, 등록 순)를 따른다.
+- 항목에는 이름, 회차(`3/12회`), 월 납부액, 남은 금액, 진행 막대를 보인다. 예정이면 회차 대신 「YYYY년 M월 시작」, 완료면 「완납」 을 보인다.
+- 등록 창은 이름, 총 금액, 할부 개월, 첫 결제 월(기본은 이번 달), 메모를 받는다. 입력하는 동안 월 납부액을 미리 보여 준다.
+- 저장이나 삭제가 실패하면 액션의 문구를 토스트로 보이고 목록을 다시 그린다. 저장 실패는 창을 연 채 두고, 삭제 실패는 창을 닫는다. 다른 구성원이 이미 지운 할부는 다시 그린 목록에서 사라진다.
+
