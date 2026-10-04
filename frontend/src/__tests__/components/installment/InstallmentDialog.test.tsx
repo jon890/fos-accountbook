@@ -172,6 +172,31 @@ describe("InstallmentDialog", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it("삭제 실패: 문구로 토스트와 refresh 를 부르고 창을 닫는다", async () => {
+    const onOpenChange = jest.fn();
+    jest.mocked(deleteInstallmentAction).mockResolvedValue(failure);
+    const user = userEvent.setup();
+    render(
+      <InstallmentDialog
+        open
+        onOpenChange={onOpenChange}
+        installment={existing}
+        defaultStartMonth="2026-10"
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "삭제" }));
+    const confirm = screen.getAllByRole("button", { name: "삭제" });
+    await user.click(confirm[confirm.length - 1]);
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(failure.error.message),
+    );
+    expect(mockRefresh).toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
   it("필수 값이 비면 저장 버튼이 비활성이다", async () => {
     const user = userEvent.setup();
     render(
