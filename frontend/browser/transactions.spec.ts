@@ -155,6 +155,29 @@ test("반복 행은 일정과 반영 상태를 보이고 수정 시트를 연다
   await expect(page.getByRole("heading", { name: "고정지출 수정" })).toBeVisible();
 });
 
+test("할부 탭은 요약과 진행 중, 완료 목록을 보이고 항목을 눌러 수정 창을 연다", async ({ page }) => {
+  await page.goto("/transactions?tab=installments");
+
+  await expect(page.getByRole("tab", { name: "할부" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByText("이번 달 할부")).toBeVisible();
+  await expect(page.getByText("예산과 합계에는 포함되지 않아요")).toBeVisible();
+  await expect(page.getByText("₩100,000", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("₩900,000", { exact: true }).first()).toBeVisible();
+
+  const laptop = page.getByRole("button", { name: "노트북 할부 수정" });
+  await expect(laptop).toContainText("3/12회");
+  await expect(page.getByRole("heading", { name: "완료" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "청소기 할부 수정" })).toBeVisible();
+
+  await laptop.click();
+  await expect(page.getByRole("heading", { name: "할부 수정" })).toBeVisible();
+  await expect(page.getByPlaceholder("예: 노트북")).toHaveValue("노트북");
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: "할부 추가" }).click();
+  await expect(page.getByRole("heading", { name: "할부 추가" })).toBeVisible();
+});
+
 test("내역 탭은 추가 버튼 없이 하단 추가 시트를 연다", async ({ page }) => {
   for (const tab of ["expenses", "incomes", "recurring"]) {
     await page.goto(`/transactions?tab=${tab}`);

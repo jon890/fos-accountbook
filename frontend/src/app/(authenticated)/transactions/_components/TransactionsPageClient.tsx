@@ -1,14 +1,15 @@
 "use client";
 
-import { TransactionsTabs } from "@/app/(authenticated)/transactions/_components/TransactionsTabs";
+import {
+  TransactionsTabs,
+  type TabType,
+} from "@/app/(authenticated)/transactions/_components/TransactionsTabs";
 import { FilterChips } from "@/app/(authenticated)/transactions/_components/FilterChips";
 import { FilterSheet } from "@/app/(authenticated)/transactions/_components/FilterSheet";
 import { SearchBar } from "@/app/(authenticated)/transactions/_components/SearchBar";
 import type { CategoryResponse } from "@/types/category";
 import { useNavigationPending } from "@/lib/client/navigation";
 import { ReactNode } from "react";
-
-type TabType = "expenses" | "incomes" | "recurring";
 
 interface TransactionsPageClientProps {
   categories: CategoryResponse[];
@@ -26,6 +27,7 @@ interface TransactionsPageClientProps {
   expenseListContent: ReactNode;
   incomeListContent: ReactNode;
   recurringListContent: ReactNode;
+  installmentListContent: ReactNode;
 }
 
 export function TransactionsPageClient({
@@ -35,6 +37,7 @@ export function TransactionsPageClient({
   expenseListContent,
   incomeListContent,
   recurringListContent,
+  installmentListContent,
 }: TransactionsPageClientProps) {
   const isNavigationPending = useNavigationPending();
 
@@ -44,8 +47,8 @@ export function TransactionsPageClient({
         <TransactionsTabs activeTab={activeTab} />
       </fieldset>
 
-      {/* 필터 + 검색 (반복지출 탭에서는 숨김) */}
-      {activeTab !== "recurring" && (
+      {/* 필터 + 검색 (지출, 수입 탭에서만 보임) */}
+      {(activeTab === "expenses" || activeTab === "incomes") && (
         <div className="flex min-w-0 items-start gap-3">
           <fieldset disabled={isNavigationPending} className="flex-1 min-w-0">
             {/* 폭 판정을 JS 로 하면 서버 렌더가 모바일로 그려져 데스크톱 첫 화면에 「필터」 버튼이 잠깐 뜬다.
@@ -78,11 +81,14 @@ export function TransactionsPageClient({
         aria-busy={isNavigationPending}
         className={`transition-opacity ${isNavigationPending ? "pointer-events-none opacity-60" : ""}`}
       >
-        {activeTab === "expenses"
-          ? expenseListContent
-          : activeTab === "incomes"
-            ? incomeListContent
-            : recurringListContent}
+        {
+          {
+            expenses: expenseListContent,
+            incomes: incomeListContent,
+            recurring: recurringListContent,
+            installments: installmentListContent,
+          }[activeTab]
+        }
       </div>
     </div>
   );

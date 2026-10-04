@@ -21,6 +21,7 @@ com.bifos.accountbook
 ├── invitation/              초대
 ├── notification/            알림, 예산 알림
 ├── budgetitem/              예산 항목 (이름, 월 한도, 카테고리 묶음. ADR-B25)
+├── installment/             할부 기록과 진행 상황 계산. 다른 도메인을 부르지 않는다 (ADR-B27)
 ├── dashboard/               대시보드 (read model)
 ├── user/                    사용자, 인증, 프로필
 ├── apitoken/                외부 에이전트 연동 토큰 발급, 조회, 폐기 (ADR-B18)
@@ -88,6 +89,7 @@ user ◄── family ──► category
 | BudgetAlertService      | —                                                                         | Repository 직접 참조 (이벤트 구독자) |
 | DashboardService        | —                                                                         | Repository 직접 참조 (read model)    |
 | BudgetItemService       | CategoryService                                                           | 항목 저장 시 카테고리 검증           |
+| InstallmentService      | —                                                                         | `Clock` 으로 이번 달을 정한다        |
 | AuthService             | UserService                                                               |                                      |
 
 ### 결합 포인트 (향후 MSA 전환 시 해소 대상)

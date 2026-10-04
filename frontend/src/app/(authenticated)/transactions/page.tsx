@@ -7,6 +7,7 @@ import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { ExpenseList } from "@/components/expenses/list/ExpenseList";
 import { ExpenseSummaryWrapper } from "@/components/expenses/summary/ExpenseSummaryWrapper";
 import { IncomeList } from "@/components/incomes/list/IncomeList";
+import { InstallmentList } from "@/components/installment/InstallmentList";
 import { RecurringExpenseList } from "@/components/recurring-expense/RecurringExpenseList";
 import { TransactionsPageClient } from "./_components/TransactionsPageClient";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import type { CategoryResponse } from "@/types/category";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getRecurringExpensesAction } from "@/actions/recurring-expense";
+import { getInstallmentsAction } from "@/actions/installment/get-installments-action";
 import { getSelectedFamilyAction } from "@/actions/family/get-selected-family-action";
 import { getFamilyMembersAction } from "@/actions/family/get-family-members-action";
 import { getFamilyCategoriesAction } from "@/actions/category/get-categories-action";
@@ -50,7 +52,8 @@ export default async function TransactionsPage({
   const isSupportedTab =
     requestedTab === "expenses" ||
     requestedTab === "incomes" ||
-    requestedTab === "recurring";
+    requestedTab === "recurring" ||
+    requestedTab === "installments";
   const activeTab = isSupportedTab ? requestedTab : "expenses";
 
   // 로그인 때 세션에 저장한 시간대 사용
@@ -193,6 +196,24 @@ export default async function TransactionsPage({
           </Suspense>
         ) : null
       }
+      installmentListContent={
+        activeTab === "installments" ? (
+          <Suspense
+            fallback={
+              <Card className="w-full">
+                <CardContent className="flex justify-center items-center min-h-[400px] py-12 md:py-12">
+                  <LoadingSpinner />
+                </CardContent>
+              </Card>
+            }
+          >
+            <InstallmentListWrapper
+              // 백엔드의 「이번 달」 은 Asia/Seoul 기준이라(ADR-B21) 사용자 시간대가 아닌 서울 기준 월을 쓴다
+              defaultStartMonth={getMonthRange("Asia/Seoul").startDate.slice(0, 7)}
+            />
+          </Suspense>
+        ) : null
+      }
     />
   );
 }
@@ -211,4 +232,29 @@ async function RecurringExpenseListWrapper({ month }: { month: string }) {
   }
 
   return <RecurringExpenseList data={result.data} />;
+}
+
+async function InstallmentListWrapper({
+  defaultStartMonth,
+}: {
+  defaultStartMonth: string;
+}) {
+  const result = await getInstallmentsAction();
+
+  if (!result.success) {
+    return (
+      <Card className="w-full">
+        <CardContent className="flex justify-center items-center min-h-[200px] py-8 md:py-8">
+          <p className="text-fg-muted text-sm">할부를 불러올 수 없습니다</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <InstallmentList
+      items={result.data}
+      defaultStartMonth={defaultStartMonth}
+    />
+  );
 }

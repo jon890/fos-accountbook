@@ -228,6 +228,40 @@ BudgetItemService.createBudgetItem()
 - 두 사람이 동시에 같은 카테고리를 서로 다른 항목에 넣으면 `uq_budget_item_categories_category` 가 뒤 요청을 막고 409 BI002 로 응답한다.
 - 항목이 하나도 없으면 예산 요약의 `items` 는 빈 배열이다. 월 예산이 0 이면 `living.limit` 은 0 이다.
 
+## 9. 할부 기록과 진행 상황
+
+결정 근거는 ADR-B27 이다. 할부는 지출을 만들지 않으므로 다른 도메인을 부르지 않고 이벤트도 내지 않는다.
+
+```mermaid
+flowchart TD
+    R["GET /families/{familyUuid}/installments"] --> A{가족 구성원인가}
+    A -- 아니다 --> F403[403]
+    A -- 그렇다 --> L[가족의 ACTIVE 할부를 첫 결제 월, id 순으로 읽는다]
+    L --> E{할부가 있나}
+    E -- 없다 --> EMPTY[빈 배열]
+    E -- 있다 --> NOW[업무 날짜 Asia/Seoul 의 이번 달]
+    NOW --> C{이번 달과 첫 결제 월, 마지막 결제 월 비교}
+    C -- 첫 결제 월 전 --> UP[UPCOMING. 회차 0, 이번 달 0, 남은 금액 = 총 금액]
+    C -- 그 사이 --> IP[IN_PROGRESS. 회차는 첫 결제 월부터 센 달 수, 이번 달은 그 회차 금액]
+    C -- 마지막 결제 월 뒤 --> DONE[COMPLETED. 회차 = 개월 수, 남은 금액 0]
+```
+
+```
+POST /families/{familyUuid}/installments
+    │  body: { name, totalAmount, installmentMonths, startMonth, memo }
+    ▼
+InstallmentService.createInstallment()
+    ├─ 가족 구성원 검증 (@ValidateFamilyAccess)
+    ├─ 본문 검증 실패(빈 이름 포함) → 400 필드 오류
+    ├─ 총 금액 < 개월 수, trim 뒤 이름이 50자 초과 → 400 C001
+    └─ installments 저장 (user_uuid = 등록한 사람)
+```
+
+- 수정(`PUT`)은 다섯 필드를 통째로 바꾼다. 검증은 생성과 같다. 등록자가 아니어도 같은 가족이면 고친다.
+- 삭제(`DELETE`)는 `DELETED` 로 바꾼다. 다른 숫자는 바뀌지 않는다.
+- 없는 할부, 지운 할부, 다른 가족의 할부를 고치거나 지우면 404 IS001 이다. 다른 가족의 할부인지 드러내지 않는다.
+- 두 사람이 같은 할부를 동시에 고치면 나중에 커밋한 쪽이 남는다. 잠금을 두지 않는다.
+
 ## 도메인 간 이벤트 흐름 요약
 
 | 이벤트                         | 발행자    | 구독자       | 트리거             |

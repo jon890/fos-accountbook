@@ -9,6 +9,7 @@ import type { Family } from "@/types/family";
 import {
   Bell,
   ChevronRight,
+  CreditCard,
   Folder,
   RefreshCw,
   Repeat,
@@ -34,6 +35,7 @@ const groups = [
       { name: "카테고리", href: "/categories", icon: Folder },
       { name: "예산", href: "/budget", icon: Wallet },
       { name: "고정지출", href: "/transactions?tab=recurring", icon: Repeat },
+      { name: "할부", href: "/transactions?tab=installments", icon: CreditCard },
     ],
   },
   {

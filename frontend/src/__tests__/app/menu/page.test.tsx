@@ -63,7 +63,7 @@ beforeEach(() => {
   jest.mocked(getFamiliesAction).mockResolvedValue({ success: true, data: [family] });
 });
 
-it("가족과 사용자 이름 및 다섯 주요 화면 링크를 표시한다", async () => {
+it("가족과 사용자 이름 및 여섯 주요 화면 링크를 표시한다", async () => {
   render(await MenuPage());
   expect(screen.getByText("우리 가족")).toBeInTheDocument();
   expect(screen.getByText("홍길동님")).toBeInTheDocument();
@@ -71,6 +71,7 @@ it("가족과 사용자 이름 및 다섯 주요 화면 링크를 표시한다",
     ["카테고리", "/categories"],
     ["예산", "/budget"],
     ["고정지출", "/transactions?tab=recurring"],
+    ["할부", "/transactions?tab=installments"],
     ["알림", "/notifications"],
     ["설정", "/settings"],
   ];

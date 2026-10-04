@@ -285,6 +285,32 @@ CREATE TABLE budget_item_categories (
 - `status` 가 없다. 항목을 지우거나 카테고리를 지우거나 항목의 카테고리 묶음을 바꾸면 행을 실제로 지운다
 - 그래서 이 테이블에 행이 있는 카테고리는 항상 ACTIVE 항목에 속한다. 생활비 합계 쿼리는 항목의 `status` 를 보지 않고 이 테이블만 본다
 
+### [installment] installments
+
+할부 한 건이다. 지출을 만들지 않고 예산과 집계에 들어가지 않는다 (ADR-B27).
+
+```sql
+CREATE TABLE installments (
+    id                 BIGINT          PRIMARY KEY AUTO_INCREMENT,
+    uuid               VARCHAR(36)     NOT NULL,
+    family_uuid        VARCHAR(36)     NOT NULL,   -- FK 없음
+    user_uuid          VARCHAR(36)     NOT NULL,   -- FK 없음, 등록한 사람
+    name               VARCHAR(50)     NOT NULL,
+    total_amount       DECIMAL(12, 2)  NOT NULL,   -- 정수 원만 받는다
+    installment_months INT             NOT NULL,   -- 2~60
+    start_month        VARCHAR(7)      NOT NULL,   -- YYYY-MM, 첫 결제 월
+    memo               VARCHAR(200)    NULL,
+    status             VARCHAR(20)     NOT NULL DEFAULT 'ACTIVE',  -- ACTIVE | DELETED
+    created_at         DATETIME(3)     NOT NULL,
+    updated_at         DATETIME(3)     NOT NULL,
+    UNIQUE KEY uq_installments_uuid (uuid),
+    INDEX idx_installments_family_uuid (family_uuid)
+);
+```
+
+- 월 납부액, 회차, 남은 금액은 저장하지 않는다. 조회할 때 계산한다
+- `start_month` 는 `expenses.year_month` 와 같은 `YYYY-MM` 문자열이다. 문자열 비교가 날짜 순서와 같다
+
 ---
 
 ## 마이그레이션 이력 (Flyway)
@@ -308,6 +334,7 @@ CREATE TABLE budget_item_categories (
 | V20260930_1400 | api_tokens 테이블 생성 (이후 타임스탬프 버전, backend CLAUDE.md 「Database」) |
 | V20261001_1200 | categories 에 type 추가, 기존 카테고리 분류, 수입 기본 카테고리 생성 (ADR-B23) |
 | V20261002_1200 | budget_items, budget_item_categories 테이블 생성 (ADR-B25) |
+| V20261004_1200 | installments 테이블 생성 (ADR-B27) |
 
 ---
 
@@ -349,6 +376,12 @@ POST   /families/{uuid}/budget-items          항목 생성
 GET    /families/{uuid}/budget-items          ACTIVE 항목 목록 (만든 순서)
 PUT    /families/{uuid}/budget-items/{uuid}   수정 (카테고리 묶음은 통째로 바꾼다)
 DELETE /families/{uuid}/budget-items/{uuid}   삭제 (Soft Delete)
+
+# [installment] 할부 (ADR-B27)
+POST   /families/{uuid}/installments          등록
+GET    /families/{uuid}/installments          ACTIVE 할부 목록 (첫 결제 월, id 순). 진행 상황을 계산해 담는다
+PUT    /families/{uuid}/installments/{uuid}   수정 (다섯 필드를 통째로 바꾼다)
+DELETE /families/{uuid}/installments/{uuid}   삭제 (Soft Delete)
 
 # [expense] 지출
 POST   /families/{uuid}/expenses              등록
@@ -414,6 +447,39 @@ GET    /families/{uuid}/dashboard/budget-summary              생활비와 예�
 | `BI004` `BUDGET_ITEM_ALREADY_EXISTS` | 409 | 같은 이름의 ACTIVE 항목이 있다 |
 | `CT001`, `CT005` | 404, 400 | 카테고리가 없다, 수입 카테고리다 |
 | `C001` | 400 | 본문 검증 실패 |
+
+### 할부 요청과 응답
+
+생성과 수정의 요청 본문은 같다.
+
+| 필드 | 타입 | 규칙 |
+|---|---|---|
+| `name` | 문자열 | 필수. 앞뒤 공백을 뺀 1~50자 |
+| `totalAmount` | 숫자 | 필수. 1 이상 정수, 10자리까지. `installmentMonths` 이상이어야 한다 |
+| `installmentMonths` | 정수 | 필수. 2~60 |
+| `startMonth` | 문자열 | 필수. `YYYY-MM` |
+| `memo` | 문자열 | 선택. 200자까지. 앞뒤 공백을 뺀 값이 비면 null 로 저장한다 |
+
+응답 `InstallmentResponse` 다. 계산 필드는 업무 날짜(Asia/Seoul)의 이번 달 기준이다.
+
+| 필드 | 뜻 |
+|---|---|
+| `uuid`, `userUuid`, `name`, `totalAmount`, `installmentMonths`, `startMonth`, `memo`, `createdAt`, `updatedAt` | 저장한 값. `userUuid` 는 등록한 사람 |
+| `endMonth` | 마지막 결제 월. `startMonth` 에서 `installmentMonths - 1` 달 뒤 |
+| `monthlyAmount` | 2회차부터의 월 납부액. 총 금액 ÷ 개월 수를 원 단위로 내림 |
+| `firstMonthAmount` | 1회차 납부액. 총 금액 - 월 납부액 × (개월 수 - 1) |
+| `currentRound` | 이번 달까지 낸 회차 수. 0 ~ `installmentMonths` |
+| `thisMonthAmount` | 이번 달에 내는 금액. 결제 기간 밖이면 0 |
+| `remainingAmount` | 이번 달 회차까지 낸 뒤 남은 금액 |
+| `progress` | `UPCOMING`(첫 결제 월 전), `IN_PROGRESS`, `COMPLETED`(마지막 결제 월 뒤) |
+
+생성은 201, 수정과 삭제는 200 이다. 삭제의 `data` 는 null 이다.
+
+| 에러 코드 | HTTP | 뜻 |
+|---|---|---|
+| `IS001` `INSTALLMENT_NOT_FOUND` | 404 | 할부가 없거나 지웠거나 다른 가족의 할부다 |
+| `C001` | 400 | 총 금액이 개월 수보다 작음, trim 뒤 이름이 50자 초과 |
+| 필드 오류 `VALIDATION_ERROR` | 400 | 본문 검증 실패(빈 이름 포함). 최상위 `code` 없이 필드 오류 목록으로 온다 |
 
 ### 예산 요약과 생활비 합계
 
