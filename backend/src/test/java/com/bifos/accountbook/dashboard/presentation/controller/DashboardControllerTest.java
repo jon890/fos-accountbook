@@ -487,8 +487,8 @@ class DashboardControllerTest extends AbstractControllerTest {
   }
 
   @Test
-  @DisplayName("일별 통계는 날짜와 등록자 순서로 합계를 반환하고 삭제 및 다른 기간과 가족은 제외한다")
-  void getDailyStats_MemberExpenseTotals() throws Exception {
+  @DisplayName("일별 통계는 날짜마다 등록자 순서로 지출을 반환하고 삭제 및 다른 기간과 가족은 제외한다")
+  void getDailyStats_MemberExpensesByDay() throws Exception {
     User firstUser = fixtures.getDefaultUser();
     User secondUser = fixtures.users.user().email("second@example.com").build();
     Family family = fixtures.getDefaultFamily();
@@ -565,22 +565,16 @@ class DashboardControllerTest extends AbstractControllerTest {
     String laterUuid;
     double earlierDailyAmount;
     double laterDailyAmount;
-    double earlierMonthlyAmount;
-    double laterMonthlyAmount;
     if (firstUserBeforeSecond) {
       earlierUuid = firstUser.getUuid().getValue();
       laterUuid = secondUser.getUuid().getValue();
       earlierDailyAmount = 121;
       laterDailyAmount = 200.5;
-      earlierMonthlyAmount = 151.5;
-      laterMonthlyAmount = 200.5;
     } else {
       earlierUuid = secondUser.getUuid().getValue();
       laterUuid = firstUser.getUuid().getValue();
       earlierDailyAmount = 200.5;
       laterDailyAmount = 121;
-      earlierMonthlyAmount = 200.5;
-      laterMonthlyAmount = 151.5;
     }
 
     mockMvc
@@ -612,15 +606,11 @@ class DashboardControllerTest extends AbstractControllerTest {
             jsonPath("$.data.dailyStats[2].memberExpenses[0].userUuid")
                 .value(firstUser.getUuid().getValue()))
         .andExpect(jsonPath("$.data.dailyStats[2].memberExpenses[0].amount").value(30.5))
-        .andExpect(jsonPath("$.data.memberExpenseTotals.length()").value(2))
-        .andExpect(jsonPath("$.data.memberExpenseTotals[0].userUuid").value(earlierUuid))
-        .andExpect(jsonPath("$.data.memberExpenseTotals[0].amount").value(earlierMonthlyAmount))
-        .andExpect(jsonPath("$.data.memberExpenseTotals[1].userUuid").value(laterUuid))
-        .andExpect(jsonPath("$.data.memberExpenseTotals[1].amount").value(laterMonthlyAmount));
+        .andExpect(jsonPath("$.data.memberExpenseTotals").doesNotExist());
   }
 
   @Test
-  @DisplayName("수입만 있는 달은 등록자별 지출 합계가 빈 배열이다")
+  @DisplayName("수입만 있는 달은 날짜별 등록자 지출이 빈 배열이다")
   void getDailyStats_IncomeOnly() throws Exception {
     User user = fixtures.getDefaultUser();
     Family family = fixtures.getDefaultFamily();
@@ -640,7 +630,6 @@ class DashboardControllerTest extends AbstractControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.totalExpense").value(0))
         .andExpect(jsonPath("$.data.totalIncome").value(100))
-        .andExpect(jsonPath("$.data.memberExpenseTotals").isEmpty())
         .andExpect(jsonPath("$.data.dailyStats.length()").value(1))
         .andExpect(jsonPath("$.data.dailyStats[0].memberExpenses").isEmpty());
   }
@@ -668,8 +657,7 @@ class DashboardControllerTest extends AbstractControllerTest {
         .andExpect(jsonPath("$.data.month").value(month))
         .andExpect(jsonPath("$.data.totalExpense").value(0))
         .andExpect(jsonPath("$.data.totalIncome").value(0))
-        .andExpect(jsonPath("$.data.dailyStats").isEmpty())
-        .andExpect(jsonPath("$.data.memberExpenseTotals").isEmpty());
+        .andExpect(jsonPath("$.data.dailyStats").isEmpty());
   }
 
   @Test
