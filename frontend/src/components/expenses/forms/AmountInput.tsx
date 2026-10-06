@@ -1,27 +1,46 @@
 "use client";
 
 import { useRef } from "react";
+import { AmountKeypad } from "@/components/expenses/forms/AmountKeypad";
 import { cn } from "@/lib/client/utils";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import type { TransactionType } from "@/types/transaction";
 
 interface AmountInputProps {
   id?: string;
   value: number;
   onChange: (next: number) => void;
   disabled?: boolean;
+  type?: TransactionType;
 }
 
 const MOBILE_CHIPS = [1000, 5000, 10000] as const;
 const DESKTOP_ONLY_CHIP = 50000;
 
-export function AmountInput({ id, value, onChange, disabled }: AmountInputProps) {
+const promptByType: Record<TransactionType, string> = {
+  expense: "얼마를 썼나요?",
+  income: "얼마를 받았나요?",
+  recurring: "매달 얼마인가요?",
+};
+
+export function AmountInput({
+  id,
+  value,
+  onChange,
+  disabled,
+  type = "expense",
+}: AmountInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const isDesktop = useMediaQuery("(min-width: 768px)");
 
   const handleChipClick = (delta: number) => {
     onChange(Math.max(0, value + delta));
   };
 
   const handleDisplayClick = () => {
-    inputRef.current?.focus();
+    if (isDesktop) {
+      inputRef.current?.focus();
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,7 +54,7 @@ export function AmountInput({ id, value, onChange, disabled }: AmountInputProps)
   return (
     <div className="space-y-3">
       {/* 라벨 */}
-      <p className="text-[12px] text-[var(--color-fg-muted)]">얼마를 썼나요?</p>
+      <p className="text-[12px] text-[var(--color-fg-muted)]">{promptByType[type]}</p>
 
       {/* 금액 디스플레이 영역 */}
       <div
@@ -66,15 +85,21 @@ export function AmountInput({ id, value, onChange, disabled }: AmountInputProps)
           id={id}
           ref={inputRef}
           type="number"
-          inputMode="numeric"
+          inputMode={isDesktop ? "numeric" : "none"}
           value={value === 0 ? "" : value}
           onChange={handleInputChange}
           disabled={disabled}
+          readOnly={!isDesktop}
+          tabIndex={isDesktop ? undefined : -1}
           className="sr-only"
           aria-label="금액 직접 입력"
           min={0}
         />
       </div>
+
+      {!isDesktop && (
+        <AmountKeypad value={value} onChange={onChange} disabled={disabled} />
+      )}
 
       {/* 빠른 추가 칩 row */}
       <div className="flex gap-2">
@@ -87,7 +112,7 @@ export function AmountInput({ id, value, onChange, disabled }: AmountInputProps)
             className={cn(
               "inline-flex items-center justify-center",
               "rounded-full border border-[var(--color-border)] bg-[var(--color-bg-elev)]",
-              "px-3 py-1.5 text-sm font-medium text-[var(--color-fg)]",
+              "min-h-11 px-3 text-sm font-medium text-[var(--color-fg)]",
               "transition-transform active:scale-95",
               "disabled:opacity-50 disabled:cursor-not-allowed"
             )}
@@ -104,7 +129,7 @@ export function AmountInput({ id, value, onChange, disabled }: AmountInputProps)
           className={cn(
             "hidden md:inline-flex items-center justify-center",
             "rounded-full border border-[var(--color-border)] bg-[var(--color-bg-elev)]",
-            "px-3 py-1.5 text-sm font-medium text-[var(--color-fg)]",
+            "min-h-11 px-3 text-sm font-medium text-[var(--color-fg)]",
             "transition-transform active:scale-95",
             "disabled:opacity-50 disabled:cursor-not-allowed"
           )}

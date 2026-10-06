@@ -3,6 +3,10 @@
 import { cn } from "@/lib/client/utils";
 import { getCategoryToneKey, type CategoryToneKey } from "@/lib/utils/category-tone";
 import type { CategoryResponse } from "@/types/category";
+import { Button } from "@/components/ui/button";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useRovingRadio } from "@/hooks/useRovingRadio";
+import { EyeOff } from "lucide-react";
 
 interface CategoryGridProps {
   categories: CategoryResponse[];
@@ -30,6 +34,15 @@ export function CategoryGrid({
   onSelect,
   disabled,
 }: CategoryGridProps) {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const { getItemProps } = useRovingRadio({
+    values: categories.map((category) => category.uuid),
+    selectedValue: selectedUuid,
+    onChange: onSelect,
+    columns: isDesktop ? 10 : 5,
+    disabled,
+  });
+
   return (
     <div className="grid gap-2 grid-cols-5 md:grid-cols-10" role="radiogroup" aria-label="카테고리 선택">
       {categories.map((category) => {
@@ -37,15 +50,19 @@ export function CategoryGrid({
         const tone = TONE_CLASS[toneKey];
         const isSelected = selectedUuid === category.uuid;
         return (
-          <button
+          <Button
             key={category.uuid}
             type="button"
+            variant={null}
+            size={null}
             role="radio"
             aria-checked={isSelected}
+            aria-label={category.excludeFromBudget ? `${category.name} 예산 제외` : category.name}
             disabled={disabled}
             onClick={() => onSelect(category.uuid)}
+            {...getItemProps(category.uuid)}
             className={cn(
-              "flex flex-col items-center justify-center gap-1 rounded-xl border-[1.5px] px-1 py-2 transition-colors disabled:opacity-50 disabled:pointer-events-none",
+              "relative h-auto min-h-11 min-w-11 w-auto whitespace-normal flex-col gap-1 rounded-xl border-[1.5px] px-1 py-2 transition-colors disabled:pointer-events-none disabled:opacity-50",
               isSelected
                 ? cn(tone.bg, tone.border)
                 : "bg-bg border-border hover:bg-bg-muted",
@@ -62,7 +79,13 @@ export function CategoryGrid({
             >
               {category.name}
             </span>
-          </button>
+            {category.excludeFromBudget && (
+              <EyeOff
+                aria-hidden="true"
+                className="absolute right-1.5 top-1.5 size-3.5 text-fg-muted"
+              />
+            )}
+          </Button>
         );
       })}
     </div>

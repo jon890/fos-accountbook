@@ -26,53 +26,54 @@ public class FamilyResponse {
 
   public static FamilyResponse from(Family family) {
     return FamilyResponse.builder()
-                         .uuid(family.getUuid().getValue())
-                         .name(family.getName())
-                         .monthlyBudget(family.getMonthlyBudget())
-                         .createdAt(family.getCreatedAt())
-                         .updatedAt(family.getUpdatedAt())
-                         .memberCount(family.getMembers() != null ? family.getMembers().size() : 0)
-                         .expenseCount(0)
-                         .categoryCount(0)
-                         .build();
+        .uuid(family.getUuid().getValue())
+        .name(family.getName())
+        .monthlyBudget(family.getMonthlyBudget())
+        .createdAt(family.getCreatedAt())
+        .updatedAt(family.getUpdatedAt())
+        .memberCount(family.getMembers() != null ? family.getMembers().size() : 0)
+        .expenseCount(0)
+        .categoryCount(0)
+        .build();
   }
 
   public static FamilyResponse fromWithMemberCount(Family family, int memberCount) {
     return FamilyResponse.builder()
-                         .uuid(family.getUuid().getValue())
-                         .name(family.getName())
-                         .monthlyBudget(family.getMonthlyBudget())
-                         .createdAt(family.getCreatedAt())
-                         .updatedAt(family.getUpdatedAt())
-                         .memberCount(memberCount)
-                         .expenseCount(0)
-                         .categoryCount(0)
-                         .build();
+        .uuid(family.getUuid().getValue())
+        .name(family.getName())
+        .monthlyBudget(family.getMonthlyBudget())
+        .createdAt(family.getCreatedAt())
+        .updatedAt(family.getUpdatedAt())
+        .memberCount(memberCount)
+        .expenseCount(0)
+        .categoryCount(0)
+        .build();
   }
 
-  public static FamilyResponse fromWithCounts(Family family, int memberCount, int expenseCount, int categoryCount) {
+  public static FamilyResponse fromWithCounts(
+      Family family, int memberCount, int expenseCount, int categoryCount) {
     return FamilyResponse.builder()
-                         .uuid(family.getUuid().getValue())
-                         .name(family.getName())
-                         .monthlyBudget(family.getMonthlyBudget())
-                         .createdAt(family.getCreatedAt())
-                         .updatedAt(family.getUpdatedAt())
-                         .memberCount(memberCount)
-                         .expenseCount(expenseCount)
-                         .categoryCount(categoryCount)
-                         .build();
+        .uuid(family.getUuid().getValue())
+        .name(family.getName())
+        .monthlyBudget(family.getMonthlyBudget())
+        .createdAt(family.getCreatedAt())
+        .updatedAt(family.getUpdatedAt())
+        .memberCount(memberCount)
+        .expenseCount(expenseCount)
+        .categoryCount(categoryCount)
+        .build();
   }
 
   public static FamilyResponse fromProjection(FamilyWithCountsProjection projection) {
     return FamilyResponse.builder()
-                         .uuid(projection.getUuid().getValue())
-                         .name(projection.getName())
-                         .monthlyBudget(projection.getMonthlyBudget())
-                         .createdAt(projection.getCreatedAt())
-                         .updatedAt(projection.getUpdatedAt())
-                         .memberCount(projection.getMemberCount())
-                         .expenseCount(projection.getExpenseCount())
-                         .categoryCount(projection.getCategoryCount())
-                         .build();
+        .uuid(projection.getUuid().getValue())
+        .name(projection.getName())
+        .monthlyBudget(projection.getMonthlyBudget())
+        .createdAt(projection.getCreatedAt())
+        .updatedAt(projection.getUpdatedAt())
+        .memberCount(projection.getMemberCount())
+        .expenseCount(projection.getExpenseCount())
+        .categoryCount(projection.getCategoryCount())
+        .build();
   }
 }

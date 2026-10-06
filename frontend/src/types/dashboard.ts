@@ -74,5 +74,4 @@ export interface DailyStatsWithMembers {
   }>;
   totalIncome: number;
   totalExpense: number;
-  memberExpenseTotals: MemberAmount[];
 }

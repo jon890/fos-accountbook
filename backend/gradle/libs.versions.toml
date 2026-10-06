@@ -2,6 +2,8 @@
 # Spring Boot & Framework
 spring-boot = "4.1.1"
 spring-dependency-management = "1.1.7"
+spotless = "8.10.3"
+google-java-format = "1.36.1"
 
 # Database
 mysql-connector = "9.7.0"
@@ -17,11 +19,14 @@ p6spy = "2.0.1"
 springdoc-openapi = "3.1.1"
 
 # Utilities
-lombok = "1.18.46"
+lombok = "1.18.48"
 querydsl = "5.1.0"
 
 # Cache
 caffeine = "3.3.0"
+
+# Architecture testing
+archunit = "1.5.1"
 
 [libraries]
 # Spring Boot Starters
@@ -60,6 +65,9 @@ querydsl-apt = { module = "com.querydsl:querydsl-apt", version.ref = "querydsl" 
 # Cache
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 
+# Architecture testing
+archunit = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
+
 # Testing
 spring-security-test = { module = "org.springframework.security:spring-security-test" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
@@ -95,4 +103,4 @@ spring-test = [
 # Spring Boot & Framework
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
-
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

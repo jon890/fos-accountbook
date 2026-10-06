@@ -9,6 +9,7 @@ import type { Family } from "@/types/family";
 import {
   Bell,
   ChevronRight,
+  CreditCard,
   Folder,
   RefreshCw,
   Repeat,
@@ -17,7 +18,7 @@ import {
   Wallet,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -34,6 +35,7 @@ const groups = [
       { name: "카테고리", href: "/categories", icon: Folder },
       { name: "예산", href: "/budget", icon: Wallet },
       { name: "고정지출", href: "/transactions?tab=recurring", icon: Repeat },
+      { name: "할부", href: "/transactions?tab=installments", icon: CreditCard },
     ],
   },
   {
@@ -58,7 +60,7 @@ export function MenuPageClient({
   userName,
   selectedFamilyUuid,
 }: MenuPageClientProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const [familySheetOpen, setFamilySheetOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [families, setFamilies] = useState<Family[]>([]);
@@ -89,7 +91,7 @@ export function MenuPageClient({
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 pb-6">
+    <div className="mx-auto max-w-2xl space-y-4 md:space-y-6 md:pb-6">
       <div className="px-1 pt-3">
         <h1 className="text-2xl font-bold text-fg">전체 메뉴</h1>
         <p className="mt-3 font-semibold text-fg">{familyName}</p>

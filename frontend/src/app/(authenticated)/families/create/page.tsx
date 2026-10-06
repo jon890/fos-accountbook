@@ -14,8 +14,8 @@ import { Label } from "@/components/ui/label";
 import { SegmentedToggle } from "@/components/ui/segmented-toggle";
 import { useSessionRefresh } from "@/lib/client/use-session-refresh";
 import { Users } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useAppRouter } from "@/lib/client/navigation";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 const FAMILY_TYPE_OPTIONS = [
@@ -28,9 +28,10 @@ type FamilyType = "personal" | "family";
 export default function CreateFamilyPage() {
   const [familyName, setFamilyName] = useState("");
   const [familyType, setFamilyType] = useState<FamilyType>("family");
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const [isLoading, startCreateTransition] = useTransition();
+  const router = useAppRouter();
   const { refreshSession } = useSessionRefresh();
+  const isPending = isLoading || router.isPending;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,38 +41,36 @@ export default function CreateFamilyPage() {
       return;
     }
 
-    setIsLoading(true);
-
-    try {
-      const result = await createFamilyAction({
+    startCreateTransition(async () => {
+      try {
+        const result = await createFamilyAction({
         name: familyName.trim(),
         description: familyType === "personal" ? "개인 가계부" : undefined,
-      });
+        });
 
-      if (result.success) {
-        await refreshSession();
-        toast.success("가족이 성공적으로 생성되었습니다!");
-        router.push("/calendar");
-      } else {
+        if (result.success) {
+          await refreshSession();
+          toast.success("가족이 성공적으로 생성되었습니다!");
+          router.push("/calendar");
+          return;
+        }
+
         toast.error(result.error.message);
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "가족 생성 중 오류가 발생했습니다. 다시 시도해주세요."
+        );
       }
-    } catch (error) {
-      console.error("Family creation error:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "가족 생성 중 오류가 발생했습니다. 다시 시도해주세요."
-      );
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   return (
-    <div className="min-h-screen bg-bg p-4">
-      <div className="max-w-md mx-auto pt-20">
+    <div className="min-h-screen bg-bg md:p-4">
+      <div className="max-w-md mx-auto md:pt-20">
         <Card className="bg-bg-elev border-border shadow-default">
-          <CardHeader className="text-center pt-8 pb-4">
+          <CardHeader className="text-center pt-6 pb-4 md:pt-8">
             <div className="mx-auto mb-3 w-24 h-24 rounded-full gradient-family flex items-center justify-center">
               <Users className="w-10 h-10 text-brand-fg" strokeWidth={2.2} />
             </div>
@@ -83,8 +82,8 @@ export default function CreateFamilyPage() {
             </CardDescription>
           </CardHeader>
 
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <CardContent className="pt-0 md:pt-0">
+            <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
               {/* 가족 타입 선택 */}
               <div className="space-y-3">
                 <Label className="text-sm font-medium">가족 타입</Label>
@@ -93,7 +92,7 @@ export default function CreateFamilyPage() {
                     options={FAMILY_TYPE_OPTIONS}
                     value={familyType}
                     onChange={(v) => setFamilyType(v)}
-                    disabled={isLoading}
+                    disabled={isPending}
                     ariaLabel="가족 타입 선택"
                   />
                 </div>
@@ -115,7 +114,7 @@ export default function CreateFamilyPage() {
                   value={familyName}
                   onChange={(e) => setFamilyName(e.target.value)}
                   className="h-12"
-                  disabled={isLoading}
+                  disabled={isPending}
                 />
               </div>
 
@@ -123,11 +122,11 @@ export default function CreateFamilyPage() {
               <Button
                 type="submit"
                 className="w-full h-12 bg-brand-500 hover:bg-brand-600 text-brand-fg"
-                disabled={isLoading}
+                disabled={isPending}
               >
-                {isLoading ? (
+                {isPending ? (
                   <div className="flex items-center justify-center">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    <div className="w-4 h-4 border-2 border-brand-fg border-t-transparent rounded-full animate-spin mr-2" />
                     생성 중...
                   </div>
                 ) : (
@@ -137,7 +136,7 @@ export default function CreateFamilyPage() {
             </form>
 
             {/* 안내 박스 */}
-            <div className="mt-6 p-4 bg-brand-50 rounded-md border border-brand-100">
+            <div className="mt-4 p-4 bg-brand-50 rounded-md border border-brand-100 md:mt-6">
               <h4 className="font-semibold text-sm text-brand-700 mb-1">
                 {familyType === "personal"
                   ? "혼자 사용하기"

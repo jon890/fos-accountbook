@@ -17,16 +17,8 @@ Java 21 과 Spring Boot 4 로 만든 가족 가계부 백엔드 API 서버다.
 
 도메인 기반 패키지 구조 (ADR-B16).
 
-```
-com.bifos.accountbook/
-├── shared/                 공통 (auth, aop, dto, exception, filter, utils, value)
-├── user/ family/ category/ expense/ income/ recurring/
-├── invitation/ notification/ dashboard/ apitoken/
-│                           각 도메인 내부 presentation/ application/ domain/ infra/
-└── config/                 Spring 설정 (캐시, 보안, CORS, Security)
-```
-
-각 도메인 내부는 `presentation → application → domain → infra` 단방향 의존성.
+도메인 목록과 레이어 책임은 [docs/code-architecture.md](docs/code-architecture.md) 의 「패키지 구조」 가 소유한다.
+각 도메인 내부 의존성은 `presentation → application → domain ← infra` 이다. infra 는 domain 인터페이스를 구현한다.
 
 ## 실행
 

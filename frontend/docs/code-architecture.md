@@ -81,6 +81,7 @@ wrapper 가 `next/dynamic` 의 `ssr: false` 로 본체를 지연 로드해 recha
 
 - **Server Action**: `{ success: false, error }` 반환 → 클라이언트에서 `toast.error`
 - **HTTP 오류**: ky가 `HTTPError` 발생 → 서비스 레이어에서 catch 후 재throw 또는 null 반환
+- **응답 계약 오류**: `serverApiGet` 같은 래퍼에 `schema` 를 넘기면 `data` 를 Zod 로 검증한다. 어긋나면 엔드포인트와 필드 경로를 로그에 남기고 `ResponseValidationError` 를 던진다. Action 은 이를 내부 오류로 돌려준다 (ADR-F42)
 - **필드 검증 실패(400)**: 백엔드 응답의 `errors[0].message` 가 있으면 그 문구를 `INVALID_INPUT` 실패 결과의 메시지로 그대로 돌려준다. 백엔드가 사용자용 문장으로 만든 문구라서다. 없으면 기본 문구로 바꾼다
 - **인증 오류**: `requireAuthOrRedirect()` → `/auth/signin` 리다이렉트
 
@@ -108,11 +109,12 @@ wrapper 가 `next/dynamic` 의 `ssr: false` 로 본체를 지연 로드해 recha
 src/
 ├── actions/{domain}/       Server Action — 인증·검증·revalidatePath
 ├── services/{domain}/      API 호출·변환 함수
+├── lib/schemas/responses/ 백엔드 응답 Zod 스키마 (ADR-F42)
 ├── components/
 │   ├── ui/                 Shadcn 기반 기본 컴포넌트
 │   ├── layout/             Header, BottomNavigation, SettingsCard (페이지 카드 helper)
 │   └── {domain}/           도메인별 UI 컴포넌트
-├── components/calendar/    달력 홈 (CalendarHome, CalendarGrid, DayTransactionList, MemberTotals)
+├── components/calendar/    달력 홈 (CalendarHome, BudgetSummaryCard, CalendarGrid, DayTransactionList, MemberLegend)
 ├── app/(authenticated)/    인증 필요 라우트 (Server Component 기본). 첫 화면은 calendar/, 전체 메뉴는 menu/
 ├── app/api/auth/           NextAuth API Route
 └── __tests__/              서비스 단위 테스트
@@ -133,6 +135,11 @@ src/
 
 ---
 
+## 화면 전환
+
+- 클라이언트 이동은 `src/lib/client/navigation.tsx` 의 `useAppRouter` 로 한다. `next/navigation` 의 `useRouter` 직접 사용은 ESLint 가 막는다 (ADR-F39).
+- `NavigationProgressProvider` 가 전역 대기 상태를 갖고 `NavigationProgressBar` 가 그 상태로 상단 진행 막대를 그린다. 둘 다 `src/app/providers.tsx` 에 놓인다.
+
 ## 디자인 토큰 / 테마
 
 - **단일 소스**: `src/app/globals.css` 의 `@theme` 블록. OKLCH 평면 값 (ADR-F13).
@@ -142,6 +149,9 @@ src/
   - `--color-neutral-{0..950}` — cool gray h=230
   - `--color-{bg|bg-elev|bg-muted|fg|fg-muted|fg-subtle|border|border-strong}` — surface 토큰 (light/dark 분리)
 - **Dark mode**: `[data-theme="dark"]` 셀렉터 (ADR-F15). `next-themes` `attribute="data-theme"`.
+- **다크 값**: 라이트 전용 값을 가진 토큰(`brand-tint`, `brand-{50|100|200}`, `brand-{700|800|900}`, `cat-*`, 바탕 그라디언트)은 다크 블록에서 다시 정의한다. `brand-ink` 와 `neutral-0` 은 테마와 무관한 고정값이다 (ADR-F38).
+- **테마 선택**: 설정 화면에서 시스템, 라이트, 다크를 고른다. `next-themes` 가 그 기기의 브라우저에 저장한다 (ADR-F38).
 - **시맨틱 그라디언트 클래스**: `gradient-{primary|expense|income|budget|family|category}` 6종 — 클래스명 유지, 값만 OKLCH.
 - **수치 표기**: `.num` 또는 `data-num` — Inter + `tabular-nums` (ADR-F14).
+- **금지**: Tailwind 기본 팔레트 클래스(`gray-*`, `blue-*`, `white` 등). 단위 테스트가 소스를 검사한다 (ADR-F38).
 - **금지**: hex / rgb / hsl 직접 작성 (`oklch()` 또는 토큰 변수만). `style={{ color: ... }}` inline 토큰 직접 표기 — `text-[var(--token)]` arbitrary class 사용.

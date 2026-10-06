@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { AlertTriangle, AlertCircle, XCircle } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/client/utils";
+import { useAppRouter } from "@/lib/client/navigation";
 import { useTimeZone } from "@/lib/client/timezone-context";
 import { markNotificationReadAction } from "@/actions/notification/mark-notification-read-action";
 import type {
@@ -13,7 +15,17 @@ import type {
 interface NotificationItemProps {
   notification: Notification;
   onRead?: (notificationUuid: string) => void;
+  onNavigate?: () => void;
 }
+
+const BUDGET_NOTIFICATION_TYPES: readonly NotificationType[] = [
+  "BUDGET_50_EXCEEDED",
+  "BUDGET_80_EXCEEDED",
+  "BUDGET_100_EXCEEDED",
+];
+
+const isBudgetNotification = (type: NotificationType) =>
+  BUDGET_NOTIFICATION_TYPES.includes(type);
 
 // 2단계 톤 매핑
 type NotificationTone = "warning" | "expense" | "brand";
@@ -74,29 +86,57 @@ const formatDate = (dateString: string, timezone: string) => {
 export function NotificationItem({
   notification,
   onRead,
+  onNavigate,
 }: NotificationItemProps) {
   const [isReading, setIsReading] = useState(false);
   const { timezone } = useTimeZone();
+  const router = useAppRouter();
+  const isBusy = isReading || router.isPending;
 
   const handleClick = async () => {
-    if (notification.isRead || isReading) return;
+    if (isBusy) return;
+
+    const shouldNavigate = isBudgetNotification(notification.type);
+
+    if (notification.isRead) {
+      if (shouldNavigate) {
+        router.push("/budget");
+        onNavigate?.();
+      }
+      return;
+    }
 
     setIsReading(true);
-    const result = await markNotificationReadAction(
-      notification.familyUuid,
-      notification.notificationUuid
-    );
-    if (result.success) {
-      onRead?.(notification.notificationUuid);
+    try {
+      const result = await markNotificationReadAction(
+        notification.familyUuid,
+        notification.notificationUuid,
+      );
+      if (result.success) {
+        onRead?.(notification.notificationUuid);
+      } else {
+        toast.error("알림 읽음 처리에 실패했어요. 다시 시도해 주세요.");
+      }
+    } catch {
+      toast.error("알림 읽음 처리에 실패했어요. 다시 시도해 주세요.");
+    } finally {
+      setIsReading(false);
     }
-    setIsReading(false);
+
+    // 읽음 처리가 실패해도 예산 화면으로는 보낸다. 사용자가 가려던 곳은 예산이다.
+    if (shouldNavigate) {
+      router.push("/budget");
+      onNavigate?.();
+    }
   };
 
   return (
     <button
       onClick={handleClick}
+      disabled={isBusy}
+      aria-busy={isBusy}
       className={cn(
-        "w-full p-4 text-left transition-colors hover:bg-bg-muted",
+        "w-full p-3 text-left transition-colors hover:bg-bg-muted disabled:cursor-wait disabled:opacity-60 md:p-4",
         !notification.isRead && "bg-brand-50/50"
       )}
     >

@@ -8,15 +8,13 @@
 export interface InvitationResponse {
   uuid: string;
   familyUuid: string;
-  familyName?: string;
+  familyName: string | null;
   token: string;
   status: string; // "PENDING" | "ACCEPTED" | "EXPIRED" | "CANCELLED"
   expiresAt: string;
   createdAt: string;
-  isExpired: boolean;
-  isUsed: boolean;
-  inviter?: { name: string; avatarUrl: string | null } | null;
-  memberCount?: number | null;
+  inviter: { name: string | null; avatarUrl: string | null } | null;
+  memberCount: number | null;
 }
 
 /**

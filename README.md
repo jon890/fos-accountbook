@@ -17,6 +17,7 @@
 | 반복 지출 | 매월 정한 날에 지출을 자동으로 만든다 |
 | 카테고리 | 가족별 카테고리, 색상과 아이콘, 예산 제외 설정 |
 | 예산 | 월 예산과 진행률, 50·80·100% 도달 알림 |
+| 할부 | 할부를 기록하고 회차와 남은 금액을 본다. 예산에는 넣지 않는다 |
 | 분석 | 월별 지출 추이, 카테고리별 비중과 전월 대비 변동 |
 | 알림 센터 | 예산 알림과 반복 지출 생성 알림, 읽음 처리 |
 | 외부 연동 토큰 | AI 에이전트 같은 외부 도구가 가계부 API 를 부를 수 있게 사용자별 토큰을 발급하고 폐기한다 |
@@ -62,7 +63,7 @@ cd frontend && pnpm install && pnpm dev
 
 ```bash
 cd frontend && pnpm lint && pnpm test
-cd backend && ./gradlew checkstyleMain checkstyleTest test
+cd backend && ./gradlew qualityCheck test
 ```
 
 ## CI와 배포

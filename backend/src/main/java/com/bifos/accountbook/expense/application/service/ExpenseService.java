@@ -1,27 +1,29 @@
 package com.bifos.accountbook.expense.application.service;
 
-import com.bifos.accountbook.shared.aop.FamilyValidationService;
-
+import com.bifos.accountbook.category.application.service.CategoryService;
+import com.bifos.accountbook.category.domain.entity.Category;
+import com.bifos.accountbook.category.domain.repository.CategoryRepository;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.expense.application.dto.CreateExpenseRequest;
 import com.bifos.accountbook.expense.application.dto.ExpenseResponse;
 import com.bifos.accountbook.expense.application.dto.ExpenseSearchRequest;
 import com.bifos.accountbook.expense.application.dto.UpdateExpenseRequest;
 import com.bifos.accountbook.expense.application.event.ExpenseCreatedEvent;
 import com.bifos.accountbook.expense.application.event.ExpenseUpdatedEvent;
+import com.bifos.accountbook.expense.domain.entity.Expense;
+import com.bifos.accountbook.expense.domain.repository.ExpenseRepository;
+import com.bifos.accountbook.family.application.access.FamilyUuid;
+import com.bifos.accountbook.family.application.access.FamilyValidationService;
+import com.bifos.accountbook.family.application.access.UserUuid;
+import com.bifos.accountbook.family.application.access.ValidateFamilyAccess;
 import com.bifos.accountbook.shared.exception.BusinessException;
 import com.bifos.accountbook.shared.exception.ErrorCode;
-import com.bifos.accountbook.category.application.service.CategoryService;
-import com.bifos.accountbook.category.domain.entity.Category;
-import com.bifos.accountbook.expense.domain.entity.Expense;
-import com.bifos.accountbook.user.domain.entity.User;
-import com.bifos.accountbook.category.domain.repository.CategoryRepository;
-import com.bifos.accountbook.expense.domain.repository.ExpenseRepository;
-import com.bifos.accountbook.user.application.service.UserService;
+import com.bifos.accountbook.shared.utils.BusinessTime;
 import com.bifos.accountbook.shared.value.CustomUuid;
-import com.bifos.accountbook.shared.aop.FamilyUuid;
-import com.bifos.accountbook.shared.aop.UserUuid;
-import com.bifos.accountbook.shared.aop.ValidateFamilyAccess;
+import com.bifos.accountbook.user.application.service.UserService;
+import com.bifos.accountbook.user.domain.entity.User;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,37 +47,29 @@ public class ExpenseService {
   private final UserService userService; // 사용자 조회
   private final FamilyValidationService familyValidationService; // 가족 검증 로직
   private final ApplicationEventPublisher eventPublisher; // 이벤트 발행
+  private final Clock clock;
 
-  /**
-   * 특정 카테고리의 모든 지출을 가족의 기본 카테고리로 이동
-   * CategoryService에서 카테고리 삭제 시 호출됨
-   */
+  /** 특정 카테고리의 모든 지출을 가족의 기본 카테고리로 이동 CategoryService에서 카테고리 삭제 시 호출됨 */
   @Transactional
   public void moveExpensesToDefaultCategory(CustomUuid familyUuid, CustomUuid oldCategoryUuid) {
-    // 기본 카테고리(미분류) 조회 또는 생성
-    Category defaultCategory = categoryRepository.getDefaultCategoryByFamily(familyUuid)
-        .orElseGet(() -> {
-          log.warn("Default category not found for family: {}. Creating new one.", familyUuid.getValue());
-          Category newDefault = Category.builder()
-                                        .familyUuid(familyUuid)
-                                        .name("미분류")
-                                        .color("#9ca3af")
-                                        .icon("📂")
-                                        .isDefault(true)
-                                        .build();
-          return categoryRepository.save(newDefault);
-        });
+    // 지출 기본 카테고리(미분류) 조회
+    Category defaultCategory =
+        categoryRepository
+            .getDefaultCategoryByFamily(familyUuid, CategoryType.EXPENSE)
+            .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
 
     // 지출 이동
     expenseRepository.moveExpenses(oldCategoryUuid, defaultCategory.getUuid());
-    log.info("Moved expenses from category {} to default category {}", oldCategoryUuid, defaultCategory.getUuid());
+    log.info(
+        "Moved expenses from category {} to default category {}",
+        oldCategoryUuid,
+        defaultCategory.getUuid());
   }
 
-  /**
-   * 지출 생성
-   */
+  /** 지출 생성 */
   @Transactional
-  public ExpenseResponse createExpense(CustomUuid userUuid, CustomUuid familyUuid, CreateExpenseRequest request) {
+  public ExpenseResponse createExpense(
+      CustomUuid userUuid, CustomUuid familyUuid, CreateExpenseRequest request) {
     CustomUuid categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
 
     // 사용자 확인
@@ -85,16 +79,20 @@ public class ExpenseService {
     var family = familyValidationService.validateAndGetFamily(userUuid, familyUuid);
 
     // 카테고리 확인 + 가족 소속 검증 (캐시 활용, DB 조회 없음)
-    categoryService.validateAndFindCached(familyUuid, categoryCustomUuid);
+    categoryService.validateAndFindCached(familyUuid, categoryCustomUuid, CategoryType.EXPENSE);
 
-    // 지출 생성 (ORM 편의 메서드 활용)
-    Expense expense = family.addExpense(
-        request.getAmount(),
-        categoryCustomUuid,
-        user.getUuid(),
-        request.getDescription(),
-        request.getDate() != null ? request.getDate() : LocalDateTime.now()
-    );
+    Expense expense =
+        Expense.builder()
+            .family(family)
+            .categoryUuid(categoryCustomUuid)
+            .userUuid(user.getUuid())
+            .amount(request.getAmount())
+            .description(request.getDescription())
+            .date(
+                request.getDate() != null
+                    ? request.getDate()
+                    : LocalDateTime.now(clock.withZone(BusinessTime.ZONE)))
+            .build();
 
     // 예산 제외 플래그 설정
     if (request.getExcludeFromBudget() != null) {
@@ -104,32 +102,29 @@ public class ExpenseService {
     expense = expenseRepository.save(expense);
 
     // 이벤트 발행 - 예산 알림 체크를 트리거
-    eventPublisher.publishEvent(new ExpenseCreatedEvent(
-        expense.getUuid(),
-        expense.getFamilyUuid(),
-        expense.getUserUuid(),
-        expense.getAmount(),
-        expense.getDate()
-    ));
+    eventPublisher.publishEvent(
+        new ExpenseCreatedEvent(
+            expense.getUuid(),
+            expense.getFamilyUuid(),
+            expense.getUserUuid(),
+            expense.getAmount(),
+            expense.getDate()));
 
     return ExpenseResponse.fromWithoutCategory(expense);
   }
 
-  /**
-   * 가족의 지출 목록 조회 (페이징)
-   */
-  public Page<ExpenseResponse> getFamilyExpenses(CustomUuid userUuid, CustomUuid familyUuid, int page, int size) {
-    ExpenseSearchRequest searchRequest = ExpenseSearchRequest.builder()
-                                                             .page(page)
-                                                             .size(size)
-                                                             .build();
+  /** 가족의 지출 목록 조회 (페이징) */
+  public Page<ExpenseResponse> getFamilyExpenses(
+      CustomUuid userUuid, CustomUuid familyUuid, int page, int size) {
+    ExpenseSearchRequest searchRequest =
+        ExpenseSearchRequest.builder().page(page).size(size).build();
     return getFamilyExpenses(userUuid, familyUuid, searchRequest);
   }
 
   /**
    * 가족의 지출 목록 조회 (페이징 + 필터링)
-   * <p>
-   * QueryDSL 동적 쿼리로 필터링을 처리합니다.
+   *
+   * <p>QueryDSL 동적 쿼리로 필터링을 처리합니다.
    */
   @ValidateFamilyAccess
   public Page<ExpenseResponse> getFamilyExpenses(
@@ -162,29 +157,30 @@ public class ExpenseService {
     }
 
     // 페이징 설정
-    Pageable pageable = PageRequest.of(
-        searchRequest.getPage(),
-        searchRequest.getSize(),
-        Sort.by(Sort.Direction.DESC, "date", "id"));
+    Pageable pageable =
+        PageRequest.of(
+            searchRequest.getPage(),
+            searchRequest.getSize(),
+            Sort.by(Sort.Direction.DESC, "date", "id"));
 
     // QueryDSL이 null 조건을 자동으로 처리하므로 단일 메서드 호출
-    Page<Expense> expenses = expenseRepository.findByFamilyUuidWithFilters(
-        familyUuid,
-        categoryUuid,
-        startDateTime,
-        endDateTime,
-        pageable);
+    Page<Expense> expenses =
+        expenseRepository.findByFamilyUuidWithFilters(
+            familyUuid, categoryUuid, startDateTime, endDateTime, pageable);
 
     return expenses.map(ExpenseResponse::fromWithoutCategory);
   }
 
-  /**
-   * 지출 상세 조회
-   */
-  public ExpenseResponse getExpense(CustomUuid userUuid, CustomUuid familyUuid, CustomUuid expenseUuid) {
-    Expense expense = expenseRepository.findActiveByUuid(expenseUuid)
-                                       .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_NOT_FOUND)
-                                           .addParameter("expenseUuid", expenseUuid.getValue()));
+  /** 지출 상세 조회 */
+  public ExpenseResponse getExpense(
+      CustomUuid userUuid, CustomUuid familyUuid, CustomUuid expenseUuid) {
+    Expense expense =
+        expenseRepository
+            .findActiveByUuid(expenseUuid)
+            .orElseThrow(
+                () ->
+                    new BusinessException(ErrorCode.EXPENSE_NOT_FOUND)
+                        .addParameter("expenseUuid", expenseUuid.getValue()));
 
     // URL familyUuid와 지출의 familyUuid 일치 여부 검증 (IDOR 방지)
     if (!expense.getFamilyUuid().equals(familyUuid)) {
@@ -197,15 +193,20 @@ public class ExpenseService {
     return ExpenseResponse.fromWithoutCategory(expense);
   }
 
-  /**
-   * 지출 수정
-   */
+  /** 지출 수정 */
   @Transactional
   public ExpenseResponse updateExpense(
-      CustomUuid userUuid, CustomUuid familyUuid, CustomUuid expenseUuid, UpdateExpenseRequest request) {
-    Expense expense = expenseRepository.findActiveByUuid(expenseUuid)
-                                       .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_NOT_FOUND)
-                                           .addParameter("expenseUuid", expenseUuid.getValue()));
+      CustomUuid userUuid,
+      CustomUuid familyUuid,
+      CustomUuid expenseUuid,
+      UpdateExpenseRequest request) {
+    Expense expense =
+        expenseRepository
+            .findActiveByUuid(expenseUuid)
+            .orElseThrow(
+                () ->
+                    new BusinessException(ErrorCode.EXPENSE_NOT_FOUND)
+                        .addParameter("expenseUuid", expenseUuid.getValue()));
 
     // URL familyUuid와 지출의 familyUuid 일치 여부 검증 (IDOR 방지)
     if (!expense.getFamilyUuid().equals(familyUuid)) {
@@ -219,7 +220,8 @@ public class ExpenseService {
     CustomUuid categoryCustomUuid = null;
     if (request.getCategoryUuid() != null) {
       categoryCustomUuid = CustomUuid.from(request.getCategoryUuid());
-      categoryService.validateAndFindCached(expense.getFamilyUuid(), categoryCustomUuid);
+      categoryService.validateAndFindCached(
+          expense.getFamilyUuid(), categoryCustomUuid, CategoryType.EXPENSE);
     }
 
     // 이벤트 발행을 위해 기존 금액 저장
@@ -227,11 +229,7 @@ public class ExpenseService {
 
     // 지출 정보 업데이트
     expense.update(
-        categoryCustomUuid,
-        request.getAmount(),
-        request.getDescription(),
-        request.getDate()
-    );
+        categoryCustomUuid, request.getAmount(), request.getDescription(), request.getDate());
 
     // 예산 제외 플래그 업데이트
     if (request.getExcludeFromBudget() != null) {
@@ -240,27 +238,29 @@ public class ExpenseService {
 
     // 이벤트 발행 - 금액이 변경된 경우 예산 알림 체크를 트리거
     if (request.getAmount() != null && !oldAmount.equals(request.getAmount())) {
-      eventPublisher.publishEvent(new ExpenseUpdatedEvent(
-          expense.getUuid(),
-          expense.getFamilyUuid(),
-          expense.getUserUuid(),
-          expense.getAmount(),
-          oldAmount,
-          expense.getDate()
-      ));
+      eventPublisher.publishEvent(
+          new ExpenseUpdatedEvent(
+              expense.getUuid(),
+              expense.getFamilyUuid(),
+              expense.getUserUuid(),
+              expense.getAmount(),
+              oldAmount,
+              expense.getDate()));
     }
 
     return ExpenseResponse.fromWithoutCategory(expense);
   }
 
-  /**
-   * 지출 삭제 (Soft Delete)
-   */
+  /** 지출 삭제 (Soft Delete) */
   @Transactional
   public void deleteExpense(CustomUuid userUuid, CustomUuid familyUuid, CustomUuid expenseUuid) {
-    Expense expense = expenseRepository.findActiveByUuid(expenseUuid)
-                                       .orElseThrow(() -> new BusinessException(ErrorCode.EXPENSE_NOT_FOUND)
-                                           .addParameter("expenseUuid", expenseUuid.getValue()));
+    Expense expense =
+        expenseRepository
+            .findActiveByUuid(expenseUuid)
+            .orElseThrow(
+                () ->
+                    new BusinessException(ErrorCode.EXPENSE_NOT_FOUND)
+                        .addParameter("expenseUuid", expenseUuid.getValue()));
 
     // URL familyUuid와 지출의 familyUuid 일치 여부 검증 (IDOR 방지)
     if (!expense.getFamilyUuid().equals(familyUuid)) {

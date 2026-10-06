@@ -36,41 +36,41 @@ public class InvitationResponse {
     private String avatarUrl;
 
     public static InviterInfo from(User user) {
-      return InviterInfo.builder()
-                        .name(user.getName())
-                        .avatarUrl(user.getImage())
-                        .build();
+      return InviterInfo.builder().name(user.getName()).avatarUrl(user.getImage()).build();
     }
   }
 
-  public static InvitationResponse from(Invitation invitation) {
-    boolean isExpired = invitation.getExpiresAt().isBefore(LocalDateTime.now());
+  public static InvitationResponse from(Invitation invitation, LocalDateTime now) {
+    boolean isExpired = invitation.getExpiresAt().isBefore(now);
     boolean isUsed = InvitationStatus.ACCEPTED == invitation.getStatus();
 
     return InvitationResponse.builder()
-                             .uuid(invitation.getUuid().getValue())
-                             .familyUuid(invitation.getFamilyUuid().getValue())
-                             .token(invitation.getToken())
-                             .status(invitation.getStatus())
-                             .expiresAt(invitation.getExpiresAt())
-                             .createdAt(invitation.getCreatedAt())
-                             .isExpired(isExpired)
-                             .isUsed(isUsed)
-                             .build();
+        .uuid(invitation.getUuid().getValue())
+        .familyUuid(invitation.getFamilyUuid().getValue())
+        .token(invitation.getToken())
+        .status(invitation.getStatus())
+        .expiresAt(invitation.getExpiresAt())
+        .createdAt(invitation.getCreatedAt())
+        .isExpired(isExpired)
+        .isUsed(isUsed)
+        .build();
   }
 
-  public static InvitationResponse fromWithFamilyName(Invitation invitation, String familyName) {
-    return from(invitation).toBuilder()
-                           .familyName(familyName)
-                           .build();
+  public static InvitationResponse fromWithFamilyName(
+      Invitation invitation, String familyName, LocalDateTime now) {
+    return from(invitation, now).toBuilder().familyName(familyName).build();
   }
 
-  public static InvitationResponse fromWithDetails(Invitation invitation, String familyName,
-      User inviterUser, int memberCount) {
-    return from(invitation).toBuilder()
-                           .familyName(familyName)
-                           .inviter(inviterUser != null ? InviterInfo.from(inviterUser) : null)
-                           .memberCount(memberCount)
-                           .build();
+  public static InvitationResponse fromWithDetails(
+      Invitation invitation,
+      String familyName,
+      User inviterUser,
+      int memberCount,
+      LocalDateTime now) {
+    return from(invitation, now).toBuilder()
+        .familyName(familyName)
+        .inviter(inviterUser != null ? InviterInfo.from(inviterUser) : null)
+        .memberCount(memberCount)
+        .build();
   }
 }

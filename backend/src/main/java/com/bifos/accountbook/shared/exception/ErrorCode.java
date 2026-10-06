@@ -4,10 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-/**
- * 에러 코드 및 메시지 정의
- * 비즈니스 예외 발생 시 사용할 에러 정보를 관리
- */
+/** 에러 코드 및 메시지 정의 비즈니스 예외 발생 시 사용할 에러 정보를 관리 */
 @Getter
 @AllArgsConstructor
 public enum ErrorCode {
@@ -55,6 +52,7 @@ public enum ErrorCode {
   CATEGORY_ALREADY_EXISTS(HttpStatus.CONFLICT, "CT002", "이미 존재하는 카테고리입니다"),
   CANNOT_DELETE_CATEGORY_IN_USE(HttpStatus.BAD_REQUEST, "CT003", "사용 중인 카테고리는 삭제할 수 없습니다"),
   CANNOT_DELETE_DEFAULT_CATEGORY(HttpStatus.BAD_REQUEST, "CT004", "기본 카테고리는 삭제할 수 없습니다"),
+  CATEGORY_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "CT005", "거래 종류와 카테고리 종류가 맞지 않습니다"),
 
   // ============================================
   // Expense Errors (6000~6999)
@@ -96,17 +94,27 @@ public enum ErrorCode {
   // Api Token Errors (9000~9999)
   // ============================================
   API_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "AT001", "연동 토큰을 찾을 수 없습니다"),
-  API_TOKEN_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "AT002", "연동 토큰은 5개까지 만들 수 있습니다");
+  API_TOKEN_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "AT002", "연동 토큰은 5개까지 만들 수 있습니다"),
+
+  // ============================================
+  // Budget Item Errors
+  // ============================================
+  BUDGET_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "BI001", "예산 항목을 찾을 수 없습니다"),
+  BUDGET_ITEM_CATEGORY_CONFLICT(HttpStatus.CONFLICT, "BI002", "이미 다른 예산 항목에 속한 카테고리입니다"),
+  BUDGET_ITEM_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "BI003", "예산 항목은 10개까지 만들 수 있습니다"),
+  BUDGET_ITEM_ALREADY_EXISTS(HttpStatus.CONFLICT, "BI004", "이미 존재하는 예산 항목입니다"),
+
+  // ============================================
+  // Installment Errors
+  // ============================================
+  INSTALLMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "IS001", "할부를 찾을 수 없습니다");
 
   private final HttpStatus httpStatus;
   private final String code;
   private final String message;
 
-  /**
-   * HTTP 상태 코드 반환
-   */
+  /** HTTP 상태 코드 반환 */
   public int getStatusCode() {
     return httpStatus.value();
   }
 }
-

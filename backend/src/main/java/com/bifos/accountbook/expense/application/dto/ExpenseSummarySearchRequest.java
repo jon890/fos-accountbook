@@ -8,49 +8,34 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 지출 요약 검색 요청 DTO
- */
+/** 지출 요약 검색 요청 DTO */
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ExpenseSummarySearchRequest {
 
-  /**
-   * 시작 날짜
-   */
+  /** 시작 날짜 */
   private LocalDateTime startDate;
 
-  /**
-   * 종료 날짜
-   */
+  /** 종료 날짜 */
   private LocalDateTime endDate;
 
-  /**
-   * 카테고리 UUID (선택)
-   */
+  /** 카테고리 UUID (선택) */
   private String categoryUuid;
 
-  /**
-   * 기본값으로 요청 생성
-   */
+  /** 기본값으로 요청 생성 */
   public static ExpenseSummarySearchRequest withDefaults(
-      String startDate,
-      String endDate,
-      String categoryUuid) {
+      String startDate, String endDate, String categoryUuid) {
 
     return ExpenseSummarySearchRequest.builder()
-                                      .startDate(parseDateTime(startDate, true))
-                                      .endDate(parseDateTime(endDate, false))
-                                      .categoryUuid(categoryUuid)
-                                      .build();
+        .startDate(parseDateTime(startDate, true))
+        .endDate(parseDateTime(endDate, false))
+        .categoryUuid(categoryUuid)
+        .build();
   }
 
-  /**
-   * 날짜 문자열을 LocalDateTime으로 파싱
-   * 날짜만 있는 경우(2025-10-31) 또는 전체 DateTime(2025-10-31T00:00:00) 모두 지원
-   */
+  /** 날짜 문자열을 LocalDateTime으로 파싱 날짜만 있는 경우(2025-10-31) 또는 전체 DateTime(2025-10-31T00:00:00) 모두 지원 */
   private static LocalDateTime parseDateTime(String dateStr, boolean isStartDate) {
     if (dateStr == null || dateStr.isEmpty()) {
       return null;
@@ -71,4 +56,3 @@ public class ExpenseSummarySearchRequest {
     }
   }
 }
-

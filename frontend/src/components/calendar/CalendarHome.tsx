@@ -1,13 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
+import { useSearchParams } from "next/navigation";
+import { useAppRouter, useNavigationPending } from "@/lib/client/navigation";
+import { revealAndFocus } from "@/lib/client/reveal";
 import { AddTransactionDialog } from "@/components/transactions/dialogs/AddTransactionDialog";
 import { EditTransactionDialog } from "@/components/transactions/dialogs/EditTransactionDialog";
 import { buildMemberColorMap } from "@/lib/utils/member-color";
 import type { CalendarMonth } from "@/types/calendar";
 import { MonthHeader } from "./MonthHeader";
-import { MemberTotals } from "./MemberTotals";
+import { BudgetSummaryCard } from "./BudgetSummaryCard";
+import { MemberLegend } from "./MemberLegend";
 import { CalendarGrid } from "./CalendarGrid";
 import { DayTransactionList, type CalendarTransaction } from "./DayTransactionList";
 
@@ -23,9 +27,11 @@ export function CalendarHome(props: CalendarHomeProps) {
 }
 
 function CalendarMonthContent({ data, initialDate, today, familyUuid }: CalendarHomeProps) {
-  const router = useRouter();
+  const router = useAppRouter();
+  const isNavigationPending = useNavigationPending();
   const urlDate = useSearchParams().get("date");
   const [dateDraft, setDateDraft] = useState<string | null>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const [previousInitialDate, setPreviousInitialDate] = useState(initialDate);
   const [previousUrlDate, setPreviousUrlDate] = useState(urlDate);
   const [addOpen, setAddOpen] = useState(false);
@@ -64,10 +70,16 @@ function CalendarMonthContent({ data, initialDate, today, familyUuid }: Calendar
   }, [selectedDate, urlDate]);
 
   function selectDate(date: string) {
-    setDateDraft(date);
+    // 제목에 새 날짜가 그려진 뒤 포커스를 옮겨야 화면 낭독기가 고른 날짜를 읽는다
+    flushSync(() => setDateDraft(date));
+    revealAndFocus(headingRef.current);
   }
 
   function moveMonth(direction: -1 | 1) {
+    if (isNavigationPending) {
+      return;
+    }
+
     const nextMonth = new Date(Date.UTC(data.year, data.month - 1 + direction, 1));
     const year = nextMonth.getUTCFullYear();
     if (year < 2000 || year > 2100) {
@@ -79,26 +91,38 @@ function CalendarMonthContent({ data, initialDate, today, familyUuid }: Calendar
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <MonthHeader year={data.year} month={data.month} onMove={moveMonth} />
-      <MemberTotals daily={data.daily} colors={colors} />
-      <CalendarGrid
+      <MonthHeader
         year={data.year}
         month={data.month}
-        dailyStats={data.daily.dailyStats}
-        colors={colors}
-        selectedDate={selectedDate}
-        today={today}
-        onSelect={selectDate}
+        onMove={moveMonth}
+        isNavigationPending={isNavigationPending}
       />
-      <DayTransactionList
-        selectedDate={selectedDate}
-        expenseTotal={expenseTotal}
-        expenses={data.expenses}
-        incomes={data.incomes}
-        colors={colors}
-        onAdd={() => setAddOpen(true)}
-        onEdit={setEditing}
-      />
+      <BudgetSummaryCard summary={data.budgetSummary} />
+      <MemberLegend colors={colors} />
+      <div
+        aria-busy={isNavigationPending}
+        className={`space-y-4 transition-opacity ${isNavigationPending ? "pointer-events-none opacity-60" : ""}`}
+      >
+        <CalendarGrid
+          year={data.year}
+          month={data.month}
+          dailyStats={data.daily.dailyStats}
+          colors={colors}
+          selectedDate={selectedDate}
+          today={today}
+          onSelect={selectDate}
+        />
+        <DayTransactionList
+          headingRef={headingRef}
+          selectedDate={selectedDate}
+          expenseTotal={expenseTotal}
+          expenses={data.expenses}
+          incomes={data.incomes}
+          colors={colors}
+          onAdd={() => setAddOpen(true)}
+          onEdit={setEditing}
+        />
+      </div>
       <AddTransactionDialog open={addOpen} onOpenChange={setAddOpen} defaultDate={selectedDate} />
       {editing && editingTransaction && (
         <EditTransactionDialog

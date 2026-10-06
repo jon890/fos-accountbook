@@ -56,8 +56,21 @@
       <property name="allowByTailComment" value="true"/>
       <property name="allowNonPrintableEscapes" value="true"/>
     </module>
-    <!-- AvoidStarImport: 프로젝트에서 star import 허용 -->
-    <!-- <module name="AvoidStarImport"/> -->
+    <module name="AvoidStarImport">
+      <property name="allowStaticMemberImports" value="true"/>
+    </module>
+    <module name="IllegalImport">
+      <property name="illegalClasses" value="lombok.Data"/>
+      <message key="import.illegal"
+               value="NO_LOMBOK_DATA: lombok.Data import는 사용할 수 없습니다."/>
+    </module>
+    <module name="MatchXpath">
+      <property name="id" value="NO_LOMBOK_DATA"/>
+      <property name="query"
+                value="//ANNOTATION[./IDENT[@text='Data'] or ./DOT[./IDENT[@text='lombok'] and ./IDENT[@text='Data']]]"/>
+      <message key="matchxpath.match"
+               value="NO_LOMBOK_DATA: @Data와 @lombok.Data는 사용할 수 없습니다."/>
+    </module>
     <module name="OneTopLevelClass"/>
     <module name="NoLineWrap">
       <property name="tokens" value="PACKAGE_DEF, IMPORT, STATIC_IMPORT"/>
@@ -316,7 +329,8 @@
     <!-- <module name="NonEmptyAtclauseDescription"/> -->
     <!-- InvalidJavadocPosition: Javadoc 위치 검사 완화 -->
     <!-- <module name="InvalidJavadocPosition"/> -->
-    <module name="JavadocTagContinuationIndentation"/>
+    <!-- google-java-format이 Javadoc 줄바꿈을 결정하므로 continuation indentation 검사는 끈다. -->
+    <!-- <module name="JavadocTagContinuationIndentation"/> -->
     <!-- SummaryJavadoc: Javadoc 요약 마침표 검사 완화 -->
     <!--
     <module name="SummaryJavadoc">
@@ -387,4 +401,3 @@
     </module>
   </module>
 </module>
-

@@ -1,4 +1,4 @@
-# Data Schema — fos-accountbook (프론트엔드 타입)
+# fos-accountbook 프론트엔드 타입
 
 > **소유권**: DB 스키마·API 스펙의 canonical 소스는 `backend/`.
 > → [`backend/docs/data-schema.md`](../../backend/docs/data-schema.md) 참고
@@ -61,7 +61,7 @@ type UserProfile = {
   timezone: string; // 'Asia/Seoul'
   language: string; // 'ko' | 'en' | 'ja'
   currency: string; // 'KRW' | 'USD' | 'JPY'
-  defaultFamilyUuid: string;
+  defaultFamilyUuid: string | null; // 가족을 고르기 전에는 null
 };
 
 // NextAuth JWT 확장
@@ -106,17 +106,19 @@ interface FamilyMemberSummary {
 interface Category {
   uuid: string;
   familyUuid: string;
+  type: "EXPENSE" | "INCOME";
   name: string;
   color?: string; // #RRGGBB(기존 값, 기본 카테고리) 또는 oklch(L C H)(팔레트에서 고른 값)
-  icon?: string; // 이모지 또는 아이콘 이름
+  icon: string | null; // 이모지 또는 아이콘 이름. 컬럼이 null 을 허용한다
   excludeFromBudget?: boolean;
-  isDefault?: boolean; // true = 삭제 불가 ('미분류')
+  isDefault?: boolean; // true = 삭제 불가 (지출 '미분류', 수입 '기타 수입')
   createdAt: string;
   updatedAt: string;
 }
 
 // Zod 스키마 (Server Action 입력 검증)
 const createCategorySchema = z.object({
+  type: z.enum(["EXPENSE", "INCOME"]),
   name: z.string().trim().min(1, "이름은 필수입니다"),
   color: z.string().optional(),
   icon: z.string().optional(),
@@ -132,10 +134,11 @@ interface Expense {
   familyUuid: string;
   userUuid: string; // 등록한 사용자. 이름은 FamilyMemberSummary 에서 찾는다
   categoryUuid: string;
-  category: CategoryInfo | null;
-  amount: number; // 백엔드 BigDecimal → 문자열 → Number 변환
+  category: (CategoryInfo & { excludeFromBudget?: boolean }) | null;
+  amount: number; // 백엔드 BigDecimal 이 JSON 숫자로 온다. 변환하지 않는다
   description: string | null;
   date: string; // ISO 8601
+  excludeFromBudget: boolean; // 이 지출만 예산에서 뺀다. 카테고리가 제외면 이 값과 관계없이 제외된다
   createdAt: string;
   updatedAt: string;
 }
@@ -145,6 +148,15 @@ interface CreateExpenseRequest {
   amount: number;
   description?: string;
   date: string; // ISO 8601 (YYYY-MM-DDTHH:mm:ss)
+  excludeFromBudget?: boolean;
+}
+
+interface UpdateExpenseRequest {
+  categoryUuid?: string;
+  amount?: number;
+  description?: string;
+  date?: string;
+  excludeFromBudget?: boolean; // false도 변경값이다. 누락하면 기존 값을 유지한다
 }
 
 interface GetExpensesParams {
@@ -185,7 +197,8 @@ interface CreateIncomeRequest {
 
 이 API의 월 통계는 분석 위쪽 카드와 예산 화면이 사용한다.
 현재 연월은 사용자 시간대로 선택하고 시간대가 없거나 잘못되면 서울을 사용한다.
-공유 일별 조회는 분석과 예산에 날짜, 수입과 지출만 전달하며 달력 홈은 구성원별 합계도 받는다.
+공유 일별 조회는 분석과 예산에 날짜, 수입과 지출만 전달하며 달력 홈은 날짜별 구성원 지출도 받는다.
+홈은 구성원별 월 누적 금액을 보이지 않는다. 예산 카드와 예산 항목이 같은 정보를 더 쓸모 있게 보여 주기 때문이다.
 
 ```typescript
 interface DashboardStats {
@@ -216,7 +229,6 @@ interface DailyStatsWithMembers {
   dailyStats: Array<DailyTransactionSummary & { memberExpenses: MemberAmount[] }>;
   totalIncome: number;
   totalExpense: number;
-  memberExpenseTotals: MemberAmount[];
 }
 
 interface RecentExpense {
@@ -230,18 +242,55 @@ interface RecentExpense {
 
 `RecentExpense` 는 보존된 서비스의 반환 타입이며 현재 화면에서는 사용하지 않는다.
 
+`DashboardStats.monthlyExpense` 는 예산 합계다. 고정지출(예산 제외, 반복 지출이 만든 지출)을 빼고 예산 항목의 지출은 포함한다([ADR-B26](../../backend/docs/adr/ADR-B26-monthly-budget-is-total.md)).
+
 집계 API 의 금액은 JSON 숫자로 오며 `number` 로 받는다.
 카테고리가 삭제되면 `name`, `icon`, `color` 는 null 이다.
 
 | 집계 | 요청 인자 | 응답 `data` | 서비스 변환 |
 | --- | --- | --- | --- |
 | 일별 합계 | `year`, `month` | `year`, `month`, `dailyStats: DailyTransactionSummary[]`, `totalIncome`, `totalExpense` | 거래가 있는 날의 날짜 오름차순 배열을 반환한다. |
-| 카테고리 월 분포 | `year`, `month`, `compareWithPrev` | `year`, `month`, `totalExpense`, `items`<br>항목은 `categoryUuid`, `name`, `icon`, `color`, `totalAmount`, `percentage`, `deltaPercent` 를 포함한다. | 이름과 아이콘이 null 이면 기본값을 쓰고 색상 null 은 undefined 로 바꾼다. 비율과 전월 대비는 반올림하며 null 전월 대비는 유지한다. |
+| 카테고리 월 분포 | `year`, `month`, `compareWithPrev` | `year`, `month`, `totalExpense`, `items`<br>항목은 `categoryUuid`, `name`, `icon`, `color`, `totalAmount`, `percentage`, `deltaPercent`, `previousAmount` 를 포함한다. | 이름과 아이콘이 null 이면 기본값을 쓰고 색상 null 은 undefined 로 바꾼다. 비율과 전월 대비는 반올림하며 null 전월 대비는 유지한다. `previousAmount` 가 0 이고 이번 달 금액이 있으면 `isNew` 를 참으로 둔다. |
 | 월별 추이 | `from`, `to` (`YYYY-MM`) | `points: { year, month, totalExpense }[]`, `average` | 없는 달은 0 으로 채운다. 평균은 빈 달도 포함한 요청 개월 수로 다시 계산한다. |
 
 카테고리 항목은 금액 내림차순이다.
 `deltaPercent` 는 비교를 요청하지 않았거나 전월 금액이 없거나 0 이면 null 이다.
+`previousAmount` 는 직전 달 같은 카테고리 금액이다. 비교를 요청하지 않으면 오지 않고, 직전 달 지출이 없으면 0 이다. 분석 화면은 이 값이 0 인 항목을 전월 대비 칸에 「신규」 로 보인다.
 추이 응답에는 지출이 있는 달만 날짜 오름차순으로 포함된다.
+
+### BudgetItem
+
+규칙과 에러 코드는 `backend/docs/data-schema.md` 의 「예산 항목 요청과 응답」, 「예산 요약과 생활비 합계」 가 소유한다.
+
+```typescript
+interface BudgetItem {
+  uuid: string;
+  name: string;
+  monthlyLimit: number; // 0 = 한도 없음
+  categoryUuids: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 생성과 수정의 입력. Zod 스키마 budgetItemInputSchema 가 검증한다
+interface BudgetItemInput {
+  name: string; // trim 뒤 1~30자
+  monthlyLimit: number; // 0 이상 정수
+  categoryUuids: string[]; // UUID 1개 이상
+}
+
+// GET /dashboard/budget-summary. 달력 홈이 쓴다
+interface BudgetSummary {
+  year: number;
+  month: number;
+  total: { spent: number; limit: number }; // limit = 월 예산. 0 = 미설정
+  living: { spent: number; limit: number }; // limit = 월 예산 - 항목 한도 합. 0 미만이면 0
+  allocationExceeded: boolean; // 항목 한도 합이 월 예산보다 크다
+  items: Array<{ budgetItemUuid: string; name: string; limit: number; spent: number }>;
+}
+```
+
+`CalendarMonth` 는 `budgetSummary: BudgetSummary` 를 함께 담는다.
 
 ### Invitation
 
@@ -253,11 +302,11 @@ interface InvitationResponse {
   status: "PENDING" | "ACCEPTED" | "EXPIRED" | "CANCELLED";
   expiresAt: string;
   createdAt: string;
-  isExpired: boolean;
-  isUsed: boolean;
+  familyName: string | null;
+  // 만료와 사용 여부는 응답 키가 아니라 status 와 expiresAt 으로 서비스가 계산한다
   // GET /invitations/token/{token} 에서만 온다. 로그인 전 공개 경로라 이름과 아바타만 싣는다
-  inviter?: { name: string; avatarUrl: string | null } | null;
-  memberCount?: number | null; // ACTIVE 멤버 수
+  inviter: { name: string | null; avatarUrl: string | null } | null;
+  memberCount: number | null; // ACTIVE 멤버 수
 }
 ```
 
@@ -308,6 +357,42 @@ interface CreateRecurringExpenseRequest {
 }
 ```
 
+### Installment
+
+할부 한 건이다. 계산 필드는 백엔드가 업무 날짜의 이번 달로 채운다. 규칙은 `backend/docs/data-schema.md` 「할부 요청과 응답」 이 소유한다.
+
+```typescript
+type InstallmentProgress = "UPCOMING" | "IN_PROGRESS" | "COMPLETED";
+
+interface Installment {
+  uuid: string;
+  userUuid: string;          // 등록한 사람
+  name: string;
+  totalAmount: number;
+  installmentMonths: number; // 2~60
+  startMonth: string;        // YYYY-MM
+  endMonth: string;          // YYYY-MM
+  memo: string | null;
+  monthlyAmount: number;
+  firstMonthAmount: number;
+  currentRound: number;      // 0 ~ installmentMonths
+  thisMonthAmount: number;
+  remainingAmount: number;
+  progress: InstallmentProgress;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 생성과 수정의 입력
+interface InstallmentInput {
+  name: string;
+  totalAmount: number;
+  installmentMonths: number;
+  startMonth: string;
+  memo?: string;
+}
+```
+
 ### ApiToken
 
 외부 에이전트 연동 토큰 (backend ADR-B18). 원문은 발급 응답에만 실린다.
@@ -333,7 +418,7 @@ interface CategoryInfo {
   uuid: string;
   name: string;
   color: string;
-  icon: string;
+  icon: string | null;
 }
 
 interface ApiErrorResponse {
@@ -368,6 +453,9 @@ Dashboard:         GET  /families/{uuid}/dashboard/stats/monthly
                    GET  /families/{uuid}/dashboard/stats/category-breakdown
                    GET  /families/{uuid}/dashboard/stats/monthly-trend
                    GET  /families/{uuid}/dashboard/expenses/by-category
+                   GET  /families/{uuid}/dashboard/budget-summary    (year, month)
+BudgetItem:        CRUD /families/{uuid}/budget-items[/{uuid}]
+Installment:       CRUD /families/{uuid}/installments[/{uuid}]
 Invitation:        POST /invitations/families/{uuid}
                    GET  /invitations/token/{token}
                    POST /invitations/accept

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { useAppRouter } from "@/lib/client/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -36,8 +36,9 @@ export function InvitePageClient({
   inviterAvatarUrl,
   memberCount,
 }: InvitePageClientProps) {
-  const router = useRouter();
-  const [isAccepting, setIsAccepting] = useState(false);
+  const router = useAppRouter();
+  const [isAccepting, startAcceptTransition] = useTransition();
+  const isPending = isAccepting || router.isPending;
   // 렌더마다 Date.now() 를 부르면 다시 그릴 때 값이 바뀐다. 화면을 연 시각으로 고정한다
   const [openedAt] = useState(() => Date.now());
 
@@ -47,23 +48,21 @@ export function InvitePageClient({
   const isExpiringSoon = !isAlreadyExpired && hoursUntilExpire <= 24;
 
   const handleAccept = async () => {
-    setIsAccepting(true);
+    startAcceptTransition(async () => {
+      try {
+        const result = await acceptInvitationAction(token);
 
-    try {
-      const result = await acceptInvitationAction(token);
+        if (result.success) {
+          toast.success("초대를 수락했습니다");
+          router.push("/calendar");
+          return;
+        }
 
-      if (result.success) {
-        toast.success("초대를 수락했습니다");
-        // 성공 시 달력으로 이동
-        router.push("/calendar");
-      } else {
         toast.error(result.error.message);
+      } catch {
+        toast.error("초대 수락 중 오류가 발생했습니다");
       }
-    } catch {
-      toast.error("초대 수락 중 오류가 발생했습니다");
-    } finally {
-      setIsAccepting(false);
-    }
+    });
   };
 
   const handleDecline = () => {
@@ -71,9 +70,9 @@ export function InvitePageClient({
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-5 bg-bg">
+    <div className="min-h-screen flex items-center justify-center md:p-5 bg-bg">
       <Card className="max-w-md w-full bg-bg-elev border-border shadow-default">
-        <CardHeader className="text-center pb-4 pt-8">
+        <CardHeader className="text-center pb-4 pt-6 md:pt-8">
           {inviterName ? (
             <Avatar className="size-24 mx-auto mb-4">
               {inviterAvatarUrl && (
@@ -98,9 +97,9 @@ export function InvitePageClient({
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 pt-0 md:space-y-6 md:pt-0">
           {/* 가족 정보 */}
-          <div className="bg-bg-muted rounded-2xl p-5 space-y-4">
+          <div className="bg-bg-muted rounded-2xl p-4 space-y-4 md:p-5">
             <div className="flex items-center gap-3">
               <Users className="w-5 h-5 text-brand-500" />
               <div className="flex-1">
@@ -166,16 +165,16 @@ export function InvitePageClient({
               onClick={handleDecline}
               variant="outline"
               className="flex-1 rounded-xl"
-              disabled={isAccepting}
+              disabled={isPending}
             >
               거절하기
             </Button>
             <Button
               onClick={handleAccept}
               className="flex-1 gradient-family text-brand-fg rounded-xl shadow-default hover:opacity-90 transition-opacity"
-              disabled={isAccepting}
+              disabled={isPending}
             >
-              {isAccepting ? (
+              {isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   수락 중...

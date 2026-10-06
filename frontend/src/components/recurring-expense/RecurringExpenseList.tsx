@@ -1,11 +1,9 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/empty/EmptyState";
 import type { GetRecurringExpensesResponse } from "@/types/recurring-expense";
-import { Plus } from "lucide-react";
-import { useState } from "react";
-import { AddTransactionDialog } from "@/components/transactions/dialogs/AddTransactionDialog";
+import { Inbox } from "lucide-react";
 import { RecurringExpenseItem } from "./RecurringExpenseItem";
 
 interface RecurringExpenseListProps {
@@ -13,8 +11,6 @@ interface RecurringExpenseListProps {
 }
 
 export function RecurringExpenseList({ data }: RecurringExpenseListProps) {
-  const [isAddOpen, setIsAddOpen] = useState(false);
-
   return (
     <div className="space-y-3 md:space-y-4">
       {/* 이달 합계 카드 */}
@@ -28,16 +24,16 @@ export function RecurringExpenseList({ data }: RecurringExpenseListProps) {
       </Card>
 
       {/* 목록 */}
-      <Card className="border-0 glass shadow-xl">
+      <Card className="border border-border bg-bg-elev shadow-xl">
         <CardContent className="p-3 md:p-6">
           {data.items.length === 0 ? (
-            <div className="py-10 md:py-16">
-              <p className="text-center text-gray-500 text-sm md:text-base">
-                등록된 고정지출이 없습니다
-              </p>
-            </div>
+            <EmptyState
+              icon={Inbox}
+              title="등록된 고정지출이 없습니다"
+              description="화면 아래 가운데 + 버튼으로 고정지출을 추가할 수 있어요."
+            />
           ) : (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-border">
               {data.items.map((item) => (
                 <RecurringExpenseItem
                   key={item.uuid}
@@ -48,22 +44,6 @@ export function RecurringExpenseList({ data }: RecurringExpenseListProps) {
           )}
         </CardContent>
       </Card>
-
-      {/* 추가 버튼 */}
-      <Button
-        onClick={() => setIsAddOpen(true)}
-        className="w-full gradient-expense text-expense-fg hover:opacity-90 shadow-lg"
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        고정지출 추가
-      </Button>
-
-      {/* 거래 추가 다이얼로그 */}
-      <AddTransactionDialog
-        open={isAddOpen}
-        onOpenChange={setIsAddOpen}
-        defaultType="recurring"
-      />
     </div>
   );
 }

@@ -8,8 +8,11 @@ import { cn } from "@/lib/client/utils";
 import { formatCurrency } from "@/lib/utils/format";
 import type { CategoryBreakdownItem } from "@/types/dashboard";
 import { AlertTriangle, PiggyBank, Settings } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
+import type { BudgetItem } from "@/types/budget-item";
+import type { CategoryResponse } from "@/types/category";
 import { BudgetCategoryBars } from "./BudgetCategoryBars";
+import { BudgetItemsSection } from "./BudgetItemsSection";
 import { BudgetCumulativeLine } from "./BudgetCumulativeLine";
 
 interface BudgetClientProps {
@@ -21,6 +24,9 @@ interface BudgetClientProps {
   day: number;
   dailyExpenses: { date: string; income: number; expense: number }[];
   categoryItems: CategoryBreakdownItem[];
+  budgetItems: BudgetItem[];
+  expenseCategories: CategoryResponse[];
+  budgetItemsFailed: boolean;
 }
 
 export function BudgetClient({
@@ -32,8 +38,11 @@ export function BudgetClient({
   day,
   dailyExpenses,
   categoryItems,
+  budgetItems,
+  expenseCategories,
+  budgetItemsFailed,
 }: BudgetClientProps) {
-  const router = useRouter();
+  const router = useAppRouter();
 
   const isBudgetExceeded = remainingBudget < 0;
   const hasBudget = budget > 0;
@@ -58,7 +67,7 @@ export function BudgetClient({
       : 0;
 
   return (
-    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+    <div className="md:p-6 space-y-4 md:space-y-6">
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div>
@@ -67,7 +76,7 @@ export function BudgetClient({
             {year}년 {month}월
           </p>
         </div>
-        <div className="p-3 gradient-budget rounded-xl shadow-md">
+        <div className="p-3 gradient-primary rounded-xl shadow-md">
           <PiggyBank className="w-5 h-5 md:w-6 md:h-6 text-brand-fg" />
         </div>
       </div>
@@ -75,7 +84,7 @@ export function BudgetClient({
       {/* 예산 미설정 빈 상태 */}
       {!hasBudget && (
         <Card className="border-dashed border-2 border-border bg-bg-elev">
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+          <CardContent className="flex flex-col items-center justify-center py-8 text-center md:py-12">
             <div className="p-4 bg-brand-50 rounded-full mb-4">
               <PiggyBank className="w-8 h-8 text-brand-500 opacity-85" />
             </div>
@@ -88,7 +97,7 @@ export function BudgetClient({
             <Button
               variant="default"
               onClick={() => router.push("/settings")}
-              className="gradient-budget text-brand-fg shadow-sm hover:opacity-90 transition-opacity"
+              className="gradient-primary text-brand-fg shadow-sm hover:opacity-90 transition-opacity"
             >
               <Settings className="w-4 h-4" />
               예산 설정하기
@@ -104,7 +113,7 @@ export function BudgetClient({
             "relative overflow-hidden border-0 shadow-lg",
             isBudgetExceeded
               ? "gradient-expense text-expense-fg"
-              : "gradient-budget text-brand-fg"
+              : "gradient-primary text-brand-fg"
           )}
         >
           <CardContent className="p-4 md:p-6">
@@ -135,7 +144,7 @@ export function BudgetClient({
               </div>
               <Progress
                 value={isBudgetExceeded ? 100 : usagePercent}
-                className="h-2 gradient-card-overlay"
+                className="h-2 bg-[var(--color-hero-track)] [&_[data-slot=progress-indicator]]:bg-[var(--color-hero-fill)]"
               />
             </div>
           </CardContent>
@@ -146,7 +155,7 @@ export function BudgetClient({
       {hasBudget && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
           <Card className="bg-bg-elev border-border rounded-xl">
-            <CardContent className="p-4">
+            <CardContent className="p-4 md:p-4">
               <p className="text-xs text-fg-muted mb-1">일 평균 지출</p>
               <p className="num text-xl md:text-2xl font-bold text-fg">
                 {formatCurrency(dailyAverage)}
@@ -156,7 +165,7 @@ export function BudgetClient({
           </Card>
 
           <Card className="bg-bg-elev border-border rounded-xl">
-            <CardContent className="p-4">
+            <CardContent className="p-4 md:p-4">
               <p className="text-xs text-fg-muted mb-1">남은 일수</p>
               <p className="num text-xl md:text-2xl font-bold text-fg">
                 {daysRemaining}일
@@ -166,7 +175,7 @@ export function BudgetClient({
           </Card>
 
           <Card className="bg-bg-elev border-border rounded-xl">
-            <CardContent className="p-4">
+            <CardContent className="p-4 md:p-4">
               <p className="text-xs text-fg-muted mb-1">권장 일 예산</p>
               <p className="num text-xl md:text-2xl font-bold text-fg">
                 {formatCurrency(recommendedDailyBudget)}
@@ -184,12 +193,12 @@ export function BudgetClient({
         <div className="grid grid-cols-2 gap-3 md:gap-4">
           {/* 이번 달 지출 */}
           <Card className="bg-bg-elev border-border">
-            <CardHeader className="pb-1 p-4">
+            <CardHeader className="p-4 pb-1 md:p-4 md:pb-1">
               <CardTitle className="text-xs text-fg-muted font-medium">
                 이번 달 지출
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-0">
+            <CardContent className="p-4 pt-0 md:p-4 md:pt-0">
               <p className="text-lg md:text-xl font-bold text-fg">
                 {formatCurrency(monthlyExpense)}
               </p>
@@ -205,12 +214,12 @@ export function BudgetClient({
 
           {/* 남은 예산 */}
           <Card className="bg-bg-elev border-border">
-            <CardHeader className="pb-1 p-4">
+            <CardHeader className="p-4 pb-1 md:p-4 md:pb-1">
               <CardTitle className="text-xs text-fg-muted font-medium">
                 {isBudgetExceeded ? "초과 금액" : "남은 예산"}
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-0">
+            <CardContent className="p-4 pt-0 md:p-4 md:pt-0">
               <p
                 className={cn(
                   "text-lg md:text-xl font-bold",
@@ -246,6 +255,14 @@ export function BudgetClient({
 
       {/* 카테고리 top 5 */}
       <BudgetCategoryBars items={categoryItems} budget={budget} />
+
+      {/* 예산 항목 */}
+      <BudgetItemsSection
+        items={budgetItems}
+        monthlyBudget={budget}
+        expenseCategories={expenseCategories}
+        failed={budgetItemsFailed}
+      />
 
       {/* 예산 수정 링크 */}
       {hasBudget && (

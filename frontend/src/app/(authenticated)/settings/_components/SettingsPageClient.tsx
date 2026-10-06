@@ -5,6 +5,7 @@ import { SettingsCard } from "@/components/layout/SettingsCard";
 import { ApiTokenSettingsCard } from "@/components/settings/ApiTokenSettingsCard";
 import { BudgetEditDialog } from "@/components/settings/BudgetEditDialog";
 import { SettingsHero } from "@/components/settings/SettingsHero";
+import { ThemeSettingsCard } from "@/components/settings/ThemeSettingsCard";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -13,7 +14,7 @@ import { useSessionRefresh } from "@/lib/client/use-session-refresh";
 import type { ApiToken } from "@/types/api-token";
 import type { Family } from "@/types/family";
 import { Check, Edit2, KeyRound, Users, Wallet } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -32,7 +33,7 @@ export function SettingsPageClient({
   userEmail,
   apiTokens,
 }: SettingsPageClientProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const { refreshSession } = useSessionRefresh();
   const [selectedFamily, setSelectedFamily] = useState<string>("");
   const [currentDefaultFamily, setCurrentDefaultFamily] = useState<string>(
@@ -71,7 +72,7 @@ export function SettingsPageClient({
 
   return (
     <>
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
       {/* 헤더 */}
       <SettingsHero
         userName={userName}
@@ -219,6 +220,8 @@ export function SettingsPageClient({
             ))}
           </div>
         </SettingsCard>
+
+        <ThemeSettingsCard />
 
         {/* 외부 연동 */}
         <SettingsCard

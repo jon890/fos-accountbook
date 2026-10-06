@@ -1,8 +1,8 @@
 package com.bifos.accountbook.invitation.domain.entity;
 
 import com.bifos.accountbook.family.domain.entity.Family;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.invitation.domain.value.InvitationStatus;
+import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.user.domain.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,10 +25,12 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Table(name = "invitations", indexes = {
-    @Index(name = "idx_token", columnList = "token"),
-    @Index(name = "idx_family_uuid", columnList = "family_uuid")
-})
+@Table(
+    name = "invitations",
+    indexes = {
+      @Index(name = "idx_token", columnList = "token"),
+      @Index(name = "idx_family_uuid", columnList = "family_uuid")
+    })
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor
@@ -64,11 +66,19 @@ public class Invitation {
   private LocalDateTime createdAt;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "family_uuid", referencedColumnName = "uuid", insertable = false, updatable = false)
+  @JoinColumn(
+      name = "family_uuid",
+      referencedColumnName = "uuid",
+      insertable = false,
+      updatable = false)
   private Family family;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "inviter_user_uuid", referencedColumnName = "uuid", insertable = false, updatable = false)
+  @JoinColumn(
+      name = "inviter_user_uuid",
+      referencedColumnName = "uuid",
+      insertable = false,
+      updatable = false)
   private User inviter;
 
   @PrePersist
@@ -82,29 +92,25 @@ public class Invitation {
   // ========== 비즈니스 메서드 ==========
 
   /**
-   * 초대 수락
+   * 초대 수락. 현재 시각은 호출하는 쪽이 주입한 Clock 에서 넘긴다(ADR-B21). 엔티티가 시스템 시계를 직접 읽지 않아 테스트에서 만료 경계를 고정할 수 있다.
    */
-  public void accept() {
+  public void accept(LocalDateTime now) {
     if (this.status != InvitationStatus.PENDING) {
       throw new IllegalStateException("수락할 수 없는 초대 상태입니다");
     }
-    if (LocalDateTime.now().isAfter(this.expiresAt)) {
+    if (isExpired(now)) {
       throw new IllegalStateException("만료된 초대입니다");
     }
     this.status = InvitationStatus.ACCEPTED;
   }
 
-  /**
-   * 초대 만료 여부 확인
-   */
-  public boolean isExpired() {
-    return LocalDateTime.now().isAfter(this.expiresAt);
+  /** 초대 만료 여부 확인 */
+  public boolean isExpired(LocalDateTime now) {
+    return now.isAfter(this.expiresAt);
   }
 
-  /**
-   * 초대 수락 가능 여부 확인
-   */
-  public boolean canAccept() {
-    return this.status == InvitationStatus.PENDING && !isExpired();
+  /** 초대 수락 가능 여부 확인 */
+  public boolean canAccept(LocalDateTime now) {
+    return this.status == InvitationStatus.PENDING && !isExpired(now);
   }
 }

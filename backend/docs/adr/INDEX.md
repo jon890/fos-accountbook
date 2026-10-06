@@ -25,3 +25,10 @@
 | [ADR-B18](ADR-B18-agent-integration-token.md) | 외부 에이전트 연동 토큰 | accepted |
 | [ADR-B19](ADR-B19-jwt-token-type-claim.md) | access token 과 refresh token 을 typ 클레임으로 구분한다 | accepted |
 | [ADR-B20](ADR-B20-log-body-policy.md) | 운영 로그에 요청과 응답 본문을 남기지 않는다 | accepted |
+| [ADR-B21](ADR-B21-business-date-asia-seoul.md) | 업무 날짜 판정은 Asia/Seoul로 하고 기본 Clock은 유지한다 | accepted |
+| [ADR-B22](ADR-B22-static-analysis-tools.md) | 코드 규칙은 도구 설정이 갖고 기존 위반은 기준 파일에 얼린다 | accepted |
+| [ADR-B23](ADR-B23-category-type.md) | 카테고리를 지출용과 수입용으로 나눈다 | accepted |
+| [ADR-B24](ADR-B24-family-without-transaction-collections.md) | Family 는 지출과 수입 컬렉션을 갖지 않는다 | accepted |
+| [ADR-B25](ADR-B25-budget-items.md) | 가족이 예산 항목을 만들어 카테고리 묶음별 한도를 두고, 생활비는 나머지로 계산한다 | accepted (일부 ADR-B26 이 대체) |
+| [ADR-B26](ADR-B26-monthly-budget-is-total.md) | 월 예산은 전체 예산이고 생활비 한도는 항목 한도를 뺀 나머지다 | accepted |
+| [ADR-B27](ADR-B27-installments-outside-budget.md) | 할부는 지출과 따로 저장하고 예산과 집계에 넣지 않는다 | accepted |

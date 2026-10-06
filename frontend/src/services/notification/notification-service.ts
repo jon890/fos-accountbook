@@ -4,6 +4,11 @@ import {
   serverApiPost,
 } from "@/lib/server/api/client";
 import { ActionError } from "@/lib/errors";
+import {
+  notificationListSchema,
+  notificationSchema,
+  unreadCountSchema,
+} from "@/lib/schemas/responses/notification";
 import type {
   Notification,
   NotificationListResponse,
@@ -17,13 +22,15 @@ export async function getNotifications(
   familyUuid: string
 ): Promise<NotificationListResponse> {
   return serverApiGet<NotificationListResponse>(
-    `/families/${familyUuid}/notifications`
+    `/families/${familyUuid}/notifications`,
+    { schema: notificationListSchema }
   );
 }
 
 export async function getUnreadCount(familyUuid: string): Promise<number> {
   const data = await serverApiGet<UnreadCountResponse>(
-    `/families/${familyUuid}/notifications/unread-count`
+    `/families/${familyUuid}/notifications/unread-count`,
+    { schema: unreadCountSchema }
   );
   return data.unreadCount ?? 0;
 }
@@ -41,7 +48,9 @@ export async function markNotificationRead(
   }
 
   return serverApiPatch<Notification>(
-    `/families/${familyUuid}/notifications/${notificationUuid}/read`
+    `/families/${familyUuid}/notifications/${notificationUuid}/read`,
+    undefined,
+    { schema: notificationSchema }
   );
 }
 

@@ -22,10 +22,12 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Table(name = "recurring_expenses", indexes = {
-    @Index(name = "idx_recurring_family_uuid", columnList = "family_uuid"),
-    @Index(name = "idx_recurring_day", columnList = "day_of_month")
-})
+@Table(
+    name = "recurring_expenses",
+    indexes = {
+      @Index(name = "idx_recurring_family_uuid", columnList = "family_uuid"),
+      @Index(name = "idx_recurring_day", columnList = "day_of_month")
+    })
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor

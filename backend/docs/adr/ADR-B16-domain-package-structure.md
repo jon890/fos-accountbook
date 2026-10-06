@@ -33,7 +33,7 @@ com.bifos.accountbook
 | 이벤트 클래스           | 발행자 도메인               |
 | 이벤트 리스너           | 구독자 도메인               |
 | CategoryInfo DTO        | `category/application/dto/` |
-| FamilyValidationService | `shared/aop/`               |
+| FamilyValidationService | `family/application/access/` (2026-10-02 이동, #419) |
 | CodeEnum, CustomUuid    | `shared/value/`             |
 
 **전략**: Big Bang (1 PR). import 경로만 변경, 로직 변경 없음. 테스트도 동일 구조로 이동.
@@ -41,7 +41,7 @@ com.bifos.accountbook
 **범위 제한 (Option A)**:
 
 - ✅ 패키지 구조 변경
-- ❌ JPA 연관관계 제거 (Expense↔Family 등) — 향후 별도 이니셔티브
+- ❌ JPA 연관관계 제거 (Expense↔Family 등) — 향후 별도 이니셔티브. Family 의 지출, 수입 컬렉션은 [ADR-B24](ADR-B24-family-without-transaction-collections.md) 로 없앴다
 - ❌ 동기 호출 → 이벤트 전환 — 향후 별도 이니셔티브
 - ❌ Gradle 멀티모듈 분리
 

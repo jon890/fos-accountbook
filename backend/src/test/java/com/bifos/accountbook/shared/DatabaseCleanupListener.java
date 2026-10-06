@@ -15,8 +15,9 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 /**
  * 테스트 후 데이터베이스 정리 Listener (Spring TestExecutionListener 기반)
- * <p>
- * 사용법:
+ *
+ * <p>사용법:
+ *
  * <pre>{@code
  * @TestExecutionListeners(
  *     value = DatabaseCleanupListener.class,
@@ -26,32 +27,27 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
  *     // 테스트 메서드들
  * }
  * }</pre>
- * <p>
- * 또는 {@code @SpringBootTest}에 자동으로 적용하려면:
- * spring.factories에 등록 (권장하지 않음, 명시적 사용 권장)
- * <p>
- * 장점:
- * - Spring 테스트 컨텍스트와 완전히 통합
- * - ApplicationContext 접근이 더 직접적이고 안정적
- * - Spring의 테스트 라이프사이클 활용
- * <p>
- * 주의: @Transactional과 함께 사용하면 롤백되므로,
- * @Transactional 제거하고 이 Listener만 사용하세요.
+ *
+ * <p>또는 {@code @SpringBootTest}에 자동으로 적용하려면: spring.factories에 등록 (권장하지 않음, 명시적 사용 권장)
+ *
+ * <p>장점: - Spring 테스트 컨텍스트와 완전히 통합 - ApplicationContext 접근이 더 직접적이고 안정적 - Spring의 테스트 라이프사이클 활용
+ *
+ * <p>주의: @Transactional과 함께 사용하면 롤백되므로, @Transactional 제거하고 이 Listener만 사용하세요.
  */
 @Slf4j
 public class DatabaseCleanupListener extends AbstractTestExecutionListener {
 
   /**
    * 각 테스트 메서드 실행 후 모든 테이블 데이터 삭제
-   * <p>
-   * Spring의 TestContext를 통해 ApplicationContext에 직접 접근
+   *
+   * <p>Spring의 TestContext를 통해 ApplicationContext에 직접 접근
    */
   @Override
   public void afterTestMethod(TestContext testContext) throws Exception {
     // Spring TestContext에서 직접 Bean 가져오기
     EntityManager em = testContext.getApplicationContext().getBean(EntityManager.class);
-    PlatformTransactionManager txManager = testContext.getApplicationContext()
-                                                      .getBean(PlatformTransactionManager.class);
+    PlatformTransactionManager txManager =
+        testContext.getApplicationContext().getBean(PlatformTransactionManager.class);
 
     // 트랜잭션 시작
     DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
@@ -139,13 +135,11 @@ public class DatabaseCleanupListener extends AbstractTestExecutionListener {
 
   /**
    * Listener의 실행 순서 (낮을수록 먼저 실행)
-   * <p>
-   * 기본값: Ordered.LOWEST_PRECEDENCE (가장 나중에 실행)
-   * 다른 Listener들이 모두 실행된 후 정리하도록 함
+   *
+   * <p>기본값: Ordered.LOWEST_PRECEDENCE (가장 나중에 실행) 다른 Listener들이 모두 실행된 후 정리하도록 함
    */
   @Override
   public int getOrder() {
     return LOWEST_PRECEDENCE;
   }
 }
-

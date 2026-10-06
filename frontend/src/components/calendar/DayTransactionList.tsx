@@ -10,6 +10,7 @@ import type { Income } from "@/types/income";
 export type CalendarTransaction = { type: "expense"; transaction: Expense } | { type: "income"; transaction: Income };
 
 interface DayTransactionListProps {
+  headingRef?: React.Ref<HTMLHeadingElement>;
   selectedDate: string;
   expenseTotal: number;
   expenses: Expense[];
@@ -19,11 +20,12 @@ interface DayTransactionListProps {
   onEdit: (transaction: CalendarTransaction) => void;
 }
 
-export function DayTransactionList({ selectedDate, expenseTotal, expenses, incomes, colors, onAdd, onEdit }: DayTransactionListProps) {
+export function DayTransactionList({ headingRef, selectedDate, expenseTotal, expenses, incomes, colors, onAdd, onEdit }: DayTransactionListProps) {
   const [year, month, day] = selectedDate.split("-").map(Number);
   const weekday = ["일", "월", "화", "수", "목", "금", "토"][new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
   const dayExpenses = expenses.filter((transaction) => transaction.date.slice(0, 10) === selectedDate);
   const dayIncomes = incomes.filter((transaction) => transaction.date.slice(0, 10) === selectedDate);
+  const incomeTotal = dayIncomes.reduce((total, transaction) => total + Math.abs(transaction.amount), 0);
   const transactions: CalendarTransaction[] = [
     ...dayExpenses.map((transaction): CalendarTransaction => ({ type: "expense", transaction })),
     ...dayIncomes.map((transaction): CalendarTransaction => ({ type: "income", transaction })),
@@ -33,8 +35,17 @@ export function DayTransactionList({ selectedDate, expenseTotal, expenses, incom
   return (
     <section className="space-y-3 border-t border-border pt-5">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-base font-bold text-fg">{month}월 {day}일 ({weekday})</h2>
-        <span className="text-xs text-fg-muted">지출 <span className="num font-semibold text-expense">{formatCurrency(expenseTotal)}</span></span>
+        <h2
+          ref={headingRef}
+          tabIndex={-1}
+          className="scroll-mt-[4.5rem] scroll-mb-[7rem] text-base font-bold text-fg focus:outline-none md:scroll-mt-[5rem]"
+        >
+          {month}월 {day}일 ({weekday})
+        </h2>
+        <span className="flex items-center gap-2 text-xs text-fg-muted">
+          <span>지출 <span className="num font-semibold text-expense">{formatCurrency(expenseTotal)}</span></span>
+          {incomeTotal > 0 && <span>수입 <span className="num font-semibold text-income">+{formatCurrency(incomeTotal)}</span></span>}
+        </span>
       </div>
       {transactions.length === 0 ? (
         <EmptyState icon={CalendarDays} title="이 날 기록이 없어요" description="지출이나 수입을 기록해 보세요." />
@@ -42,23 +53,26 @@ export function DayTransactionList({ selectedDate, expenseTotal, expenses, incom
         <ul className="divide-y divide-border">
           {transactions.map((item) => {
             const member = getMemberColor(colors, item.transaction.userUuid);
+            const excludeFromBudget =
+              item.type === "expense" &&
+              (item.transaction.excludeFromBudget ||
+                item.transaction.category?.excludeFromBudget === true);
             return (
-              <li key={`${item.type}-${item.transaction.uuid}`} className="flex items-center gap-2">
-                <span className={`shrink-0 text-[11px] font-medium ${item.type === "expense" ? "text-expense" : "text-income"}`}>{item.type === "expense" ? "지출" : "수입"}</span>
-                <div className="min-w-0 flex-1">
-                  <TransactionRow
-                    variant="compact"
-                    tx={{
-                      ...item.transaction,
-                      createdBy: {
-                        uuid: item.transaction.userUuid,
-                        name: member.label,
-                        colorClass: member.bgClass,
-                      },
-                    }}
-                    onEdit={() => onEdit(item)}
-                  />
-                </div>
+              <li key={`${item.type}-${item.transaction.uuid}`}>
+                <TransactionRow
+                  variant="compact"
+                  kind={item.type}
+                  tx={{
+                    ...item.transaction,
+                    excludeFromBudget,
+                    createdBy: {
+                      uuid: item.transaction.userUuid,
+                      name: member.label,
+                      colorClass: member.bgClass,
+                    },
+                  }}
+                  onEdit={() => onEdit(item)}
+                />
               </li>
             );
           })}

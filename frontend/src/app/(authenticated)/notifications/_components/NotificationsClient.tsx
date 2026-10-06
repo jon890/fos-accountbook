@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/client/navigation";
 import { toast } from "sonner";
 import { CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ export function NotificationsClient({
   notifications,
   filter,
 }: NotificationsClientProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const [localNotifications, setLocalNotifications] =
     useState<Notification[]>(notifications);
   const [markingAllRead, setMarkingAllRead] = useState(false);
@@ -59,7 +59,7 @@ export function NotificationsClient({
   };
 
   return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto">
+    <div className="md:p-6 max-w-2xl mx-auto">
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-fg">알림</h1>
@@ -101,7 +101,7 @@ export function NotificationsClient({
 
       {/* 알림 목록 */}
       {visible.length === 0 ? (
-        <div className="py-16 text-center">
+        <div className="py-10 text-center md:py-16">
           <p className="text-sm font-semibold text-fg">
             {filter === "unread" ? "안 읽은 알림이 없어요" : "알림이 없어요"}
           </p>

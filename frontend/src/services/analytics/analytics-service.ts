@@ -1,3 +1,9 @@
+import {
+  categoryBreakdownResponseSchema,
+  monthlyTrendResponseSchema,
+  type CategoryBreakdownResponse,
+  type MonthlyTrendResponse,
+} from "@/lib/schemas/responses/dashboard";
 import { serverApiGet } from "@/lib/server/api/client";
 import { ServerApiError } from "@/lib/server/api/types";
 import type {
@@ -14,23 +20,6 @@ const PERIOD_TO_MONTHS: Record<AnalyticsPeriod, number> = {
   m6: 6,
   y1: 12,
 };
-
-interface TrendResponse {
-  points: MonthlyTrendPoint[];
-  average: number;
-}
-
-interface BreakdownResponse {
-  year: number;
-  month: number;
-  totalExpense: number;
-  items: Array<
-    Omit<CategoryWithDelta, "name" | "icon"> & {
-      name: string | null;
-      icon: string | null;
-    }
-  >;
-}
 
 function monthKey(year: number, month: number): string {
   return `${year}-${String(month).padStart(2, "0")}`;
@@ -80,9 +69,10 @@ export async function getMonthlyTrend(
   }
 
   const first = targets[0];
-  const response = await serverApiGet<TrendResponse>(
+  const response = await serverApiGet(
     `/families/${familyUuid}/dashboard/stats/monthly-trend?from=${monthKey(first.year, first.month)}&to=${monthKey(refYear, refMonth)}`,
-  ).catch(emptyOnFailure<TrendResponse>({ points: [], average: 0 }));
+    { schema: monthlyTrendResponseSchema },
+  ).catch(emptyOnFailure<MonthlyTrendResponse>({ points: [], average: 0 }));
   const amounts = new Map(
     response.points.map((point) => [
       monthKey(point.year, point.month),
@@ -108,19 +98,21 @@ export async function getCategoryBreakdownWithDelta(
 ): Promise<CategoryBreakdownWithDelta> {
   const prev = getPreviousMonth(year, month);
   const [current, trend] = await Promise.all([
-    serverApiGet<BreakdownResponse>(
+    serverApiGet(
       `/families/${familyUuid}/dashboard/stats/category-breakdown?year=${year}&month=${month}&compareWithPrev=true`,
+      { schema: categoryBreakdownResponseSchema },
     ).catch(
-      emptyOnFailure<BreakdownResponse>({
+      emptyOnFailure<CategoryBreakdownResponse>({
         year,
         month,
         totalExpense: 0,
         items: [],
       }),
     ),
-    serverApiGet<TrendResponse>(
+    serverApiGet(
       `/families/${familyUuid}/dashboard/stats/monthly-trend?from=${monthKey(prev.year, prev.month)}&to=${monthKey(year, month)}`,
-    ).catch(emptyOnFailure<TrendResponse>({ points: [], average: 0 })),
+      { schema: monthlyTrendResponseSchema },
+    ).catch(emptyOnFailure<MonthlyTrendResponse>({ points: [], average: 0 })),
   ]);
 
   const amounts = new Map(
@@ -140,7 +132,8 @@ export async function getCategoryBreakdownWithDelta(
       totalAmount: item.totalAmount,
       percentage: Math.round(item.percentage),
       deltaPercent:
-        item.deltaPercent === null ? null : Math.round(item.deltaPercent),
+        item.deltaPercent == null ? null : Math.round(item.deltaPercent),
+      isNew: item.previousAmount === 0 && item.totalAmount > 0,
     };
   });
 

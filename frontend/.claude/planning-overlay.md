@@ -99,7 +99,7 @@ ADR-F01 부터 ADR-F12 는 코어 뼈대가 정착하기 전에 작성됐다.
 ```bash
 # cwd: <repo root>
 # 완료된 계획서는 지우므로 사용한 번호는 git 이력에서 찾는다
-bash ~/.claude/skills/planning/scripts/plan_number.sh --prefix fe- | tail -1
+bash "$SKILL_DIR/scripts/plan_number.sh" --prefix fe- | tail -1
 find frontend/docs/adr -maxdepth 1 -name 'ADR-F*.md' | sed -E 's/.*ADR-F([0-9]+)-.*/\1/' | sort -n | tail -1
 gh pr list --state open --json number,headRefName,title --jq '.[] | "\(.headRefName) \(.title)"'
 ```

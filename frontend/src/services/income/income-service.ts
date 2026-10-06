@@ -4,6 +4,8 @@ import type {
   GetIncomesParams,
   GetIncomesResponse,
 } from "@/types/income";
+import { ActionError } from "@/lib/errors";
+import { getIncomesResponseSchema } from "@/lib/schemas/responses/transaction";
 
 export async function createIncome(
   familyUuid: string,
@@ -27,19 +29,26 @@ export async function getIncomes(
   familyUuid: string,
   params: Omit<GetIncomesParams, "familyUuid">
 ): Promise<GetIncomesResponse> {
+  const limit = params.limit ?? 25;
+  if (limit < 1 || limit > 3000) {
+    throw ActionError.invalidInput("limit", limit, "1에서 3000 사이여야 합니다");
+  }
+
   const queryParams = new URLSearchParams();
   if (params.categoryId) queryParams.set("categoryUuid", params.categoryId);
   if (params.startDate) queryParams.set("startDate", params.startDate);
   if (params.endDate) queryParams.set("endDate", params.endDate);
   queryParams.set("page", String((params.page || 1) - 1));
-  queryParams.set("size", String(params.limit || 25));
+  queryParams.set("size", String(limit));
 
   const queryString = queryParams.toString();
   const endpoint = `/families/${familyUuid}/incomes${
     queryString ? `?${queryString}` : ""
   }`;
 
-  return serverApiGet<GetIncomesResponse>(endpoint);
+  return serverApiGet<GetIncomesResponse>(endpoint, {
+    schema: getIncomesResponseSchema,
+  });
 }
 
 export async function updateIncome(

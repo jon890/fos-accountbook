@@ -1,7 +1,6 @@
 package com.bifos.accountbook.dashboard.application.dto;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,7 +18,4 @@ public class DailyStatsResponse {
   private List<DailyStat> dailyStats;
   private BigDecimal totalIncome;
   private BigDecimal totalExpense;
-
-  @Builder.Default
-  private List<MemberAmount> memberExpenseTotals = new ArrayList<>();
 }

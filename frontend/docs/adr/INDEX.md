@@ -39,3 +39,11 @@
 | [ADR-F32](ADR-F32-calendar-home-monthly-list.md) | 달력을 첫 화면으로 두고 한 달 목록을 한 번에 받는다 | accepted |
 | [ADR-F33](ADR-F33-bottom-tabs-menu.md) | 메뉴는 하단 탭의 「전체」 에 모은다 | accepted |
 | [ADR-F34](ADR-F34-browser-tests-fake-backend.md) | 브라우저 테스트는 가짜 백엔드와 직접 만든 세션으로 돌린다 | accepted |
+| [ADR-F35](ADR-F35-mobile-spacing.md) | 화면 바깥 여백은 레이아웃이 갖고 카드 여백은 카드 부품이 갖는다 | accepted |
+| [ADR-F36](ADR-F36-seo-and-link-preview.md) | 랜딩만 검색에 노출하고 링크 미리보기와 아이콘은 코드로 만든다 | accepted |
+| [ADR-F37](ADR-F37-single-transaction-row.md) | 거래 목록은 공용 행 하나로 그리고 누르면 수정 시트를 연다 | accepted |
+| [ADR-F38](ADR-F38-dark-mode-tokens-and-theme-choice.md) | 다크 모드 색은 토큰이 맡고, 테마는 기기마다 고른다 | accepted |
+| [ADR-F39](ADR-F39-navigation-pending-feedback.md) | 화면 전환 대기 표시는 공용 라우터 훅과 상단 진행 막대가 맡는다 | accepted |
+| [ADR-F40](ADR-F40-in-sheet-amount-keypad.md) | 모바일 금액 입력은 시트 안 숫자패드로 하고, 저장할 수 없는 이유를 버튼 위에 보인다 | accepted |
+| [ADR-F41](ADR-F41-list-client-filters-and-load-more.md) | 내역 목록은 300건씩 받고, 이름 검색과 금액 필터는 받은 목록 안에서 화면이 거른다 | accepted |
+| [ADR-F42](ADR-F42-service-response-validation.md) | services 가 받는 백엔드 응답도 Zod 로 검증한다 | accepted |

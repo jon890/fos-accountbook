@@ -5,6 +5,7 @@ import { getSelectedFamilyUuid } from "@/lib/server/auth/auth-helpers";
 import { getDashboardStatsAction } from "@/actions/dashboard/get-dashboard-stats-action";
 import { getMonthlyDailyStatsAction } from "@/actions/dashboard/get-monthly-daily-stats-action";
 import { getExpensesAction } from "@/actions/expense/get-expenses-action";
+import { getFamilyCategoriesAction } from "@/actions/category/get-categories-action";
 import { getCategoryBreakdownWithDeltaAction } from "@/actions/analytics/get-category-breakdown-with-delta-action";
 import { getMonthlyTrendAction } from "@/actions/analytics/get-monthly-trend-action";
 import { getRecurringExpensesTotalAction } from "@/actions/recurring-expense";
@@ -15,6 +16,7 @@ jest.mock("@/lib/server/auth/auth-helpers", () => ({ getSelectedFamilyUuid: jest
 jest.mock("@/actions/dashboard/get-dashboard-stats-action", () => ({ getDashboardStatsAction: jest.fn() }));
 jest.mock("@/actions/dashboard/get-monthly-daily-stats-action", () => ({ getMonthlyDailyStatsAction: jest.fn() }));
 jest.mock("@/actions/expense/get-expenses-action", () => ({ getExpensesAction: jest.fn() }));
+jest.mock("@/actions/category/get-categories-action", () => ({ getFamilyCategoriesAction: jest.fn() }));
 jest.mock("@/actions/analytics/get-category-breakdown-with-delta-action", () => ({ getCategoryBreakdownWithDeltaAction: jest.fn() }));
 jest.mock("@/actions/analytics/get-monthly-trend-action", () => ({ getMonthlyTrendAction: jest.fn() }));
 jest.mock("@/actions/recurring-expense", () => ({ getRecurringExpensesTotalAction: jest.fn() }));
@@ -27,11 +29,17 @@ jest.mock("@/app/(authenticated)/analytics/_components/AnalyticsClient", () => (
   AnalyticsClient: ({
     initialYear,
     initialMonth,
+    initialTotalElements,
+    categories,
   }: {
     initialYear: number;
     initialMonth: number;
+    initialTotalElements: number;
+    categories: unknown[];
   }) => (
-    <div>분석:{initialYear}-{initialMonth}</div>
+    <div data-testid="analytics-client" data-category-count={categories.length} data-total-elements={initialTotalElements}>
+      분석:{initialYear}-{initialMonth}
+    </div>
   ),
 }));
 
@@ -52,6 +60,7 @@ beforeEach(() => {
   } });
   jest.mocked(getMonthlyDailyStatsAction).mockResolvedValue({ success: true, data: [] });
   jest.mocked(getExpensesAction).mockResolvedValue({ success: true, data: { items: [], totalElements: 0, totalPages: 0, currentPage: 0 } });
+  jest.mocked(getFamilyCategoriesAction).mockResolvedValue({ success: true, data: [] });
   jest.mocked(getCategoryBreakdownWithDeltaAction).mockResolvedValue({ success: true, data: { year: 2026, month: 10, totalExpense: 10000, totalDelta: null, items: [] } });
   jest.mocked(getMonthlyTrendAction).mockResolvedValue({ success: true, data: { period: "m1", points: [], average: 0 } });
   jest.mocked(getRecurringExpensesTotalAction).mockResolvedValue({ success: true, data: 17000 });
@@ -85,10 +94,36 @@ it.each([
   render(await AnalyticsPage({ searchParams: Promise.resolve({ period: "m3" }) }));
   expect(getMonthlyDailyStatsAction).toHaveBeenCalledWith(2026, month);
   expect(getExpensesAction).toHaveBeenCalledWith({ familyUuid: "family", startDate, endDate, limit: 1000 });
+  expect(getFamilyCategoriesAction).toHaveBeenCalledWith("family");
   expect(getCategoryBreakdownWithDeltaAction).toHaveBeenCalledWith(2026, month);
   expect(getMonthlyTrendAction).toHaveBeenCalledWith("m3", 2026, month);
   expect(screen.getByText(`분석:2026-${month}`)).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: `이번 달 2026년 ${month}월` })).toBeInTheDocument();
+});
+
+it("카테고리 목록과 지출 전체 건수를 클라이언트에 전달한다", async () => {
+  jest.mocked(getFamilyCategoriesAction).mockResolvedValue({
+    success: true,
+    data: [{
+      uuid: "food",
+      familyUuid: "family",
+      type: "EXPENSE",
+      name: "식비",
+      icon: "🍚",
+      color: "#f00",
+      createdAt: "2026-01-01",
+      updatedAt: "2026-01-01",
+    }],
+  });
+  jest.mocked(getExpensesAction).mockResolvedValue({
+    success: true,
+    data: { items: [], totalElements: 1001, totalPages: 2, currentPage: 0 },
+  });
+
+  render(await AnalyticsPage({ searchParams: Promise.resolve({}) }));
+
+  expect(screen.getByTestId("analytics-client")).toHaveAttribute("data-category-count", "1");
+  expect(screen.getByTestId("analytics-client")).toHaveAttribute("data-total-elements", "1001");
 });
 
 it("잘못된 기간은 기본 기간으로 조회한다", async () => {
@@ -100,6 +135,7 @@ it.each([
   getDashboardStatsAction,
   getMonthlyDailyStatsAction,
   getExpensesAction,
+  getFamilyCategoriesAction,
   getCategoryBreakdownWithDeltaAction,
   getMonthlyTrendAction,
   getRecurringExpensesTotalAction,
@@ -129,6 +165,7 @@ it.each([
   getDashboardStatsAction,
   getMonthlyDailyStatsAction,
   getExpensesAction,
+  getFamilyCategoriesAction,
   getCategoryBreakdownWithDeltaAction,
   getMonthlyTrendAction,
   getRecurringExpensesTotalAction,

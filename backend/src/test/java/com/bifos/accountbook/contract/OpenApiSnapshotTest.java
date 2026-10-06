@@ -27,8 +27,7 @@ class OpenApiSnapshotTest {
 
   private MockMvc mockMvc;
 
-  @Autowired
-  private WebApplicationContext context;
+  @Autowired private WebApplicationContext context;
 
   @BeforeEach
   void setUp() {
@@ -38,20 +37,25 @@ class OpenApiSnapshotTest {
   @Test
   @DisplayName("OpenAPI 스냅샷을 추출하여 build/openapi-snapshot.json에 저장한다")
   void extractOpenApiSnapshot() throws Exception {
-    String json = mockMvc.perform(get("/v3/api-docs"))
-        .andExpect(status().isOk())
-        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.openapi").exists())
-        .andExpect(jsonPath("$.paths").exists())
-        .andReturn().getResponse().getContentAsString();
+    String json =
+        mockMvc
+            .perform(get("/v3/api-docs"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.openapi").exists())
+            .andExpect(jsonPath("$.paths").exists())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
 
     Path output = Path.of("build", "openapi-snapshot.json");
     Files.createDirectories(output.getParent());
-    Files.writeString(output, json,
-        StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+    Files.writeString(
+        output, json, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
     String saved = Files.readString(output);
-    assertThat(saved)
-        .contains("/api/v1/families/{familyUuid}/recurring-expenses");
+    assertThat(saved).contains("/api/v1/families/{familyUuid}/recurring-expenses");
+    assertThat(saved).contains("/api/v1/families/{familyUuid}/budget-items");
+    assertThat(saved).contains("/api/v1/families/{familyUuid}/dashboard/budget-summary");
   }
 }

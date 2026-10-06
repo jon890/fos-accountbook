@@ -2,6 +2,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { EditCategoryDialog } from "@/app/(authenticated)/categories/_components/EditCategoryDialog";
 import { updateCategoryAction } from "@/actions/category/update-category-action";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+
+jest.mock("@/hooks/useMediaQuery", () => ({
+  useMediaQuery: jest.fn(),
+}));
 
 // Mock server action
 jest.mock("@/actions/category/update-category-action", () => ({
@@ -18,6 +23,7 @@ jest.mock("sonner", () => ({
 const mockCategory = {
   uuid: "cat-1",
   familyUuid: "fam-1",
+  type: "EXPENSE" as const,
   name: "Original Name",
   color: "#000000",
   icon: "🍔",
@@ -32,6 +38,26 @@ describe("EditCategoryDialog", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.mocked(useMediaQuery).mockReturnValue(true);
+  });
+
+  it.each([
+    [false, "sheet-content"],
+    [true, "dialog-content"],
+  ])("폭에 따라 %s에서 %s를 표시하고 색 문자열을 숨긴다", (isDesktop, slot) => {
+    jest.mocked(useMediaQuery).mockReturnValue(isDesktop);
+
+    const { container } = render(
+      <EditCategoryDialog
+        open={true}
+        onOpenChange={mockOnOpenChange}
+        category={mockCategory}
+        onSuccess={mockOnSuccess}
+      />,
+    );
+
+    expect(container.ownerDocument.querySelector(`[data-slot="${slot}"]`)).toBeInTheDocument();
+    expect(screen.queryByText(mockCategory.color)).not.toBeInTheDocument();
   });
 
   it("initializes form with category data including excludeFromBudget", () => {

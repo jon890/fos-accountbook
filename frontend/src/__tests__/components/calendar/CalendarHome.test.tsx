@@ -10,9 +10,14 @@ import type { Income } from "@/types/income";
 const mockPush = jest.fn();
 const mockEditLoadError = jest.fn();
 const mockSearchParams = jest.fn();
+const mockNavigationPending = jest.fn();
+const mockScrollIntoView = jest.fn();
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mockPush }),
   useSearchParams: () => mockSearchParams(),
+}));
+jest.mock("@/lib/client/navigation", () => ({
+  useAppRouter: () => ({ push: mockPush }),
+  useNavigationPending: () => mockNavigationPending(),
 }));
 jest.mock("@/actions/calendar/get-calendar-month-action", () => ({ getCalendarMonthAction: jest.fn() }));
 jest.mock("@/lib/server/auth", () => ({ auth: async () => ({ user: { profile: { defaultFamilyUuid: "family-1", timezone: "Asia/Seoul" } } }) }));
@@ -34,12 +39,71 @@ const props = { data, initialDate: "2026-09-14", today: "2026-09-14", familyUuid
 
 beforeEach(() => {
   jest.clearAllMocks();
+  Object.defineProperty(Element.prototype, "scrollIntoView", {
+    configurable: true,
+    value: mockScrollIntoView,
+  });
   mockSearchParams.mockImplementation(() => new URLSearchParams(window.location.search));
+  mockNavigationPending.mockReturnValue(false);
   window.history.replaceState({}, "", "/calendar?month=2026-09&date=2026-09-14");
   jest.mocked(getCalendarMonthAction).mockResolvedValue({ success: true, data });
 });
 
 describe("달력 홈", () => {
+  it("날짜를 누르면 선택 날짜의 목록 제목에 포커스를 준다", async () => {
+    render(<CalendarHome {...props} />);
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "9월 15일" }));
+
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "9월 15일 (화)" }));
+  });
+
+  it("제목에 고른 날짜가 그려진 뒤 포커스를 옮긴다", async () => {
+    const focusedTexts: string[] = [];
+    const focus = jest.spyOn(HTMLElement.prototype, "focus").mockImplementation(function (this: HTMLElement) {
+      focusedTexts.push(this.textContent ?? "");
+    });
+    render(<CalendarHome {...props} />);
+
+    await userEvent.setup().click(screen.getByRole("button", { name: /^9월 15일/ }));
+
+    expect(focusedTexts).toContain("9월 15일 (화)");
+    expect(focusedTexts).not.toContain("9월 14일 (월)");
+    focus.mockRestore();
+  });
+
+  it("처음 렌더와 월 이동에는 스크롤이나 제목 포커스를 하지 않는다", async () => {
+    const view = render(<CalendarHome {...props} />);
+    expect(mockScrollIntoView).not.toHaveBeenCalled();
+    expect(screen.getByRole("heading", { name: "9월 14일 (월)" })).not.toHaveFocus();
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "다음 달" }));
+    view.rerender(<CalendarHome {...props} data={calendarMonth({ month: 10 })} initialDate="2026-10-01" />);
+
+    expect(mockScrollIntoView).not.toHaveBeenCalled();
+    expect(screen.getByRole("heading", { name: "10월 1일 (목)" })).not.toHaveFocus();
+  });
+
+  it("월 전환 중 달력 격자와 날짜 목록 영역을 흐리게 하고 aria-busy를 표시한다", () => {
+    mockNavigationPending.mockReturnValue(true);
+    const { container } = render(<CalendarHome {...props} />);
+
+    const pendingRegion = container.querySelector('[aria-busy="true"]');
+    expect(pendingRegion).toHaveClass("opacity-60", "pointer-events-none");
+  });
+
+  it("월 전환 중에는 이전 달과 다음 달 버튼을 비활성화하고 이동을 추가로 호출하지 않는다", async () => {
+    mockNavigationPending.mockReturnValue(true);
+    render(<CalendarHome {...props} />);
+
+    const previousMonthButton = screen.getByRole("button", { name: "이전 달" });
+    const nextMonthButton = screen.getByRole("button", { name: "다음 달" });
+    expect(previousMonthButton).toBeDisabled();
+    expect(nextMonthButton).toBeDisabled();
+
+    await userEvent.setup().click(nextMonthButton);
+    expect(mockPush).not.toHaveBeenCalled();
+  });
   it.each(["/calendar?month=2026-08", "/calendar?month=2026-08&date=invalid"])("초기 URL %s의 날짜를 서버가 선택한 날짜로 맞춘다", (url) => {
     window.history.replaceState({}, "", url);
     render(<CalendarHome {...props} data={calendarMonth({ month: 8 })} initialDate="2026-08-01" />);
@@ -191,11 +255,21 @@ describe("달력 홈", () => {
     expect(screen.queryByRole("dialog", { name: "수정" })).not.toBeInTheDocument();
   });
 
-  it("구성원 합계는 목록 금액 대신 서버 합계를 가입 순서로 표시한다", () => {
+  it("구성원 색 범례는 가입 순서로 이름만 보이고 금액은 보이지 않는다", () => {
     render(<CalendarHome {...props} />);
-    const totals = screen.getAllByRole("list")[0];
-    expect(totals.textContent).toBe("아내₩33,000남편₩66,000");
-    expect(screen.getByText("₩99,000")).toBeInTheDocument();
-    expect(screen.getByText("₩120,000")).toBeInTheDocument();
+    const legend = screen.getByRole("list", { name: "구성원 색상" });
+
+    expect(legend.textContent).toBe("아내남편");
+    expect(screen.queryByText("₩99,000")).toBeNull();
+    expect(screen.queryByText("₩120,000")).toBeNull();
+    expect(legend.querySelectorAll('[aria-hidden="true"]')).toHaveLength(2);
+    expect(legend.querySelector('[aria-hidden="true"]')).toHaveClass("bg-member-1");
+    expect(legend.querySelectorAll('[aria-hidden="true"]')[1]).toHaveClass("bg-member-2");
+  });
+
+  it("구성원이 없으면 색 범례를 그리지 않는다", () => {
+    render(<CalendarHome {...props} data={calendarMonth({ members: [] })} />);
+
+    expect(screen.queryByRole("list", { name: "구성원 색상" })).toBeNull();
   });
 });

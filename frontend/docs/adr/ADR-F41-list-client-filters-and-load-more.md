@@ -1,0 +1,16 @@
+# ADR-F41: 내역 목록은 300건씩 받고, 이름 검색과 금액 필터는 받은 목록 안에서 화면이 거른다 (2026-10-02)
+
+- **status**: `accepted`
+- **결정**: 지출과 수입 목록은 선택한 기간을 300건 단위로 받는다. 더 있으면 목록 끝의 「더 보기」 가 300건을 더 받는다(URL 의 `limit` 을 300씩 늘린다). 쪽 넘김(이전, 다음) 버튼은 없앤다. 한 번에 받는 양은 최대 3000건이다.
+  검색어(`q`)와 금액 범위(`amountMin`, `amountMax`)는 백엔드에 보내지 않고, 받은 목록에 `applyClientFilters` 를 적용해 화면이 거른다. 검색어는 메모와 카테고리 이름에서 찾는다.
+  받지 않은 건이 남아 있으면 「불러온 N건 안에서 찾았어요」 와 「더 보기」 를 함께 보인다.
+  모바일에서 기간, 카테고리, 금액 필터는 「필터」 버튼 하나가 여는 하단 시트에 모은다.
+- **맥락**: 검색 칸과 금액 필터가 URL 값만 바꾸고 목록에는 아무 영향이 없었다(백엔드 목록 API 가 받지 않고, `applyClientFilters` 는 테스트에서만 불렸다). 쪽당 25건이라 한 달 내역을 보려면 여러 번 넘겨야 했다.
+  사용자는 월 단위로 받아 화면에서 거르는 방식과 300건 상한 뒤 「더 보기」, 필터 하단 시트를 골랐다(2026-10-01).
+- **대안 기각**:
+  - 백엔드에 검색어와 금액 조건 추가: 가족 한 달 거래가 수백 건 규모라 화면 거르기로 충분하고, API, QueryDSL, 테스트를 함께 바꾸는 비용이 크다.
+  - 무한 스크롤: 끝을 알 수 없어 「불러온 범위 안에서 찾았다」 를 알리기 어렵고, 하단 탭과 가운데 버튼이 있는 화면에서 끝 감지가 불안정하다.
+- **결과**:
+  - 얻는 것: 검색과 금액 필터가 실제로 동작한다. 한 달 내역을 한 화면에서 본다.
+  - 감당할 것: 300건을 넘는 기간에서 검색은 받은 범위 안에서만 찾는다. 이 사실을 화면에 알린다. 한 번에 받는 양이 늘어 첫 응답이 조금 느려질 수 있다.
+- **적용 범위**: `src/app/(authenticated)/transactions/`, `src/components/expenses/list/`, `src/components/incomes/list/`, `src/components/transactions/`, `src/components/expenses/summary/`, `src/lib/utils/list-limit.ts`, `src/services/transaction/transaction-service.ts`, `src/services/expense/expense-service.ts`, `src/services/income/income-service.ts`.

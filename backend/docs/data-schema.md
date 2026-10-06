@@ -1,4 +1,4 @@
-# Data Schema — fos-accountbook-backend (Canonical)
+# fos-accountbook-backend 데이터 구조 (Canonical)
 
 > 이 파일이 DB 스키마·API 스펙의 **canonical 소스**다.
 > 프론트엔드는 `fos-accountbook/docs/data-schema.md`에서 TypeScript 타입으로 파생한다.
@@ -100,7 +100,8 @@ CREATE TABLE categories (
     color               VARCHAR(50),                             -- #RRGGBB 또는 oklch(L C H). 기본값 #6366f1 은 엔티티가 채운다
     icon                VARCHAR(50),
     exclude_from_budget BOOLEAN     NOT NULL DEFAULT FALSE,
-    is_default          BOOLEAN     NOT NULL DEFAULT FALSE,       -- TRUE = 삭제 불가
+    type                VARCHAR(20) NOT NULL DEFAULT 'EXPENSE', -- EXPENSE | INCOME (ADR-B23)
+    is_default          BOOLEAN     NOT NULL DEFAULT FALSE,       -- TRUE = 삭제 불가. 종류마다 하나
     status              VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     created_at          DATETIME(3) NOT NULL,
     updated_at          DATETIME(3) NOT NULL,
@@ -180,7 +181,7 @@ CREATE TABLE notifications (
     id                BIGINT       PRIMARY KEY AUTO_INCREMENT,
     notification_uuid VARCHAR(36)  NOT NULL UNIQUE,
     family_uuid       VARCHAR(36)  NOT NULL,
-    user_uuid         VARCHAR(36),                    -- NULL = 가족 전체
+    user_uuid         VARCHAR(36),                    -- 수신자 UUID (레거시 행 호환을 위해 nullable)
     type              VARCHAR(50)  NOT NULL,           -- BUDGET_50_EXCEEDED | BUDGET_80_EXCEEDED | BUDGET_100_EXCEEDED | RECURRING_EXPENSE_CREATED
     title             VARCHAR(200) NOT NULL,
     message           TEXT         NOT NULL,
@@ -195,6 +196,9 @@ CREATE TABLE notifications (
     INDEX idx_notif_user_is_read       (user_uuid, is_read)
 );
 ```
+
+현재 알림은 ACTIVE 구성원마다 `user_uuid` 를 채워 저장한다. `user_uuid` 가 NULL 인 레거시 행은 사용자별 알림 목록에 표시하지 않는다.
+중복은 애플리케이션에서 `(family_uuid, user_uuid, type, year_month)` 로 판단한다. `idx_notif_family_type_month` 는 조회 인덱스이며 사용자별 중복을 막는 UNIQUE 제약이 아니다.
 
 ### [recurring] recurring_expenses
 
@@ -242,6 +246,71 @@ CREATE TABLE api_tokens (
 - 만료는 없다. 폐기하면 `status = REVOKED` 가 되고 다시 살릴 수 없다
 - 사용자 한 명이 가질 수 있는 ACTIVE 토큰은 5개까지다
 
+### [budgetitem] budget_items
+
+가족이 만든 예산 항목이다 (ADR-B25).
+
+```sql
+CREATE TABLE budget_items (
+    id            BIGINT          PRIMARY KEY AUTO_INCREMENT,
+    uuid          VARCHAR(36)     NOT NULL UNIQUE,
+    family_uuid   VARCHAR(36)     NOT NULL,   -- FK 없음
+    name          VARCHAR(30)     NOT NULL,   -- 가족의 ACTIVE 항목 안에서 중복 불가 (서비스가 검사)
+    monthly_limit DECIMAL(15, 2)  NOT NULL DEFAULT 0,  -- 0 = 한도 없음
+    status        VARCHAR(20)     NOT NULL DEFAULT 'ACTIVE',  -- ACTIVE | DELETED
+    created_at    DATETIME(3)     NOT NULL,
+    updated_at    DATETIME(3)     NOT NULL,
+    INDEX idx_budget_items_family_uuid (family_uuid)
+);
+```
+
+- 가족당 ACTIVE 항목은 10개까지다
+- 두 테이블은 `utf8mb4_unicode_ci` 로 만든다. `category_uuid` 를 `expenses`, `categories` 와 비교하므로 collation 이 같아야 한다
+- 목록과 예산 요약은 만든 순서(`id` 오름차순)로 준다
+
+### [budgetitem] budget_item_categories
+
+항목이 세는 지출 카테고리다.
+
+```sql
+CREATE TABLE budget_item_categories (
+    id               BIGINT      PRIMARY KEY AUTO_INCREMENT,
+    budget_item_uuid VARCHAR(36) NOT NULL,   -- FK 없음
+    category_uuid    VARCHAR(36) NOT NULL,   -- FK 없음. EXPENSE 카테고리만
+    UNIQUE KEY uq_budget_item_categories_category (category_uuid),  -- 카테고리 하나는 항목 하나에만
+    INDEX idx_budget_item_categories_item (budget_item_uuid)
+);
+```
+
+- `status` 가 없다. 항목을 지우거나 카테고리를 지우거나 항목의 카테고리 묶음을 바꾸면 행을 실제로 지운다
+- 그래서 이 테이블에 행이 있는 카테고리는 항상 ACTIVE 항목에 속한다. 생활비 합계 쿼리는 항목의 `status` 를 보지 않고 이 테이블만 본다
+
+### [installment] installments
+
+할부 한 건이다. 지출을 만들지 않고 예산과 집계에 들어가지 않는다 (ADR-B27).
+
+```sql
+CREATE TABLE installments (
+    id                 BIGINT          PRIMARY KEY AUTO_INCREMENT,
+    uuid               VARCHAR(36)     NOT NULL,
+    family_uuid        VARCHAR(36)     NOT NULL,   -- FK 없음
+    user_uuid          VARCHAR(36)     NOT NULL,   -- FK 없음, 등록한 사람
+    name               VARCHAR(50)     NOT NULL,
+    total_amount       DECIMAL(12, 2)  NOT NULL,   -- 정수 원만 받는다
+    installment_months INT             NOT NULL,   -- 2~60
+    start_month        VARCHAR(7)      NOT NULL,   -- YYYY-MM, 첫 결제 월
+    memo               VARCHAR(200)    NULL,
+    status             VARCHAR(20)     NOT NULL DEFAULT 'ACTIVE',  -- ACTIVE | DELETED
+    created_at         DATETIME(3)     NOT NULL,
+    updated_at         DATETIME(3)     NOT NULL,
+    UNIQUE KEY uq_installments_uuid (uuid),
+    INDEX idx_installments_family_uuid (family_uuid)
+);
+```
+
+- 월 납부액, 회차, 남은 금액은 저장하지 않는다. 조회할 때 계산한다
+- `start_month` 는 `expenses.year_month` 와 같은 `YYYY-MM` 문자열이다. 문자열 비교가 날짜 순서와 같다
+
 ---
 
 ## 마이그레이션 이력 (Flyway)
@@ -263,6 +332,9 @@ CREATE TABLE api_tokens (
 | V13  | expenses에 recurring_expense_uuid, year_month 추가 + UNIQUE constraint          |
 | V14  | recurring_expenses 테이블 생성                                                  |
 | V20260930_1400 | api_tokens 테이블 생성 (이후 타임스탬프 버전, backend CLAUDE.md 「Database」) |
+| V20261001_1200 | categories 에 type 추가, 기존 카테고리 분류, 수입 기본 카테고리 생성 (ADR-B23) |
+| V20261002_1200 | budget_items, budget_item_categories 테이블 생성 (ADR-B25) |
+| V20261004_1200 | installments 테이블 생성 (ADR-B27) |
 
 ---
 
@@ -298,6 +370,18 @@ GET    /families/{uuid}/categories            목록
 GET    /families/{uuid}/categories/{uuid}     상세
 PUT    /families/{uuid}/categories/{uuid}     수정
 DELETE /families/{uuid}/categories/{uuid}     삭제 (기본 카테고리 불가)
+
+# [budgetitem] 예산 항목 (ADR-B25)
+POST   /families/{uuid}/budget-items          항목 생성
+GET    /families/{uuid}/budget-items          ACTIVE 항목 목록 (만든 순서)
+PUT    /families/{uuid}/budget-items/{uuid}   수정 (카테고리 묶음은 통째로 바꾼다)
+DELETE /families/{uuid}/budget-items/{uuid}   삭제 (Soft Delete)
+
+# [installment] 할부 (ADR-B27)
+POST   /families/{uuid}/installments          등록
+GET    /families/{uuid}/installments          ACTIVE 할부 목록 (첫 결제 월, id 순). 진행 상황을 계산해 담는다
+PUT    /families/{uuid}/installments/{uuid}   수정 (다섯 필드를 통째로 바꾼다)
+DELETE /families/{uuid}/installments/{uuid}   삭제 (Soft Delete)
 
 # [expense] 지출
 POST   /families/{uuid}/expenses              등록
@@ -339,7 +423,89 @@ GET    /families/{uuid}/dashboard/daily-stats                 일별 통계
 GET    /families/{uuid}/dashboard/expenses/by-category        카테고리별 지출
 GET    /families/{uuid}/dashboard/stats/monthly-trend         월별 지출 추이 (from/to)
 GET    /families/{uuid}/dashboard/stats/category-breakdown    카테고리 분포 + 전월 delta
+GET    /families/{uuid}/dashboard/budget-summary              생활비와 예산 항목별 쓴 금액과 한도 (year, month 필수)
 ```
+
+### 예산 항목 요청과 응답
+
+생성과 수정의 요청 본문은 같다.
+
+| 필드 | 타입 | 규칙 |
+|---|---|---|
+| `name` | 문자열 | 필수. 앞뒤 공백을 뺀 1~30자. 가족의 ACTIVE 항목 안에서 중복 불가 |
+| `monthlyLimit` | 숫자 | 필수. 0 이상 정수, 13자리까지. 0 은 한도 없음 |
+| `categoryUuids` | 문자열 배열 | 필수. 1개 이상. 중복 없이. 그 가족의 ACTIVE `EXPENSE` 카테고리만 |
+
+응답 `BudgetItemResponse` 는 `uuid`, `name`, `monthlyLimit`, `categoryUuids`, `createdAt`, `updatedAt` 을 담는다.
+생성은 201, 수정과 삭제는 200 이다. 삭제의 `data` 는 null 이다.
+
+| 에러 코드 | HTTP | 뜻 |
+|---|---|---|
+| `BI001` `BUDGET_ITEM_NOT_FOUND` | 404 | 항목이 없거나 다른 가족의 항목이다 |
+| `BI002` `BUDGET_ITEM_CATEGORY_CONFLICT` | 409 | 카테고리가 이미 다른 항목에 속한다 |
+| `BI003` `BUDGET_ITEM_LIMIT_EXCEEDED` | 400 | 가족의 ACTIVE 항목이 이미 10개다 |
+| `BI004` `BUDGET_ITEM_ALREADY_EXISTS` | 409 | 같은 이름의 ACTIVE 항목이 있다 |
+| `CT001`, `CT005` | 404, 400 | 카테고리가 없다, 수입 카테고리다 |
+| `C001` | 400 | 본문 검증 실패 |
+
+### 할부 요청과 응답
+
+생성과 수정의 요청 본문은 같다.
+
+| 필드 | 타입 | 규칙 |
+|---|---|---|
+| `name` | 문자열 | 필수. 앞뒤 공백을 뺀 1~50자 |
+| `totalAmount` | 숫자 | 필수. 1 이상 정수, 10자리까지. `installmentMonths` 이상이어야 한다 |
+| `installmentMonths` | 정수 | 필수. 2~60 |
+| `startMonth` | 문자열 | 필수. `YYYY-MM` |
+| `memo` | 문자열 | 선택. 200자까지. 앞뒤 공백을 뺀 값이 비면 null 로 저장한다 |
+
+응답 `InstallmentResponse` 다. 계산 필드는 업무 날짜(Asia/Seoul)의 이번 달 기준이다.
+
+| 필드 | 뜻 |
+|---|---|
+| `uuid`, `userUuid`, `name`, `totalAmount`, `installmentMonths`, `startMonth`, `memo`, `createdAt`, `updatedAt` | 저장한 값. `userUuid` 는 등록한 사람 |
+| `endMonth` | 마지막 결제 월. `startMonth` 에서 `installmentMonths - 1` 달 뒤 |
+| `monthlyAmount` | 2회차부터의 월 납부액. 총 금액 ÷ 개월 수를 원 단위로 내림 |
+| `firstMonthAmount` | 1회차 납부액. 총 금액 - 월 납부액 × (개월 수 - 1) |
+| `currentRound` | 이번 달까지 낸 회차 수. 0 ~ `installmentMonths` |
+| `thisMonthAmount` | 이번 달에 내는 금액. 결제 기간 밖이면 0 |
+| `remainingAmount` | 이번 달 회차까지 낸 뒤 남은 금액 |
+| `progress` | `UPCOMING`(첫 결제 월 전), `IN_PROGRESS`, `COMPLETED`(마지막 결제 월 뒤) |
+
+생성은 201, 수정과 삭제는 200 이다. 삭제의 `data` 는 null 이다.
+
+| 에러 코드 | HTTP | 뜻 |
+|---|---|---|
+| `IS001` `INSTALLMENT_NOT_FOUND` | 404 | 할부가 없거나 지웠거나 다른 가족의 할부다 |
+| `C001` | 400 | 총 금액이 개월 수보다 작음, trim 뒤 이름이 50자 초과 |
+| 필드 오류 `VALIDATION_ERROR` | 400 | 본문 검증 실패(빈 이름 포함). 최상위 `code` 없이 필드 오류 목록으로 온다 |
+
+### 예산 요약과 생활비 합계
+
+`budget-summary` 의 응답 `BudgetSummaryResponse` 다.
+
+| 필드 | 타입 | 뜻 |
+|---|---|---|
+| `year`, `month` | 숫자 | 요청한 연월 |
+| `total.spent` | 숫자 | 그 달 예산 합계 |
+| `total.limit` | 숫자 | `families.monthly_budget`(전체 예산). 0 = 미설정 |
+| `living.spent` | 숫자 | 그 달 생활비 합계 |
+| `living.limit` | 숫자 | `total.limit` 에서 ACTIVE 항목 `limit` 의 합을 뺀 값. 0 보다 작으면 0 |
+| `allocationExceeded` | 불리언 | `total.limit` 이 0 보다 크고 항목 `limit` 의 합이 그보다 크면 true |
+| `items[]` | `{ budgetItemUuid, name, limit, spent }` | ACTIVE 항목. 만든 순서. `limit` 0 = 한도 없음 |
+
+합계 규칙은 ADR-B25 와 ADR-B26 이 정한다.
+고정지출은 지출의 예산 제외 표시가 있거나, 카테고리가 예산 제외이거나, `recurring_expense_uuid` 가 있는 지출이다.
+
+| 합계 | 더하는 지출 |
+|---|---|
+| 예산 | 그 달 ACTIVE 지출 가운데 고정지출이 아닌 것. 항목 카테고리의 지출도 포함한다 |
+| 생활비 | 예산 합계의 지출 가운데 카테고리가 `budget_item_categories` 에 없는 것 |
+| 항목 | 그 달 ACTIVE 지출 가운데 카테고리가 그 항목에 속하고 지출의 예산 제외 표시가 없는 것. 카테고리의 예산 제외 표시와 반복 지출 여부는 보지 않는다 |
+
+`stats/monthly` 의 `monthlyExpense` 와 예산 알림의 기준 금액은 예산 합계다. `remainingBudget` 은 `budget - monthlyExpense` 다.
+지난달을 조회해도 지금의 항목 구성으로 계산한다.
 
 ### 응답에 담는 등록자
 
@@ -351,7 +517,7 @@ GET    /families/{uuid}/dashboard/stats/category-breakdown    카테고리 분�
 `name`과 `image`는 null일 수 있고, `email`은 사용자에게 있으면 담는다.
 `ACTIVE` 구성원만 가입 시각 오름차순으로 반환하며 가족 구성원만 조회할 수 있다.
 
-`daily-stats` 는 날짜별 합계와 함께 등록자별 지출 합계를 준다.
+`daily-stats` 는 날짜별 합계와 함께 날짜마다 등록자별 지출을 준다.
 
 | 필드 | 타입 | 뜻 |
 |---|---|---|
@@ -359,7 +525,6 @@ GET    /families/{uuid}/dashboard/stats/category-breakdown    카테고리 분�
 | `dailyStats[].income`, `dailyStats[].expense` | 숫자 | 그날 가족 전체 합계 |
 | `dailyStats[].memberExpenses[]` | `{ userUuid, amount }` | 그날 지출이 있는 등록자만. `userUuid` 오름차순 |
 | `totalIncome`, `totalExpense` | 숫자 | 그 달 가족 전체 합계 |
-| `memberExpenseTotals[]` | `{ userUuid, amount }` | 그 달 등록자별 지출 합계. 지출이 있는 등록자만. `userUuid` 오름차순 |
 
 합계는 삭제되지 않은(`ACTIVE`) 지출과 수입을 모두 더한다. 예산 제외 표시는 보지 않는다.
-등록자별 수입 합계는 담지 않는다. 달력은 등록자별로 지출만 비교하고, 수입은 날짜를 눌러 목록에서 본다.
+그 달 등록자별 누적 합계와 등록자별 수입 합계는 담지 않는다. 홈은 누적 금액 대신 예산 카드를 보여 준다. 달력은 등록자별로 지출만 비교하고, 수입은 날짜를 눌러 목록에서 본다.

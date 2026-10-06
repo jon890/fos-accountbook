@@ -14,7 +14,8 @@ POST /auth/social-login → JWT 발급
     │
     ▼
 POST /families → 가족 생성
-    │  └─ 기본 카테고리 10개 자동 생성 (미분류, 식비, 교통 등)
+    │  └─ 지출 카테고리 11개와 수입 카테고리 4개 자동 생성
+    │     (삭제할 수 없는 기본 카테고리: 지출 미분류, 수입 기타 수입)
     │  └─ UserProfile.defaultFamilyUuid 자동 설정
     │
     ▼
@@ -38,7 +39,7 @@ ExpenseService.create()
             │
             ▼  (트랜잭션 커밋 후, 비동기)
         BudgetAlertEventListener
-            ├─ 월 예산 대비 지출 비율 계산
+            ├─ 월 예산 대비 예산 합계 비율 계산 (예산 합계는 「8. 예산 항목과 예산 요약」)
             ├─ 50% / 80% / 100% 초과 시 Notification 생성
             └─ 실패해도 지출 저장에 영향 없음
 ```
@@ -53,7 +54,7 @@ ExpenseService.create()
 RecurringExpense 템플릿 저장 (status=ACTIVE)
 
         ┌──────────────────────────────┐
-        │  매일 새벽 1시 (스케줄러)       │
+        │  매일 KST 새벽 1시 (스케줄러)   │
         │  RecurringExpenseScheduler    │
         └──────────┬───────────────────┘
                    │
@@ -61,19 +62,23 @@ RecurringExpense 템플릿 저장 (status=ACTIVE)
         오늘 dayOfMonth인 ACTIVE 템플릿 조회
                    │
                    ▼  (각 템플릿마다)
+        템플릿 하나를 트랜잭션 하나로 처리 (RecurringExpenseGenerator)
         (recurring_expense_uuid, year_month) 중복 체크
                    │
-            ┌──────┴──────┐
-            │ 미생성       │ 이미 존재
-            ▼             ▼
-        Expense 생성   log.warn → skip
+            ┌──────┴──────┬──────────────┐
+            │ 미생성       │ 이미 존재     │ 예외
+            ▼             ▼              ▼
+        Expense 생성   log.warn → skip  log.warn → 그 템플릿만 skip, 다음 템플릿 계속
+            │
+            ▼  (모든 템플릿 처리 뒤 가족마다)
+        RecurringExpenseCreatedEvent 발행 (트랜잭션 밖)
             │
             ▼
-        RecurringExpenseCreatedEvent 발행
-            │
-            ▼
-        Notification 생성 (RECURRING_EXPENSE_CREATED)
+        가족의 ACTIVE 구성원마다 Notification 생성 (RECURRING_EXPENSE_CREATED, userUuid = 구성원)
 ```
+
+스케줄러는 트랜잭션 밖에서 이벤트를 발행한다. `@TransactionalEventListener` 는 기본값으로 트랜잭션 밖 이벤트를 버리므로, 이 리스너는 `fallbackExecution = true` 로 받는다.
+알림 목록은 `userUuid` 로 조회하므로 수신자를 구성원마다 정해 저장한다. `userUuid` 가 null 인 알림은 아무에게도 보이지 않는다.
 
 ## 4. 카테고리 삭제 시 연쇄 처리
 
@@ -83,9 +88,10 @@ DELETE /families/{familyUuid}/categories/{categoryUuid}
     ▼
 CategoryService.deleteCategory()
     ├─ 기본 카테고리 여부 체크 (is_default=true → 삭제 불가)
-    ├─ 기본 카테고리 조회 (이동 대상)
-    ├─ ExpenseService.moveExpensesToDefaultCategory()
-    ├─ RecurringExpenseService.moveRecurringExpensesToDefaultCategory()
+    ├─ 종류별 기본 카테고리 조회 (지출: 미분류, 수입: 기타 수입)
+    ├─ EXPENSE → 지출 전체 이력과 ACTIVE 반복 지출을 미분류로 이관
+    ├─ INCOME → 수입 전체 이력을 기타 수입으로 이관
+    ├─ EXPENSE → 예산 항목에서 이 카테고리를 뺀다 (budget_item_categories 행 삭제)
     └─ Category status → DELETED + 캐시 무효화
 ```
 
@@ -96,7 +102,7 @@ GET /families/{familyUuid}/dashboard/stats/monthly?year=2026&month=4
     │
     ▼
 DashboardService.getMonthlyStats()
-    ├─ 해당 월 총 지출 (exclude_from_budget 제외)
+    ├─ 해당 월 예산 합계 (「8. 예산 항목과 예산 요약」)
     ├─ 해당 월 총 수입
     ├─ 월 예산 대비 비율
     └─ 가족 멤버 수
@@ -116,9 +122,20 @@ GET /families/{familyUuid}/dashboard/stats/category-breakdown?year=2026&month=5&
     │
     ▼
 DashboardService.getCategoryBreakdown()
-    ├─ 기존 getCategoryExpenseStats 재활용 (월 범위 LocalDateTime 변환)
+    ├─ 월 범위는 [그 달 1일 00:00, 다음 달 1일 00:00) 반열린 구간 (다음 달 1일 00:00 지출은 다음 달)
     ├─ 카테고리별 금액·비율 계산
-    └─ compareWithPrev=true 시 전월 조회 → delta 계산
+    └─ compareWithPrev=true 시 전월 조회 → delta 계산, previousAmount(직전 달 지출 없으면 0) 함께 응답
+        └─ deltaPercent 는 전월 0원이면 null. previousAmount 로 「비교 안 함」 과 「이번 달 새로 생김」 을 구분한다
+```
+
+```
+GET /families/{familyUuid}/dashboard/budget-summary?year=2026&month=10
+    │
+    ▼
+DashboardService.getBudgetSummary()
+    ├─ 예산: 그 달 예산 합계와 families.monthly_budget
+    ├─ 생활비: 그 달 생활비 합계와 monthly_budget 에서 항목 한도 합을 뺀 값 (0 미만이면 0)
+    └─ 항목: 가족의 ACTIVE 예산 항목마다 그 항목 카테고리의 그 달 지출 합계와 monthly_limit (만든 순서)
 ```
 
 ## 6. 인증 갱신
@@ -174,6 +191,77 @@ API 인증 필터(`JwtAuthenticationFilter`)는 `typ=access` 인 토큰만 인�
 
 ---
 
+## 8. 예산 항목과 예산 요약
+
+결정 근거는 ADR-B25 와 ADR-B26 이다.
+
+```mermaid
+flowchart TD
+    E[그 달의 ACTIVE 지출] --> X{지출의 예산 제외 표시}
+    X -- 켜짐 --> N[어디에도 세지 않는다]
+    X -- 꺼짐 --> I{카테고리가 예산 항목에 속하나}
+    I -- 속한다 --> ITEM[그 항목의 지출 합계]
+    I -- 아니다 --> C{예산 제외 카테고리이거나 반복 지출이 만든 지출인가}
+    C -- 그렇다 --> F[고정지출. 예산과 생활비에 세지 않는다]
+    C -- 아니다 --> L[생활비 합계]
+    ITEM --> T[예산 합계]
+    L --> T
+```
+
+항목 카테고리의 지출 가운데 카테고리가 예산 제외이거나 반복 지출이 만든 것은 항목 합계에는 들어가고 예산 합계에는 들어가지 않는다.
+
+```
+POST /families/{familyUuid}/budget-items
+    │  body: { name, monthlyLimit, categoryUuids }
+    ▼
+BudgetItemService.createBudgetItem()
+    ├─ 가족 구성원 검증 (@ValidateFamilyAccess)
+    ├─ ACTIVE 항목이 이미 10개 → 400 BI003
+    ├─ 같은 이름의 ACTIVE 항목 → 409 BI004
+    ├─ 카테고리마다 가족 소속과 EXPENSE 종류 검증 → 없으면 404 CT001, 수입 카테고리면 400 CT005
+    ├─ 다른 항목에 이미 속한 카테고리 → 409 BI002
+    └─ budget_items 와 budget_item_categories 저장
+```
+
+- 수정(`PUT`)은 이름과 한도를 바꾸고 카테고리 묶음을 통째로 바꾼다. 검증은 생성과 같고, 자기 항목에 이미 있던 카테고리는 충돌로 보지 않는다.
+- 삭제(`DELETE`)는 항목을 `DELETED` 로 바꾸고 `budget_item_categories` 행을 지운다. 그 카테고리의 지출은 다시 생활비에 들어간다.
+- 두 사람이 동시에 같은 카테고리를 서로 다른 항목에 넣으면 `uq_budget_item_categories_category` 가 뒤 요청을 막고 409 BI002 로 응답한다.
+- 항목이 하나도 없으면 예산 요약의 `items` 는 빈 배열이다. 월 예산이 0 이면 `living.limit` 은 0 이다.
+
+## 9. 할부 기록과 진행 상황
+
+결정 근거는 ADR-B27 이다. 할부는 지출을 만들지 않으므로 다른 도메인을 부르지 않고 이벤트도 내지 않는다.
+
+```mermaid
+flowchart TD
+    R["GET /families/{familyUuid}/installments"] --> A{가족 구성원인가}
+    A -- 아니다 --> F403[403]
+    A -- 그렇다 --> L[가족의 ACTIVE 할부를 첫 결제 월, id 순으로 읽는다]
+    L --> E{할부가 있나}
+    E -- 없다 --> EMPTY[빈 배열]
+    E -- 있다 --> NOW[업무 날짜 Asia/Seoul 의 이번 달]
+    NOW --> C{이번 달과 첫 결제 월, 마지막 결제 월 비교}
+    C -- 첫 결제 월 전 --> UP[UPCOMING. 회차 0, 이번 달 0, 남은 금액 = 총 금액]
+    C -- 그 사이 --> IP[IN_PROGRESS. 회차는 첫 결제 월부터 센 달 수, 이번 달은 그 회차 금액]
+    C -- 마지막 결제 월 뒤 --> DONE[COMPLETED. 회차 = 개월 수, 남은 금액 0]
+```
+
+```
+POST /families/{familyUuid}/installments
+    │  body: { name, totalAmount, installmentMonths, startMonth, memo }
+    ▼
+InstallmentService.createInstallment()
+    ├─ 가족 구성원 검증 (@ValidateFamilyAccess)
+    ├─ 본문 검증 실패(빈 이름 포함) → 400 필드 오류
+    ├─ 총 금액 < 개월 수, trim 뒤 이름이 50자 초과 → 400 C001
+    └─ installments 저장 (user_uuid = 등록한 사람)
+```
+
+- 수정(`PUT`)은 다섯 필드를 통째로 바꾼다. 검증은 생성과 같다. 등록자가 아니어도 같은 가족이면 고친다.
+- 삭제(`DELETE`)는 `DELETED` 로 바꾼다. 다른 숫자는 바뀌지 않는다.
+- 없는 할부, 지운 할부, 다른 가족의 할부를 고치거나 지우면 404 IS001 이다. 다른 가족의 할부인지 드러내지 않는다.
+- 두 사람이 같은 할부를 동시에 고치면 나중에 커밋한 쪽이 남는다. 잠금을 두지 않는다.
+
 ## 도메인 간 이벤트 흐름 요약
 
 | 이벤트                         | 발행자    | 구독자       | 트리거             |
@@ -185,5 +273,7 @@ API 인증 필터(`JwtAuthenticationFilter`)는 `typ=access` 인 토큰만 인�
 동기 호출 (향후 이벤트 전환 후보):
 
 - `family → category`: 가족 생성 시 기본 카테고리 생성
-- `category → expense/recurring`: 카테고리 삭제 시 기본 카테고리로 이동 (income은 미구현)
+- `category → expense/recurring/income`: 카테고리 삭제 시 종류별 기본 카테고리로 이동
+- `category → budgetitem`: 카테고리 삭제 시 예산 항목에서 그 카테고리를 뺀다
+- `budgetitem → category`: 항목 저장 시 카테고리의 가족 소속과 종류 검증
 - `family → user`: 가족 생성 시 기본 가족 설정

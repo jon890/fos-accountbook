@@ -23,9 +23,16 @@ if (mode === "dev") {
 }
 
 function build() {
+  const buildEnv = {
+    ...process.env,
+    SKIP_ENV_VALIDATION: "true",
+    NEXT_TELEMETRY_DISABLED: "1",
+  };
+  delete buildEnv.AUTH_URL;
+
   const result = spawnSync("pnpm", ["build"], {
     cwd: frontendDir,
-    env: { ...process.env, SKIP_ENV_VALIDATION: "true", NEXT_TELEMETRY_DISABLED: "1" },
+    env: buildEnv,
     stdio: "inherit",
   });
   if (result.status !== 0) {

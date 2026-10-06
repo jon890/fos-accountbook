@@ -1,4 +1,4 @@
-# Code Architecture — fos-accountbook-backend
+# fos-accountbook-backend 코드 구조
 
 > 상세 코딩 컨벤션·테스트 패턴·명령어는 `CLAUDE.md` 참고. 이 문서는 계층 구조와 설계 철학만 다룬다.
 
@@ -10,16 +10,18 @@
 com.bifos.accountbook
 ├── shared/                  도메인 공통 — 아래 상세
 ├── expense/                 지출
-│   ├── presentation/        Controller, Request/Response DTO
+│   ├── presentation/        Controller, Controller 만 쓰는 Request/Response DTO
 │   ├── application/         Service, DTO, Event
 │   ├── domain/              Entity, Repository 인터페이스, Value Object, Converter
 │   └── infra/               Repository 구현체 (JPA/QueryDSL)
 ├── income/                  수입 (동일 레이어 구조)
 ├── category/                카테고리
-├── family/                  가족, 멤버십
+├── family/                  가족, 멤버십. application/access/ 에 가족 접근 검증 AOP(@ValidateFamilyAccess, FamilyAccessAspect, FamilyValidationService)
 ├── recurring/               반복 지출, 스케줄러
 ├── invitation/              초대
 ├── notification/            알림, 예산 알림
+├── budgetitem/              예산 항목 (이름, 월 한도, 카테고리 묶음. ADR-B25)
+├── installment/             할부 기록과 진행 상황 계산. 다른 도메인을 부르지 않는다 (ADR-B27)
 ├── dashboard/               대시보드 (read model)
 ├── user/                    사용자, 인증, 프로필
 ├── apitoken/                외부 에이전트 연동 토큰 발급, 조회, 폐기 (ADR-B18)
@@ -31,13 +33,12 @@ com.bifos.accountbook
 ```
 shared/
 ├── auth/           LoginUser, LoginUserDto, LoginUserArgumentResolver
-├── aop/            FamilyAccessAspect, @ValidateFamilyAccess, FamilyValidationService
 ├── dto/            ApiSuccessResponse, ApiErrorResponse, PaginationResponse
 ├── exception/      BusinessException, ErrorCode, GlobalExceptionHandler
 ├── value/          CustomUuid, CodeEnum
 ├── converter/      UuidConverter (CustomUuid 전용)
 ├── filter/         RequestResponseLoggingFilter
-└── utils/          TimeUtils
+└── utils/          BusinessTime (Asia/Seoul 업무 시간대 상수)
 ```
 
 ### 도메인별 소유 원칙
@@ -50,9 +51,12 @@ shared/
 | 이벤트 리스너                  | **구독자** 도메인의 `application/event/`                    |
 | Projection (read model DTO)    | **사용하는** 도메인의 `domain/repository/projection/`       |
 | CategoryInfo DTO               | `category/application/dto/` (다른 도메인이 category를 참조) |
+| Service 가 받거나 돌려주는 DTO | 해당 도메인의 `application/dto/`                            |
 
 **의존성 방향**: `presentation → application → domain ← infra`
-상위 레이어는 하위를 직접 참조하지 않는다. Controller는 Repository를 직접 주입받지 않는다.
+하위 레이어는 상위 레이어를 참조하지 않는다.
+presentation은 DTO 변환을 위해 domain의 Entity와 값 타입을 참조할 수 있다.
+Controller는 Repository와 infra를 직접 사용하지 않는다.
 
 ---
 
@@ -77,19 +81,21 @@ user ◄── family ──► category
 | ----------------------- | ------------------------------------------------------------------------- | ------------------------------------ |
 | ExpenseService          | CategoryService, UserService, FamilyValidationService                     |                                      |
 | IncomeService           | CategoryService, UserService, FamilyValidationService                     |                                      |
-| CategoryService         | ExpenseService, RecurringExpenseService (ObjectProvider)                  | 카테고리 삭제 시 이관                |
+| CategoryService         | ExpenseService, RecurringExpenseService, IncomeService, BudgetItemService (ObjectProvider) | 카테고리 삭제 시 종류별 이관과 예산 항목 정리 |
 | FamilyService           | UserService, CategoryService, UserProfileService, FamilyValidationService | 가족 생성 시 카테고리/프로필         |
 | RecurringExpenseService | CategoryService                                                           |                                      |
 | InvitationService       | UserService                                                               | FamilyRepository 직접 참조           |
 | NotificationService     | FamilyValidationService                                                   |                                      |
 | BudgetAlertService      | —                                                                         | Repository 직접 참조 (이벤트 구독자) |
 | DashboardService        | —                                                                         | Repository 직접 참조 (read model)    |
+| BudgetItemService       | CategoryService                                                           | 항목 저장 시 카테고리 검증           |
+| InstallmentService      | —                                                                         | `Clock` 으로 이번 달을 정한다        |
 | AuthService             | UserService                                                               |                                      |
 
 ### 결합 포인트 (향후 MSA 전환 시 해소 대상)
 
 1. **JPA `@ManyToOne` 관계**: Expense↔Family, Income↔Family, FamilyMember↔Family/User, Invitation↔Family/User
-2. **동기 호출**: FamilyService→CategoryService, CategoryService→ExpenseService (ObjectProvider)
+2. **동기 호출**: FamilyService→CategoryService. CategoryService는 ObjectProvider로 ExpenseService, RecurringExpenseService, IncomeService를 조회해 삭제할 카테고리의 종류에 맞게 거래를 이관한다.
 3. **FamilyValidationService**: 6개 서비스가 공유하는 AOP 관심사
 
 이미 잘 분리된 부분:
@@ -159,6 +165,8 @@ applicationEventPublisher.publishEvent(new ExpenseCreatedEvent(familyUuid, date)
 public void handle(ExpenseCreatedEvent event) { ... }
 ```
 
+반복 지출 이벤트는 스케줄러가 트랜잭션 밖에서 발행하므로 `fallbackExecution = true` 로 받는다. 구성원별 알림은 새 트랜잭션에 저장하며, 저장 실패 시 알림 전체를 롤백하고 지출은 유지한다.
+
 ### 스케줄러 패턴 (반복 지출)
 
 ```java
@@ -166,19 +174,19 @@ public void handle(ExpenseCreatedEvent event) { ... }
 @RequiredArgsConstructor
 public class RecurringExpenseScheduler {
 
-  @Scheduled(cron = "0 0 1 * * ?")  // 매일 새벽 1시
+  @Scheduled(cron = "0 0 1 * * ?", zone = "Asia/Seoul")  // 매일 KST 새벽 1시
   public void generateRecurringExpenses() {
     // 1. 오늘 day_of_month인 ACTIVE 템플릿 조회
-    // 2. 각 템플릿 → Expense INSERT 시도
-    //    - (recurring_expense_uuid, year_month) UNIQUE 위반 시 log.warn 후 skip
-    // 3. 성공 시 ApplicationEvent 발행 → RECURRING_EXPENSE_CREATED 알림
+    // 2. 별도 RecurringExpenseGenerator 빈에서 템플릿마다 트랜잭션으로 Expense 생성
+    //    - 중복 또는 예외는 log.warn 후 해당 템플릿만 skip, 다음 템플릿 계속
+    // 3. 모든 템플릿 처리 뒤 가족별 성공 수 집계 → 트랜잭션 밖에서 이벤트 발행
   }
 }
 ```
 
 멱등성: DB UNIQUE constraint로 보장. 재실행 시 중복 생성 없음.
 
-### 테스트 가능한 시간 의존성 — Clock 주입
+### Clock 주입으로 시간에 의존하는 로직 테스트하기
 
 날짜/시간에 의존하는 로직(스케줄러 등)은 `Clock` Bean을 주입하여 테스트 가능성을 확보한다:
 
@@ -189,13 +197,13 @@ public Clock clock() {
     return Clock.systemDefaultZone();
 }
 
-// Scheduler: LocalDate.now(clock) 사용
+// Scheduler: 업무 날짜에만 Asia/Seoul 적용
 @RequiredArgsConstructor
 public class RecurringExpenseScheduler {
     private final Clock clock;
 
     public void generateRecurringExpenses() {
-        LocalDate today = LocalDate.now(clock);
+        LocalDate today = LocalDate.now(clock.withZone(BusinessTime.ZONE));
         // ...
     }
 }
@@ -237,11 +245,11 @@ static class TestClockConfig {
 
 ## 새 도메인 추가 체크리스트
 
-1. `{domain}/domain/` — Entity (`@Entity` + `@Builder`), Repository 인터페이스, Value Object
-2. `{domain}/infra/` — Repository 구현체 (JPA + QueryDSL)
-3. `{domain}/application/` — Service (`@Transactional(readOnly=true)` 기본) + DTO
-4. `{domain}/presentation/` — Controller + Request/Response DTO
+1. `{domain}/domain/`: Entity (`@Entity`, `@Builder`), Repository 인터페이스, Value Object
+2. `{domain}/infra/`: Repository 구현체 (JPA와 QueryDSL)
+3. `{domain}/application/`: Service (`@Transactional(readOnly=true)` 기본)와 DTO
+4. `{domain}/presentation/`: Controller와 Controller만 쓰는 Request/Response DTO
 5. `db/migration/` — Flyway SQL (`V{N}__{description}.sql`)
-6. `docs/data-schema.md` — 스키마 + API 엔드포인트 업데이트
+6. `docs/data-schema.md`: 스키마와 API 엔드포인트 업데이트
 7. 기존 삭제/이관 로직에 새 도메인 반영 (예: 카테고리 삭제 시 새 도메인 데이터도 기본 카테고리로 이동)
 8. `docs/flow.md` — 사용자 흐름에 새 도메인 시나리오 추가

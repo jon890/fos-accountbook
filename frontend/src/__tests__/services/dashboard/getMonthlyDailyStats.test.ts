@@ -6,6 +6,7 @@ jest.mock("@/lib/server/cache", () => ({
 }));
 
 import { serverApiGet } from "@/lib/server/api/client";
+import { dailyStatsResponseSchema } from "@/lib/schemas/responses/calendar";
 import { ServerApiError } from "@/lib/server/api/types";
 import { getMonthlyDailyStats } from "@/services/dashboard/dashboard-service";
 
@@ -29,6 +30,7 @@ describe("getMonthlyDailyStats", () => {
     expect(await getMonthlyDailyStats("family", 2026, 3)).toEqual(dailyStats);
     expect(api).toHaveBeenCalledWith(
       "/families/family/dashboard/daily-stats?year=2026&month=3",
+      expect.objectContaining({ schema: dailyStatsResponseSchema }),
     );
   });
 

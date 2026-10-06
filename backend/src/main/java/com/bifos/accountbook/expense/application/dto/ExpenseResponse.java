@@ -36,18 +36,18 @@ public class ExpenseResponse {
    */
   public static ExpenseResponse from(Expense expense, CategoryInfo category) {
     return ExpenseResponse.builder()
-                          .uuid(expense.getUuid().getValue())
-                          .familyUuid(expense.getFamilyUuid().getValue())
-                          .userUuid(expense.getUserUuid().getValue())
-                          .categoryUuid(expense.getCategoryUuid().getValue())
-                          .category(category)
-                          .amount(expense.getAmount())
-                          .description(expense.getDescription())
-                          .date(expense.getDate())
-                          .excludeFromBudget(expense.isExcludeFromBudget())
-                          .createdAt(expense.getCreatedAt())
-                          .updatedAt(expense.getUpdatedAt())
-                          .build();
+        .uuid(expense.getUuid().getValue())
+        .familyUuid(expense.getFamilyUuid().getValue())
+        .userUuid(expense.getUserUuid().getValue())
+        .categoryUuid(expense.getCategoryUuid().getValue())
+        .category(category)
+        .amount(expense.getAmount())
+        .description(expense.getDescription())
+        .date(expense.getDate())
+        .excludeFromBudget(expense.isExcludeFromBudget())
+        .createdAt(expense.getCreatedAt())
+        .updatedAt(expense.getUpdatedAt())
+        .build();
   }
 
   /**
@@ -58,17 +58,16 @@ public class ExpenseResponse {
    */
   public static ExpenseResponse fromWithoutCategory(Expense expense) {
     return ExpenseResponse.builder()
-                          .uuid(expense.getUuid().getValue())
-                          .familyUuid(expense.getFamilyUuid().getValue())
-                          .userUuid(expense.getUserUuid().getValue())
-                          .categoryUuid(expense.getCategoryUuid().getValue())
-                          .amount(expense.getAmount())
-                          .description(expense.getDescription())
-                          .date(expense.getDate())
-                          .excludeFromBudget(expense.isExcludeFromBudget())
-                          .createdAt(expense.getCreatedAt())
-                          .updatedAt(expense.getUpdatedAt())
-                          .build();
+        .uuid(expense.getUuid().getValue())
+        .familyUuid(expense.getFamilyUuid().getValue())
+        .userUuid(expense.getUserUuid().getValue())
+        .categoryUuid(expense.getCategoryUuid().getValue())
+        .amount(expense.getAmount())
+        .description(expense.getDescription())
+        .date(expense.getDate())
+        .excludeFromBudget(expense.isExcludeFromBudget())
+        .createdAt(expense.getCreatedAt())
+        .updatedAt(expense.getUpdatedAt())
+        .build();
   }
 }
-

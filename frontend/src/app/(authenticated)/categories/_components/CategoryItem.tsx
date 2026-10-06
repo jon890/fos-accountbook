@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { CategoryResponse } from "@/types/category";
 import { Edit2, EyeOff, Trash2 } from "lucide-react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, MouseEvent } from "react";
 
 interface CategoryItemProps {
   category: CategoryResponse;
@@ -22,9 +22,23 @@ export function CategoryItem({
     "--cat-color": category.color ?? "var(--color-brand-500)",
   } as CSSProperties;
 
+  const handleEditClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    onEdit(category);
+  };
+
+  const handleDeleteClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    onDelete(category);
+  };
+
   return (
-    <Card className="hover:shadow-md transition-shadow" style={colorStyle}>
-      <CardContent className="px-2 md:p-4">
+    <Card
+      className="cursor-pointer transition-shadow hover:shadow-md"
+      style={colorStyle}
+      onClick={() => onEdit(category)}
+    >
+      <CardContent className="p-3 md:p-4">
         <div className="flex flex-col justify-between h-full gap-2 md:gap-3">
           <div className="flex items-start justify-between">
             <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center text-xl md:text-2xl shrink-0 bg-[color-mix(in_srgb,var(--cat-color)_16%,transparent)] text-[var(--cat-color)]">
@@ -35,7 +49,8 @@ export function CategoryItem({
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 md:h-8 md:w-8"
-                onClick={() => onEdit(category)}
+                onClick={handleEditClick}
+                aria-label={`${category.name} 수정`}
               >
                 <Edit2 className="w-3 h-3 md:w-4 md:h-4" />
               </Button>
@@ -43,7 +58,8 @@ export function CategoryItem({
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 md:h-8 md:w-8"
-                onClick={() => onDelete(category)}
+                onClick={handleDeleteClick}
+                aria-label={`${category.name} 삭제`}
               >
                 <Trash2 className="w-3 h-3 md:w-4 md:h-4 text-expense" />
               </Button>
@@ -64,7 +80,7 @@ export function CategoryItem({
                   className="text-[10px] px-1.5 py-0 h-5 gap-1 text-fg-muted w-fit whitespace-nowrap shrink-0"
                 >
                   <EyeOff className="w-3 h-3" />
-                  <span className="hidden md:inline">예산 제외</span>
+                  <span>예산 제외</span>
                 </Badge>
               )}
             </div>

@@ -19,6 +19,8 @@ jest.mock("@/lib/server/api/client");
 
 import { ActionError } from "@/lib/errors";
 import { serverApiClient, serverApiGet } from "@/lib/server/api/client";
+import { ResponseValidationError } from "@/lib/server/api/types";
+import { invitationListSchema } from "@/lib/schemas/responses/invitation";
 import {
   assertInvitationOwnership,
   getInvitationInfo,
@@ -34,6 +36,7 @@ const mockServerApiGet = serverApiGet as jest.MockedFunction<
 const FAMILY_UUID = "family-uuid-1";
 const INVITATION_UUID = "550e8400-e29b-41d4-a716-446655440000";
 
+/** 백엔드 `InvitationResponse` 와 같은 모양. 원시형 boolean 두 필드는 JSON 키가 `expired`, `used` 다. */
 function pendingInvitation(extra: Record<string, unknown> = {}) {
   return {
     uuid: INVITATION_UUID,
@@ -43,8 +46,10 @@ function pendingInvitation(extra: Record<string, unknown> = {}) {
     status: "PENDING",
     expiresAt: new Date(Date.now() + 86_400_000).toISOString(),
     createdAt: new Date().toISOString(),
-    isExpired: false,
-    isUsed: false,
+    expired: false,
+    used: false,
+    inviter: null,
+    memberCount: null,
     ...extra,
   };
 }
@@ -82,6 +87,23 @@ describe("getInvitationInfo", () => {
     expect(result.inviterAvatarUrl).toBeNull();
     expect(result.memberCount).toBeUndefined();
   });
+
+  it("공개 조회 응답에 status 가 없으면 ResponseValidationError 로 reject 하고 토큰을 메시지에 넣지 않는다", async () => {
+    const invitation: Record<string, unknown> = pendingInvitation();
+    delete invitation.status;
+    mockServerApiClient.mockResolvedValue({ data: invitation });
+    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    const promise = getInvitationInfo("secret-token-1");
+
+    await expect(promise).rejects.toBeInstanceOf(ResponseValidationError);
+    await expect(promise).rejects.toMatchObject({
+      endpoint: "/invitations/token/:token",
+      issues: [{ path: "status", code: "invalid_type" }],
+    });
+    expect(String(errorSpy.mock.calls[0]?.[0])).not.toContain("secret-token-1");
+    errorSpy.mockRestore();
+  });
 });
 
 describe("assertInvitationOwnership", () => {
@@ -95,6 +117,10 @@ describe("assertInvitationOwnership", () => {
     await expect(
       assertInvitationOwnership(FAMILY_UUID, INVITATION_UUID)
     ).resolves.toBeUndefined();
+    expect(mockServerApiGet).toHaveBeenCalledWith(
+      `/invitations/families/${FAMILY_UUID}`,
+      expect.objectContaining({ schema: invitationListSchema })
+    );
   });
 
   it("목록에 없으면 C002 ActionError 로 reject 한다", async () => {

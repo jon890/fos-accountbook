@@ -10,7 +10,7 @@ export function LoadingSpinner() {
           </div>
           <div className="absolute inset-0 w-12 h-12 gradient-primary rounded-2xl animate-ping opacity-20"></div>
         </div>
-        <div className="text-sm text-gray-600 font-medium">로딩 중...</div>
+        <div className="text-sm text-fg-muted font-medium">로딩 중...</div>
       </div>
     </div>
   );

@@ -2,24 +2,19 @@
 
 import { createCategoryAction } from "@/actions/category/create-category-action";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { CategoryResponse } from "@/types/category";
 import { useState } from "react";
 import { toast } from "sonner";
 import { PALETTE, commonEmojis } from "./category-constants";
+import { CategoryFormShell } from "./CategoryFormShell";
 
 interface AddCategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   familyUuid: string;
+  type: "EXPENSE" | "INCOME";
   onSuccess: (category: CategoryResponse) => void;
 }
 
@@ -27,35 +22,38 @@ export function AddCategoryDialog({
   open,
   onOpenChange,
   familyUuid,
+  type,
   onSuccess,
 }: AddCategoryDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>카테고리 추가</DialogTitle>
-          <DialogDescription>새로운 지출 카테고리를 추가합니다</DialogDescription>
-        </DialogHeader>
-        {open ? (
-          <AddCategoryDialogBody
-            familyUuid={familyUuid}
-            onOpenChange={onOpenChange}
-            onSuccess={onSuccess}
-          />
-        ) : null}
-      </DialogContent>
-    </Dialog>
+    <CategoryFormShell
+      open={open}
+      onOpenChange={onOpenChange}
+      title="카테고리 추가"
+      description={`새로운 ${type === "EXPENSE" ? "지출" : "수입"} 카테고리를 추가합니다`}
+    >
+      {open ? (
+        <AddCategoryDialogBody
+          familyUuid={familyUuid}
+          type={type}
+          onOpenChange={onOpenChange}
+          onSuccess={onSuccess}
+        />
+      ) : null}
+    </CategoryFormShell>
   );
 }
 
 interface AddCategoryDialogBodyProps {
   familyUuid: string;
+  type: "EXPENSE" | "INCOME";
   onOpenChange: (open: boolean) => void;
   onSuccess: (category: CategoryResponse) => void;
 }
 
 function AddCategoryDialogBody({
   familyUuid,
+  type,
   onOpenChange,
   onSuccess,
 }: AddCategoryDialogBodyProps) {
@@ -76,6 +74,7 @@ function AddCategoryDialogBody({
     setIsSubmitting(true);
     try {
       const result = await createCategoryAction(familyUuid, {
+        type,
         name: name.trim(),
         color,
         icon,
@@ -97,7 +96,7 @@ function AddCategoryDialogBody({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 px-1 pb-4 md:px-0">
       <div className="space-y-2">
         <Label htmlFor="name">카테고리 이름 *</Label>
         <Input
@@ -120,41 +119,46 @@ function AddCategoryDialogBody({
             placeholder="이모지 입력"
           />
         </div>
-        <div className="grid grid-cols-10 gap-1 p-2 border rounded-md max-h-32 overflow-y-auto">
+        <div className="grid max-h-[178px] grid-cols-8 gap-0 overflow-y-auto rounded-md border border-border p-0">
           {commonEmojis.map((emoji) => (
-            <button
+            <Button
               key={emoji}
               type="button"
               onClick={() => setIcon(emoji)}
-              className={`text-2xl p-1 rounded hover:bg-bg-muted ${
+              variant="ghost"
+              size="icon"
+              className={`size-11 rounded-none text-2xl ${
                 icon === emoji ? "bg-bg-muted" : ""
               }`}
+              aria-label={`${emoji} 아이콘 선택`}
             >
               {emoji}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
       <div className="space-y-2">
         <Label>색상</Label>
-        <div className="flex items-center gap-2 mb-2">
+        <div className="mb-2 flex items-center gap-2">
           <div
             className="w-10 h-10 rounded border border-border shrink-0"
             style={{ backgroundColor: color }}
           />
-          <span className="text-xs text-fg-muted flex-1 truncate">{color}</span>
         </div>
         <div className="flex flex-wrap gap-2 p-2 border border-border rounded-md">
           {PALETTE.map((c) => (
-            <button
+            <Button
               key={c}
               type="button"
               onClick={() => setColor(c)}
-              className={`w-8 h-8 rounded-full border-2 transition-transform ${
+              variant="ghost"
+              size="icon"
+              className={`size-8 rounded-full border-2 p-0 transition-transform ${
                 color === c ? "border-fg scale-110" : "border-transparent"
               }`}
               style={{ backgroundColor: c }}
+              aria-label={`색 ${PALETTE.indexOf(c) + 1} 선택`}
             />
           ))}
         </div>
@@ -173,7 +177,7 @@ function AddCategoryDialogBody({
         </Label>
       </div>
 
-      <div className="flex gap-2 pt-4">
+      <div className="safe-area-pb flex gap-2 pt-4">
         <Button
           type="button"
           variant="outline"

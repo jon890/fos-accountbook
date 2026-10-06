@@ -1,16 +1,16 @@
 package com.bifos.accountbook.user.application.service;
 
-import com.bifos.accountbook.shared.exception.BusinessException;
-import com.bifos.accountbook.shared.exception.ErrorCode;
 import com.bifos.accountbook.config.security.AccessToken;
 import com.bifos.accountbook.config.security.JwtTokenProvider;
 import com.bifos.accountbook.config.security.SocialLoginAssertionVerifier;
+import com.bifos.accountbook.shared.exception.BusinessException;
+import com.bifos.accountbook.shared.exception.ErrorCode;
+import com.bifos.accountbook.shared.value.CustomUuid;
+import com.bifos.accountbook.user.application.dto.AuthResponse;
+import com.bifos.accountbook.user.application.dto.SocialLoginRequest;
 import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.user.domain.repository.UserRepository;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.user.domain.value.UserStatus;
-import com.bifos.accountbook.user.presentation.dto.AuthResponse;
-import com.bifos.accountbook.user.presentation.dto.SocialLoginRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,33 +27,36 @@ public class AuthService {
   private final JwtTokenProvider jwtTokenProvider;
   private final SocialLoginAssertionVerifier socialLoginAssertionVerifier;
 
-
-  /**
-   * 소셜 로그인
-   */
+  /** 소셜 로그인 */
   @Transactional
   public AuthResponse socialLogin(SocialLoginRequest request, String assertion) {
-    if (!socialLoginAssertionVerifier.verify(assertion, request.getProvider(), request.getProviderId(),
-                                             request.getEmail())) {
+    if (!socialLoginAssertionVerifier.verify(
+        assertion, request.getProvider(), request.getProviderId(), request.getEmail())) {
       throw new BusinessException(ErrorCode.INVALID_CREDENTIALS, "로그인 요청 서명이 올바르지 않습니다")
           .addParameter("provider", request.getProvider());
     }
 
     User user;
 
-    if (userRepository.existsByProviderAndProviderId(request.getProvider(), request.getProviderId())) {
-      user = userRepository.findByProviderAndProviderId(request.getProvider(), request.getProviderId())
-                           .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)
-                               .addParameter("provider", request.getProvider())
-                               .addParameter("providerId", request.getProviderId()));
+    if (userRepository.existsByProviderAndProviderId(
+        request.getProvider(), request.getProviderId())) {
+      user =
+          userRepository
+              .findByProviderAndProviderId(request.getProvider(), request.getProviderId())
+              .orElseThrow(
+                  () ->
+                      new BusinessException(ErrorCode.USER_NOT_FOUND)
+                          .addParameter("provider", request.getProvider())
+                          .addParameter("providerId", request.getProviderId()));
     } else {
-      user = User.builder()
-                 .provider(request.getProvider())
-                 .providerId(request.getProviderId())
-                 .email(request.getEmail())
-                 .name(request.getName())
-                 .image(request.getImage())
-                 .build();
+      user =
+          User.builder()
+              .provider(request.getProvider())
+              .providerId(request.getProviderId())
+              .email(request.getEmail())
+              .name(request.getName())
+              .image(request.getImage())
+              .build();
 
       user = userRepository.save(user);
     }
@@ -66,9 +69,7 @@ public class AuthService {
     return generateAuthResponse(user);
   }
 
-  /**
-   * Refresh 토큰으로 새 Access 토큰 발급
-   */
+  /** Refresh 토큰으로 새 Access 토큰 발급 */
   public AuthResponse refreshToken(String refreshToken) {
     if (!jwtTokenProvider.validateRefreshToken(refreshToken)) {
       throw new BusinessException(ErrorCode.INVALID_TOKEN, "유효하지 않은 refresh 토큰입니다");
@@ -89,27 +90,25 @@ public class AuthService {
     return generateAuthResponse(user);
   }
 
-  /**
-   * JWT 토큰 및 사용자 정보 응답 생성
-   * JWT의 sub (subject)에는 user.uuid를 사용하여 내부 ID 노출을 방지합니다.
-   */
+  /** JWT 토큰 및 사용자 정보 응답 생성 JWT의 sub (subject)에는 user.uuid를 사용하여 내부 ID 노출을 방지합니다. */
   private AuthResponse generateAuthResponse(User user) {
     String userUuid = user.getUuid().getValue();
     AccessToken accessToken = jwtTokenProvider.generateToken(user);
     String refreshToken = jwtTokenProvider.generateRefreshToken(user);
 
     return AuthResponse.builder()
-                       .accessToken(accessToken.getToken())
-                       .refreshToken(refreshToken)
-                       .issuedAt(accessToken.getIssuedAt())
-                       .expiredAt(accessToken.getExpiresAt())
-                       .user(AuthResponse.UserInfo.builder()
-                                                  .id(user.getUuid().getValue())
-                                                  .uuid(userUuid)
-                                                  .email(user.getEmail())
-                                                  .name(user.getName())
-                                                  .image(user.getImage())
-                                                  .build())
-                       .build();
+        .accessToken(accessToken.getToken())
+        .refreshToken(refreshToken)
+        .issuedAt(accessToken.getIssuedAt())
+        .expiredAt(accessToken.getExpiresAt())
+        .user(
+            AuthResponse.UserInfo.builder()
+                .id(user.getUuid().getValue())
+                .uuid(userUuid)
+                .email(user.getEmail())
+                .name(user.getName())
+                .image(user.getImage())
+                .build())
+        .build();
   }
 }

@@ -7,6 +7,7 @@ import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { ExpenseList } from "@/components/expenses/list/ExpenseList";
 import { ExpenseSummaryWrapper } from "@/components/expenses/summary/ExpenseSummaryWrapper";
 import { IncomeList } from "@/components/incomes/list/IncomeList";
+import { InstallmentList } from "@/components/installment/InstallmentList";
 import { RecurringExpenseList } from "@/components/recurring-expense/RecurringExpenseList";
 import { TransactionsPageClient } from "./_components/TransactionsPageClient";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,10 +15,14 @@ import type { CategoryResponse } from "@/types/category";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getRecurringExpensesAction } from "@/actions/recurring-expense";
+import { getInstallmentsAction } from "@/actions/installment/get-installments-action";
 import { getSelectedFamilyAction } from "@/actions/family/get-selected-family-action";
+import { getFamilyMembersAction } from "@/actions/family/get-family-members-action";
 import { getFamilyCategoriesAction } from "@/actions/category/get-categories-action";
 import { getMonthRange } from "@/lib/utils/date-timezone";
+import { parseListLimit } from "@/lib/utils/list-limit";
 import { getCachedSession } from "@/lib/server/cache";
+import { getActionDataOrDefault } from "@/lib/server/action-result-handler";
 
 // 쿠키를 사용하므로 동적 렌더링 필요
 export const dynamic = "force-dynamic";
@@ -27,7 +32,6 @@ interface SearchParams {
   categoryId?: string;
   startDate?: string;
   endDate?: string;
-  page?: string;
   limit?: string;
   q?: string;
   amountMin?: string;
@@ -48,7 +52,8 @@ export default async function TransactionsPage({
   const isSupportedTab =
     requestedTab === "expenses" ||
     requestedTab === "incomes" ||
-    requestedTab === "recurring";
+    requestedTab === "recurring" ||
+    requestedTab === "installments";
   const activeTab = isSupportedTab ? requestedTab : "expenses";
 
   // 로그인 때 세션에 저장한 시간대 사용
@@ -70,21 +75,33 @@ export default async function TransactionsPage({
   }
   const familyUuid = familyResult.data;
 
+  const shouldFetchMembers = activeTab === "expenses" || activeTab === "incomes";
+  const membersPromise = shouldFetchMembers
+    ? getFamilyMembersAction()
+    : Promise.resolve(null);
+  const categoriesPromise = getFamilyCategoriesAction(familyUuid);
+
+  const [membersResult, categoriesResult] = await Promise.all([
+    membersPromise,
+    categoriesPromise,
+  ]);
+
+  const members = membersResult
+    ? getActionDataOrDefault(membersResult, [])
+    : [];
+
   // 카테고리 목록 조회
-  const categoriesResult = await getFamilyCategoriesAction(familyUuid);
   const categories: CategoryResponse[] = categoriesResult.success
     ? categoriesResult.data
     : [];
 
-  const page = parseInt(resolvedSearchParams.page || "1", 10);
-  const limit = parseInt(resolvedSearchParams.limit || "25", 10);
+  const limit = parseListLimit(resolvedSearchParams.limit);
 
   // 현재 월 (YYYY-MM 형식)
   const currentMonth = startDate.slice(0, 7);
 
   return (
     <TransactionsPageClient
-      familyUuid={familyUuid}
       categories={categories}
       activeTab={activeTab}
       searchParams={{
@@ -99,7 +116,7 @@ export default async function TransactionsPage({
             <Suspense
               fallback={
                 <Card className="w-full border-0 bg-bg-elev backdrop-blur-sm shadow-xl">
-                  <CardContent className="flex justify-center items-center min-h-[200px] py-8">
+                  <CardContent className="flex justify-center items-center min-h-[200px] py-8 md:py-8">
                     <LoadingSpinner />
                   </CardContent>
                 </Card>
@@ -117,7 +134,7 @@ export default async function TransactionsPage({
             <Suspense
               fallback={
                 <Card className="w-full">
-                  <CardContent className="flex justify-center items-center min-h-[400px] py-12">
+                  <CardContent className="flex justify-center items-center min-h-[400px] py-12 md:py-12">
                     <LoadingSpinner />
                   </CardContent>
                 </Card>
@@ -126,10 +143,10 @@ export default async function TransactionsPage({
               <ExpenseList
                 familyId={familyUuid}
                 categories={categories}
+                members={members}
                 categoryId={resolvedSearchParams.categoryId}
                 startDate={startDate}
                 endDate={endDate}
-                page={page}
                 limit={limit}
                 q={resolvedSearchParams.q}
                 amountMin={resolvedSearchParams.amountMin}
@@ -144,7 +161,7 @@ export default async function TransactionsPage({
           <Suspense
             fallback={
               <Card className="w-full">
-                <CardContent className="flex justify-center items-center min-h-[400px] py-12">
+                <CardContent className="flex justify-center items-center min-h-[400px] py-12 md:py-12">
                   <LoadingSpinner />
                 </CardContent>
               </Card>
@@ -152,10 +169,10 @@ export default async function TransactionsPage({
           >
             <IncomeList
               familyId={familyUuid}
+              members={members}
               categoryId={resolvedSearchParams.categoryId}
               startDate={startDate}
               endDate={endDate}
-              page={page}
               limit={limit}
               q={resolvedSearchParams.q}
               amountMin={resolvedSearchParams.amountMin}
@@ -169,13 +186,31 @@ export default async function TransactionsPage({
           <Suspense
             fallback={
               <Card className="w-full">
-                <CardContent className="flex justify-center items-center min-h-[400px] py-12">
+                <CardContent className="flex justify-center items-center min-h-[400px] py-12 md:py-12">
                   <LoadingSpinner />
                 </CardContent>
               </Card>
             }
           >
             <RecurringExpenseListWrapper month={currentMonth} />
+          </Suspense>
+        ) : null
+      }
+      installmentListContent={
+        activeTab === "installments" ? (
+          <Suspense
+            fallback={
+              <Card className="w-full">
+                <CardContent className="flex justify-center items-center min-h-[400px] py-12 md:py-12">
+                  <LoadingSpinner />
+                </CardContent>
+              </Card>
+            }
+          >
+            <InstallmentListWrapper
+              // 백엔드의 「이번 달」 은 Asia/Seoul 기준이라(ADR-B21) 사용자 시간대가 아닌 서울 기준 월을 쓴다
+              defaultStartMonth={getMonthRange("Asia/Seoul").startDate.slice(0, 7)}
+            />
           </Suspense>
         ) : null
       }
@@ -189,7 +224,7 @@ async function RecurringExpenseListWrapper({ month }: { month: string }) {
   if (!result.success) {
     return (
       <Card className="w-full">
-        <CardContent className="flex justify-center items-center min-h-[200px] py-8">
+        <CardContent className="flex justify-center items-center min-h-[200px] py-8 md:py-8">
           <p className="text-fg-muted text-sm">고정지출을 불러올 수 없습니다</p>
         </CardContent>
       </Card>
@@ -197,4 +232,29 @@ async function RecurringExpenseListWrapper({ month }: { month: string }) {
   }
 
   return <RecurringExpenseList data={result.data} />;
+}
+
+async function InstallmentListWrapper({
+  defaultStartMonth,
+}: {
+  defaultStartMonth: string;
+}) {
+  const result = await getInstallmentsAction();
+
+  if (!result.success) {
+    return (
+      <Card className="w-full">
+        <CardContent className="flex justify-center items-center min-h-[200px] py-8 md:py-8">
+          <p className="text-fg-muted text-sm">할부를 불러올 수 없습니다</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <InstallmentList
+      items={result.data}
+      defaultStartMonth={defaultStartMonth}
+    />
+  );
 }

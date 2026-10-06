@@ -1,14 +1,14 @@
 package com.bifos.accountbook.family.presentation.controller;
 
 import com.bifos.accountbook.family.application.dto.CreateFamilyRequest;
-import com.bifos.accountbook.family.application.dto.FamilyResponse;
 import com.bifos.accountbook.family.application.dto.FamilyMemberResponse;
+import com.bifos.accountbook.family.application.dto.FamilyResponse;
 import com.bifos.accountbook.family.application.dto.UpdateFamilyRequest;
 import com.bifos.accountbook.family.application.service.FamilyService;
-import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.shared.auth.LoginUser;
-import com.bifos.accountbook.shared.dto.ApiSuccessResponse;
 import com.bifos.accountbook.shared.auth.LoginUserDto;
+import com.bifos.accountbook.shared.dto.ApiSuccessResponse;
+import com.bifos.accountbook.shared.value.CustomUuid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -44,12 +44,10 @@ public class FamilyController {
   @ApiResponse(responseCode = "401", description = "인증 실패")
   @PostMapping
   public ResponseEntity<ApiSuccessResponse<FamilyResponse>> createFamily(
-      @LoginUser LoginUserDto loginUser,
-      @Valid @RequestBody CreateFamilyRequest request) {
+      @LoginUser LoginUserDto loginUser, @Valid @RequestBody CreateFamilyRequest request) {
     FamilyResponse response = familyService.createFamily(loginUser.userUuid(), request);
 
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
+    return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiSuccessResponse.of("가족이 생성되었습니다", response));
   }
 
@@ -84,7 +82,8 @@ public class FamilyController {
   public ResponseEntity<ApiSuccessResponse<List<FamilyMemberResponse>>> getFamilyMembers(
       @LoginUser LoginUserDto loginUser,
       @Parameter(description = "가족 UUID") @PathVariable CustomUuid familyUuid) {
-    List<FamilyMemberResponse> members = familyService.getFamilyMembers(loginUser.userUuid(), familyUuid);
+    List<FamilyMemberResponse> members =
+        familyService.getFamilyMembers(loginUser.userUuid(), familyUuid);
 
     return ResponseEntity.ok(ApiSuccessResponse.of(members));
   }

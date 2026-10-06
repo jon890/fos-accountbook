@@ -35,6 +35,10 @@ Claude Code가 항상 따라야 할 규칙과 참조 문서 포인터.
 | 패키지/도메인 구조 변경 | ADR-B16 — 도메인 기반 패키지 리팩토링 |
 | 소셜 로그인 서명 검증 | ADR-B17 — 프론트엔드 서버 서명 필수 |
 | 외부 에이전트 연동 토큰 | ADR-B18 — 사용자별 토큰과 허용 경로 |
+| JWT 발급과 검증 | ADR-B19 — access 와 refresh 를 `typ` 클레임으로 구분, `typ` 없는 토큰 거부 |
+| 요청 응답 로깅, 예외 로그 | ADR-B20 — INFO 에 본문을 남기지 않고 인증 경로 본문은 DEBUG 에서도 생략 |
+| 업무 날짜, Clock 또는 스케줄러 시간대 변경 | ADR-B21 — 업무 날짜는 Asia/Seoul, 기본 Clock과 감사 시각은 JVM 기준 유지 |
+| 백엔드 포맷, 구조·코드 모양 검사 | ADR-B22 — Spotless, ArchUnit, Checkstyle 로 검사하고 기존 구조 위반은 기준 파일에서 관리 |
 
 ---
 
@@ -59,8 +63,17 @@ Claude Code가 항상 따라야 할 규칙과 참조 문서 포인터.
 # 코드 스타일 검사
 ./gradlew checkstyleMain checkstyleTest --no-daemon
 
+# 포맷 적용
+./gradlew spotlessApply --no-daemon
+
+# ArchUnit 구조 규칙만 검사
+./gradlew archTest --no-daemon
+
+# 포맷, Checkstyle, ArchUnit 검사
+./gradlew qualityCheck --no-daemon
+
 # 통합 검증 (CI 와 동일)
-./gradlew checkstyleMain checkstyleTest test build --no-daemon
+./gradlew qualityCheck test build --no-daemon
 
 # 로컬 MySQL 실행 (Docker)
 docker compose -f docker/compose.yml up -d
@@ -77,19 +90,10 @@ docker compose -f docker/compose.yml up -d
 
 도메인 기반 패키지 구조 (ADR-B16). 패키지 경로: `com.bifos.accountbook`.
 
-```
-com.bifos.accountbook/
-├── shared/                 공통 (auth, aop, converter, dto, exception, filter, utils, value)
-├── user/ family/ category/ expense/ income/ recurring/
-├── invitation/ notification/ dashboard/ apitoken/
-│                           각 도메인 내부 presentation/ application/ domain/ infra/
-└── config/                 Spring 설정 (캐시, 보안, CORS, Security)
-```
-
 각 도메인 내부 의존성은 `presentation → application → domain ← infra` 이다.
 infra 는 domain 인터페이스를 구현한다. Controller 는 Repository 를 직접 주입받지 않는다.
 
-상세 구조·레이어 책임은 `docs/code-architecture.md` 참조.
+도메인 목록, 상세 구조, 레이어 책임은 [`docs/code-architecture.md`](docs/code-architecture.md) 의 「패키지 구조」 가 소유한다.
 
 ---
 
@@ -198,9 +202,27 @@ AFTER_COMMIT 리스너에서 DB 에 쓰려면 `@Transactional(propagation = REQU
 
 ### 코드 스타일 (Google Java Style + Naver Convention)
 
-- `import java.util.*` 같은 와일드카드 import 금지 (static import 제외)
+- 포맷은 `./gradlew spotlessApply --no-daemon` 으로 적용한다.
+- 검사는 `./gradlew qualityCheck --no-daemon` 으로 실행한다. 규칙의 근거는 ADR-B22다.
+- google-java-format 이 import를 기본으로 정렬하므로 `spotlessApply` 뒤에는 import 순서를 따로 바꾸지 않는다.
 - 한국어 발음 표기 식별자 금지 (`jibun` ❌, `address` ✅)
-- Checkstyle: `config/checkstyle/google_checks.xml` 기준 빌드 시 자동 검사
+
+| 규칙 | 검사 도구 | 뜻 |
+| --- | --- | --- |
+| `NO_LOMBOK_DATA` | Checkstyle | `lombok.Data` import와 `@Data`, `@lombok.Data` 사용을 막는다. Lombok의 `@Data`는 source retention이라 class 파일을 읽는 ArchUnit으로는 검사할 수 없다. |
+| `LAYER_DIRECTION` | ArchUnit | `presentation → application → domain` 방향을 지키고 `infra`는 domain 인터페이스를 구현한다. |
+| `CONTROLLERS_DO_NOT_USE_REPOSITORIES` | ArchUnit | presentation은 `domain.repository`와 `infra`에 의존하지 않는다. |
+| `SHARED_DOES_NOT_DEPEND_ON_DOMAINS` | ArchUnit | `shared`는 도메인 패키지에 의존하지 않는다. |
+| `TRANSACTIONAL_ONLY_IN_APPLICATION` | ArchUnit | `@Transactional`은 application 안에서만 사용한다. |
+| `NO_DIRECT_NOW_FOR_BUSINESS_DATE` | ArchUnit | application과 presentation은 업무 날짜에 인자 없는 `now()`를 직접 부르지 않는다. |
+| `TESTS_ARE_NOT_TRANSACTIONAL` | ArchUnit | 테스트 클래스와 메서드는 `@Transactional`을 사용하지 않는다. |
+
+ArchUnit 기준 파일은 기존 위반을 새 위반과 구분하는 용도다.
+기존 위반을 고친 뒤 기준 파일을 줄일 때만 `-Parchunit.freeze.store.default.allowStoreUpdate=true`를 붙여 `archTest`를 실행한다.
+새 위반은 이 옵션으로 기준 파일에 넣지 말고 코드를 고친다.
+기준 파일을 처음 만드는 예외적인 수동 작업에서는 `-Parchunit.freeze.store.default.allowStoreCreation=true`와 `-Parchunit.freeze.store.default.allowStoreUpdate=true`를 함께 명시한다.
+전체 기준을 다시 만드는 `-Parchunit.freeze.refreeze=true`는 의도적으로 기준을 초기화할 때만 쓴다.
+`build.gradle.kts`는 이 세 Gradle 속성을 테스트 JVM 시스템 속성으로 전달한다.
 
 ---
 
@@ -263,7 +285,8 @@ class SomeServiceTest extends TestFixturesSupport {
 **주요 도메인 개념**:
 
 - `expenses.exclude_from_budget` / `categories.exclude_from_budget`: 예산 집계에서 제외하는 플래그 (예: 보험, 저축)
-- `categories.is_default`: 가족당 하나의 기본 카테고리("미분류") 존재 — 카테고리 삭제 시 해당 지출이 이 카테고리로 이동. 기본 카테고리는 삭제 불가
+- `categories.type`: `EXPENSE` 또는 `INCOME`. 지출과 반복 지출은 지출 카테고리만, 수입은 수입 카테고리만 쓴다 (ADR-B23)
+- `categories.is_default`: 종류마다 하나(지출 「미분류」, 수입 「기타 수입」). 카테고리를 지우면 지출과 반복 지출은 미분류로, 수입은 기타 수입으로 옮긴다. 기본 카테고리는 삭제 불가 (ADR-B23)
 
 ---
 

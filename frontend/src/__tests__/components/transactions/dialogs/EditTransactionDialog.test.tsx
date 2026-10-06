@@ -38,7 +38,10 @@ jest.mock("react", () => ({
 import { getFamilyCategoriesAction } from "@/actions/category/get-categories-action";
 import { updateExpenseAction } from "@/actions/expense/update-expense-action";
 import { updateIncomeAction } from "@/actions/income/update-income-action";
-import { updateRecurringExpenseAction } from "@/actions/recurring-expense";
+import {
+  deleteRecurringExpenseAction,
+  updateRecurringExpenseAction,
+} from "@/actions/recurring-expense";
 import { EditTransactionDialog } from "@/components/transactions/dialogs/EditTransactionDialog";
 import { deleteExpenseAction } from "@/actions/expense/delete-expense-action";
 import { deleteIncomeAction } from "@/actions/income/delete-income-action";
@@ -49,6 +52,17 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import type { Expense, UpdateExpenseFormState } from "@/types/expense";
 import type { Income } from "@/types/income";
 import type { RecurringExpense } from "@/types/recurring-expense";
+
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+Object.defineProperty(global, "ResizeObserver", {
+  writable: true,
+  value: ResizeObserverMock,
+});
 
 const mockGetCategories = getFamilyCategoriesAction as jest.MockedFunction<
   typeof getFamilyCategoriesAction
@@ -62,11 +76,15 @@ const mockUpdateIncome = updateIncomeAction as jest.MockedFunction<
 const mockUpdateRecurring = updateRecurringExpenseAction as jest.MockedFunction<
   typeof updateRecurringExpenseAction
 >;
+const mockDeleteRecurring = deleteRecurringExpenseAction as jest.MockedFunction<
+  typeof deleteRecurringExpenseAction
+>;
 
 const mockCategories = [
   {
     uuid: "cat-1",
     familyUuid: "family-1",
+    type: "EXPENSE" as const,
     name: "식비",
     icon: "🍔",
     color: "#EF4444",
@@ -84,6 +102,7 @@ const mockExpense: Expense = {
   amount: 15000,
   description: "점심",
   date: "2024-01-15T00:00:00Z",
+  excludeFromBudget: false,
   createdAt: "2024-01-15T00:00:00Z",
   updatedAt: "2024-01-15T00:00:00Z",
 };
@@ -105,7 +124,7 @@ const mockRecurring: RecurringExpense = {
   uuid: "recurring-1",
   familyUuid: "family-1",
   categoryUuid: "cat-1",
-  category: { uuid: "cat-1", familyUuid: "family-1", name: "구독", color: "#3B82F6", icon: "📺", createdAt: "2024-01-01T00:00:00Z", updatedAt: "2024-01-01T00:00:00Z" },
+  category: { uuid: "cat-1", name: "구독", color: "#3B82F6", icon: "📺" },
   name: "넷플릭스",
   amount: 17000,
   dayOfMonth: 15,
@@ -132,6 +151,19 @@ describe("EditTransactionDialog", () => {
     mockGetCategories.mockResolvedValue({ success: true, data: mockCategories });
   });
 
+  it("기존 지출의 예산 제외 값을 스위치 초기값으로 사용한다", async () => {
+    render(
+      <EditTransactionDialog
+        open
+        onOpenChange={onOpenChange}
+        type="expense"
+        transaction={{ ...mockExpense, excludeFromBudget: true }}
+      />,
+    );
+
+    expect(await screen.findByRole("switch", { name: "예산에서 제외" })).toBeChecked();
+  });
+
   it.each(["expense", "income"] as const)("%s 수정 응답을 기다리는 동안 삭제 확인을 열지 않는다", async (type) => {
     const user = userEvent.setup();
     const transaction = type === "expense" ? mockExpense : mockIncome;
@@ -147,6 +179,9 @@ describe("EditTransactionDialog", () => {
     try {
       await user.click(await screen.findByRole("button", { name: `${label} 수정` }));
       await waitFor(() => expect(updateAction).toHaveBeenCalled());
+      expect(screen.getByRole("spinbutton", { name: "금액 직접 입력" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "취소" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "수정 중..." })).toBeDisabled();
       const deleteButton = screen.getByRole("button", { name: "삭제" });
       expect(deleteButton).toBeDisabled();
       await user.click(deleteButton);
@@ -311,12 +346,57 @@ describe("EditTransactionDialog", () => {
     expect(onOpenChange).not.toHaveBeenCalled();
   });
 
-  it("고정지출에는 삭제 버튼을 표시하지 않는다", async () => {
+  it("고정지출 종료 확인을 취소하면 수정 창을 유지한다", async () => {
+    const user = userEvent.setup();
     render(
       <EditTransactionDialog open onOpenChange={onOpenChange} type="recurring" transaction={mockRecurring} />,
     );
-    await screen.findByRole("button", { name: "고정지출 수정" });
-    expect(screen.queryByRole("button", { name: "삭제" })).not.toBeInTheDocument();
+
+    await user.click(await screen.findByRole("button", { name: "종료" }));
+    const confirmation = within(screen.getByRole("alertdialog"));
+    expect(confirmation.getByText(/기존 등록된 지출은 유지됩니다/)).toBeInTheDocument();
+    await user.click(confirmation.getByRole("button", { name: "취소" }));
+
+    expect(mockDeleteRecurring).not.toHaveBeenCalled();
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "고정지출 수정" })).toBeInTheDocument();
+  });
+
+  it("고정지출 종료 성공 시 수정 창을 닫는다", async () => {
+    const user = userEvent.setup();
+    mockDeleteRecurring.mockResolvedValue({ success: true, data: undefined });
+    render(
+      <EditTransactionDialog open onOpenChange={onOpenChange} type="recurring" transaction={mockRecurring} />,
+    );
+
+    await user.click(await screen.findByRole("button", { name: "종료" }));
+    await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "종료" }));
+
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(mockDeleteRecurring).toHaveBeenCalledWith(mockRecurring.uuid);
+    expect(toast.success).toHaveBeenCalledWith("고정지출이 종료되었습니다");
+  });
+
+  it("고정지출 종료 실패 후 확인 창을 유지하고 다시 시도할 수 있다", async () => {
+    const user = userEvent.setup();
+    mockDeleteRecurring
+      .mockResolvedValueOnce(ActionError.unauthorized("종료 권한 없음").toFailureResult())
+      .mockResolvedValueOnce({ success: true, data: undefined });
+    render(
+      <EditTransactionDialog open onOpenChange={onOpenChange} type="recurring" transaction={mockRecurring} />,
+    );
+
+    await user.click(await screen.findByRole("button", { name: "종료" }));
+    const confirmation = within(screen.getByRole("alertdialog"));
+    await user.click(confirmation.getByRole("button", { name: "종료" }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("종료 권한 없음"));
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    await user.click(confirmation.getByRole("button", { name: "종료" }));
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(mockDeleteRecurring).toHaveBeenCalledTimes(2);
   });
 
   describe("type 잠금 — 비활성 토글 disabled", () => {
@@ -335,8 +415,8 @@ describe("EditTransactionDialog", () => {
         expect(screen.getByRole("button", { name: /지출 수정/ })).toBeInTheDocument();
       });
 
-      const incomeToggle = screen.getByRole("button", { name: /^수입$/ });
-      const recurringToggle = screen.getByRole("button", { name: /^고정지출$/ });
+      const incomeToggle = screen.getByRole("radio", { name: "수입" });
+      const recurringToggle = screen.getByRole("radio", { name: "고정지출" });
       expect(incomeToggle).toBeDisabled();
       expect(recurringToggle).toBeDisabled();
     });
@@ -356,8 +436,8 @@ describe("EditTransactionDialog", () => {
         expect(screen.getByRole("button", { name: /수입 수정/ })).toBeInTheDocument();
       });
 
-      const expenseToggle = screen.getByRole("button", { name: /^지출$/ });
-      const recurringToggle = screen.getByRole("button", { name: /^고정지출$/ });
+      const expenseToggle = screen.getByRole("radio", { name: "지출" });
+      const recurringToggle = screen.getByRole("radio", { name: "고정지출" });
       expect(expenseToggle).toBeDisabled();
       expect(recurringToggle).toBeDisabled();
     });
@@ -376,8 +456,8 @@ describe("EditTransactionDialog", () => {
         expect(screen.getByRole("button", { name: /고정지출 수정/ })).toBeInTheDocument();
       });
 
-      const expenseToggle = screen.getByRole("button", { name: /^지출$/ });
-      const incomeToggle = screen.getByRole("button", { name: /^수입$/ });
+      const expenseToggle = screen.getByRole("radio", { name: "지출" });
+      const incomeToggle = screen.getByRole("radio", { name: "수입" });
       expect(expenseToggle).toBeDisabled();
       expect(incomeToggle).toBeDisabled();
     });
@@ -537,6 +617,35 @@ describe("EditTransactionDialog", () => {
 
       // updateRecurringExpenseAction 이 모듈에 정의되어 있는지 검증
       expect(mockUpdateRecurring).toBeDefined();
+    });
+
+    it("빈 결제일 제출은 고정지출 수정 action을 호출하지 않고 오류를 반환한다", async () => {
+      const { useActionState } = jest.requireMock("react");
+      useActionState.mockImplementation((action: unknown, initialState: unknown) => [initialState, action, false]);
+
+      try {
+        render(
+          <EditTransactionDialog
+            open
+            onOpenChange={onOpenChange}
+            type="recurring"
+            transaction={mockRecurring}
+          />,
+        );
+        await screen.findByRole("button", { name: "고정지출 수정" });
+
+        const recurringWrapper = useActionState.mock.calls[2][0];
+        const result = await recurringWrapper({ success: false, errors: {}, message: "" }, new FormData());
+
+        expect(result).toEqual({
+          success: false,
+          errors: { dayOfMonth: ["결제일을 1~28 중에서 입력해 주세요"] },
+          message: "",
+        });
+        expect(mockUpdateRecurring).not.toHaveBeenCalled();
+      } finally {
+        useActionState.mockImplementation(jest.requireActual("react").useActionState);
+      }
     });
   });
 

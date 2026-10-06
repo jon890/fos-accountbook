@@ -1,5 +1,6 @@
 import { serverApiDelete, serverApiGet, serverApiPost, serverApiPut } from "@/lib/server/api/client";
 import { ActionError } from "@/lib/errors";
+import { getExpensesResponseSchema } from "@/lib/schemas/responses/transaction";
 import type {
   CreateExpenseRequest,
   GetExpensesParams,
@@ -13,6 +14,7 @@ export async function createExpense(
     description?: string;
     categoryId: string;
     date?: string;
+    excludeFromBudget?: boolean;
   }
 ): Promise<void> {
   const requestBody: CreateExpenseRequest = {
@@ -21,6 +23,9 @@ export async function createExpense(
     description: data.description,
     date: data.date ? new Date(data.date).toISOString() : new Date().toISOString(),
   };
+  if (data.excludeFromBudget !== undefined) {
+    requestBody.excludeFromBudget = data.excludeFromBudget;
+  }
   await serverApiPost<void>(`/families/${familyUuid}/expenses`, requestBody);
 }
 
@@ -33,11 +38,11 @@ export async function getExpenses(
   if (page < 1) {
     throw ActionError.invalidInput("page", page, "1 이상이어야 합니다");
   }
-  if (limit < 1 || limit > 1000) {
+  if (limit < 1 || limit > 3000) {
     throw ActionError.invalidInput(
       "limit",
       limit,
-      "1에서 1000 사이여야 합니다"
+      "1에서 3000 사이여야 합니다"
     );
   }
 
@@ -47,7 +52,8 @@ export async function getExpenses(
   if (endDate) queryParams += `&endDate=${endDate}`;
 
   return serverApiGet<GetExpensesResponse>(
-    `/families/${familyUuid}/expenses?${queryParams}`
+    `/families/${familyUuid}/expenses?${queryParams}`,
+    { schema: getExpensesResponseSchema }
   );
 }
 
@@ -59,6 +65,7 @@ export async function updateExpense(
     description?: string;
     categoryId?: string;
     date?: string;
+    excludeFromBudget?: boolean;
   }
 ): Promise<void> {
   const updateData: {
@@ -66,12 +73,14 @@ export async function updateExpense(
     amount?: number;
     description?: string;
     date?: string;
+    excludeFromBudget?: boolean;
   } = {};
 
   if (data.categoryId) updateData.categoryUuid = data.categoryId;
   if (data.amount !== undefined) updateData.amount = data.amount;
   if (data.description !== undefined) updateData.description = data.description;
   if (data.date) updateData.date = new Date(data.date).toISOString();
+  if (data.excludeFromBudget !== undefined) updateData.excludeFromBudget = data.excludeFromBudget;
 
   await serverApiPut<void>(`/families/${familyUuid}/expenses/${expenseUuid}`, updateData);
 }

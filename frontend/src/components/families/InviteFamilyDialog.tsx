@@ -216,18 +216,18 @@ export function InviteFamilyDialog({
           {/* 활성 초대 목록 */}
           {invitations.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-gray-700">
+              <h4 className="text-sm font-semibold text-fg">
                 활성 초대 링크
               </h4>
 
               {invitations.map((invitation) => (
                 <div
                   key={invitation.uuid}
-                  className="bg-gray-50 rounded-lg p-3 space-y-2"
+                  className="bg-bg-muted rounded-lg p-3 space-y-2"
                 >
                   <div className="flex items-center gap-2">
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-gray-500 mb-1">
+                      <p className="text-xs text-fg-muted mb-1">
                         만료:{" "}
                         {format(
                           new Date(invitation.expiresAt),
@@ -236,7 +236,7 @@ export function InviteFamilyDialog({
                         )}
                       </p>
                       <div className="w-full overflow-hidden">
-                        <p className="text-xs font-mono text-gray-700 truncate">
+                        <p className="text-xs font-mono text-fg truncate">
                           {invitation.inviteUrl}
                         </p>
                       </div>
@@ -256,7 +256,7 @@ export function InviteFamilyDialog({
                         className="h-8 w-8 p-0"
                       >
                         {copiedToken === invitation.token ? (
-                          <Check className="w-4 h-4 text-green-600" />
+                          <Check className="w-4 h-4 text-income" />
                         ) : (
                           <Copy className="w-4 h-4" />
                         )}
@@ -267,7 +267,7 @@ export function InviteFamilyDialog({
                         size="sm"
                         variant="ghost"
                         onClick={() => handleDeleteInvitation(invitation.uuid)}
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="h-8 w-8 p-0 text-expense hover:text-expense hover:bg-expense/10"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -279,8 +279,8 @@ export function InviteFamilyDialog({
           )}
 
           {/* 안내 메시지 */}
-          <div className="bg-blue-50 rounded-lg p-3">
-            <p className="text-sm text-blue-900">
+          <div className="bg-brand-50 rounded-lg p-3">
+            <p className="text-sm text-brand-700">
               💡 초대 링크를 여자친구에게 공유하면 함께 가계부를 관리할 수
               있습니다!
             </p>

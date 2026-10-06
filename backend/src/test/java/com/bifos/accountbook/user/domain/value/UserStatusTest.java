@@ -1,8 +1,8 @@
 package com.bifos.accountbook.user.domain.value;
 
-import com.bifos.accountbook.shared.value.CodeEnum;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import com.bifos.accountbook.shared.value.CodeEnum;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -27,4 +27,3 @@ class UserStatusTest {
     assertThat(status).isInstanceOf(CodeEnum.class);
   }
 }
-

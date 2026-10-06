@@ -1,12 +1,16 @@
 package com.bifos.accountbook.family.application.service;
 
-import com.bifos.accountbook.family.application.dto.CreateFamilyRequest;
-import com.bifos.accountbook.family.application.dto.FamilyResponse;
-import com.bifos.accountbook.shared.TestFixturesSupport;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.bifos.accountbook.category.domain.entity.Category;
+import com.bifos.accountbook.category.domain.repository.CategoryRepository;
+import com.bifos.accountbook.category.domain.value.CategoryStatus;
+import com.bifos.accountbook.category.domain.value.CategoryType;
 import com.bifos.accountbook.expense.domain.entity.Expense;
 import com.bifos.accountbook.expense.domain.repository.ExpenseRepository;
 import com.bifos.accountbook.expense.domain.value.ExpenseStatus;
+import com.bifos.accountbook.family.application.dto.CreateFamilyRequest;
+import com.bifos.accountbook.family.application.dto.FamilyResponse;
 import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.family.domain.entity.FamilyMember;
 import com.bifos.accountbook.family.domain.repository.FamilyMemberRepository;
@@ -15,41 +19,30 @@ import com.bifos.accountbook.family.domain.value.FamilyMemberStatus;
 import com.bifos.accountbook.income.domain.entity.Income;
 import com.bifos.accountbook.income.domain.repository.IncomeRepository;
 import com.bifos.accountbook.income.domain.value.IncomeStatus;
-import com.bifos.accountbook.user.domain.entity.User;
-import com.bifos.accountbook.category.domain.repository.CategoryRepository;
-import com.bifos.accountbook.category.domain.value.CategoryStatus;
+import com.bifos.accountbook.shared.TestFixturesSupport;
 import com.bifos.accountbook.shared.value.CustomUuid;
+import com.bifos.accountbook.user.domain.entity.User;
 import java.math.BigDecimal;
 import java.util.List;
-import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-/**
- * FamilyService 통합 테스트
- * 실제 데이터베이스와 함께 동작하며, 가족 생성 시 기본 카테고리가 정상적으로 생성되는지 검증합니다.
- */
+/** FamilyService 통합 테스트 실제 데이터베이스와 함께 동작하며, 가족 생성 시 기본 카테고리가 정상적으로 생성되는지 검증합니다. */
 @DisplayName("FamilyService 통합 테스트")
 class FamilyServiceIntegrationTest extends TestFixturesSupport {
 
-  @Autowired
-  private FamilyService familyService;
+  @Autowired private FamilyService familyService;
 
-  @Autowired
-  private CategoryRepository categoryRepository;
+  @Autowired private CategoryRepository categoryRepository;
 
-  @Autowired
-  private FamilyRepository familyRepository;
+  @Autowired private FamilyRepository familyRepository;
 
-  @Autowired
-  private FamilyMemberRepository familyMemberRepository;
+  @Autowired private FamilyMemberRepository familyMemberRepository;
 
-  @Autowired
-  private ExpenseRepository expenseRepository;
+  @Autowired private ExpenseRepository expenseRepository;
 
-  @Autowired
-  private IncomeRepository incomeRepository;
+  @Autowired private IncomeRepository incomeRepository;
 
   @Test
   @DisplayName("가족 생성 시 기본 카테고리 10개가 자동으로 생성되어야 한다")
@@ -57,9 +50,7 @@ class FamilyServiceIntegrationTest extends TestFixturesSupport {
     // Given: TestFixtures로 사용자 생성
     User testUser = fixtures.getDefaultUser();
 
-    CreateFamilyRequest request = CreateFamilyRequest.builder()
-                                                     .name("통합테스트 가족")
-                                                     .build();
+    CreateFamilyRequest request = CreateFamilyRequest.builder().name("통합테스트 가족").build();
 
     // When
     FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
@@ -77,19 +68,30 @@ class FamilyServiceIntegrationTest extends TestFixturesSupport {
     assertThat(categories).isNotEmpty();
 
     // 4. 각 카테고리의 이름과 속성 검증
-    List<String> categoryNames = categories.stream()
-                                           .map(Category::getName)
-                                           .toList();
+    List<String> categoryNames = categories.stream().map(Category::getName).toList();
 
     assertThat(categoryNames).contains("미분류", "식비", "생활비");
+    assertThat(categoryNames).contains("급여", "부수입", "용돈", "기타 수입");
+    assertThat(categories.stream().filter(Category::isDefault)).hasSize(2);
+    assertThat(
+            categories.stream()
+                .filter(category -> category.getType() == CategoryType.EXPENSE)
+                .filter(Category::isDefault))
+        .hasSize(1);
+    assertThat(
+            categories.stream()
+                .filter(category -> category.getType() == CategoryType.INCOME)
+                .filter(Category::isDefault))
+        .hasSize(1);
 
     // 5. 각 카테고리가 올바른 가족에 속해있는지 확인
-    categories.forEach(category -> {
-      assertThat(category.getFamilyUuid()).isEqualTo(familyUuid);
-      assertThat(category.getColor()).isNotBlank();
-      assertThat(category.getIcon()).isNotBlank();
-      assertThat(category.getStatus()).isEqualTo(CategoryStatus.ACTIVE);
-    });
+    categories.forEach(
+        category -> {
+          assertThat(category.getFamilyUuid()).isEqualTo(familyUuid);
+          assertThat(category.getColor()).isNotBlank();
+          assertThat(category.getIcon()).isNotBlank();
+          assertThat(category.getStatus()).isEqualTo(CategoryStatus.ACTIVE);
+        });
   }
 
   @Test
@@ -98,9 +100,7 @@ class FamilyServiceIntegrationTest extends TestFixturesSupport {
     // Given: TestFixtures로 사용자 생성
     User testUser = fixtures.getDefaultUser();
 
-    CreateFamilyRequest request = CreateFamilyRequest.builder()
-                                                     .name("카테고리 속성 테스트 가족")
-                                                     .build();
+    CreateFamilyRequest request = CreateFamilyRequest.builder().name("카테고리 속성 테스트 가족").build();
 
     // When
     FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
@@ -110,24 +110,18 @@ class FamilyServiceIntegrationTest extends TestFixturesSupport {
     List<Category> categories = categoryRepository.findAllByFamilyUuid(familyUuid);
 
     // 특정 카테고리의 색상과 아이콘 검증
-    Category foodCategory = categories.stream()
-                                      .filter(c -> "식비".equals(c.getName()))
-                                      .findFirst()
-                                      .orElseThrow();
+    Category foodCategory =
+        categories.stream().filter(c -> "식비".equals(c.getName())).findFirst().orElseThrow();
     assertThat(foodCategory.getColor()).isEqualTo("#ef4444");
     assertThat(foodCategory.getIcon()).isEqualTo("🍚");
 
-    Category cafeCategory = categories.stream()
-                                      .filter(c -> "카페".equals(c.getName()))
-                                      .findFirst()
-                                      .orElseThrow();
+    Category cafeCategory =
+        categories.stream().filter(c -> "카페".equals(c.getName())).findFirst().orElseThrow();
     assertThat(cafeCategory.getColor()).isEqualTo("#f59e0b");
     assertThat(cafeCategory.getIcon()).isEqualTo("☕");
 
-    Category transportCategory = categories.stream()
-                                           .filter(c -> "교통비".equals(c.getName()))
-                                           .findFirst()
-                                           .orElseThrow();
+    Category transportCategory =
+        categories.stream().filter(c -> "교통비".equals(c.getName())).findFirst().orElseThrow();
     assertThat(transportCategory.getColor()).isEqualTo("#3b82f6");
     assertThat(transportCategory.getIcon()).isEqualTo("🚗");
   }
@@ -138,12 +132,8 @@ class FamilyServiceIntegrationTest extends TestFixturesSupport {
     // Given: TestFixtures로 사용자 생성
     User testUser = fixtures.getDefaultUser();
 
-    CreateFamilyRequest request1 = CreateFamilyRequest.builder()
-                                                      .name("첫 번째 가족")
-                                                      .build();
-    CreateFamilyRequest request2 = CreateFamilyRequest.builder()
-                                                      .name("두 번째 가족")
-                                                      .build();
+    CreateFamilyRequest request1 = CreateFamilyRequest.builder().name("첫 번째 가족").build();
+    CreateFamilyRequest request2 = CreateFamilyRequest.builder().name("두 번째 가족").build();
 
     // When
     FamilyResponse family1 = familyService.createFamily(testUser.getUuid(), request1);
@@ -161,12 +151,10 @@ class FamilyServiceIntegrationTest extends TestFixturesSupport {
     assertThat(family2Categories).isNotEmpty();
 
     // 두 가족의 카테고리 UUID는 서로 달라야 함
-    List<String> family1CategoryUuids = family1Categories.stream()
-                                                         .map(c -> c.getUuid().getValue())
-                                                         .toList();
-    List<String> family2CategoryUuids = family2Categories.stream()
-                                                         .map(c -> c.getUuid().getValue())
-                                                         .toList();
+    List<String> family1CategoryUuids =
+        family1Categories.stream().map(c -> c.getUuid().getValue()).toList();
+    List<String> family2CategoryUuids =
+        family2Categories.stream().map(c -> c.getUuid().getValue()).toList();
 
     assertThat(family1CategoryUuids).doesNotContainAnyElementsOf(family2CategoryUuids);
   }
@@ -177,9 +165,7 @@ class FamilyServiceIntegrationTest extends TestFixturesSupport {
     // Given: TestFixtures로 사용자 생성
     User testUser = fixtures.getDefaultUser();
 
-    CreateFamilyRequest request = CreateFamilyRequest.builder()
-                                                     .name("카테고리 조회 테스트 가족")
-                                                     .build();
+    CreateFamilyRequest request = CreateFamilyRequest.builder().name("카테고리 조회 테스트 가족").build();
 
     // When
     FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
@@ -198,8 +184,7 @@ class FamilyServiceIntegrationTest extends TestFixturesSupport {
     assertThat(firstCategory.getIcon()).isNotBlank();
 
     // UUID로 특정 카테고리 조회 테스트
-    Category foundCategory = categoryRepository.findByUuid(firstCategory.getUuid())
-                                               .orElseThrow();
+    Category foundCategory = categoryRepository.findByUuid(firstCategory.getUuid()).orElseThrow();
     assertThat(foundCategory.getUuid()).isEqualTo(firstCategory.getUuid());
     assertThat(foundCategory.getName()).isEqualTo(firstCategory.getName());
   }
@@ -211,10 +196,8 @@ class FamilyServiceIntegrationTest extends TestFixturesSupport {
     User testUser = fixtures.getDefaultUser();
 
     BigDecimal budget = new BigDecimal("1000000.00");
-    CreateFamilyRequest request = CreateFamilyRequest.builder()
-                                                     .name("예산 설정 가족")
-                                                     .monthlyBudget(budget)
-                                                     .build();
+    CreateFamilyRequest request =
+        CreateFamilyRequest.builder().name("예산 설정 가족").monthlyBudget(budget).build();
 
     // When
     FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);
@@ -230,9 +213,7 @@ class FamilyServiceIntegrationTest extends TestFixturesSupport {
   void deleteFamily_ShouldSoftDeleteChildEntities() {
     // Given: 서비스로 가족 생성 (OWNER 권한 부여)
     User user = fixtures.getDefaultUser();
-    CreateFamilyRequest request = CreateFamilyRequest.builder()
-                                                     .name("삭제 테스트 가족")
-                                                     .build();
+    CreateFamilyRequest request = CreateFamilyRequest.builder().name("삭제 테스트 가족").build();
     FamilyResponse familyResponse = familyService.createFamily(user.getUuid(), request);
     CustomUuid familyUuid = CustomUuid.from(familyResponse.getUuid());
     Family family = familyRepository.findActiveByUuid(familyUuid).orElseThrow();
@@ -243,9 +224,10 @@ class FamilyServiceIntegrationTest extends TestFixturesSupport {
     final CustomUuid incomeUuid = fixtures.incomes.income(family, category).build().getUuid();
 
     // 삭제 전 구성원 UUID 확보
-    FamilyMember member = familyMemberRepository
-        .findByFamilyUuidAndUserUuid(familyUuid, user.getUuid())
-        .orElseThrow();
+    FamilyMember member =
+        familyMemberRepository
+            .findByFamilyUuidAndUserUuid(familyUuid, user.getUuid())
+            .orElseThrow();
     CustomUuid memberUuid = member.getUuid();
 
     // When
@@ -268,9 +250,7 @@ class FamilyServiceIntegrationTest extends TestFixturesSupport {
     // Given: TestFixtures로 사용자 생성
     User testUser = fixtures.getDefaultUser();
 
-    CreateFamilyRequest request = CreateFamilyRequest.builder()
-                                                     .name("예산 미설정 가족")
-                                                     .build();
+    CreateFamilyRequest request = CreateFamilyRequest.builder().name("예산 미설정 가족").build();
 
     // When
     FamilyResponse family = familyService.createFamily(testUser.getUuid(), request);

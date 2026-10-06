@@ -4,6 +4,11 @@ import {
   serverApiPost,
   serverApiPut,
 } from "@/lib/server/api/client";
+import {
+  getRecurringExpensesResponseSchema,
+  recurringExpenseResponseSchema,
+  recurringExpensesMonthlyTotalSchema,
+} from "@/lib/schemas/responses/recurring-expense";
 import type {
   CreateRecurringExpenseRequest,
   GetRecurringExpensesResponse,
@@ -17,7 +22,8 @@ export async function getRecurringExpenses(
 ): Promise<GetRecurringExpensesResponse> {
   const query = month ? `?month=${month}` : "";
   return serverApiGet<GetRecurringExpensesResponse>(
-    `/families/${familyUuid}/recurring-expenses${query}`
+    `/families/${familyUuid}/recurring-expenses${query}`,
+    { schema: getRecurringExpensesResponseSchema }
   );
 }
 
@@ -25,7 +31,8 @@ export async function getRecurringExpensesMonthlyTotal(
   familyUuid: string
 ): Promise<number> {
   return serverApiGet<number>(
-    `/families/${familyUuid}/recurring-expenses/monthly-total`
+    `/families/${familyUuid}/recurring-expenses/monthly-total`,
+    { schema: recurringExpensesMonthlyTotalSchema }
   );
 }
 
@@ -35,7 +42,8 @@ export async function createRecurringExpense(
 ): Promise<RecurringExpense> {
   return serverApiPost<RecurringExpense>(
     `/families/${familyUuid}/recurring-expenses`,
-    data
+    data,
+    { schema: recurringExpenseResponseSchema }
   );
 }
 
@@ -46,7 +54,8 @@ export async function updateRecurringExpense(
 ): Promise<RecurringExpense> {
   return serverApiPut<RecurringExpense>(
     `/families/${familyUuid}/recurring-expenses/${uuid}`,
-    data
+    data,
+    { schema: recurringExpenseResponseSchema }
   );
 }
 

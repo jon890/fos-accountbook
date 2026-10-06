@@ -2,39 +2,29 @@
 
 import { getFamiliesAction } from "@/actions/family/get-families-action";
 import { getUserProfileAction } from "@/actions/user/get-user-profile-action";
-import { setDefaultFamilyAction } from "@/actions/user/set-default-family-action";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useSessionRefresh } from "@/lib/client/use-session-refresh";
 import type { Family } from "@/types/family";
-import { ChevronRight, Plus, User, Users } from "lucide-react";
+import { ChevronRight, Loader2, Plus, User, Users } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface FamilySelectorProps {
   onFamilySelect: (family: Family) => void;
   onCreateFamily: () => void;
+  isPending: boolean;
 }
 
 export function FamilySelector({
   onFamilySelect,
   onCreateFamily,
+  isPending,
 }: FamilySelectorProps) {
   const [families, setFamilies] = useState<Family[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const autoSelectedRef = useRef(false);
-  const { refreshSession } = useSessionRefresh();
-
-  const handleFamilySelect = useCallback(async (family: Family) => {
-    const result = await setDefaultFamilyAction(family.uuid);
-    if (result.success) {
-      await refreshSession();
-    }
-    onFamilySelect(family);
-  }, [refreshSession, onFamilySelect]);
-
   // effect 에서 부르므로 상태는 Promise 콜백 안에서만 바꾼다. loading 의 초기값은 true 다
   const loadFamilies = useCallback(
     () =>
@@ -90,12 +80,12 @@ export function FamilySelector({
 
       if (families.length === 1) {
         autoSelectedRef.current = true;
-        await handleFamilySelect(families[0]);
+        onFamilySelect(families[0]);
       }
     };
 
     selectFamily();
-  }, [families, loading, onFamilySelect, handleFamilySelect]);
+  }, [families, loading, onFamilySelect]);
 
   if (loading) {
     return (
@@ -109,7 +99,7 @@ export function FamilySelector({
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
-          <CardContent className="py-8 text-center">
+          <CardContent className="py-8 text-center md:py-8">
             <p className="text-expense mb-4">{error}</p>
             <Button onClick={retryLoadFamilies}>다시 시도</Button>
           </CardContent>
@@ -119,9 +109,9 @@ export function FamilySelector({
   }
 
   return (
-    <div className="min-h-screen py-8 app-background">
-      <div className="max-w-2xl mx-auto px-4">
-        <div className="text-center mb-8">
+    <div className="min-h-screen md:py-8 app-background">
+      <div className="max-w-2xl mx-auto px-0 md:px-4">
+        <div className="text-center mb-4 md:mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex-1" />
             <h1 className="text-3xl font-bold text-fg flex-1">
@@ -131,10 +121,12 @@ export function FamilySelector({
               {families.length > 0 && (
                 <Button
                   onClick={onCreateFamily}
+                  disabled={isPending}
                   className="gradient-primary hover:opacity-90 text-brand-fg shadow-lg hover:shadow-xl transition-all duration-300"
                   size="lg"
                 >
-                  <Plus className="w-5 h-5 mr-2" />새 가족 만들기
+                  {isPending ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Plus className="w-5 h-5 mr-2" />}
+                  {isPending ? "이동 중..." : "새 가족 만들기"}
                 </Button>
               )}
             </div>
@@ -157,9 +149,14 @@ export function FamilySelector({
                 <Card
                   key={family.uuid}
                   className="cursor-pointer transition border-border hover:border-brand-300 hover:shadow-default bg-bg-elev"
-                  onClick={() => handleFamilySelect(family)}
+                  aria-disabled={isPending}
+                  onClick={() => {
+                    if (!isPending) {
+                      void onFamilySelect(family);
+                    }
+                  }}
                 >
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 md:p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
@@ -190,7 +187,7 @@ export function FamilySelector({
                 </Card>
               ))}
 
-              <div className="my-8">
+              <div className="my-4 md:my-8">
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-border" />
@@ -207,9 +204,14 @@ export function FamilySelector({
           <div className="grid gap-4">
             <Card
               className="cursor-pointer hover:shadow-default transition-all duration-200 border-border hover:border-brand-300 group"
-              onClick={() => onCreateFamily()}
+              aria-disabled={isPending}
+              onClick={() => {
+                if (!isPending) {
+                  onCreateFamily();
+                }
+              }}
             >
-              <CardContent className="p-6">
+              <CardContent className="p-4 md:p-6">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 gradient-primary rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <User className="w-7 h-7 text-brand-fg" />
@@ -229,9 +231,14 @@ export function FamilySelector({
 
             <Card
               className="cursor-pointer hover:shadow-default transition-all duration-200 border-border hover:border-brand-300 group"
-              onClick={() => onCreateFamily()}
+              aria-disabled={isPending}
+              onClick={() => {
+                if (!isPending) {
+                  onCreateFamily();
+                }
+              }}
             >
-              <CardContent className="p-6">
+              <CardContent className="p-4 md:p-6">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 gradient-family rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <Users className="w-7 h-7 text-brand-fg" />
@@ -262,6 +269,7 @@ export function FamilySelector({
             </div>
           )}
         </div>
+        {isPending && <p role="status" className="sr-only">이동 중...</p>}
       </div>
     </div>
   );

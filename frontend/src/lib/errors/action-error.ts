@@ -4,7 +4,10 @@
  */
 
 import { ERROR_MESSAGES, ErrorCode } from "./error-code";
-import { ServerApiError } from "@/lib/server/api/types";
+import {
+  ResponseValidationError,
+  ServerApiError,
+} from "@/lib/server/api/types";
 
 /**
  * Server Action 에러 정보
@@ -246,7 +249,7 @@ function firstFieldError(
  * 백엔드 업무 오류 응답의 최상위 code 와 message 를 꺼낸다.
  * 둘 중 하나라도 비어 있으면 null. code 없이 내부 예외 문구만 담은 응답은 걸러진다.
  */
-function businessError(
+export function businessError(
   errorData: unknown
 ): { code: string; message: string } | null {
   if (typeof errorData !== "object" || errorData === null) return null;
@@ -289,6 +292,11 @@ export function handleActionError(
         .addParameter("backendCode", business.code)
         .toFailureResult();
     }
+  }
+
+  // 응답 계약 위반(ADR-F42): message 에 엔드포인트가 있어 cause 로 클라이언트에 싣지 않는다
+  if (error instanceof ResponseValidationError) {
+    return ActionError.internalError(defaultMessage).toFailureResult();
   }
 
   // Error 객체인 경우

@@ -10,9 +10,20 @@
 
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { AmountInput } from "@/components/expenses/forms/AmountInput";
 
+jest.mock("@/hooks/useMediaQuery", () => ({ useMediaQuery: jest.fn() }));
+
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+
+const mockedUseMediaQuery = jest.mocked(useMediaQuery);
+
 describe("AmountInput", () => {
+  beforeEach(() => {
+    mockedUseMediaQuery.mockReturnValue(true);
+  });
+
   it("value=0일 때 '0'과 ₩ prefix를 표시한다", () => {
     // Given & When
     render(<AmountInput value={0} onChange={jest.fn()} />);
@@ -102,6 +113,39 @@ describe("AmountInput", () => {
 
     // Then
     expect(screen.getByText("얼마를 썼나요?")).toBeInTheDocument();
+  });
+
+  it("모바일에서 숫자패드로 금액을 입력하고 지운다", async () => {
+    mockedUseMediaQuery.mockReturnValue(false);
+    const user = userEvent.setup();
+    function ControlledAmountInput() {
+      const [value, setValue] = useState(0);
+      return <AmountInput value={value} onChange={setValue} />;
+    }
+
+    render(<ControlledAmountInput />);
+
+    await user.click(screen.getByRole("button", { name: "1" }));
+    await user.click(screen.getByRole("button", { name: "2" }));
+    await user.click(screen.getByRole("button", { name: "영영" }));
+    expect(screen.getByText("1,200")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "지우기" }));
+    expect(screen.getByText("120")).toBeInTheDocument();
+  });
+
+  it("데스크톱에서는 숫자패드를 표시하지 않는다", () => {
+    mockedUseMediaQuery.mockReturnValue(true);
+
+    render(<AmountInput value={0} onChange={jest.fn()} />);
+
+    expect(screen.queryByRole("button", { name: "영영" })).not.toBeInTheDocument();
+  });
+
+  it("수입 금액 문구를 표시한다", () => {
+    render(<AmountInput type="income" value={0} onChange={jest.fn()} />);
+
+    expect(screen.getByText("얼마를 받았나요?")).toBeInTheDocument();
   });
 
   it("disabled 상태에서는 칩 버튼이 비활성화된다", () => {

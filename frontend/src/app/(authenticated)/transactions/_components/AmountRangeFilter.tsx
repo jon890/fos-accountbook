@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useAppRouter, useNavigationPending } from "@/lib/client/navigation";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/client/utils";
 import {
@@ -32,7 +33,8 @@ const chipDefault = "border-border bg-bg-elev text-fg-muted hover:text-fg";
 const chipActive = "border-brand-300 bg-brand-50 text-brand-700";
 
 export function AmountRangeFilter() {
-  const router = useRouter();
+  const router = useAppRouter();
+  const isNavigationPending = useNavigationPending();
   const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
 
@@ -48,6 +50,10 @@ export function AmountRangeFilter() {
   const setMaxInput = setMaxDraft;
 
   const apply = () => {
+    if (isNavigationPending) {
+      return;
+    }
+
     const params = new URLSearchParams(searchParams.toString());
     const min = Number(minInput);
     const max = Number(maxInput);
@@ -62,7 +68,7 @@ export function AmountRangeFilter() {
     } else {
       params.delete("amountMax");
     }
-    params.set("page", "1");
+    params.delete("limit");
     router.replace(`/transactions?${params.toString()}`);
     setMinDraft(null);
     setMaxDraft(null);
@@ -70,10 +76,14 @@ export function AmountRangeFilter() {
   };
 
   const reset = () => {
+    if (isNavigationPending) {
+      return;
+    }
+
     const params = new URLSearchParams(searchParams.toString());
     params.delete("amountMin");
     params.delete("amountMax");
-    params.set("page", "1");
+    params.delete("limit");
     router.replace(`/transactions?${params.toString()}`);
     setMinDraft(null);
     setMaxDraft(null);
@@ -86,6 +96,7 @@ export function AmountRangeFilter() {
         <button
           aria-label="금액 범위 필터"
           aria-expanded={open}
+          disabled={isNavigationPending}
           className={cn(chipBase, hasValue ? chipActive : chipDefault)}
         >
           {buildLabel(currentMin, currentMax)}
@@ -104,6 +115,7 @@ export function AmountRangeFilter() {
             className="h-8 text-sm flex-1 min-w-0"
             aria-label="최솟값 금액"
             min={0}
+            disabled={isNavigationPending}
           />
           <span className="text-fg-muted text-xs shrink-0" aria-hidden="true">
             ~
@@ -117,17 +129,20 @@ export function AmountRangeFilter() {
             className="h-8 text-sm flex-1 min-w-0"
             aria-label="최댓값 금액"
             min={0}
+            disabled={isNavigationPending}
           />
         </div>
         <div className="flex gap-2">
           <button
             onClick={reset}
+            disabled={isNavigationPending}
             className="flex-1 py-1.5 text-xs rounded-md border border-border text-fg-muted hover:text-fg transition-colors"
           >
             초기화
           </button>
           <button
             onClick={apply}
+            disabled={isNavigationPending}
             className="flex-1 py-1.5 text-xs rounded-md bg-fg text-bg font-semibold hover:opacity-90 transition-opacity"
           >
             적용

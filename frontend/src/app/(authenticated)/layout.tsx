@@ -12,6 +12,14 @@ import { auth } from "@/lib/server/auth";
 import { getSelectedFamilyUuid } from "@/lib/server/auth/auth-helpers";
 import { redirect } from "next/navigation";
 import { ReactNode, Suspense } from "react";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 interface AuthenticatedLayoutProps {
   children: ReactNode;
@@ -33,7 +41,8 @@ export default async function AuthenticatedLayout({
       <div className="min-h-screen bg-bg">
         <Header session={session} selectedFamilyUuid={selectedFamilyUuid} />
 
-        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-3 md:pt-6 pb-[calc(4rem+env(safe-area-inset-bottom))]">
+        {/* 아래 여백 104px = 하단 탭 64px + 가운데 추가 버튼 돌출 20px + 여유 20px (BottomNavigation 의 h-16, bottom-7, size-14) */}
+        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-3 md:pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom))]">
           {children}
         </main>
 

@@ -11,7 +11,9 @@ interface CategoryDetailListProps {
   topN?: number;
 }
 
-function DeltaCell({ delta }: { delta: number | null }) {
+function DeltaCell({ delta, isNew }: { delta: number | null; isNew: boolean }) {
+  // 직전 달 0원에서 새로 생긴 지출은 비율을 낼 수 없어 「신규」 로 보인다 (#362).
+  if (isNew) return <span className="text-[11px] font-semibold text-brand-600">신규</span>;
   if (delta === null) return <span className="text-[11px] text-fg-subtle">—</span>;
   if (delta === 0) return <span className="text-[11px] text-fg-muted">·</span>;
   const isUp = delta > 0;
@@ -75,7 +77,7 @@ export function CategoryDetailList({ items, totalExpense, topN = 6 }: CategoryDe
                 {formatCurrency(item.totalAmount)}
               </span>
               <span className="shrink-0 text-right">
-                <DeltaCell delta={item.deltaPercent} />
+                <DeltaCell delta={item.deltaPercent} isNew={item.isNew} />
               </span>
             </div>
           );

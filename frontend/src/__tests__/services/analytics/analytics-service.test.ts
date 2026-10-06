@@ -6,7 +6,14 @@ jest.mock("@/lib/server/cache", () => ({
 }));
 
 import { serverApiGet } from "@/lib/server/api/client";
-import { ServerApiError } from "@/lib/server/api/types";
+import {
+  categoryBreakdownResponseSchema,
+  monthlyTrendResponseSchema,
+} from "@/lib/schemas/responses/dashboard";
+import {
+  ResponseValidationError,
+  ServerApiError,
+} from "@/lib/server/api/types";
 import {
   getMonthlyTrend,
   getCategoryBreakdownWithDelta,
@@ -28,6 +35,7 @@ const breakdown = {
       totalAmount: 120,
       percentage: 66.67,
       deltaPercent: 20.49,
+      previousAmount: 99.6,
     },
     {
       categoryUuid: "bus",
@@ -36,6 +44,7 @@ const breakdown = {
       totalAmount: 60,
       percentage: 33.33,
       deltaPercent: -25.51,
+      previousAmount: 80.55,
     },
     {
       categoryUuid: "new",
@@ -44,6 +53,16 @@ const breakdown = {
       totalAmount: 0,
       percentage: 0,
       deltaPercent: null,
+      previousAmount: 0,
+    },
+    {
+      categoryUuid: "gift",
+      name: "선물",
+      icon: "🎁",
+      totalAmount: 30,
+      percentage: 0,
+      deltaPercent: null,
+      previousAmount: 0,
     },
   ],
 };
@@ -68,6 +87,7 @@ describe("getMonthlyTrend", () => {
     expect(api).toHaveBeenCalledTimes(1);
     expect(api).toHaveBeenCalledWith(
       "/families/family/dashboard/stats/monthly-trend?from=2025-03&to=2026-02",
+      expect.objectContaining({ schema: monthlyTrendResponseSchema }),
     );
     expect(result).toEqual({
       period: "y1",
@@ -94,8 +114,14 @@ describe("getMonthlyTrend", () => {
     });
   });
 
-  it.each([new ServerApiError("failed", 500), new Error("network")])(
-    "일반 실패에도 세 달의 점을 유지한다: %s",
+  it.each([
+    new ServerApiError("failed", 500),
+    new Error("network"),
+    new ResponseValidationError("/families/:uuid/dashboard/stats/monthly-trend", [
+      { path: "points.0.totalExpense", code: "invalid_type" },
+    ]),
+  ])(
+    "일반 실패와 응답 계약 위반에도 세 달의 점을 유지한다: %s",
     async (error) => {
       api.mockRejectedValue(error);
       expect(await getMonthlyTrend("family", "m3", 2026, 5)).toEqual({
@@ -147,6 +173,7 @@ describe("getCategoryBreakdownWithDelta", () => {
           totalAmount: 120,
           percentage: 67,
           deltaPercent: 20,
+          isNew: false,
         },
         {
           categoryUuid: "bus",
@@ -155,6 +182,7 @@ describe("getCategoryBreakdownWithDelta", () => {
           totalAmount: 60,
           percentage: 33,
           deltaPercent: -26,
+          isNew: false,
         },
         {
           categoryUuid: "new",
@@ -163,14 +191,26 @@ describe("getCategoryBreakdownWithDelta", () => {
           totalAmount: 0,
           percentage: 0,
           deltaPercent: null,
+          isNew: false,
+        },
+        {
+          categoryUuid: "gift",
+          name: "선물",
+          icon: "🎁",
+          totalAmount: 30,
+          percentage: 0,
+          deltaPercent: null,
+          isNew: true,
         },
       ],
     });
     expect(api).toHaveBeenCalledWith(
       "/families/family/dashboard/stats/category-breakdown?year=2026&month=5&compareWithPrev=true",
+      expect.objectContaining({ schema: categoryBreakdownResponseSchema }),
     );
     expect(api).toHaveBeenCalledWith(
       "/families/family/dashboard/stats/monthly-trend?from=2026-04&to=2026-05",
+      expect.objectContaining({ schema: monthlyTrendResponseSchema }),
     );
   });
 
@@ -205,9 +245,11 @@ describe("getCategoryBreakdownWithDelta", () => {
     });
     expect(api).toHaveBeenCalledWith(
       "/families/family/dashboard/stats/category-breakdown?year=2026&month=1&compareWithPrev=true",
+      expect.objectContaining({ schema: categoryBreakdownResponseSchema }),
     );
     expect(api).toHaveBeenCalledWith(
       "/families/family/dashboard/stats/monthly-trend?from=2025-12&to=2026-01",
+      expect.objectContaining({ schema: monthlyTrendResponseSchema }),
     );
   });
 
@@ -226,9 +268,25 @@ describe("getCategoryBreakdownWithDelta", () => {
     mockResponses(breakdown, new ServerApiError("failed", 500));
     const result = await getCategoryBreakdownWithDelta("family", 2026, 5);
     expect(result.totalExpense).toBe(180);
-    expect(result.items).toHaveLength(3);
+    expect(result.items).toHaveLength(4);
     expect(result.items[0].deltaPercent).toBe(20);
     expect(result.totalDelta).toBeNull();
+  });
+
+  it("카테고리 응답 계약 위반은 빈 항목으로 바꾸고 추이의 총액 대비는 유지한다", async () => {
+    mockResponses(
+      new ResponseValidationError(
+        "/families/:uuid/dashboard/stats/category-breakdown",
+        [{ path: "items.0.deltaPercent", code: "invalid_type" }],
+      ),
+    );
+    expect(await getCategoryBreakdownWithDelta("family", 2026, 5)).toEqual({
+      year: 2026,
+      month: 5,
+      totalExpense: 0,
+      totalDelta: 20,
+      items: [],
+    });
   });
 
   it("두 요청 500은 빈 결과로 바꾼다", async () => {

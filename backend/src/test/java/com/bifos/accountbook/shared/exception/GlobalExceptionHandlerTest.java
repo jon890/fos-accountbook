@@ -23,9 +23,10 @@ class GlobalExceptionHandlerTest {
     HandlerLogCapture capture = new HandlerLogCapture();
 
     try {
-      ApiErrorResponse response = handlerWithProfile("prod")
-          .handleBusinessException(exception(ErrorCode.INVALID_INVITATION_TOKEN), request())
-          .getBody();
+      ApiErrorResponse response =
+          handlerWithProfile("prod")
+              .handleBusinessException(exception(ErrorCode.INVALID_INVITATION_TOKEN), request())
+              .getBody();
 
       ILoggingEvent event = capture.singleEvent();
 
@@ -44,9 +45,10 @@ class GlobalExceptionHandlerTest {
     HandlerLogCapture capture = new HandlerLogCapture();
 
     try {
-      ApiErrorResponse response = handlerWithProfile("test")
-          .handleBusinessException(exception(ErrorCode.INTERNAL_SERVER_ERROR), request())
-          .getBody();
+      ApiErrorResponse response =
+          handlerWithProfile("test")
+              .handleBusinessException(exception(ErrorCode.INTERNAL_SERVER_ERROR), request())
+              .getBody();
 
       ILoggingEvent event = capture.singleEvent();
 

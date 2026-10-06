@@ -1,32 +1,36 @@
 package com.bifos.accountbook.dashboard.application.service;
 
-import com.bifos.accountbook.dashboard.application.dto.DailyStat;
-import com.bifos.accountbook.dashboard.application.dto.MemberAmount;
-import com.bifos.accountbook.dashboard.application.dto.DailyStatsResponse;
-import com.bifos.accountbook.dashboard.application.dto.MonthlyStatsResponse;
+import com.bifos.accountbook.budgetitem.domain.repository.BudgetItemRepository;
+import com.bifos.accountbook.dashboard.application.dto.BudgetSummaryAmount;
+import com.bifos.accountbook.dashboard.application.dto.BudgetSummaryItem;
+import com.bifos.accountbook.dashboard.application.dto.BudgetSummaryResponse;
 import com.bifos.accountbook.dashboard.application.dto.CategoryBreakdownItem;
 import com.bifos.accountbook.dashboard.application.dto.CategoryBreakdownResponse;
+import com.bifos.accountbook.dashboard.application.dto.DailyStat;
+import com.bifos.accountbook.dashboard.application.dto.DailyStatsResponse;
+import com.bifos.accountbook.dashboard.application.dto.MemberAmount;
+import com.bifos.accountbook.dashboard.application.dto.MonthlyStatsResponse;
 import com.bifos.accountbook.dashboard.application.dto.MonthlyTrendPoint;
 import com.bifos.accountbook.dashboard.application.dto.MonthlyTrendResponse;
+import com.bifos.accountbook.dashboard.domain.repository.DashboardRepository;
 import com.bifos.accountbook.dashboard.domain.repository.projection.MonthlyTrendProjection;
 import com.bifos.accountbook.expense.application.dto.CategoryExpenseStat;
 import com.bifos.accountbook.expense.application.dto.CategoryExpenseSummaryResponse;
 import com.bifos.accountbook.expense.application.dto.ExpenseSummarySearchRequest;
+import com.bifos.accountbook.expense.domain.repository.projection.CategoryExpenseProjection;
+import com.bifos.accountbook.family.application.access.FamilyUuid;
+import com.bifos.accountbook.family.application.access.UserUuid;
+import com.bifos.accountbook.family.application.access.ValidateFamilyAccess;
+import com.bifos.accountbook.family.domain.entity.Family;
+import com.bifos.accountbook.family.domain.repository.FamilyRepository;
 import com.bifos.accountbook.shared.exception.BusinessException;
 import com.bifos.accountbook.shared.exception.ErrorCode;
-import com.bifos.accountbook.family.domain.entity.Family;
-import com.bifos.accountbook.dashboard.domain.repository.DashboardRepository;
-import com.bifos.accountbook.family.domain.repository.FamilyRepository;
-import com.bifos.accountbook.expense.domain.repository.projection.CategoryExpenseProjection;
 import com.bifos.accountbook.shared.value.CustomUuid;
-import com.bifos.accountbook.shared.aop.FamilyUuid;
-import com.bifos.accountbook.shared.aop.UserUuid;
-import com.bifos.accountbook.shared.aop.ValidateFamilyAccess;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.YearMonth;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -39,9 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 대시보드 서비스 - 대시보드 통계 데이터 조회 - 지출/수입 요약 통계 - 카테고리별 집계
- */
+/** 대시보드 서비스 - 대시보드 통계 데이터 조회 - 지출/수입 요약 통계 - 카테고리별 집계 */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -50,52 +52,56 @@ public class DashboardService {
 
   private final DashboardRepository dashboardRepository;
   private final FamilyRepository familyRepository;
+  private final BudgetItemRepository budgetItemRepository;
 
   /**
    * 카테고리별 지출 요약 조회 - 전체 지출 합계 - 카테고리별 지출 통계 (금액, 건수, 비율)
    *
-   * @param userUuid      사용자 UUID
-   * @param familyUuid    가족 UUID
+   * @param userUuid 사용자 UUID
+   * @param familyUuid 가족 UUID
    * @param searchRequest 검색 조건 (날짜, 카테고리)
    * @return 카테고리별 지출 요약
    */
   @ValidateFamilyAccess
-  public CategoryExpenseSummaryResponse getCategoryExpenseSummary(@UserUuid CustomUuid userUuid,
-                                                                  @FamilyUuid CustomUuid familyUuid,
-                                                                  ExpenseSummarySearchRequest searchRequest) {
+  public CategoryExpenseSummaryResponse getCategoryExpenseSummary(
+      @UserUuid CustomUuid userUuid,
+      @FamilyUuid CustomUuid familyUuid,
+      ExpenseSummarySearchRequest searchRequest) {
 
     // 카테고리 UUID 변환 (null 가능)
-    CustomUuid categoryCustomUuid = searchRequest.getCategoryUuid() != null
-        ? CustomUuid.from(searchRequest.getCategoryUuid())
-        : null;
+    CustomUuid categoryCustomUuid =
+        searchRequest.getCategoryUuid() != null
+            ? CustomUuid.from(searchRequest.getCategoryUuid())
+            : null;
 
     // 전체 지출 합계 조회
-    BigDecimal totalExpense = dashboardRepository.getTotalExpenseAmount(familyUuid,
-                                                                        categoryCustomUuid,
-                                                                        searchRequest.getStartDate(),
-                                                                        searchRequest.getEndDate());
+    BigDecimal totalExpense =
+        dashboardRepository.getTotalExpenseAmount(
+            familyUuid,
+            categoryCustomUuid,
+            searchRequest.getStartDate(),
+            searchRequest.getEndDate());
 
     // 카테고리별 지출 통계 조회
-    List<CategoryExpenseProjection> projections = dashboardRepository.getCategoryExpenseStats(familyUuid,
-                                                                                              categoryCustomUuid,
-                                                                                              searchRequest.getStartDate(),
-                                                                                              searchRequest.getEndDate());
+    List<CategoryExpenseProjection> projections =
+        dashboardRepository.getCategoryExpenseStats(
+            familyUuid,
+            categoryCustomUuid,
+            searchRequest.getStartDate(),
+            searchRequest.getEndDate());
 
     // DTO 변환 및 비율 계산
     List<CategoryExpenseStat> categoryStats = convertToStats(projections, totalExpense);
 
     return CategoryExpenseSummaryResponse.builder()
-                                         .totalExpense(totalExpense)
-                                         .categoryStats(categoryStats)
-                                         .build();
+        .totalExpense(totalExpense)
+        .categoryStats(categoryStats)
+        .build();
   }
 
-  /**
-   * Projection을 DTO로 변환하고 비율 계산
-   */
+  /** Projection을 DTO로 변환하고 비율 계산 */
   private List<CategoryExpenseStat> convertToStats(
-      List<CategoryExpenseProjection> projections,
-      BigDecimal totalExpense) {
+      List<CategoryExpenseProjection> projections, BigDecimal totalExpense) {
 
     List<CategoryExpenseStat> categoryStats = new ArrayList<>();
 
@@ -103,15 +109,16 @@ public class DashboardService {
       // 비율 계산 (소수점 2자리)
       Double percentage = calculatePercentage(projection.totalAmount(), totalExpense);
 
-      CategoryExpenseStat stat = CategoryExpenseStat.builder()
-                                                    .categoryUuid(projection.categoryUuid())
-                                                    .categoryName(projection.categoryName())
-                                                    .categoryIcon(projection.categoryIcon())
-                                                    .categoryColor(projection.categoryColor())
-                                                    .totalAmount(projection.totalAmount())
-                                                    .count(projection.count())
-                                                    .percentage(percentage)
-                                                    .build();
+      CategoryExpenseStat stat =
+          CategoryExpenseStat.builder()
+              .categoryUuid(projection.categoryUuid())
+              .categoryName(projection.categoryName())
+              .categoryIcon(projection.categoryIcon())
+              .categoryColor(projection.categoryColor())
+              .totalAmount(projection.totalAmount())
+              .count(projection.count())
+              .percentage(percentage)
+              .build();
 
       categoryStats.add(stat);
     }
@@ -119,9 +126,7 @@ public class DashboardService {
     return categoryStats;
   }
 
-  /**
-   * 비율 계산 (소수점 2자리)
-   */
+  /** 비율 계산 (소수점 2자리) */
   private Double calculatePercentage(BigDecimal amount, BigDecimal total) {
     if (total.compareTo(BigDecimal.ZERO) <= 0) {
       return 0.0;
@@ -136,64 +141,111 @@ public class DashboardService {
   /**
    * 월별 통계 조회 (QueryDSL 기반) - 이번 달 지출/수입 합계를 백엔드에서 직접 집계 - 프론트에서 1000개 가져와서 필터링하던 비효율 개선
    *
-   * @param userUuid   사용자 UUID
+   * @param userUuid 사용자 UUID
    * @param familyUuid 가족 UUID
-   * @param year       연도 (예: 2025)
-   * @param month      월 (1~12)
+   * @param year 연도 (예: 2025)
+   * @param month 월 (1~12)
    * @return 월별 통계 (지출, 수입, 예산, 가족 구성원 수)
    */
   @ValidateFamilyAccess
-  public MonthlyStatsResponse getMonthlyStats(@UserUuid CustomUuid userUuid,
-                                              @FamilyUuid CustomUuid familyUuid,
-                                              int year,
-                                              int month) {
+  public MonthlyStatsResponse getMonthlyStats(
+      @UserUuid CustomUuid userUuid, @FamilyUuid CustomUuid familyUuid, int year, int month) {
     // 가족 정보 조회 (구성원 수)
-    Family family = familyRepository.findByUuid(familyUuid)
-                                    .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND));
+    Family family =
+        familyRepository
+            .findByUuid(familyUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND));
 
     // QueryDSL로 월별 지출 합계 조회 (DB에서 직접 집계)
-    BigDecimal monthlyExpense = dashboardRepository.getMonthlyExpenseAmount(
-        familyUuid, year, month);
+    BigDecimal monthlyExpense =
+        dashboardRepository.getMonthlyExpenseAmount(familyUuid, year, month);
 
     // QueryDSL로 월별 수입 합계 조회 (DB에서 직접 집계)
-    BigDecimal monthlyIncome = dashboardRepository.getMonthlyIncomeAmount(
-        familyUuid, year, month);
+    BigDecimal monthlyIncome = dashboardRepository.getMonthlyIncomeAmount(familyUuid, year, month);
 
     // 가족의 월 예산 조회
-    BigDecimal budget = family.getMonthlyBudget() != null
-        ? family.getMonthlyBudget()
-        : BigDecimal.ZERO;
+    BigDecimal budget =
+        family.getMonthlyBudget() != null ? family.getMonthlyBudget() : BigDecimal.ZERO;
 
     // 남은 예산 계산 (예산 - 지출)
     BigDecimal remainingBudget = budget.subtract(monthlyExpense);
 
     return MonthlyStatsResponse.builder()
-                               .monthlyExpense(monthlyExpense)
-                               .monthlyIncome(monthlyIncome)
-                               .remainingBudget(remainingBudget)
-                               .familyMembers(family.getMembers() != null ? family.getMembers().size() : 0)
-                               .budget(budget)
-                               .year(year)
-                               .month(month)
-                               .build();
+        .monthlyExpense(monthlyExpense)
+        .monthlyIncome(monthlyIncome)
+        .remainingBudget(remainingBudget)
+        .familyMembers(family.getMembers() != null ? family.getMembers().size() : 0)
+        .budget(budget)
+        .year(year)
+        .month(month)
+        .build();
+  }
+
+  /**
+   * 예산, 생활비, 예산 항목별 쓴 금액과 한도를 준다. 생활비 한도는 월 예산에서 항목 한도 합을 뺀 값이다 (ADR-B26). 항목 순서는 만든 순서다 (ADR-B25).
+   */
+  @ValidateFamilyAccess
+  public BudgetSummaryResponse getBudgetSummary(
+      @UserUuid CustomUuid userUuid, @FamilyUuid CustomUuid familyUuid, int year, int month) {
+    Family family =
+        familyRepository
+            .findByUuid(familyUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.FAMILY_NOT_FOUND));
+
+    BigDecimal totalLimit =
+        family.getMonthlyBudget() != null ? family.getMonthlyBudget() : BigDecimal.ZERO;
+    BigDecimal totalSpent = dashboardRepository.getMonthlyExpenseAmount(familyUuid, year, month);
+    BigDecimal livingSpent =
+        dashboardRepository.getMonthlyLivingExpenseAmount(familyUuid, year, month);
+
+    Map<String, BigDecimal> spentByItem =
+        dashboardRepository.getMonthlyExpenseAmountsByBudgetItem(familyUuid, year, month);
+    List<BudgetSummaryItem> items =
+        budgetItemRepository.findAllActiveByFamilyUuid(familyUuid).stream()
+            .map(
+                item ->
+                    BudgetSummaryItem.builder()
+                        .budgetItemUuid(item.getUuid().getValue())
+                        .name(item.getName())
+                        .limit(item.getMonthlyLimit())
+                        .spent(spentByItem.getOrDefault(item.getUuid().getValue(), BigDecimal.ZERO))
+                        .build())
+            .toList();
+
+    BigDecimal itemLimitSum =
+        items.stream().map(BudgetSummaryItem::getLimit).reduce(BigDecimal.ZERO, BigDecimal::add);
+    BigDecimal livingLimit = totalLimit.subtract(itemLimitSum).max(BigDecimal.ZERO);
+    boolean allocationExceeded = totalLimit.signum() > 0 && itemLimitSum.compareTo(totalLimit) > 0;
+
+    return BudgetSummaryResponse.builder()
+        .year(year)
+        .month(month)
+        .total(BudgetSummaryAmount.builder().spent(totalSpent).limit(totalLimit).build())
+        .living(BudgetSummaryAmount.builder().spent(livingSpent).limit(livingLimit).build())
+        .allocationExceeded(allocationExceeded)
+        .items(items)
+        .build();
   }
 
   @ValidateFamilyAccess
-  public CategoryBreakdownResponse getCategoryBreakdown(@UserUuid CustomUuid userUuid,
-                                                        @FamilyUuid CustomUuid familyUuid,
-                                                        int year,
-                                                        int month,
-                                                        boolean compareWithPrev) {
+  public CategoryBreakdownResponse getCategoryBreakdown(
+      @UserUuid CustomUuid userUuid,
+      @FamilyUuid CustomUuid familyUuid,
+      int year,
+      int month,
+      boolean compareWithPrev) {
     YearMonth yearMonth = YearMonth.of(year, month);
     LocalDateTime startOfMonth = yearMonth.atDay(1).atStartOfDay();
     LocalDateTime startOfNextMonth = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
 
     List<CategoryExpenseProjection> currentProjections =
-        dashboardRepository.getCategoryExpenseStats(familyUuid, null, startOfMonth, startOfNextMonth);
+        dashboardRepository.getCategoryExpenseStatsBefore(
+            familyUuid, null, startOfMonth, startOfNextMonth);
 
-    BigDecimal totalExpense = currentProjections.stream()
-                                                .map(CategoryExpenseProjection::totalAmount)
-                                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    BigDecimal totalExpense =
+        currentProjections.stream()
+            .map(CategoryExpenseProjection::totalAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
     Map<String, BigDecimal> prevAmountByCategory = new HashMap<>();
     if (compareWithPrev) {
@@ -202,87 +254,97 @@ public class DashboardService {
       LocalDateTime prevStartOfNext = yearMonth.atDay(1).atStartOfDay();
 
       List<CategoryExpenseProjection> prevProjections =
-          dashboardRepository.getCategoryExpenseStats(familyUuid, null, prevStart, prevStartOfNext);
+          dashboardRepository.getCategoryExpenseStatsBefore(
+              familyUuid, null, prevStart, prevStartOfNext);
 
       for (CategoryExpenseProjection p : prevProjections) {
         prevAmountByCategory.put(p.categoryUuid(), p.totalAmount());
       }
     }
 
-    List<CategoryBreakdownItem> items = currentProjections.stream()
-                                                          .map(p -> {
-                                                            Double percentage = calculatePercentage(p.totalAmount(), totalExpense);
-                                                            Double delta = null;
-                                                            if (compareWithPrev) {
-                                                              BigDecimal prevAmount = prevAmountByCategory.get(p.categoryUuid());
-                                                              if (prevAmount != null
-                                                                  && prevAmount.compareTo(BigDecimal.ZERO) != 0) {
-                                                                delta = p.totalAmount()
-                                                                         .subtract(prevAmount)
-                                                                         .multiply(BigDecimal.valueOf(100))
-                                                                         .divide(prevAmount, 2, RoundingMode.HALF_UP)
-                                                                         .doubleValue();
-                                                              }
-                                                            }
-                                                            return CategoryBreakdownItem.builder()
-                                                                                       .categoryUuid(p.categoryUuid())
-                                                                                       .name(p.categoryName())
-                                                                                       .icon(p.categoryIcon())
-                                                                                       .color(p.categoryColor())
-                                                                                       .totalAmount(p.totalAmount())
-                                                                                       .percentage(percentage)
-                                                                                       .deltaPercent(delta)
-                                                                                       .build();
-                                                          })
-                                                          .toList();
+    List<CategoryBreakdownItem> items =
+        currentProjections.stream()
+            .map(
+                p -> {
+                  Double percentage = calculatePercentage(p.totalAmount(), totalExpense);
+                  Double delta = null;
+                  BigDecimal previousAmount = null;
+                  if (compareWithPrev) {
+                    BigDecimal prevAmount = prevAmountByCategory.get(p.categoryUuid());
+                    // 직전 달에 지출이 없으면 0 을 준다. deltaPercent 의 null 만으로는
+                    // 「비교 안 함」 과 「이번 달 새로 생김」 을 구분할 수 없다 (#362).
+                    previousAmount = prevAmount != null ? prevAmount : BigDecimal.ZERO;
+                    if (prevAmount != null && prevAmount.compareTo(BigDecimal.ZERO) != 0) {
+                      delta =
+                          p.totalAmount()
+                              .subtract(prevAmount)
+                              .multiply(BigDecimal.valueOf(100))
+                              .divide(prevAmount, 2, RoundingMode.HALF_UP)
+                              .doubleValue();
+                    }
+                  }
+                  return CategoryBreakdownItem.builder()
+                      .categoryUuid(p.categoryUuid())
+                      .name(p.categoryName())
+                      .icon(p.categoryIcon())
+                      .color(p.categoryColor())
+                      .totalAmount(p.totalAmount())
+                      .percentage(percentage)
+                      .deltaPercent(delta)
+                      .previousAmount(previousAmount)
+                      .build();
+                })
+            .toList();
 
     return CategoryBreakdownResponse.builder()
-                                    .year(year)
-                                    .month(month)
-                                    .totalExpense(totalExpense)
-                                    .items(items)
-                                    .build();
+        .year(year)
+        .month(month)
+        .totalExpense(totalExpense)
+        .items(items)
+        .build();
   }
 
   @ValidateFamilyAccess
-  public MonthlyTrendResponse getMonthlyTrend(@UserUuid CustomUuid userUuid,
-                                              @FamilyUuid CustomUuid familyUuid,
-                                              YearMonth fromYearMonth,
-                                              YearMonth toYearMonth) {
+  public MonthlyTrendResponse getMonthlyTrend(
+      @UserUuid CustomUuid userUuid,
+      @FamilyUuid CustomUuid familyUuid,
+      YearMonth fromYearMonth,
+      YearMonth toYearMonth) {
     LocalDateTime from = fromYearMonth.atDay(1).atStartOfDay();
     LocalDateTime to = toYearMonth.plusMonths(1).atDay(1).atStartOfDay();
 
-    List<MonthlyTrendProjection> projections = dashboardRepository.getMonthlyExpenseTrend(familyUuid, from, to);
+    List<MonthlyTrendProjection> projections =
+        dashboardRepository.getMonthlyExpenseTrend(familyUuid, from, to);
 
-    List<MonthlyTrendPoint> points = projections.stream()
-                                                .map(p -> MonthlyTrendPoint.builder()
-                                                                           .year(p.year())
-                                                                           .month(p.month())
-                                                                           .totalExpense(p.totalExpense())
-                                                                           .build())
-                                                .toList();
+    List<MonthlyTrendPoint> points =
+        projections.stream()
+            .map(
+                p ->
+                    MonthlyTrendPoint.builder()
+                        .year(p.year())
+                        .month(p.month())
+                        .totalExpense(p.totalExpense())
+                        .build())
+            .toList();
 
-    BigDecimal average = points.isEmpty()
-        ? BigDecimal.ZERO
-        : points.stream()
+    BigDecimal average =
+        points.isEmpty()
+            ? BigDecimal.ZERO
+            : points.stream()
                 .map(MonthlyTrendPoint::getTotalExpense)
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .divide(BigDecimal.valueOf(points.size()), 2, RoundingMode.HALF_UP);
 
-    return MonthlyTrendResponse.builder()
-                               .points(points)
-                               .average(average)
-                               .build();
+    return MonthlyTrendResponse.builder().points(points).average(average).build();
   }
 
   @ValidateFamilyAccess
-  public DailyStatsResponse getDailyStats(@UserUuid CustomUuid userUuid,
-                                          @FamilyUuid CustomUuid familyUuid,
-                                          int year,
-                                          int month) {
+  public DailyStatsResponse getDailyStats(
+      @UserUuid CustomUuid userUuid, @FamilyUuid CustomUuid familyUuid, int year, int month) {
     Map<Integer, Map<String, BigDecimal>> expenseByDay =
         dashboardRepository.getDailyExpenseAmountsByMember(familyUuid, year, month);
-    Map<Integer, BigDecimal> incomeByDay = dashboardRepository.getDailyIncomeAmounts(familyUuid, year, month);
+    Map<Integer, BigDecimal> incomeByDay =
+        dashboardRepository.getDailyIncomeAmounts(familyUuid, year, month);
 
     Set<Integer> daysWithTransactions = new HashSet<>();
     daysWithTransactions.addAll(expenseByDay.keySet());
@@ -291,21 +353,20 @@ public class DashboardService {
     List<DailyStat> dailyStats = new ArrayList<>();
     BigDecimal totalIncome = BigDecimal.ZERO;
     BigDecimal totalExpense = BigDecimal.ZERO;
-    Map<String, BigDecimal> expenseByMember = new HashMap<>();
 
     for (Integer day : daysWithTransactions) {
       BigDecimal income = incomeByDay.getOrDefault(day, BigDecimal.ZERO);
       Map<String, BigDecimal> memberExpenses = expenseByDay.getOrDefault(day, Map.of());
-      BigDecimal expense = memberExpenses.values().stream()
-                                         .reduce(BigDecimal.ZERO, BigDecimal::add);
-      memberExpenses.forEach((memberUuid, amount) -> expenseByMember.merge(memberUuid, amount, BigDecimal::add));
+      BigDecimal expense =
+          memberExpenses.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
 
-      dailyStats.add(DailyStat.builder()
-                              .date(LocalDate.of(year, month, day))
-                              .income(income)
-                              .expense(expense)
-                              .memberExpenses(toMemberAmounts(memberExpenses))
-                              .build());
+      dailyStats.add(
+          DailyStat.builder()
+              .date(LocalDate.of(year, month, day))
+              .income(income)
+              .expense(expense)
+              .memberExpenses(toMemberAmounts(memberExpenses))
+              .build());
 
       totalIncome = totalIncome.add(income);
       totalExpense = totalExpense.add(expense);
@@ -314,22 +375,20 @@ public class DashboardService {
     dailyStats.sort(Comparator.comparing(DailyStat::getDate));
 
     return DailyStatsResponse.builder()
-                             .year(year)
-                             .month(month)
-                             .dailyStats(dailyStats)
-                             .totalIncome(totalIncome)
-                             .totalExpense(totalExpense)
-                             .memberExpenseTotals(toMemberAmounts(expenseByMember))
-                             .build();
+        .year(year)
+        .month(month)
+        .dailyStats(dailyStats)
+        .totalIncome(totalIncome)
+        .totalExpense(totalExpense)
+        .build();
   }
 
   private List<MemberAmount> toMemberAmounts(Map<String, BigDecimal> amounts) {
     return amounts.entrySet().stream()
-                  .sorted(Map.Entry.comparingByKey())
-                  .map(entry -> MemberAmount.builder()
-                                            .userUuid(entry.getKey())
-                                            .amount(entry.getValue())
-                                            .build())
-                  .toList();
+        .sorted(Map.Entry.comparingByKey())
+        .map(
+            entry ->
+                MemberAmount.builder().userUuid(entry.getKey()).amount(entry.getValue()).build())
+        .toList();
   }
 }

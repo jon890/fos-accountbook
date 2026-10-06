@@ -3,14 +3,14 @@ package com.bifos.accountbook.shared.fixtures;
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.recurring.domain.entity.RecurringExpense;
-import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.recurring.domain.repository.RecurringExpenseRepository;
+import com.bifos.accountbook.user.domain.entity.User;
 import java.math.BigDecimal;
 
 /**
  * RecurringExpense 도메인 테스트 Fixture
  *
- * 반복 지출 생성 및 관리를 담당
+ * <p>반복 지출 생성 및 관리를 담당
  */
 public class RecurringExpenseFixtures {
 
@@ -18,8 +18,7 @@ public class RecurringExpenseFixtures {
   private final UserFixtures userFixtures;
 
   public RecurringExpenseFixtures(
-      RecurringExpenseRepository recurringExpenseRepository,
-      UserFixtures userFixtures) {
+      RecurringExpenseRepository recurringExpenseRepository, UserFixtures userFixtures) {
     this.recurringExpenseRepository = recurringExpenseRepository;
     this.userFixtures = userFixtures;
   }
@@ -32,15 +31,10 @@ public class RecurringExpenseFixtures {
    */
   public RecurringExpenseBuilder recurringExpense(Family family, Category category) {
     return new RecurringExpenseBuilder(
-        recurringExpenseRepository,
-        family,
-        category,
-        userFixtures.getDefaultUser());
+        recurringExpenseRepository, family, category, userFixtures.getDefaultUser());
   }
 
-  /**
-   * RecurringExpense Builder - 반복 지출 생성
-   */
+  /** RecurringExpense Builder - 반복 지출 생성 */
   public static class RecurringExpenseBuilder {
     private String name = "Test Recurring Expense";
     private BigDecimal amount = BigDecimal.valueOf(50000);
@@ -83,14 +77,15 @@ public class RecurringExpenseFixtures {
     }
 
     public RecurringExpense build() {
-      RecurringExpense recurringExpense = RecurringExpense.builder()
-          .familyUuid(family.getUuid().getValue())
-          .categoryUuid(category.getUuid().getValue())
-          .userUuid(user.getUuid().getValue())
-          .name(name)
-          .amount(amount)
-          .dayOfMonth(dayOfMonth)
-          .build();
+      RecurringExpense recurringExpense =
+          RecurringExpense.builder()
+              .familyUuid(family.getUuid().getValue())
+              .categoryUuid(category.getUuid().getValue())
+              .userUuid(user.getUuid().getValue())
+              .name(name)
+              .amount(amount)
+              .dayOfMonth(dayOfMonth)
+              .build();
       return recurringExpenseRepository.save(recurringExpense);
     }
   }

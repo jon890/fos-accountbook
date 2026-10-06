@@ -20,13 +20,13 @@
 | 경로 | 화면 |
 | --- | --- |
 | `/calendar` | 달력 홈. 날짜별 지출 확인과 등록 |
-| `/transactions` | 지출과 수입 내역, 반복 지출 |
+| `/transactions` | 지출과 수입 내역, 반복 지출, 할부 |
 | `/analytics` | 월별 추이, 카테고리별 비중 |
 | `/budget` | 월 예산과 진행률 |
 | `/categories` | 카테고리 관리 |
 | `/notifications` | 알림 센터 |
 | `/families/select`, `/families/create`, `/invite/[token]` | 가족 선택과 생성, 초대 수락 |
-| `/settings` | 기본 가족, 외부 연동 토큰 |
+| `/settings` | 기본 가족, 화면 테마, 외부 연동 토큰 |
 | `/menu` | 전체 메뉴 |
 
 `(authenticated)` 그룹의 레이아웃이 로그인을 확인하므로, 이 그룹 아래 화면은 따로 인증을 확인하지 않는다.

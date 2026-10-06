@@ -6,13 +6,16 @@ import { getExpensesAction } from "@/actions/expense/get-expenses-action";
 import type { DailyTransactionSummary } from "@/actions/dashboard/get-monthly-daily-stats-action";
 import type { DashboardStats } from "@/types/dashboard";
 import type { Expense } from "@/types/expense";
+import type { CategoryResponse } from "@/types/category";
 import { ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { startTransition, useState, useMemo } from "react";
+import { useNavigationPending } from "@/lib/client/navigation";
 import { AnalyticsPeriodToggle } from "./AnalyticsPeriodToggle";
 import { AnalyticsCategoryDonut } from "./AnalyticsCategoryDonut";
 import { MonthlyTrendBar } from "./MonthlyTrendBar";
 import { CategoryDetailList } from "./CategoryDetailList";
+import { AnalyticsTopExpenses } from "./AnalyticsTopExpenses";
 import type { AnalyticsPeriod, CategoryBreakdownWithDelta, MonthlyTrend } from "@/types/analytics";
 
 interface AnalyticsClientProps {
@@ -21,14 +24,12 @@ interface AnalyticsClientProps {
   initialStats: DashboardStats | null;
   initialDailyStats: DailyTransactionSummary[];
   initialExpenses: Expense[];
+  initialTotalElements: number;
+  categories: CategoryResponse[];
   familyUuid: string;
   period: AnalyticsPeriod;
   initialBreakdown: CategoryBreakdownWithDelta | null;
   initialTrend: MonthlyTrend | null;
-}
-
-function formatAmount(amount: number) {
-  return amount.toLocaleString("ko-KR");
 }
 
 function formatShortAmount(amount: number) {
@@ -45,6 +46,8 @@ export function AnalyticsClient({
   initialStats,
   initialDailyStats,
   initialExpenses,
+  initialTotalElements,
+  categories,
   familyUuid,
   period,
   initialBreakdown,
@@ -55,7 +58,10 @@ export function AnalyticsClient({
   const [stats, setStats] = useState(initialStats);
   const [dailyStats, setDailyStats] = useState(initialDailyStats);
   const [expenses, setExpenses] = useState(initialExpenses);
+  const [totalElements, setTotalElements] = useState(initialTotalElements);
   const [isPending, setIsPending] = useState(false);
+  const isNavigationPending = useNavigationPending();
+  const isBusy = isPending || isNavigationPending;
 
   const isCurrentMonth = useMemo(() => {
     const now = new Date();
@@ -93,6 +99,7 @@ export function AnalyticsClient({
         setMonth(newMonth);
         setDailyStats(daily.success ? daily.data : []);
         setExpenses(exps.success ? exps.data.items : []);
+        setTotalElements(exps.success ? exps.data.totalElements : 0);
         if (isNewCurrentMonth) {
           setStats(dashboardStats && dashboardStats.success ? dashboardStats.data : null);
         } else {
@@ -116,12 +123,6 @@ export function AnalyticsClient({
     [dailyStats]
   );
 
-  // 지출 TOP 5
-  const topExpenses = useMemo(
-    () => [...expenses].sort((a, b) => Number(b.amount) - Number(a.amount)).slice(0, 5),
-    [expenses]
-  );
-
   const budget = isCurrentMonth ? (stats?.budget ?? 0) : 0;
   const remainingBudget = isCurrentMonth ? (stats?.remainingBudget ?? 0) : 0;
 
@@ -131,7 +132,10 @@ export function AnalyticsClient({
     (year === now.getFullYear() && month >= now.getMonth() + 1);
 
   return (
-    <div className={`space-y-4 transition-opacity duration-200 ${isPending ? "opacity-50 pointer-events-none" : ""}`}>
+    <div
+      aria-busy={isNavigationPending}
+      className={`space-y-4 transition-opacity duration-200 ${isBusy ? "pointer-events-none opacity-60" : ""}`}
+    >
       {/* 헤더: 기간 토글 + 월 선택기 */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
@@ -141,6 +145,7 @@ export function AnalyticsClient({
         <div className="flex items-center gap-2 bg-bg-elev rounded-xl border border-border shadow-[var(--shadow-subtle)] px-1 py-1">
           <button
             onClick={() => handleMonthChange("prev")}
+            aria-label="이전 달"
             className="p-1.5 rounded-lg hover:bg-bg-muted transition-colors text-fg-muted hover:text-fg"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -150,6 +155,7 @@ export function AnalyticsClient({
           </span>
           <button
             onClick={() => handleMonthChange("next")}
+            aria-label="다음 달"
             disabled={isNextDisabled}
             className="p-1.5 rounded-lg hover:bg-bg-muted transition-colors text-fg-muted hover:text-fg disabled:opacity-30 disabled:cursor-not-allowed"
           >
@@ -178,7 +184,7 @@ export function AnalyticsClient({
             ₩{formatShortAmount(totalIncome)}
           </p>
         </div>
-        <div className="gradient-budget rounded-2xl p-3 text-brand-fg">
+        <div className="gradient-primary rounded-2xl p-3 text-brand-fg">
           <div className="flex items-center gap-1 mb-2 opacity-80">
             <Wallet className="w-3.5 h-3.5" />
             <span className="text-[11px] font-medium">{isCurrentMonth ? "잔여예산" : "예산"}</span>
@@ -221,39 +227,11 @@ export function AnalyticsClient({
         />
       )}
 
-      {/* 지출 TOP 5 */}
-      {topExpenses.length > 0 && (
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-50">
-          <h2 className="text-sm font-bold text-gray-700 mb-3">지출 TOP 5</h2>
-          <div className="space-y-2.5">
-            {topExpenses.map((expense, idx) => (
-              <div key={expense.uuid} className="flex items-center gap-3">
-                <span className="w-5 h-5 rounded-full bg-gray-100 text-[10px] font-bold text-gray-400 flex items-center justify-center shrink-0">
-                  {idx + 1}
-                </span>
-                <div
-                  className="w-8 h-8 rounded-xl flex items-center justify-center text-sm shrink-0"
-                  style={{ backgroundColor: expense.category?.color ? `${expense.category.color}20` : "var(--color-category-fallback-bg)" }}
-                >
-                  {expense.category?.icon ?? "💸"}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-gray-800 truncate">
-                    {expense.description || expense.category?.name || "기타"}
-                  </p>
-                  <p className="text-[10px] text-gray-400">
-                    {expense.description ? `${expense.category?.name ?? "기타"} · ` : ""}
-                    {expense.date.split("T")[0]}
-                  </p>
-                </div>
-                <p className="text-sm font-bold text-expense shrink-0">
-                  -₩{formatAmount(Number(expense.amount))}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <AnalyticsTopExpenses
+        expenses={expenses}
+        categories={categories}
+        totalElements={totalElements}
+      />
     </div>
   );
 }

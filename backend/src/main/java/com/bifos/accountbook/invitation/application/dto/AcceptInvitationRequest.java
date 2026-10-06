@@ -13,4 +13,3 @@ public class AcceptInvitationRequest {
   @NotBlank(message = "초대 토큰은 필수입니다")
   private String token;
 }
-

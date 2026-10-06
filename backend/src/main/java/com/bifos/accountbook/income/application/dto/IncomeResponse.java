@@ -35,17 +35,17 @@ public class IncomeResponse {
    */
   public static IncomeResponse from(Income income, CategoryInfo category) {
     return IncomeResponse.builder()
-                         .uuid(income.getUuid().getValue())
-                         .familyUuid(income.getFamilyUuid().getValue())
-                         .userUuid(income.getUserUuid().getValue())
-                         .categoryUuid(income.getCategoryUuid().getValue())
-                         .category(category)
-                         .amount(income.getAmount())
-                         .description(income.getDescription())
-                         .date(income.getDate())
-                         .createdAt(income.getCreatedAt())
-                         .updatedAt(income.getUpdatedAt())
-                         .build();
+        .uuid(income.getUuid().getValue())
+        .familyUuid(income.getFamilyUuid().getValue())
+        .userUuid(income.getUserUuid().getValue())
+        .categoryUuid(income.getCategoryUuid().getValue())
+        .category(category)
+        .amount(income.getAmount())
+        .description(income.getDescription())
+        .date(income.getDate())
+        .createdAt(income.getCreatedAt())
+        .updatedAt(income.getUpdatedAt())
+        .build();
   }
 
   /**
@@ -56,16 +56,15 @@ public class IncomeResponse {
    */
   public static IncomeResponse fromWithoutCategory(Income income) {
     return IncomeResponse.builder()
-                         .uuid(income.getUuid().getValue())
-                         .familyUuid(income.getFamilyUuid().getValue())
-                         .userUuid(income.getUserUuid().getValue())
-                         .categoryUuid(income.getCategoryUuid().getValue())
-                         .amount(income.getAmount())
-                         .description(income.getDescription())
-                         .date(income.getDate())
-                         .createdAt(income.getCreatedAt())
-                         .updatedAt(income.getUpdatedAt())
-                         .build();
+        .uuid(income.getUuid().getValue())
+        .familyUuid(income.getFamilyUuid().getValue())
+        .userUuid(income.getUserUuid().getValue())
+        .categoryUuid(income.getCategoryUuid().getValue())
+        .amount(income.getAmount())
+        .description(income.getDescription())
+        .date(income.getDate())
+        .createdAt(income.getCreatedAt())
+        .updatedAt(income.getUpdatedAt())
+        .build();
   }
 }
-

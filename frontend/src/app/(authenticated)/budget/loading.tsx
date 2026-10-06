@@ -2,7 +2,7 @@ import { Skel } from "@/components/loading/Skel";
 
 export default function BudgetLoading() {
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+    <div className="max-w-2xl mx-auto space-y-4 md:px-4 md:py-6">
       <div className="space-y-2">
         <Skel w="40%" h={22} />
         <Skel w="28%" h={13} />

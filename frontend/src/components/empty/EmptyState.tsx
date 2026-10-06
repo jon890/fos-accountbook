@@ -12,9 +12,9 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon: Icon, title, description, cta, tip }: EmptyStateProps) {
   return (
-    <div className="bg-bg-elev border border-border rounded-2xl px-6 pt-13 pb-10 flex flex-col items-center text-center">
-      <div className="size-24 rounded-full bg-brand-50 flex items-center justify-center mb-5">
-        <Icon className="size-12 text-brand-500 opacity-85" />
+    <div className="bg-bg-elev border border-border rounded-2xl px-4 pt-8 pb-6 flex flex-col items-center text-center md:px-6 md:pt-13 md:pb-10">
+      <div className="size-16 rounded-full bg-brand-50 flex items-center justify-center mb-5 md:size-24">
+        <Icon className="size-8 text-brand-500 opacity-85 md:size-12" />
       </div>
 
       <p className="text-[17px] font-bold tracking-tight text-fg mb-2">{title}</p>

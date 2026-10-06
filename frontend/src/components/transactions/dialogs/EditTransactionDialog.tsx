@@ -14,9 +14,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { updateRecurringExpenseAction } from "@/actions/recurring-expense";
+import {
+  deleteRecurringExpenseAction,
+  updateRecurringExpenseAction,
+} from "@/actions/recurring-expense";
 import { getFamilyCategoriesAction } from "@/actions/category/get-categories-action";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/client/utils";
+import { getMissingField, MISSING_FIELD_MESSAGE } from "@/lib/client/transaction-form-readiness";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
@@ -35,6 +40,7 @@ import { TransactionFormFields } from "@/components/transactions/forms/Transacti
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useTransactionSheetViewport } from "@/hooks/useTransactionSheetViewport";
 import { toLocalDateInput } from "@/lib/utils/format";
+import type { ActionResult } from "@/lib/errors/action-error";
 import type { UpdateExpenseFormState, Expense } from "@/types/expense";
 import type { UpdateIncomeFormState, Income } from "@/types/income";
 import type { RecurringExpense } from "@/types/recurring-expense";
@@ -62,8 +68,16 @@ type FormState = {
   message: string;
 };
 
-const initialExpenseState: UpdateExpenseFormState = { message: "", errors: {}, success: false };
-const initialIncomeState: UpdateIncomeFormState = { message: "", errors: {}, success: false };
+const initialExpenseState: UpdateExpenseFormState = {
+  message: "",
+  errors: {},
+  success: false,
+};
+const initialIncomeState: UpdateIncomeFormState = {
+  message: "",
+  errors: {},
+  success: false,
+};
 const initialFormState: FormState = { success: false, errors: {}, message: "" };
 
 function isRecurringExpense(t: TransactionUnion): t is RecurringExpense {
@@ -78,13 +92,25 @@ function getDescriptionInitial(t: TransactionUnion): string {
   return isRecurringExpense(t) ? "" : (t.description ?? "");
 }
 
-async function updateRecurringWrapper(_prev: FormState, fd: FormData): Promise<FormState> {
+async function updateRecurringWrapper(
+  _prev: FormState,
+  fd: FormData,
+): Promise<FormState> {
   const uuid = String(fd.get("uuid") ?? "");
+  const dayOfMonth = fd.get("dayOfMonth");
+  if (dayOfMonth === null || dayOfMonth === "") {
+    return {
+      success: false,
+      errors: { dayOfMonth: [MISSING_FIELD_MESSAGE.dayOfMonth] },
+      message: "",
+    };
+  }
+
   const raw = {
     name: String(fd.get("name") ?? ""),
     categoryUuid: String(fd.get("categoryUuid") ?? ""),
     amount: Number(fd.get("amount")),
-    dayOfMonth: Number(fd.get("dayOfMonth")),
+    dayOfMonth: Number(dayOfMonth),
   };
   const parsed = recurringExpenseSchema.partial().safeParse(raw);
   if (!parsed.success) {
@@ -98,7 +124,11 @@ async function updateRecurringWrapper(_prev: FormState, fd: FormData): Promise<F
   const result = await updateRecurringExpenseAction(uuid, parsed.data);
   return result.success
     ? { success: true, errors: {}, message: "고정지출이 수정되었습니다" }
-    : { success: false, errors: { _form: [result.error.message ?? "수정 실패"] }, message: "" };
+    : {
+        success: false,
+        errors: { _form: [result.error.message ?? "수정 실패"] },
+        message: "",
+      };
 }
 
 export function EditTransactionDialog({
@@ -112,7 +142,11 @@ export function EditTransactionDialog({
   const sheetStyle = useTransactionSheetViewport(open, isDesktop);
 
   const title =
-    type === "expense" ? "지출 수정" : type === "income" ? "수입 수정" : "고정지출 수정";
+    type === "expense"
+      ? "지출 수정"
+      : type === "income"
+        ? "수입 수정"
+        : "고정지출 수정";
 
   const body = open ? (
     <EditTransactionDialogBody
@@ -126,7 +160,7 @@ export function EditTransactionDialog({
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[720px] bg-bg-elev">
+        <DialogContent className="max-h-[90dvh] max-w-[720px] flex flex-col overflow-hidden bg-bg-elev">
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
           </DialogHeader>
@@ -138,7 +172,11 @@ export function EditTransactionDialog({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" style={sheetStyle} className="h-[100dvh] p-0 gap-0 bg-bg-elev">
+      <SheetContent
+        side="bottom"
+        style={sheetStyle}
+        className="h-[100dvh] p-0 gap-0 bg-bg-elev"
+      >
         <SheetHeader className="px-5 py-3 border-b border-border">
           <SheetTitle>{title}</SheetTitle>
         </SheetHeader>
@@ -169,11 +207,23 @@ function EditTransactionDialogBody({
   const recurring = isRecurringExpense(transaction) ? transaction : null;
 
   const [amount, setAmount] = useState(Number(transaction.amount));
-  const [categoryUuid, setCategoryUuid] = useState<string | null>(transaction.categoryUuid);
+  const [categoryUuid, setCategoryUuid] = useState<string | null>(
+    transaction.categoryUuid,
+  );
   const [date, setDate] = useState(() => getDateInitial(transaction));
-  const [description, setDescription] = useState(() => getDescriptionInitial(transaction));
+  const [description, setDescription] = useState(() =>
+    getDescriptionInitial(transaction),
+  );
+  const [excludeFromBudget, setExcludeFromBudget] = useState(
+    () =>
+      type === "expense" &&
+      "excludeFromBudget" in transaction &&
+      transaction.excludeFromBudget,
+  );
   const [name, setName] = useState(recurring?.name ?? "");
-  const [dayOfMonth, setDayOfMonth] = useState<number | undefined>(recurring?.dayOfMonth);
+  const [dayOfMonth, setDayOfMonth] = useState<number | undefined>(
+    recurring?.dayOfMonth,
+  );
 
   const [expenseState, expenseFormAction, isExpensePending] = useActionState(
     updateExpenseAction,
@@ -183,10 +233,8 @@ function EditTransactionDialogBody({
     updateIncomeAction,
     initialIncomeState,
   );
-  const [recurringState, recurringFormAction, isRecurringPending] = useActionState(
-    updateRecurringWrapper,
-    initialFormState,
-  );
+  const [recurringState, recurringFormAction, isRecurringPending] =
+    useActionState(updateRecurringWrapper, initialFormState);
 
   useEffect(() => {
     let cancelled = false;
@@ -240,44 +288,85 @@ function EditTransactionDialogBody({
   }, [recurringState, onOpenChange]);
 
   let formAction = recurringFormAction;
-  let isUpdating = isRecurringPending;
-  let errors: Record<string, string[] | undefined> | undefined = recurringState.errors;
-  let ctaGradient = "gradient-budget text-brand-fg";
+  let errors: Record<string, string[] | undefined> | undefined =
+    recurringState.errors;
+  let ctaGradient = "gradient-primary text-brand-fg";
   let ctaLabel = "고정지출";
 
   if (type === "expense") {
     formAction = expenseFormAction;
-    isUpdating = isExpensePending;
     errors = expenseState.errors;
     ctaGradient = "gradient-expense text-expense-fg";
     ctaLabel = "지출";
   } else if (type === "income") {
     formAction = incomeFormAction;
-    isUpdating = isIncomePending;
     errors = incomeState.errors;
     ctaGradient = "gradient-income text-income-fg";
     ctaLabel = "수입";
   }
 
+  const isRecurringTransaction = type === "recurring";
+  const isPending = isExpensePending || isIncomePending || isRecurringPending;
+  const missingField = getMissingField({
+    type,
+    amount,
+    categoryUuid,
+    date,
+    name,
+    dayOfMonth,
+  });
+  const destructiveActionLabel = isRecurringTransaction ? "종료" : "삭제";
+  const destructivePendingLabel = isRecurringTransaction
+    ? "종료 중..."
+    : "삭제 중...";
+  const destructiveTitle = isRecurringTransaction
+    ? "고정지출 종료"
+    : `${ctaLabel} 삭제`;
+  const destructiveDescription = isRecurringTransaction
+    ? "이 고정지출을 종료하시겠습니까? 기존 등록된 지출은 유지됩니다."
+    : "이 거래를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.";
+
   async function handleDelete() {
-    if (type === "recurring" || isDeleting || isUpdating) {
+    if (isDeleting || isPending) {
       return;
     }
 
     setIsDeleting(true);
 
     try {
-      const deleteAction = type === "expense" ? deleteExpenseAction : deleteIncomeAction;
-      const result = await deleteAction(familyUuid ?? transaction.familyUuid, transaction.uuid);
+      let result: ActionResult<void>;
+
+      if (isRecurringTransaction) {
+        result = await deleteRecurringExpenseAction(transaction.uuid);
+      } else if (type === "expense") {
+        result = await deleteExpenseAction(
+          familyUuid ?? transaction.familyUuid,
+          transaction.uuid,
+        );
+      } else {
+        result = await deleteIncomeAction(
+          familyUuid ?? transaction.familyUuid,
+          transaction.uuid,
+        );
+      }
+
       if (result.success) {
-        toast.success(`${ctaLabel}이 삭제되었습니다`);
+        toast.success(
+          isRecurringTransaction
+            ? "고정지출이 종료되었습니다"
+            : `${ctaLabel}이 삭제되었습니다`,
+        );
         setDeleteOpen(false);
         onOpenChange(false);
       } else {
         toast.error(result.error.message);
       }
     } catch {
-      toast.error(`${ctaLabel} 삭제에 실패했습니다`);
+      toast.error(
+        isRecurringTransaction
+          ? "고정지출 종료에 실패했습니다"
+          : `${ctaLabel} 삭제에 실패했습니다`,
+      );
     } finally {
       setIsDeleting(false);
     }
@@ -285,140 +374,167 @@ function EditTransactionDialogBody({
 
   return (
     <form action={formAction} className="flex min-h-0 flex-1 flex-col">
-      <div className="space-y-5 overflow-y-auto min-h-0 flex-1 px-5 py-4 md:p-0">
-        {/* type-specific hidden fields */}
-        {type === "expense" && (
-          <>
-            <input type="hidden" name="expenseUuid" value={transaction.uuid} />
-            {familyUuid && <input type="hidden" name="familyUuid" value={familyUuid} />}
-          </>
-        )}
-        {type === "income" && (
-          <>
-            <input type="hidden" name="incomeUuid" value={transaction.uuid} />
-            {familyUuid && <input type="hidden" name="familyUuid" value={familyUuid} />}
-          </>
-        )}
-        {type === "recurring" && <input type="hidden" name="uuid" value={transaction.uuid} />}
+      <fieldset disabled={isPending} className="contents">
+        <div className="space-y-5 overflow-y-auto min-h-0 flex-1 px-5 py-4 md:p-0">
+          {/* type-specific hidden fields */}
+          {type === "expense" && (
+            <>
+              <input
+                type="hidden"
+                name="expenseUuid"
+                value={transaction.uuid}
+              />
+              {familyUuid && (
+                <input type="hidden" name="familyUuid" value={familyUuid} />
+              )}
+            </>
+          )}
+          {type === "income" && (
+            <>
+              <input type="hidden" name="incomeUuid" value={transaction.uuid} />
+              {familyUuid && (
+                <input type="hidden" name="familyUuid" value={familyUuid} />
+              )}
+            </>
+          )}
+          {type === "recurring" && (
+            <input type="hidden" name="uuid" value={transaction.uuid} />
+          )}
 
-        {/* 3 segmented 토글 — 현재 type 만 활성, 나머지 disabled */}
-        <div className="flex gap-1 bg-bg-muted p-1 rounded-xl">
-          <button
-            type="button"
-            disabled={type !== "expense"}
-            aria-disabled={type !== "expense"}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all",
-              type === "expense"
-                ? "gradient-expense text-expense-fg shadow-sm"
-                : "text-fg-muted opacity-40 cursor-not-allowed",
-            )}
+          {/* 3 segmented 토글 — 현재 type 만 활성, 나머지 disabled */}
+          <RadioGroup
+            value={type}
+            aria-label="거래 종류"
+            className="flex gap-1 rounded-xl bg-bg-muted p-1"
           >
-            <TrendingDown className="w-4 h-4" />
-            지출
-          </button>
-          <button
-            type="button"
-            disabled={type !== "income"}
-            aria-disabled={type !== "income"}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all",
-              type === "income"
-                ? "gradient-income text-income-fg shadow-sm"
-                : "text-fg-muted opacity-40 cursor-not-allowed",
-            )}
-          >
-            <TrendingUp className="w-4 h-4" />
-            수입
-          </button>
-          <button
-            type="button"
-            disabled={type !== "recurring"}
-            aria-disabled={type !== "recurring"}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all",
-              type === "recurring"
-                ? "gradient-budget text-brand-fg shadow-sm"
-                : "text-fg-muted opacity-40 cursor-not-allowed",
-            )}
-          >
-            <Repeat className="w-4 h-4" />
-            고정지출
-          </button>
+            <RadioGroupItem
+              value="expense"
+              disabled={type !== "expense"}
+              className={cn(
+                "aspect-auto flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg border-0 py-2 text-sm font-semibold shadow-none transition-all",
+                type === "expense"
+                  ? "gradient-expense text-expense-fg shadow-sm"
+                  : "text-fg-muted opacity-40 cursor-not-allowed",
+              )}
+            >
+              <TrendingDown className="w-4 h-4" />
+              지출
+            </RadioGroupItem>
+            <RadioGroupItem
+              value="income"
+              disabled={type !== "income"}
+              className={cn(
+                "aspect-auto flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg border-0 py-2 text-sm font-semibold shadow-none transition-all",
+                type === "income"
+                  ? "gradient-income text-income-fg shadow-sm"
+                  : "text-fg-muted opacity-40 cursor-not-allowed",
+              )}
+            >
+              <TrendingUp className="w-4 h-4" />
+              수입
+            </RadioGroupItem>
+            <RadioGroupItem
+              value="recurring"
+              disabled={type !== "recurring"}
+              className={cn(
+                "aspect-auto flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg border-0 py-2 text-sm font-semibold shadow-none transition-all",
+                type === "recurring"
+                  ? "gradient-primary text-brand-fg shadow-sm"
+                  : "text-fg-muted opacity-40 cursor-not-allowed",
+              )}
+            >
+              <Repeat className="w-4 h-4" />
+              고정지출
+            </RadioGroupItem>
+          </RadioGroup>
+
+          <TransactionFormFields
+            type={type}
+            categories={categories}
+            amount={amount}
+            onAmountChange={setAmount}
+            categoryUuid={categoryUuid}
+            onCategoryChange={setCategoryUuid}
+            description={description}
+            onDescriptionChange={setDescription}
+            excludeFromBudget={excludeFromBudget}
+            onExcludeFromBudgetChange={setExcludeFromBudget}
+            date={date}
+            onDateChange={setDate}
+            name={name}
+            onNameChange={setName}
+            dayOfMonth={dayOfMonth}
+            onDayOfMonthChange={setDayOfMonth}
+            isLoadingCategories={isLoadingCategories}
+            errors={errors}
+          />
+
+          {type === "recurring" && recurringState.errors._form && (
+            <p className="text-sm text-expense">
+              {recurringState.errors._form[0]}
+            </p>
+          )}
         </div>
-
-        <TransactionFormFields
-          type={type}
-          categories={categories}
-          amount={amount}
-          onAmountChange={setAmount}
-          categoryUuid={categoryUuid}
-          onCategoryChange={setCategoryUuid}
-          description={description}
-          onDescriptionChange={setDescription}
-          date={date}
-          onDateChange={setDate}
-          name={name}
-          onNameChange={setName}
-          dayOfMonth={dayOfMonth}
-          onDayOfMonthChange={setDayOfMonth}
-          isLoadingCategories={isLoadingCategories}
-          errors={errors}
-        />
-
-        {type === "recurring" && recurringState.errors._form && (
-          <p className="text-sm text-expense">{recurringState.errors._form[0]}</p>
-        )}
-
-      </div>
-      <div className="sticky bottom-0 shrink-0 bg-bg-elev px-5 pt-4 safe-area-pb md:px-0">
-        <div className="flex gap-2 pb-4">
-          {type !== "recurring" && (
+        <div className="sticky bottom-0 shrink-0 bg-bg-elev px-5 pt-4 safe-area-pb md:static md:px-0">
+          {missingField && (
+            <p
+              id="transaction-form-missing-field"
+              className="mb-2 text-xs text-fg-muted"
+            >
+              {MISSING_FIELD_MESSAGE[missingField]}
+            </p>
+          )}
+          <div className="flex gap-2 pb-4">
             <Button
               type="button"
               variant="ghost"
               className="text-expense"
-              disabled={isDeleting || isUpdating}
+              disabled={isDeleting || isPending}
               onClick={() => setDeleteOpen(true)}
             >
-              삭제
+              {destructiveActionLabel}
             </Button>
-          )}
-          <Button
-            type="button"
-            variant="outline"
-            className="flex-1"
-            disabled={isDeleting}
-            onClick={() => onOpenChange(false)}
-          >
-            취소
-          </Button>
-          <SubmitButton
-            disabled={isDeleting}
-            className={cn("flex-1 hover:opacity-90", ctaGradient)}
-            pendingText="수정 중..."
-          >
-            {ctaLabel} 수정
-          </SubmitButton>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              disabled={isDeleting}
+              onClick={() => onOpenChange(false)}
+            >
+              취소
+            </Button>
+            <SubmitButton
+              disabled={isDeleting || missingField !== null}
+              aria-describedby={
+                missingField ? "transaction-form-missing-field" : undefined
+              }
+              className={cn("flex-1 hover:opacity-90", ctaGradient)}
+              pendingText="수정 중..."
+            >
+              {ctaLabel} 수정
+            </SubmitButton>
+          </div>
         </div>
-      </div>
+      </fieldset>
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{ctaLabel} 삭제</AlertDialogTitle>
-            <AlertDialogDescription>이 거래를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</AlertDialogDescription>
+            <AlertDialogTitle>{destructiveTitle}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {destructiveDescription}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
             <AlertDialogAction
               className={buttonVariants({ variant: "destructive" })}
-              disabled={isDeleting || isUpdating}
+              disabled={isDeleting || isPending}
               onClick={(event) => {
                 event.preventDefault();
                 void handleDelete();
               }}
             >
-              {isDeleting ? "삭제 중..." : "삭제"}
+              {isDeleting ? destructivePendingLabel : destructiveActionLabel}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
