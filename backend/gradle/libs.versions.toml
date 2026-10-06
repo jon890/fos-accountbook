@@ -6,7 +6,7 @@ spotless = "8.10.3"
 google-java-format = "1.36.1"
 
 # Database
-mysql-connector = "9.7.0"
+mysql-connector = "26.7.0"
 h2 = "2.5.252"
 
 # Security & JWT
