@@ -66,11 +66,8 @@ test("다음 달 전환 중 진행 막대와 달력 대기 상태를 표시한�
 });
 
 test("달력에서 내역으로 이동할 때 목적 화면 스켈레톤을 표시한다", async ({ page, request }) => {
-  await page.goto("/calendar");
-  await expect(page.getByRole("heading", { name: /년.*월/ })).toBeVisible();
-
-  const membersPath = `${familyApiPath}/members`;
-  await setDelay(request, membersPath, delayMs);
+  // 하단 내비의 내역 링크는 화면에 보이자마자 prefetch 된다.
+  // 가로채기를 goto 뒤에 걸면 그 사이 끝난 prefetch 가 캐시에 남아 스켈레톤 없이 바로 그린다
   await page.route("**/transactions**", async (route) => {
     if (await route.request().headerValue("next-router-prefetch")) {
       await route.abort();
@@ -78,6 +75,12 @@ test("달력에서 내역으로 이동할 때 목적 화면 스켈레톤을 표�
     }
     await route.continue();
   });
+
+  await page.goto("/calendar");
+  await expect(page.getByRole("heading", { name: /년.*월/ })).toBeVisible();
+
+  const membersPath = `${familyApiPath}/members`;
+  await setDelay(request, membersPath, delayMs);
 
   try {
     await page.getByRole("link", { name: "내역", exact: true }).click();
