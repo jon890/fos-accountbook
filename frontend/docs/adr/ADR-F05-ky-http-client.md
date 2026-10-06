@@ -2,7 +2,7 @@
 
 **결정**: axios 대신 ky 사용. **2026-05-09**: ky 1.x → 2.x 업그레이드 (plan004).
 
-**현재 설치 상태 (2026-09-30)**: lockfile 의 ky 버전은 1.14.3 이다. 현재 hook 은 1.x 의 위치 인자 방식을 사용한다.
+**현재 설치 상태 (2026-10-07)**: lockfile 의 ky 버전은 2.1.0 이고, hook 은 단일 state 객체 방식을 사용한다.
 
 **이유**:
 
@@ -21,7 +21,7 @@
 |---|---|---|
 | URL 베이스 옵션 | `prefixUrl` → `prefix` rename | 단순 string join 으로 현재 동작 유지. `baseUrl` 은 standard URL resolution 으로 leading slash 의미 달라져 회귀 위험 |
 | Hook signature | 단일 state object (`{request, options, retryCount, ...}`) | ky 2.0 강제 변경. 기존 위치 인자 폐지 |
-| `.json()` 빈 body 처리 | 204 / 빈 body 응답 분기에 명시 가드 | ky 2.0 이 빈 body / 204 에서 throw — 우리 응답 envelope (`ApiResponse<T>`) 가 모든 200 응답을 가정하므로 가드 필수 |
+| `.json()` 빈 body 처리 | 가드를 두지 않는다 | ky 2.0 이 빈 body / 204 에서 throw 하지만, 백엔드는 모든 응답을 `ApiResponse<T>` envelope 로 보내고 204 를 쓰지 않는다 |
 | `HTTPError.data` 활용 | `beforeError` / catch 의 `.json().catch(() => null)` 패턴 제거 | ky 2.0 이 자동 파싱 + resource leak 해결. 코드 단순화 |
 | `beforeError` 시그니처 | 객체 인자 + 모든 에러 받음 (HTTPError 한정 아님) | ky 2.0 변경. `error.response` 가 undefined 가능 → 명시 가드 |
 

@@ -11,7 +11,11 @@
  */
 
 import { serverEnv } from "@/lib/env/server.env";
-import ky, { type Options as KyOptions, HTTPError } from "ky";
+import ky, {
+  type BeforeErrorState,
+  type Options as KyOptions,
+  HTTPError,
+} from "ky";
 import { cookies } from "next/headers";
 import type { z } from "zod";
 import type {
@@ -62,36 +66,44 @@ async function getBackendAccessToken(): Promise<string | null> {
   return token || null;
 }
 
+type ErrorBody = { message?: string; error?: string };
+
+/**
+ * HTTPError 에서 백엔드 오류 본문을 꺼낸다.
+ *
+ * ky 2 는 오류 응답 본문을 먼저 읽어 error.data 에 담고 error.response 의 body 를 소진한다.
+ * 그래서 error.response.json() 이나 clone() 은 쓸 수 없다.
+ */
+function readErrorBody(error: HTTPError): ErrorBody | null {
+  const data = error.data;
+  return data !== null && typeof data === "object" && !Array.isArray(data)
+    ? (data as ErrorBody)
+    : null;
+}
+
 /**
  * beforeError 훅 본문
  *
- * clone()으로 읽어 원본 body를 보존한다. 원본을 직접 읽으면
- * serverApiClient의 catch가 같은 body를 다시 읽지 못해 errorData가 null이 된다.
+ * ky 2 는 타임아웃과 네트워크 오류도 이 훅에 넘긴다. 응답이 없는 오류는 그대로 돌려준다.
  */
-export async function logAndImproveHttpError<
-  E extends { message: string; response: Response },
->(error: E): Promise<E> {
-  const { response } = error;
-
-  if (response) {
-    const raw = await response
-      .clone()
-      .json()
-      .catch(() => null);
-    const errorData =
-      raw !== null && typeof raw === "object" && !Array.isArray(raw)
-        ? (raw as { message?: string; error?: string })
-        : null;
-
-    // 에러 상세 로깅
-    logApiError(response.url, response.status, response.statusText, errorData);
-
-    // 에러 메시지 개선
-    error.message =
-      errorData?.message ||
-      errorData?.error ||
-      `API 오류: ${response.status} ${response.statusText}`;
+export async function logAndImproveHttpError({
+  error,
+}: Pick<BeforeErrorState, "error">): Promise<Error> {
+  if (!(error instanceof HTTPError)) {
+    return error;
   }
+
+  const { response } = error;
+  const errorData = readErrorBody(error);
+
+  // 에러 상세 로깅
+  logApiError(response.url, response.status, response.statusText, errorData);
+
+  // 에러 메시지 개선
+  error.message =
+    errorData?.message ||
+    errorData?.error ||
+    `API 오류: ${response.status} ${response.statusText}`;
 
   return error;
 }
@@ -105,7 +117,7 @@ async function createKyInstance(skipAuth: boolean = false) {
   const accessToken = skipAuth ? null : await getBackendAccessToken();
 
   return ky.create({
-    prefixUrl: API_URL,
+    prefix: API_URL,
     retry: KY_RETRY_CONFIG,
     timeout: KY_TIMEOUT_MS,
     hooks: {
@@ -115,7 +127,7 @@ async function createKyInstance(skipAuth: boolean = false) {
        * - 요청 시작 로깅
        */
       beforeRequest: [
-        (request) => {
+        ({ request }) => {
           // Authorization 헤더 추가
           if (accessToken) {
             request.headers.set("Authorization", `Bearer ${accessToken}`);
@@ -139,13 +151,13 @@ async function createKyInstance(skipAuth: boolean = false) {
        * - JSON 응답인 경우 body도 로깅 (민감 데이터 마스킹)
        */
       afterResponse: [
-        async (_request, _options, response) => {
-          const method = _request.method;
-          const url = _request.url;
+        async ({ request, response }) => {
+          const method = request.method;
+          const url = request.url;
           const status = response.status;
 
           // 요청 시작 시간 추출
-          const startTimeStr = _request.headers.get(
+          const startTimeStr = request.headers.get(
             LOG_CONFIG.requestStartTimeHeader
           );
           const startTime = startTimeStr
@@ -196,7 +208,7 @@ export async function serverApiClient<T = unknown>(
   const method = (fetchOptions.method || "GET").toLowerCase() as
     "get" | "post" | "put" | "delete" | "patch";
 
-  // endpoint에서 선행 슬래시 제거 (ky prefixUrl과 함께 사용 시)
+  // endpoint에서 선행 슬래시 제거 (ky prefix와 함께 사용 시)
   const normalizedEndpoint = endpoint.startsWith("/")
     ? endpoint.slice(1)
     : endpoint;
@@ -226,10 +238,7 @@ export async function serverApiClient<T = unknown>(
     return response.json<T>();
   } catch (error) {
     if (error instanceof HTTPError) {
-      const errorData = (await error.response.json().catch(() => null)) as {
-        message?: string;
-        error?: string;
-      } | null;
+      const errorData = readErrorBody(error);
 
       throw new ServerApiError(
         errorData?.message ||
