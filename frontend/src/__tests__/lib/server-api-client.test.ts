@@ -20,19 +20,37 @@ jest.mock("next/headers", () => ({
 }));
 
 describe("beforeError 훅", () => {
-  it("훅이 지나간 뒤에도 응답 body 를 다시 읽을 수 있다", async () => {
+  it("ky 가 미리 읽어 둔 error.data 로 오류 메시지를 만든다", async () => {
     const message = "색상은 #RRGGBB 또는 oklch(L C H) 형식이어야 합니다";
-    const response = new Response(
-      JSON.stringify({ errors: [{ field: "color", message }] }),
-      { status: 400, headers: { "content-type": "application/json" } }
-    );
+    const response = new Response(null, { status: 400 });
+    const error = new HTTPError(response);
+    error.data = { message };
 
-    await logAndImproveHttpError(new HTTPError(response));
+    const result = await logAndImproveHttpError({ error });
 
-    const body = (await response.json()) as {
-      errors: { message: string }[];
-    };
-    expect(body.errors[0].message).toBe(message);
+    expect(result).toBe(error);
+    expect(result.message).toBe(message);
+  });
+
+  it("본문이 없으면 상태 코드로 메시지를 만든다", async () => {
+    const response = new Response(null, {
+      status: 503,
+      statusText: "Service Unavailable",
+    });
+    const error = new HTTPError(response);
+
+    const result = await logAndImproveHttpError({ error });
+
+    expect(result.message).toBe("API 오류: 503 Service Unavailable");
+  });
+
+  it("응답이 없는 오류는 그대로 돌려준다", async () => {
+    const error = new TimeoutError();
+
+    const result = await logAndImproveHttpError({ error });
+
+    expect(result).toBe(error);
+    expect(result.message).toBe("Request timed out");
   });
 });
 

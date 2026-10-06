@@ -68,6 +68,8 @@ export class HTTPError extends Error {
   response: Response;
   request: Request;
   options: Record<string, unknown>;
+  /** ky 2 는 오류 응답 본문을 미리 읽어 data 에 담는다. */
+  data: unknown;
 
   constructor(
     response: Response,
