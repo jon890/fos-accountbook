@@ -47,3 +47,4 @@
 | [ADR-F40](ADR-F40-in-sheet-amount-keypad.md) | 모바일 금액 입력은 시트 안 숫자패드로 하고, 저장할 수 없는 이유를 버튼 위에 보인다 | accepted |
 | [ADR-F41](ADR-F41-list-client-filters-and-load-more.md) | 내역 목록은 300건씩 받고, 이름 검색과 금액 필터는 받은 목록 안에서 화면이 거른다 | accepted |
 | [ADR-F42](ADR-F42-service-response-validation.md) | services 가 받는 백엔드 응답도 Zod 로 검증한다 | accepted |
+| [ADR-F43](ADR-F43-design-lint-ratchet.md) | 디자인 lint 는 `@shadcn/lint` 로 하고, 위반이 0건이 된 규칙부터 켠다 | accepted |

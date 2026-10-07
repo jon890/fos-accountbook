@@ -37,6 +37,7 @@
 | Jest 테스트 추가 | ADR-F09 — MSW 아닌 jest.mock 방식 |
 | 실시간 업데이트 vs revalidate | ADR-F10 — Server Action + `revalidatePath` 유지 |
 | CI 코드 리뷰 워크플로 수정 | ADR-F11 — 트리거/모델/봇 허용 정책 |
+| 디자인 lint 규칙 켜기 / 예외 추가 | ADR-F43 — 0건이 된 규칙만 켜고, 예외는 설정 파일에 이유와 함께 둔다 |
 
 ---
 
@@ -53,6 +54,7 @@
 
 상황별 ADR 필수 참조 표의 ADR-F07, F13, F14, F15, F23 을 따른다.
 하드코딩 색상은 쓰지 않는다.
+`pnpm lint` 의 `shadcn/*` 규칙을 끄거나 낮추지 않는다. 오류 문구가 알려 주는 토큰이나 컴포넌트 변형으로 고친다(ADR-F43).
 `md` 미만에서는 화면 바깥 여백을 인증 레이아웃만 준다. 화면과 `loading.tsx` 는 모바일 바깥 여백을 다시 주지 않는다. `md` 이상의 기존 화면 여백은 유지하고, 카드 여백은 `CardHeader`, `CardContent` 가 갖는다(ADR-F35).
 
 ---
