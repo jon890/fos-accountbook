@@ -18,6 +18,7 @@ gh pr view $PR_NUMBER --repo $REPO --json title,body,additions,deletions
 ```
 
 필터링 후 diff 가 비어 있으면 `body` 에 짧은 긍정 리뷰만 담고 `comments` 를 빈 배열로 낸 뒤 끝낸다.
+단, 아래 점검 목록에 「의존성 버전 변경에서 볼 것」 이 있으면 diff 가 비어도 끝내지 않고 그 절을 따른다. lock 파일만 바뀐 의존성 PR 이 여기 해당한다.
 Flyway SQL 은 리뷰 대상이다. 걸러내지 않는다.
 필요하면 변경된 파일 전체와 관련 지침을 Read / Grep 으로 읽어 맥락을 파악한다 (코드 수정과 파일 생성은 절대 금지다. 읽기만 한다).
 

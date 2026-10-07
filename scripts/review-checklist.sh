@@ -21,6 +21,7 @@ while IFS= read -r path || [ -n "$path" ]; do
   [ -z "$path" ] && continue
   case "$path" in
     frontend/package.json | frontend/pnpm-lock.yaml | backend/gradle/libs.versions.toml | backend/build.gradle.kts) deps=1 ;;
+    backend/gradle/wrapper/gradle-wrapper.properties | backend/Dockerfile) deps=1 ;;
   esac
   case "$path" in
     frontend/*) frontend=1 ;;
