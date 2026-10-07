@@ -44,11 +44,13 @@ test("모바일 카테고리 추가 시트는 하단에 붙고 이모지를 8열
     await expect(sheet).toBeVisible();
     expect(page.viewportSize()).toEqual({ width: 390, height: 844 });
 
-    const sheetBox = await sheet.boundingBox();
-    if (!sheetBox) {
-      throw new Error("카테고리 시트의 위치를 확인할 수 없습니다");
-    }
-    expect(Math.round(sheetBox.y + sheetBox.height)).toBe(844);
+    await expect.poll(async () => {
+      const sheetBox = await sheet.boundingBox();
+      if (!sheetBox) {
+        throw new Error("카테고리 시트의 위치를 확인할 수 없습니다");
+      }
+      return Math.round(sheetBox.y + sheetBox.height);
+    }).toBe(844);
 
     const emojiGrid = page.locator('[aria-label$="아이콘 선택"]').first().locator("..");
     const emojiButtons = emojiGrid.getByRole("button");

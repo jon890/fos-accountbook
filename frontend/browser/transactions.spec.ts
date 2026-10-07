@@ -206,10 +206,12 @@ test("모바일은 필터 버튼이 여는 하단 시트에서 필터를 적용�
   await page.getByRole("button", { name: "필터", exact: true }).click();
   const sheet = page.getByRole("dialog");
   await expect(sheet).toBeVisible();
-  const box = await sheet.boundingBox();
   const viewport = page.viewportSize();
-  expect(box).not.toBeNull();
-  expect(Math.round(box!.y + box!.height)).toBe(viewport!.height);
+  await expect.poll(async () => {
+    const box = await sheet.boundingBox();
+    expect(box).not.toBeNull();
+    return Math.round(box!.y + box!.height);
+  }).toBe(viewport!.height);
 
   await sheet.getByRole("spinbutton", { name: "최솟값 금액" }).fill("10000");
   await sheet.getByRole("button", { name: "적용", exact: true }).click();

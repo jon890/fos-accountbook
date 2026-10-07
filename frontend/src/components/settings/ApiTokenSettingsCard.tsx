@@ -130,10 +130,10 @@ export function ApiTokenSettingsCard({
               <h3 className="font-medium text-fg text-sm truncate">
                 {token.name}
               </h3>
-              <p className="text-xs text-fg-muted mt-0.5 font-num tabular-nums">
+              <p className="text-xs text-fg-muted mt-0.5 num">
                 {token.tokenPrefix}…
               </p>
-              <p className="text-xs text-fg-muted mt-0.5 font-num tabular-nums">
+              <p className="text-xs text-fg-muted mt-0.5 num">
                 발급 {format(new Date(token.createdAt), "yyyy.MM.dd", { locale: ko })} ·{" "}
                 {token.lastUsedAt
                   ? `마지막 사용 ${format(new Date(token.lastUsedAt), "yyyy.MM.dd HH:mm", {
@@ -172,7 +172,7 @@ export function ApiTokenSettingsCard({
           </DialogHeader>
           {issuedToken ? (
             <div className="space-y-3 pt-2">
-              <code className="block break-all rounded-md bg-bg-muted p-3 text-xs text-fg font-num">
+              <code className="block break-all rounded-md bg-bg-muted p-3 text-xs text-fg num">
                 {issuedToken}
               </code>
               <p className="text-xs text-fg-muted">

@@ -127,7 +127,7 @@ export function SettingsPageClient({
                             </span>
                           )}
                         </span>
-                        <span className="text-xs text-fg-muted mt-0.5 font-num tabular-nums">
+                        <span className="text-xs text-fg-muted mt-0.5 num">
                           {family.monthlyBudget > 0
                             ? `월 예산 ₩${family.monthlyBudget.toLocaleString()}`
                             : "월 예산 미설정"}
@@ -174,7 +174,7 @@ export function SettingsPageClient({
                   <h3 className="font-medium text-fg text-sm truncate">
                     {family.name}
                   </h3>
-                  <p className="text-xs text-fg-muted mt-0.5 font-num tabular-nums">
+                  <p className="text-xs text-fg-muted mt-0.5 num">
                     {family.monthlyBudget > 0
                       ? `월 예산: ₩${family.monthlyBudget.toLocaleString()}`
                       : "예산 미설정"}

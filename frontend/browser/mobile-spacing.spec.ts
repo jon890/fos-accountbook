@@ -70,11 +70,13 @@ test("카드와 카테고리 창의 폭별 안쪽 여백을 표시한다", async
   await expect(alertDialog).toBeVisible();
   const alertDialogStyles = await computedStyles(alertDialog);
   expect(alertDialogStyles.paddingTop).toBe(expected.dialogPadding);
-  const alertDialogBox = await alertDialog.boundingBox();
-  if (!alertDialogBox) {
-    throw new Error("AlertDialog bounding box is unavailable");
-  }
-  expect(alertDialogBox.width).toBe(expected.alertDialogWidth);
+  await expect.poll(async () => {
+    const alertDialogBox = await alertDialog.boundingBox();
+    if (!alertDialogBox) {
+      throw new Error("AlertDialog bounding box is unavailable");
+    }
+    return alertDialogBox.width;
+  }).toBe(expected.alertDialogWidth);
   expect(alertDialogStyles.borderRadius).toBe("16px");
 });
 
