@@ -15,6 +15,8 @@ interface CategoryGridProps {
   disabled?: boolean;
 }
 
+// 선택된 칸의 배경과 테두리는 아래 Button className 의 조건 객체가 갖는다.
+// lint(shadcn/require-static-classes)가 객체 조회를 읽지 못해 나눴으므로, 톤을 더하면 두 곳을 함께 고친다.
 const TONE_CLASS: Record<CategoryToneKey, { text: string }> = {
   food:      { text: "text-[var(--color-cat-food-fg)]" },
   cafe:      { text: "text-[var(--color-cat-cafe-fg)]" },

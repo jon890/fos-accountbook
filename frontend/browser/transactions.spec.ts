@@ -209,8 +209,10 @@ test("모바일은 필터 버튼이 여는 하단 시트에서 필터를 적용�
   const viewport = page.viewportSize();
   await expect.poll(async () => {
     const box = await sheet.boundingBox();
-    expect(box).not.toBeNull();
-    return Math.round(box!.y + box!.height);
+    if (!box) {
+      throw new Error("필터 시트의 위치를 확인할 수 없습니다");
+    }
+    return Math.round(box.y + box.height);
   }).toBe(viewport!.height);
 
   await sheet.getByRole("spinbutton", { name: "최솟값 금액" }).fill("10000");
