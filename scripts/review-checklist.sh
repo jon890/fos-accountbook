@@ -4,6 +4,7 @@
 # 이름은 .github/claude-review-prompt-<이름>.txt 와 대응한다.
 # frontend/ 아래 파일이 있으면 frontend, backend/ 아래 파일이 있으면 backend 를 이 순서로 낸다.
 # 어느 쪽도 없으면(루트 파일만 바뀐 경우) 둘 다 낸다.
+# 의존성 버전 파일이 바뀌었으면 마지막에 deps 를 더 낸다.
 #
 # 사용법:
 #   gh pr diff 12 --name-only | scripts/review-checklist.sh
@@ -14,9 +15,13 @@ set -euo pipefail
 
 frontend=0
 backend=0
+deps=0
 
 while IFS= read -r path || [ -n "$path" ]; do
   [ -z "$path" ] && continue
+  case "$path" in
+    frontend/package.json | frontend/pnpm-lock.yaml | backend/gradle/libs.versions.toml | backend/build.gradle.kts) deps=1 ;;
+  esac
   case "$path" in
     frontend/*) frontend=1 ;;
     backend/*) backend=1 ;;
@@ -30,4 +35,5 @@ fi
 
 [ "$frontend" = 1 ] && echo "frontend"
 [ "$backend" = 1 ] && echo "backend"
+[ "$deps" = 1 ] && echo "deps"
 exit 0

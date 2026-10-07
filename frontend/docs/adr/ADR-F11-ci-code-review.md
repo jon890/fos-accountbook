@@ -29,7 +29,7 @@
 | diff 필터 | `frontend/pnpm-lock.yaml`, `*.lock`, `*.snap`, `backend/gradle/wrapper/gradle-wrapper.jar`, `backend/build/`, `*.class` 제외. Flyway SQL 은 제외하지 않는다 | 노이즈 감소. `*` 가 없는 pathspec 은 저장소 루트 기준이라 하위 프로젝트 경로를 붙인다 |
 | Job timeout | 15분 | agent hang 시 불필요한 비용 방지 |
 | Check Run 수동 등록 | `issue_comment` 트리거 시 수동 생성 | issue_comment workflow run 이 PR Checks 탭에 자동 노출 안 됨 — 수동 Check Run 으로 진행 상태 가시화 |
-| 프롬프트 관리 | 공통 본문 `.github/claude-review-prompt-common.txt` 와 점검 목록 `-frontend.txt`, `-backend.txt` 로 외부 분리. 바뀐 경로로 점검 목록을 고르고 둘 다 바뀌면 이어 붙인다. `frontend/`, `backend/` 어느 쪽도 바뀌지 않으면 두 목록을 모두 붙인다. 선택 스크립트 `scripts/review-checklist.sh` 는 보안 경계가 아니라 PR head 의 것을 쓴다. `envsubst` 로 `$PR_NUMBER`·`$REPO`·`$RISK_LABELS`·`$CHECKLIST` 치환 | ~180줄 인라인 heredoc 가독성·diff 정밀도 확보. `.md` 아닌 `.txt` 로 IDE 포맷터의 glob·식별자 깨짐 회피 |
+| 프롬프트 관리 | 공통 본문 `.github/claude-review-prompt-common.txt` 와 점검 목록 `-frontend.txt`, `-backend.txt` 로 외부 분리. 바뀐 경로로 점검 목록을 고르고 둘 다 바뀌면 이어 붙인다. `frontend/`, `backend/` 어느 쪽도 바뀌지 않으면 두 목록을 모두 붙인다. 의존성 버전 파일이 바뀌면 `-deps.txt` 를 더 붙인다. 선택 스크립트 `scripts/review-checklist.sh` 는 보안 경계가 아니라 PR head 의 것을 쓴다. `envsubst` 로 `$PR_NUMBER`·`$REPO`·`$RISK_LABELS`·`$CHECKLIST` 치환 | ~180줄 인라인 heredoc 가독성·diff 정밀도 확보. `.md` 아닌 `.txt` 로 IDE 포맷터의 glob·식별자 깨짐 회피 |
 | 소규모 PR 스킵 | 안 함 | 모든 PR 동일 리뷰 |
 
 **대안 기각**:
