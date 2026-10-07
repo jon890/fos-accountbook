@@ -187,7 +187,12 @@ API 인증 필터(`JwtAuthenticationFilter`)는 `typ=access` 인 토큰만 인�
     GET    PUT    DELETE   /families/{familyUuid}/expenses/{expenseUuid}
     GET    POST            /families/{familyUuid}/incomes
     GET    PUT    DELETE   /families/{familyUuid}/incomes/{incomeUuid}
+    GET                    /families/{familyUuid}/recurring-expenses
+           PUT             /families/{familyUuid}/recurring-expenses/{uuid}
 ```
+
+반복 지출은 조회와 수정만 연다. 등록과 종료, `/monthly-total` 은 연동 토큰으로 부를 수 없다.
+지출 응답의 `recurringExpenseUuid` 로 에이전트가 그 지출을 만든 템플릿을 찾는다. 직접 등록한 지출이면 null 이다.
 
 ---
 

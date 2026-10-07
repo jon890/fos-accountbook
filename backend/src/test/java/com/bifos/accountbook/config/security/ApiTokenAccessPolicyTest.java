@@ -27,7 +27,9 @@ class ApiTokenAccessPolicyTest {
     "POST, /api/v1/families/" + FAMILY + "/incomes",
     "GET, /api/v1/families/" + FAMILY + "/incomes/" + ITEM,
     "PUT, /api/v1/families/" + FAMILY + "/incomes/" + ITEM,
-    "DELETE, /api/v1/families/" + FAMILY + "/incomes/" + ITEM
+    "DELETE, /api/v1/families/" + FAMILY + "/incomes/" + ITEM,
+    "GET, /api/v1/families/" + FAMILY + "/recurring-expenses",
+    "PUT, /api/v1/families/" + FAMILY + "/recurring-expenses/" + ITEM
   })
   void allowedRequests(String method, String uri) {
     assertThat(policy.isAllowed(method, uri)).as("%s %s 는 허용 목록에 있어야 한다", method, uri).isTrue();
@@ -41,7 +43,13 @@ class ApiTokenAccessPolicyTest {
     "POST, /api/v1/families/" + FAMILY + "/categories",
     "GET, /api/v1/families/" + FAMILY + "/expenses-extra",
     "PATCH, /api/v1/families/" + FAMILY + "/expenses/" + ITEM,
-    "GET, /api/v1/families/" + FAMILY + "/dashboard/stats/monthly"
+    "GET, /api/v1/families/" + FAMILY + "/dashboard/stats/monthly",
+    "POST, /api/v1/families/" + FAMILY + "/recurring-expenses",
+    "DELETE, /api/v1/families/" + FAMILY + "/recurring-expenses/" + ITEM,
+    "GET, /api/v1/families/" + FAMILY + "/recurring-expenses/" + ITEM,
+    "GET, /api/v1/families/" + FAMILY + "/recurring-expenses/monthly-total",
+    "GET, /api/v1/families/" + FAMILY + "/recurring-expenses-extra",
+    "PUT, /api/v1/families/" + FAMILY + "/recurring-expenses-extra/" + ITEM
   })
   void deniedRequests(String method, String uri) {
     assertThat(policy.isAllowed(method, uri)).as("%s %s 는 허용 목록 밖이어야 한다", method, uri).isFalse();

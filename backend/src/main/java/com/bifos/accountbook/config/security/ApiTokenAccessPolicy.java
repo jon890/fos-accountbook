@@ -23,7 +23,9 @@ public class ApiTokenAccessPolicy {
           rule("/api/v1/families/{familyUuid}/expenses", "GET", "POST"),
           rule("/api/v1/families/{familyUuid}/expenses/{expenseUuid}", "GET", "PUT", "DELETE"),
           rule("/api/v1/families/{familyUuid}/incomes", "GET", "POST"),
-          rule("/api/v1/families/{familyUuid}/incomes/{incomeUuid}", "GET", "PUT", "DELETE"));
+          rule("/api/v1/families/{familyUuid}/incomes/{incomeUuid}", "GET", "PUT", "DELETE"),
+          rule("/api/v1/families/{familyUuid}/recurring-expenses", "GET"),
+          rule("/api/v1/families/{familyUuid}/recurring-expenses/{uuid}", "PUT"));
 
   public boolean isAllowed(String method, String requestUri) {
     if (method == null || requestUri == null) {

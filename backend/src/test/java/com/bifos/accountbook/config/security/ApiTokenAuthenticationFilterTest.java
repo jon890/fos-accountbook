@@ -18,9 +18,14 @@ import com.bifos.accountbook.apitoken.infra.repository.jpa.ApiTokenJpaRepository
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.expense.application.dto.CreateExpenseRequest;
 import com.bifos.accountbook.expense.application.dto.UpdateExpenseRequest;
+import com.bifos.accountbook.expense.domain.entity.Expense;
 import com.bifos.accountbook.expense.infra.repository.jpa.ExpenseJpaRepository;
 import com.bifos.accountbook.family.domain.entity.Family;
 import com.bifos.accountbook.family.infra.repository.jpa.FamilyJpaRepository;
+import com.bifos.accountbook.recurring.domain.entity.RecurringExpense;
+import com.bifos.accountbook.recurring.domain.repository.RecurringExpenseRepository;
+import com.bifos.accountbook.recurring.presentation.dto.CreateRecurringExpenseRequest;
+import com.bifos.accountbook.recurring.presentation.dto.UpdateRecurringExpenseRequest;
 import com.bifos.accountbook.shared.AbstractControllerTest;
 import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.user.domain.entity.User;
@@ -46,6 +51,8 @@ class ApiTokenAuthenticationFilterTest extends AbstractControllerTest {
   @Autowired private ExpenseJpaRepository expenseJpaRepository;
 
   @Autowired private FamilyJpaRepository familyJpaRepository;
+
+  @Autowired private RecurringExpenseRepository recurringExpenseRepository;
 
   @Autowired private JwtTokenProvider jwtTokenProvider;
 
@@ -74,6 +81,15 @@ class ApiTokenAuthenticationFilterTest extends AbstractControllerTest {
     return "/api/v1/families/" + family.getUuid().getValue() + "/expenses";
   }
 
+  private String recurringExpensesUrl(Family family) {
+    return "/api/v1/families/" + family.getUuid().getValue() + "/recurring-expenses";
+  }
+
+  private String updateRecurringExpenseBody(String name, String amount) throws Exception {
+    return objectMapper.writeValueAsString(
+        new UpdateRecurringExpenseRequest(null, name, new BigDecimal(amount), null));
+  }
+
   private String createExpenseBody(Category category, String amount) throws Exception {
     return objectMapper.writeValueAsString(
         new CreateExpenseRequest(
@@ -98,6 +114,7 @@ class ApiTokenAuthenticationFilterTest extends AbstractControllerTest {
                 tokenA.getToken())
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.data.amount").value(12000))
+            .andExpect(jsonPath("$.data.recurringExpenseUuid").isEmpty())
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -123,6 +140,128 @@ class ApiTokenAuthenticationFilterTest extends AbstractControllerTest {
     assertThat(expenseJpaRepository.findActiveByUuid(CustomUuid.from(expenseUuid)))
         .as("삭제한 지출은 활성 목록에서 사라져야 한다")
         .isEmpty();
+  }
+
+  @Test
+  @DisplayName("토큰 주인으로 반복 지출을 조회하고 수정하며, 이미 만든 그 달 지출은 바뀌지 않는다")
+  void ownerCanReadAndUpdateRecurringExpenses() throws Exception {
+    RecurringExpense template =
+        fixtures
+            .recurringExpenses
+            .recurringExpense(familyA, categoryA)
+            .user(userA)
+            .name("고정비 A")
+            .amount(new BigDecimal("100000"))
+            .build();
+    String templateUuid = template.getUuid().getValue();
+    Expense generated =
+        fixtures
+            .expenses
+            .expense(familyA, categoryA)
+            .user(userA)
+            .amount(new BigDecimal("100000"))
+            .description("고정비 A")
+            .recurringExpenseUuid(templateUuid)
+            .build();
+
+    perform(get(recurringExpensesUrl(familyA)), tokenA.getToken())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.items[*].uuid").value(hasItem(templateUuid)));
+
+    perform(
+            put(recurringExpensesUrl(familyA) + "/" + templateUuid)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(updateRecurringExpenseBody("고정비 B", "120000")),
+            tokenA.getToken())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.name").value("고정비 B"))
+        .andExpect(jsonPath("$.data.amount").value(120000));
+
+    assertThat(recurringExpenseRepository.findActiveByUuid(template.getUuid()))
+        .as("수정한 템플릿이 저장돼야 한다")
+        .hasValueSatisfying(
+            saved -> {
+              assertThat(saved.getName()).isEqualTo("고정비 B");
+              assertThat(saved.getAmount()).isEqualByComparingTo("120000");
+            });
+
+    perform(get(expensesUrl(familyA) + "/" + generated.getUuid().getValue()), tokenA.getToken())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.recurringExpenseUuid").value(templateUuid))
+        .andExpect(jsonPath("$.data.amount").value(100000))
+        .andExpect(jsonPath("$.data.description").value("고정비 A"));
+
+    perform(get(expensesUrl(familyA)), tokenA.getToken())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.items[0].recurringExpenseUuid").value(templateUuid));
+  }
+
+  @Test
+  @DisplayName("토큰 주인이 멤버가 아닌 가족의 반복 지출은 조회도 수정도 403 F003 이다")
+  void otherFamilyRecurringExpensesAreRejectedByService() throws Exception {
+    User userB = fixtures.users.user().email("other-recurring@test.com").build();
+    Family familyB = fixtures.families.family().owner(userB).build();
+    Category categoryB = fixtures.categories.category(familyB).build();
+    RecurringExpense templateB =
+        fixtures
+            .recurringExpenses
+            .recurringExpense(familyB, categoryB)
+            .user(userB)
+            .name("고정비 B")
+            .amount(new BigDecimal("30000"))
+            .build();
+
+    perform(get(recurringExpensesUrl(familyB)), tokenA.getToken())
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("F003"));
+
+    perform(
+            put(recurringExpensesUrl(familyB) + "/" + templateB.getUuid().getValue())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(updateRecurringExpenseBody("바뀐 이름", "1")),
+            tokenA.getToken())
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("F003"));
+
+    perform(
+            put(recurringExpensesUrl(familyA) + "/" + templateB.getUuid().getValue())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(updateRecurringExpenseBody("바뀐 이름", "1")),
+            tokenA.getToken())
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("C005"));
+
+    assertThat(recurringExpenseRepository.findActiveByUuid(templateB.getUuid()))
+        .as("다른 가족의 템플릿은 바뀌지 않아야 한다")
+        .hasValueSatisfying(saved -> assertThat(saved.getName()).isEqualTo("고정비 B"));
+  }
+
+  @Test
+  @DisplayName("연동 토큰으로 반복 지출을 등록하거나 종료하면 403 A005 이다")
+  void recurringExpenseCreateAndDeleteAreForbidden() throws Exception {
+    RecurringExpense template =
+        fixtures.recurringExpenses.recurringExpense(familyA, categoryA).user(userA).build();
+
+    perform(
+            post(recurringExpensesUrl(familyA))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        new CreateRecurringExpenseRequest(
+                            categoryA.getUuid().getValue(), "고정비 C", new BigDecimal("1000"), 1))),
+            tokenA.getToken())
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("A005"));
+
+    perform(
+            delete(recurringExpensesUrl(familyA) + "/" + template.getUuid().getValue()),
+            tokenA.getToken())
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("A005"));
+
+    assertThat(recurringExpenseRepository.findActiveByUuid(template.getUuid()))
+        .as("허용 목록 밖 요청으로 템플릿이 종료되면 안 된다")
+        .isPresent();
   }
 
   @Test
