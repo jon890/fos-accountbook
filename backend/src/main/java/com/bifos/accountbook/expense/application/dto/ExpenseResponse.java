@@ -24,6 +24,10 @@ public class ExpenseResponse {
   private String description;
   private LocalDateTime date;
   private boolean excludeFromBudget;
+
+  /** 이 지출을 만든 반복 지출 템플릿. 직접 등록한 지출이면 null 이다 */
+  private String recurringExpenseUuid;
+
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
 
@@ -45,6 +49,7 @@ public class ExpenseResponse {
         .description(expense.getDescription())
         .date(expense.getDate())
         .excludeFromBudget(expense.isExcludeFromBudget())
+        .recurringExpenseUuid(expense.getRecurringExpenseUuid())
         .createdAt(expense.getCreatedAt())
         .updatedAt(expense.getUpdatedAt())
         .build();
@@ -66,6 +71,7 @@ public class ExpenseResponse {
         .description(expense.getDescription())
         .date(expense.getDate())
         .excludeFromBudget(expense.isExcludeFromBudget())
+        .recurringExpenseUuid(expense.getRecurringExpenseUuid())
         .createdAt(expense.getCreatedAt())
         .updatedAt(expense.getUpdatedAt())
         .build();
