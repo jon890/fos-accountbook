@@ -254,18 +254,15 @@ function AddTransactionDialogBody({
   let formAction = recurringFormAction;
   let errors: Record<string, string[] | undefined> | undefined =
     recurringState.errors;
-  let ctaGradient = "gradient-primary text-brand-fg";
   let ctaLabel = "고정지출";
 
   if (activeType === "expense") {
     formAction = expenseFormAction;
     errors = expenseState.errors;
-    ctaGradient = "gradient-expense text-expense-fg";
     ctaLabel = "지출";
   } else if (activeType === "income") {
     formAction = incomeFormAction;
     errors = incomeState.errors;
-    ctaGradient = "gradient-income text-income-fg";
     ctaLabel = "수입";
   }
 
@@ -381,7 +378,11 @@ function AddTransactionDialogBody({
               aria-describedby={
                 missingField ? "transaction-form-missing-field" : undefined
               }
-              className={cn("flex-1 hover:opacity-90", ctaGradient)}
+              className={cn("flex-1 hover:opacity-90", {
+                "gradient-expense text-expense-fg": activeType === "expense",
+                "gradient-income text-income-fg": activeType === "income",
+                "gradient-primary text-brand-fg": activeType !== "expense" && activeType !== "income",
+              })}
               pendingText="추가 중..."
             >
               {ctaLabel} 추가

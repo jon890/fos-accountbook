@@ -181,6 +181,7 @@ describe("AddTransactionDialog", () => {
     await user.click(screen.getByRole("radio", { name: "지출" }));
 
     expect(screen.getByRole("button", { name: /지출 추가/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /지출 추가/ })).toHaveClass("gradient-expense");
   });
 
   it("수입 토글 클릭 → 수입 추가 버튼 표시", async () => {
@@ -196,6 +197,7 @@ describe("AddTransactionDialog", () => {
     await user.click(screen.getByRole("radio", { name: "수입" }));
 
     expect(screen.getByRole("button", { name: /수입 추가/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /수입 추가/ })).toHaveClass("gradient-income");
   });
 
   it("거래 종류를 바꾸면 카테고리 선택을 비우고 자동 선택하지 않는다", async () => {

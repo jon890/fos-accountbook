@@ -47,6 +47,7 @@ const eslintConfig = [
       // 달력 선택자 표시용 이름과 sonner 기본 클래스는 CSS 유틸리티가 아니다.
       "shadcn/no-unknown-classes": ["error", { allow: ["day-range-end", "day-outside", "toaster"] }],
       "shadcn/no-raw-colors": "error",
+      "shadcn/require-static-classes": "error",
     },
   },
   {

@@ -22,7 +22,7 @@ import { getFamilyCategoriesAction } from "@/actions/category/get-categories-act
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/client/utils";
 import { getMissingField, MISSING_FIELD_MESSAGE } from "@/lib/client/transaction-form-readiness";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -290,18 +290,15 @@ function EditTransactionDialogBody({
   let formAction = recurringFormAction;
   let errors: Record<string, string[] | undefined> | undefined =
     recurringState.errors;
-  let ctaGradient = "gradient-primary text-brand-fg";
   let ctaLabel = "고정지출";
 
   if (type === "expense") {
     formAction = expenseFormAction;
     errors = expenseState.errors;
-    ctaGradient = "gradient-expense text-expense-fg";
     ctaLabel = "지출";
   } else if (type === "income") {
     formAction = incomeFormAction;
     errors = incomeState.errors;
-    ctaGradient = "gradient-income text-income-fg";
     ctaLabel = "수입";
   }
 
@@ -508,7 +505,11 @@ function EditTransactionDialogBody({
               aria-describedby={
                 missingField ? "transaction-form-missing-field" : undefined
               }
-              className={cn("flex-1 hover:opacity-90", ctaGradient)}
+              className={cn("flex-1 hover:opacity-90", {
+                "gradient-expense text-expense-fg": type === "expense",
+                "gradient-income text-income-fg": type === "income",
+                "gradient-primary text-brand-fg": type !== "expense" && type !== "income",
+              })}
               pendingText="수정 중..."
             >
               {ctaLabel} 수정
@@ -527,7 +528,7 @@ function EditTransactionDialogBody({
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
             <AlertDialogAction
-              className={buttonVariants({ variant: "destructive" })}
+              variant="destructive"
               disabled={isDeleting || isPending}
               onClick={(event) => {
                 event.preventDefault();

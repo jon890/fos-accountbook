@@ -25,7 +25,7 @@
 - 위반 6곳:
   - `frontend/src/app/(authenticated)/categories/_components/DeleteCategoryDialog.tsx` 의 `<AlertDialogAction className={cn(buttonVariants({ variant: "destructive" }))}>`
   - `frontend/src/components/transactions/dialogs/EditTransactionDialog.tsx` 의 `<AlertDialogAction className={buttonVariants({ variant: "destructive" })}>`
-  - `frontend/src/components/transactions/dialogs/AddTransactionDialog.tsx` 와 `EditTransactionDialog.tsx` 의 `<SubmitButton className={cn("flex-1 hover:opacity-90", ctaGradient)}>`. `ctaGradient` 는 `activeType` 에 따라 `let` 으로 바뀐다
+  - `frontend/src/components/transactions/dialogs/AddTransactionDialog.tsx` 와 `EditTransactionDialog.tsx` 의 `<SubmitButton className={cn("flex-1 hover:opacity-90", ctaGradient)}>`. `ctaGradient` 는 Add에서는 `activeType`, Edit에서는 `type` 에 따라 `let` 으로 바뀐다
   - `frontend/src/components/expenses/forms/CategoryGrid.tsx` 의 `<Button className={cn(..., isSelected ? cn(tone.bg, tone.border) : ...)}>` 2건
 
 ## 의도 메모
@@ -40,8 +40,8 @@
 props 타입을 `React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Action> & Pick<VariantProps<typeof buttonVariants>, "variant">` 로 바꾸고 `className={cn(buttonVariants({ variant }), className)}` 로 넘긴다.
 `VariantProps` 는 `class-variance-authority` 에서 가져온다. `variant` 를 넘기지 않으면 지금과 같은 기본 버튼이다.
 이 동작을 `frontend/src/__tests__/components/ui/alert-dialog.test.tsx` 에서 확인한다.
-열린 `AlertDialog` 안에서 `variant="destructive"` 인 `AlertDialogAction` 의 className 에 `buttonVariants({ variant: "destructive" })` 의 클래스가 들어 있는지 본다.
-`variant` 가 없을 때는 `buttonVariants()` 기본 클래스인지 본다.
+열린 `AlertDialog` 안에서 `variant="destructive"` 인 `AlertDialogAction` 의 className 에 `cn(buttonVariants({ variant: "destructive" }))` 로 중복을 합친 클래스가 들어 있는지 본다.
+`variant` 가 없을 때는 `cn(buttonVariants())` 기본 클래스인지 본다.
 
 ### 2. 삭제 확인 버튼 2곳을 `variant="destructive"` 로 교체
 
@@ -51,7 +51,7 @@ props 타입을 `React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Acti
 ### 3. 거래 다이얼로그의 CTA 색을 조건 객체로 교체
 
 `AddTransactionDialog.tsx` 와 `EditTransactionDialog.tsx` 에서 `let ctaGradient` 와 그것을 바꾸는 대입을 지운다.
-`SubmitButton` 의 className 을 아래처럼 바꾼다. `ctaLabel` 과 다른 분기는 그대로 둔다.
+`SubmitButton` 의 className 을 아래처럼 바꾼다. 예시는 Add의 `activeType` 기준이며, Edit에서는 기존 변수 `type` 을 쓴다. `ctaLabel` 과 다른 분기는 그대로 둔다.
 
 ```tsx
 className={cn("flex-1 hover:opacity-90", {

@@ -15,17 +15,17 @@ interface CategoryGridProps {
   disabled?: boolean;
 }
 
-const TONE_CLASS: Record<CategoryToneKey, { bg: string; border: string; text: string }> = {
-  food:      { bg: "bg-[var(--color-cat-food-bg)]",      border: "border-[var(--color-cat-food-fg)]",      text: "text-[var(--color-cat-food-fg)]" },
-  cafe:      { bg: "bg-[var(--color-cat-cafe-bg)]",      border: "border-[var(--color-cat-cafe-fg)]",      text: "text-[var(--color-cat-cafe-fg)]" },
-  transit:   { bg: "bg-[var(--color-cat-transit-bg)]",   border: "border-[var(--color-cat-transit-fg)]",   text: "text-[var(--color-cat-transit-fg)]" },
-  telecom:   { bg: "bg-[var(--color-cat-telecom-bg)]",   border: "border-[var(--color-cat-telecom-fg)]",   text: "text-[var(--color-cat-telecom-fg)]" },
-  home:      { bg: "bg-[var(--color-cat-home-bg)]",      border: "border-[var(--color-cat-home-fg)]",      text: "text-[var(--color-cat-home-fg)]" },
-  shopping:  { bg: "bg-[var(--color-cat-shopping-bg)]",  border: "border-[var(--color-cat-shopping-fg)]",  text: "text-[var(--color-cat-shopping-fg)]" },
-  health:    { bg: "bg-[var(--color-cat-health-bg)]",    border: "border-[var(--color-cat-health-fg)]",    text: "text-[var(--color-cat-health-fg)]" },
-  leisure:   { bg: "bg-[var(--color-cat-leisure-bg)]",   border: "border-[var(--color-cat-leisure-fg)]",   text: "text-[var(--color-cat-leisure-fg)]" },
-  education: { bg: "bg-[var(--color-cat-education-bg)]", border: "border-[var(--color-cat-education-fg)]", text: "text-[var(--color-cat-education-fg)]" },
-  etc:       { bg: "bg-[var(--color-cat-etc-bg)]",       border: "border-[var(--color-cat-etc-fg)]",       text: "text-[var(--color-cat-etc-fg)]" },
+const TONE_CLASS: Record<CategoryToneKey, { text: string }> = {
+  food:      { text: "text-[var(--color-cat-food-fg)]" },
+  cafe:      { text: "text-[var(--color-cat-cafe-fg)]" },
+  transit:   { text: "text-[var(--color-cat-transit-fg)]" },
+  telecom:   { text: "text-[var(--color-cat-telecom-fg)]" },
+  home:      { text: "text-[var(--color-cat-home-fg)]" },
+  shopping:  { text: "text-[var(--color-cat-shopping-fg)]" },
+  health:    { text: "text-[var(--color-cat-health-fg)]" },
+  leisure:   { text: "text-[var(--color-cat-leisure-fg)]" },
+  education: { text: "text-[var(--color-cat-education-fg)]" },
+  etc:       { text: "text-[var(--color-cat-etc-fg)]" },
 };
 
 export function CategoryGrid({
@@ -64,7 +64,18 @@ export function CategoryGrid({
             className={cn(
               "relative h-auto min-h-11 min-w-11 w-auto whitespace-normal flex-col gap-1 rounded-xl border-[1.5px] px-1 py-2 transition-colors disabled:pointer-events-none disabled:opacity-50",
               isSelected
-                ? cn(tone.bg, tone.border)
+                ? {
+                    "bg-[var(--color-cat-food-bg)] border-[var(--color-cat-food-fg)]": toneKey === "food",
+                    "bg-[var(--color-cat-cafe-bg)] border-[var(--color-cat-cafe-fg)]": toneKey === "cafe",
+                    "bg-[var(--color-cat-transit-bg)] border-[var(--color-cat-transit-fg)]": toneKey === "transit",
+                    "bg-[var(--color-cat-telecom-bg)] border-[var(--color-cat-telecom-fg)]": toneKey === "telecom",
+                    "bg-[var(--color-cat-home-bg)] border-[var(--color-cat-home-fg)]": toneKey === "home",
+                    "bg-[var(--color-cat-shopping-bg)] border-[var(--color-cat-shopping-fg)]": toneKey === "shopping",
+                    "bg-[var(--color-cat-health-bg)] border-[var(--color-cat-health-fg)]": toneKey === "health",
+                    "bg-[var(--color-cat-leisure-bg)] border-[var(--color-cat-leisure-fg)]": toneKey === "leisure",
+                    "bg-[var(--color-cat-education-bg)] border-[var(--color-cat-education-fg)]": toneKey === "education",
+                    "bg-[var(--color-cat-etc-bg)] border-[var(--color-cat-etc-fg)]": toneKey === "etc",
+                  }
                 : "bg-bg border-border hover:bg-bg-muted",
             )}
           >
