@@ -34,7 +34,7 @@ export function SettingsHero({
             {defaultFamily.monthlyBudget > 0 ? (
               <div className="flex items-center gap-2">
                 <Wallet className="w-4 h-4 text-brand-fg/80" />
-                <span className="font-num font-medium tabular-nums">
+                <span className="num font-medium">
                   ₩{defaultFamily.monthlyBudget.toLocaleString()}
                 </span>
                 <span className="text-xs text-brand-fg/70">월 예산</span>

@@ -112,7 +112,7 @@ export function LandingPage() {
 
       {/* Bottom CTA section */}
       <div
-        className="0 md:mx-14 md:mb-9 md:px-14 md:py-[52px] md:rounded-3xl md:flex md:items-center md:justify-between md:gap-8"
+        className="md:mx-14 md:mb-9 md:px-14 md:py-[52px] md:rounded-3xl md:flex md:items-center md:justify-between md:gap-8"
       >
         <div>
           <div className="text-[19px] font-bold tracking-[-0.02em] leading-[1.3] md:text-[32px] md:font-extrabold md:tracking-[-0.028em] md:leading-[1.2]">

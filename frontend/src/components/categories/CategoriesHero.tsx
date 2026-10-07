@@ -22,7 +22,7 @@ export function CategoriesHero({
         </h1>
         <div className="flex items-center gap-2 text-sm md:text-base">
           <FolderTree className="w-4 h-4 text-brand-fg/80" />
-          <span className="font-num font-medium tabular-nums">
+          <span className="num font-medium">
             {categoryCount}
           </span>
           <span className="text-xs text-brand-fg/70">개 등록됨</span>

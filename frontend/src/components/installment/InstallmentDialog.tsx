@@ -181,7 +181,7 @@ export function InstallmentDialog({
           inputMode="numeric"
           value={total}
           onChange={(e) => setTotal(e.target.value.replace(/\D/g, ""))}
-          className="font-num text-lg tabular-nums"
+          className="num text-lg"
         />
       </div>
 
@@ -198,7 +198,7 @@ export function InstallmentDialog({
           inputMode="numeric"
           value={months}
           onChange={(e) => setMonths(e.target.value.replace(/\D/g, ""))}
-          className="font-num tabular-nums"
+          className="num"
         />
         {showPreview && (
           <p className="mt-1.5 text-xs text-fg-muted">

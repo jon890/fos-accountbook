@@ -53,7 +53,7 @@ export function InstallmentItem({
           {!isCompleted && (
             <p className="text-xs text-fg-muted">남은 금액</p>
           )}
-          <p className="font-num tabular-nums text-sm font-semibold text-expense">
+          <p className="num text-sm font-semibold text-expense">
             {formatCurrency(
               isCompleted ? installment.totalAmount : installment.remainingAmount,
             )}

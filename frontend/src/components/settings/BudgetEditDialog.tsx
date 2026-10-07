@@ -106,7 +106,7 @@ export function BudgetEditDialog({
           inputMode="numeric"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="font-num tabular-nums text-lg"
+          className="num text-lg"
           autoFocus
         />
         <div className="flex flex-wrap gap-2 mt-3">

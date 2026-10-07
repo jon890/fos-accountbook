@@ -136,7 +136,7 @@ export function BudgetItemDialog({
           inputMode="numeric"
           value={limit}
           onChange={(e) => setLimit(e.target.value.replace(/\D/g, ""))}
-          className="font-num tabular-nums text-lg"
+          className="num text-lg"
         />
         <p className="mt-1.5 text-xs text-fg-muted">
           0 이면 한도 없이 쓴 금액만 보여요
