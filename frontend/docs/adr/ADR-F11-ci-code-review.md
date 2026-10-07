@@ -1,6 +1,6 @@
 # ADR-F11: CI 코드 리뷰 워크플로 설계 (개정)
 
-**결정**: Claude Code Action 기반 자동 코드 리뷰 워크플로를 아래 방침으로 운영. fos-blog 정착 패턴과 동일화 (2026-05-09 개정, 2026-06-02 단일 opus 리뷰어로 모델 전환, 2026-09-01 요약을 리뷰 body 로 통합, 2026-09-29 fos-assistant 판에 맞춰 호출 경계와 등급과 위험 라벨 추가, 2026-10-02 게시를 워크플로 단계로 옮김).
+**결정**: Claude Code Action 기반 자동 코드 리뷰 워크플로를 아래 방침으로 운영. fos-blog 정착 패턴과 동일화 (2026-05-09 개정, 2026-06-02 단일 opus 리뷰어로 모델 전환, 2026-09-01 요약을 리뷰 body 로 통합, 2026-09-29 fos-assistant 판에 맞춰 호출 경계와 등급과 위험 라벨 추가, 2026-10-02 게시를 워크플로 단계로 옮김, 2026-10-07 Dependabot PR 도 리뷰).
 
 **적용 범위**: 모노레포의 리뷰 워크플로 하나가 프론트엔드와 백엔드를 함께 리뷰한다([ADR-M01](../../../docs/adr/ADR-M01-frontend-backend-monorepo.md)). 백엔드의 ADR-B14 는 이 ADR 로 대체된다.
 
@@ -9,7 +9,7 @@
 | 항목 | 결정 | 이유 |
 |------|------|------|
 | 트리거 | `opened` + `/review` 수동 | `synchronize` 제거 — 매 push마다 토큰 소비 방지 |
-| 호출 경계 | PR 은 이 저장소 브랜치에서 연 것만. `/review` 는 댓글이 그 명령으로 시작하고 OWNER / MEMBER / COLLABORATOR 가 단 것만. 포크 PR 은 댓글 트리거에서도 첫 단계에서 제외 | 공개 저장소라 누구나 PR 과 댓글을 남길 수 있다. 본문에 `/review` 가 들어 있기만 해도 우리 토큰으로 리뷰가 돌던 것을 막는다 |
+| 호출 경계 | PR 은 이 저장소 브랜치에서 연 것만. `/review` 는 댓글이 그 명령으로 시작하고 OWNER / MEMBER / COLLABORATOR 가 단 것만. 포크 PR 은 댓글 트리거에서도 첫 단계에서 제외. Dependabot PR 도 자동 리뷰하고, 그 실행은 Dependabot 비밀값을 받으므로 토큰을 거기에도 등록한다 | 공개 저장소라 누구나 PR 과 댓글을 남길 수 있다. 본문에 `/review` 가 들어 있기만 해도 우리 토큰으로 리뷰가 돌던 것을 막는다. Dependabot PR 을 건너뛰자 메이저 업그레이드 PR 이 리뷰 없이 머지되어 배포됐다(2026-10-07, #397, #444, #451) |
 | 체크아웃 | `refs/pull/N/head` | 리뷰어가 PR 에서 바뀐 파일과 지침을 Read / Grep 으로 읽는다. `issue_comment` 의 기본 체크아웃은 main 이다 |
 | 도구 허용 | Read / Grep / Glob / Agent / Task 와 읽기용 Bash(`gh pr diff`, `gh pr view`, `jq`)만. Write / Edit 금지 | Agent 가 없으면 거르기 위임이 드러나지 않게 자가검토로 바뀐다. Bash 를 열어 두면 체크아웃한 PR 코드를 실행할 길이 생긴다 |
 | 등급 | 🔴 P1 치명 ~ ⚪ P5 참고 다섯 단계. P4 와 P5 는 리뷰당 세 개까지 | 두 단계로는 꼭 고칠 것과 참고할 것 사이가 비었다. 등급은 반영하지 않았을 때 깨지는 것으로 정한다 |
@@ -29,7 +29,7 @@
 | diff 필터 | `frontend/pnpm-lock.yaml`, `*.lock`, `*.snap`, `backend/gradle/wrapper/gradle-wrapper.jar`, `backend/build/`, `*.class` 제외. Flyway SQL 은 제외하지 않는다 | 노이즈 감소. `*` 가 없는 pathspec 은 저장소 루트 기준이라 하위 프로젝트 경로를 붙인다 |
 | Job timeout | 15분 | agent hang 시 불필요한 비용 방지 |
 | Check Run 수동 등록 | `issue_comment` 트리거 시 수동 생성 | issue_comment workflow run 이 PR Checks 탭에 자동 노출 안 됨 — 수동 Check Run 으로 진행 상태 가시화 |
-| 프롬프트 관리 | 공통 본문 `.github/claude-review-prompt-common.txt` 와 점검 목록 `-frontend.txt`, `-backend.txt` 로 외부 분리. 바뀐 경로로 점검 목록을 고르고 둘 다 바뀌면 이어 붙인다. `frontend/`, `backend/` 어느 쪽도 바뀌지 않으면 두 목록을 모두 붙인다. 선택 스크립트 `scripts/review-checklist.sh` 는 보안 경계가 아니라 PR head 의 것을 쓴다. `envsubst` 로 `$PR_NUMBER`·`$REPO`·`$RISK_LABELS`·`$CHECKLIST` 치환 | ~180줄 인라인 heredoc 가독성·diff 정밀도 확보. `.md` 아닌 `.txt` 로 IDE 포맷터의 glob·식별자 깨짐 회피 |
+| 프롬프트 관리 | 공통 본문 `.github/claude-review-prompt-common.txt` 와 점검 목록 `-frontend.txt`, `-backend.txt` 로 외부 분리. 바뀐 경로로 점검 목록을 고르고 둘 다 바뀌면 이어 붙인다. `frontend/`, `backend/` 어느 쪽도 바뀌지 않으면 두 목록을 모두 붙인다. 의존성 버전 파일이 바뀌면 `-deps.txt` 를 더 붙인다. 선택 스크립트 `scripts/review-checklist.sh` 는 보안 경계가 아니라 PR head 의 것을 쓴다. `envsubst` 로 `$PR_NUMBER`·`$REPO`·`$RISK_LABELS`·`$CHECKLIST` 치환 | ~180줄 인라인 heredoc 가독성·diff 정밀도 확보. `.md` 아닌 `.txt` 로 IDE 포맷터의 glob·식별자 깨짐 회피 |
 | 소규모 PR 스킵 | 안 함 | 모든 PR 동일 리뷰 |
 
 **대안 기각**:
