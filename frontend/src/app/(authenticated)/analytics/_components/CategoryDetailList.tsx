@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/client/utils";
-import { getCategoryTone } from "@/lib/utils/category-tone";
+import { getCategoryChartColors } from "@/lib/utils/category-chart-color";
 import { formatCurrency } from "@/lib/utils/format";
 import type { CategoryWithDelta } from "@/types/analytics";
 
@@ -27,6 +27,7 @@ function DeltaCell({ delta, isNew }: { delta: number | null; isNew: boolean }) {
 
 export function CategoryDetailList({ items, totalExpense, topN = 6 }: CategoryDetailListProps) {
   const visible = items.slice(0, topN);
+  const colors = getCategoryChartColors(items);
 
   if (visible.length === 0) {
     return (
@@ -50,7 +51,7 @@ export function CategoryDetailList({ items, totalExpense, topN = 6 }: CategoryDe
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-x-6 md:gap-y-3">
         {visible.map((item) => {
-          const tone = getCategoryTone(item.name);
+          const color = colors.get(item.categoryUuid) ?? "";
           const widthPct = totalExpense > 0 ? Math.min(100, (item.totalAmount / totalExpense) * 100) : 0;
           return (
             <div
@@ -59,7 +60,7 @@ export function CategoryDetailList({ items, totalExpense, topN = 6 }: CategoryDe
             >
               <div
                 className="size-9 md:size-[34px] shrink-0 rounded-xl flex items-center justify-center text-base"
-                style={{ background: tone.bg, color: tone.fg }}
+                style={{ background: `color-mix(in srgb, ${color} 16%, transparent)`, color }}
                 aria-hidden="true"
               >
                 {item.icon}
@@ -69,7 +70,7 @@ export function CategoryDetailList({ items, totalExpense, topN = 6 }: CategoryDe
                 <div className="mt-1 h-1.5 bg-bg-muted rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full"
-                    style={{ width: `${widthPct}%`, background: tone.fg }}
+                    style={{ width: `${widthPct}%`, background: color }}
                   />
                 </div>
               </div>

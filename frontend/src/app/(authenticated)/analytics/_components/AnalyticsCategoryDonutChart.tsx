@@ -1,7 +1,7 @@
 "use client";
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { getCategoryTone } from "@/lib/utils/category-tone";
+import { getCategoryChartColors } from "@/lib/utils/category-chart-color";
 import { formatCurrency } from "@/lib/utils/format";
 import type { CategoryBreakdownWithDelta } from "@/types/analytics";
 
@@ -12,9 +12,10 @@ interface AnalyticsCategoryDonutChartProps {
 export default function AnalyticsCategoryDonutChart({
   breakdown,
 }: AnalyticsCategoryDonutChartProps) {
+  const colors = getCategoryChartColors(breakdown.items);
   const chartData = breakdown.items.map((item) => ({
     ...item,
-    fill: getCategoryTone(item.name).fg,
+    fill: colors.get(item.categoryUuid) ?? "",
   }));
 
   return (

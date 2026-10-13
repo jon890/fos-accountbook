@@ -129,6 +129,7 @@ export async function getCategoryBreakdownWithDelta(
       categoryUuid: item.categoryUuid,
       name: item.name ?? "Unknown",
       icon: item.icon ?? "💰",
+      color: item.color,
       totalAmount: item.totalAmount,
       percentage: Math.round(item.percentage),
       deltaPercent:

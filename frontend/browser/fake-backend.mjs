@@ -517,16 +517,17 @@ const server = createServer(async (request, response) => {
         year: 2026,
         month: 10,
         totalExpense: 16200,
-        items: [{
-          categoryUuid: categories[0].uuid,
-          name: categories[0].name,
-          icon: "🍚",
-          color: categories[0].color,
-          totalAmount: 16200,
-          percentage: 100,
+        items: [
+          { category: categories[0], icon: "🍚", color: categories[0].color, totalAmount: 10000, percentage: 61.73 },
+          { category: categories[1], icon: "🚌", color: categories[1].color, totalAmount: 4000, percentage: 24.69 },
+          { category: { uuid: "33333333-3333-3333-3333-333333333399", name: "생활" }, icon: "🏠", color: categories[0].color, totalAmount: 2200, percentage: 13.58 },
+        ].map(({ category, ...item }) => ({
+          categoryUuid: category.uuid,
+          name: category.name,
+          ...item,
           deltaPercent: null,
           previousAmount: null,
-        }],
+        })),
       },
     });
     return;

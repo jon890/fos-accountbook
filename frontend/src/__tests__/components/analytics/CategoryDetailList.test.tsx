@@ -7,6 +7,7 @@ function item(overrides: Partial<CategoryWithDelta>): CategoryWithDelta {
     categoryUuid: "food",
     name: "식비",
     icon: "🍔",
+    color: null,
     totalAmount: 10000,
     percentage: 50,
     deltaPercent: null,

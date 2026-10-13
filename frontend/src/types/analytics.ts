@@ -21,6 +21,7 @@ export interface CategoryWithDelta {
   categoryUuid: string;
   name: string;
   icon: string;
+  color: string | null; // 카테고리 화면에서 고른 저장 색. 없으면 null
   totalAmount: number;
   percentage: number;
   deltaPercent: number | null; // 전월 대비 %, null = 비교 불가(직전 달 0원 포함)
