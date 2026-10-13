@@ -66,6 +66,8 @@ page.tsx          (Server) — 데이터 fetch, SEO
 대시보드 분포, 분석 분포와 예산 누적 차트는 기존 Client wrapper 를 유지하고 recharts 를 사용하는 차트 본체만 분리한다.
 wrapper 가 `next/dynamic` 의 `ssr: false` 로 본체를 지연 로드해 recharts 를 초기 동기 번들에서 제외한다.
 다운로드 중에는 차트와 같은 반응형 높이의 자리표시자를 표시해 화면이 밀리지 않게 한다.
+분석 분포의 카테고리 색은 `lib/utils/category-chart-color.ts` 가 정한다. 차트, 범례, 상세 목록이 같은 항목 목록으로 각각 불러도 같은 색이 나오는 순수 함수다. 고르는 규칙은 `flow.md` 의 「카테고리 분포의 색」 이 소유한다.
+카테고리 팔레트 값은 같은 디렉터리의 `category-palette.ts` 가 소유하고, 카테고리 화면의 색 선택과 차트가 함께 읽는다.
 
 `/dashboard` 는 `/analytics` 로 보내는 이전 주소다.
 분석 Page가 예산, 수입과 지출, 고정비 카드를 서버에서 렌더링하고 그 아래에 기존 분석 Client를 둔다.

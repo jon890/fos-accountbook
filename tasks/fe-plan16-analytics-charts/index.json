@@ -1,0 +1,13 @@
+{
+  "name": "fe-plan16-analytics-charts",
+  "description": "분석 화면의 월별 추이 막대가 보이지 않는 문제와 도넛 조각 색이 구분되지 않는 문제를 고친다. 추이 조회 실패는 0원 대신 실패 카드로 보인다",
+  "status": "pending",
+  "created_at": "2026-10-13",
+  "total_phases": 3,
+  "current_phase": 1,
+  "phases": [
+    { "number": 1, "file": "phase-01.md", "execution_profile": "standard" },
+    { "number": 2, "file": "phase-02.md", "execution_profile": "fast" },
+    { "number": 3, "file": "phase-03.md", "execution_profile": "standard" }
+  ]
+}

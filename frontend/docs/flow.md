@@ -250,7 +250,7 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
     └─ AnalyticsClient (use client)
             ├─ AnalyticsPeriodToggle (segmented role=tablist, URL ?period= 단방향)
             ├─ AnalyticsCategoryDonut (172/160px Donut + 중앙 totalDelta ↑/↓)
-            ├─ MonthlyTrendBar (순수 CSS bar, 마지막 막대 bg-brand-500 강조)
+            ├─ MonthlyTrendBar (순수 CSS bar, 마지막 막대 bg-brand-500 강조, 추이 조회 실패면 「월별 추이를 불러오지 못했습니다」 카드)
             ├─ CategoryDetailList (progress + 전월 delta % 2-col grid)
             └─ 지출 TOP 5: categoryUuid 로 카테고리 목록에서 아이콘과 이름을 찾는다. 전체 건수가 받은 건수보다 많으면 「최근 1000건 안에서 골랐어요」 를 보인다
 ```
@@ -258,8 +258,15 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 데이터 흐름 핵심 (ADR-F30):
 - 합계는 모두 백엔드 집계 API 가 계산한다. 프론트는 목록을 받아 더하지 않는다.
 - `getCategoryBreakdownWithDelta`: `category-breakdown?compareWithPrev=true` 로 카테고리별 `deltaPercent` 를 받는다. 전체 합계의 전월 대비(`totalDelta`)는 같은 호출과 병렬로 직전 달부터 이번 달까지 `monthly-trend` 를 받아 계산한다. 직전 달 합계가 0 이면 null
-- `getMonthlyTrend`: m1/m3/m6/y1 → `monthly-trend?from=YYYY-MM&to=YYYY-MM` 한 번. 응답에 없는 달은 0 으로 채워 개월 수만큼 점을 만든다
+- `getMonthlyTrend`: m1/m3/m6/y1 → `monthly-trend?from=YYYY-MM&to=YYYY-MM` 한 번. 응답에 없는 달은 0 으로 채워 개월 수만큼 점을 만든다. 조회 실패와 응답 계약 위반은 0원으로 바꾸지 않고 그대로 실패로 올린다
 - 비율과 전월 대비는 백엔드가 소수 둘째 자리까지 주고 프론트가 정수로 반올림한다
+
+카테고리 분포의 색:
+- 도넛 조각, 도넛 옆 범례, 카테고리 상세의 아이콘 칸과 막대는 같은 색을 쓴다.
+- 금액이 큰 카테고리부터 카테고리 화면에서 고른 저장 색을 쓴다.
+- 저장 색이 없거나 앞선 카테고리가 이미 같은 색을 썼으면, 아직 쓰지 않은 차트 팔레트 색을 금액 순서대로 준다. 한 차트 안에서 두 조각이 같은 색이 되지 않게 하기 위해서다.
+- 팔레트를 다 쓰면 처음부터 다시 돈다.
+- 이름으로 정하는 카테고리 톤 색은 배지와 내역 행에만 쓴다. 표에 없는 이름은 모두 회색이 되어 차트에서 조각을 구분할 수 없었기 때문이다.
 
 분석 화면 위쪽에는 예전 대시보드의 예산 카드(`BudgetHeroCard`, 누르면 `/budget`), 이번 달 수입·지출(`IncomeExpenseStats`), 고정비 카드(「14」)를 둔다.
 그 아래가 기간 토글과 차트다.
@@ -268,6 +275,8 @@ page.tsx 는 `tab` 에 해당하는 목록 하나만 서버에서 조회한다. 
 명시한 조회 연월은 바꾸지 않는다.
 예산의 남은 일수도 같은 시간대의 오늘로 계산한다.
 분석 Page의 일반 조회 실패는 오류 화면으로 전달하고 인증 실패는 로그인으로 보낸다.
+월별 추이 조회만 예외로, 일반 실패면 화면 전체를 오류로 바꾸지 않고 추이 카드만 「월별 추이를 불러오지 못했습니다」 로 보인다.
+추이는 분석 화면의 한 카드일 뿐이라 이것 때문에 예산과 분포까지 가리지 않는다. 실패를 0원 막대로 바꾸면 지출이 없는 달과 구분할 수 없다.
 
 ---
 
