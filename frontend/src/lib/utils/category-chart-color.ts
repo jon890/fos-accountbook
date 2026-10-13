@@ -9,8 +9,14 @@ const CHART_PALETTE: readonly string[] = [
   "oklch(0.440 0.100 60)",
 ];
 
-function normalizeColor(color: string): string {
-  return color.trim().toLowerCase();
+const OKLCH_PATTERN = /^oklch\(\s*(-?\d*\.?\d+)\s+(-?\d*\.?\d+)\s+(-?\d*\.?\d+)\s*\)$/;
+
+// 같은 색을 다른 숫자 표기(0.56 과 0.560)로 저장해도 같은 키가 나오게 한다. hex 와 oklch 사이는 비교하지 않는다.
+function colorKey(color: string): string {
+  const lowered = color.trim().toLowerCase();
+  const match = OKLCH_PATTERN.exec(lowered);
+  if (match === null) return lowered;
+  return `oklch(${Number(match[1])} ${Number(match[2])} ${Number(match[3])})`;
 }
 
 /**
@@ -26,7 +32,7 @@ export function getCategoryChartColors(
 
   for (const item of sorted) {
     if (item.color === null) continue;
-    const key = normalizeColor(item.color);
+    const key = colorKey(item.color);
     if (key === "" || used.has(key)) continue;
     used.add(key);
     assigned.set(item.categoryUuid, item.color.trim());
@@ -36,12 +42,12 @@ export function getCategoryChartColors(
   for (const item of sorted) {
     if (assigned.has(item.categoryUuid)) continue;
     let tries = 0;
-    while (tries < CHART_PALETTE.length && used.has(normalizeColor(CHART_PALETTE[cursor % CHART_PALETTE.length]))) {
+    while (tries < CHART_PALETTE.length && used.has(colorKey(CHART_PALETTE[cursor % CHART_PALETTE.length]))) {
       cursor += 1;
       tries += 1;
     }
     assigned.set(item.categoryUuid, CHART_PALETTE[cursor % CHART_PALETTE.length]);
-    used.add(normalizeColor(CHART_PALETTE[cursor % CHART_PALETTE.length]));
+    used.add(colorKey(CHART_PALETTE[cursor % CHART_PALETTE.length]));
     cursor += 1;
   }
   return assigned;

@@ -49,4 +49,23 @@ describe("getCategoryChartColors", () => {
     expect(colors.size).toBe(13);
     expect(new Set(Array.from(colors.values())).size).toBe(12);
   });
+
+  it("숫자 표기만 다른 저장 색과 팔레트 색을 같은 색으로 본다", () => {
+    const colors = getCategoryChartColors([
+      item("a", "oklch(0.56 0.14 35)", 20),
+      item("b", null, 10),
+    ]);
+    expect(colors.get("a")).toBe("oklch(0.56 0.14 35)");
+    expect(colors.get("b")).not.toBe("oklch(0.560 0.140 35)");
+    expect(colors.get("b")).toBe(CATEGORY_PALETTE[1]);
+  });
+
+  it("숫자 표기만 다른 두 저장 색은 금액이 작은 쪽이 다른 색을 받는다", () => {
+    const colors = getCategoryChartColors([
+      item("big", "oklch(0.56 0.14 35)", 20),
+      item("small", "oklch(0.560 0.140 35)", 10),
+    ]);
+    expect(colors.get("big")).toBe("oklch(0.56 0.14 35)");
+    expect(colors.get("small")).toBe(CATEGORY_PALETTE[1]);
+  });
 });
