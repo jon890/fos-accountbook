@@ -94,7 +94,7 @@ export default async function AnalyticsPage({
   const expenses = getAnalyticsData(expensesResult);
   const categories = getAnalyticsData(categoriesResult);
   const breakdown = getAnalyticsData(breakdownResult);
-  const trend = getAnalyticsData(trendResult);
+  const trend = trendResult.success ? trendResult.data : null;
   const recurringTotal = getAnalyticsData(recurringResult);
   const daysRemaining = Math.max(0, lastDay - day);
 

@@ -121,18 +121,10 @@ describe("getMonthlyTrend", () => {
       { path: "points.0.totalExpense", code: "invalid_type" },
     ]),
   ])(
-    "일반 실패와 응답 계약 위반에도 세 달의 점을 유지한다: %s",
+    "일반 실패와 응답 계약 위반을 그대로 전파한다: %s",
     async (error) => {
       api.mockRejectedValue(error);
-      expect(await getMonthlyTrend("family", "m3", 2026, 5)).toEqual({
-        period: "m3",
-        points: [
-          { year: 2026, month: 3, totalExpense: 0 },
-          { year: 2026, month: 4, totalExpense: 0 },
-          { year: 2026, month: 5, totalExpense: 0 },
-        ],
-        average: 0,
-      });
+      await expect(getMonthlyTrend("family", "m3", 2026, 5)).rejects.toBe(error);
     },
   );
   it("401은 전파한다", async () => {

@@ -72,7 +72,7 @@ export async function getMonthlyTrend(
   const response = await serverApiGet(
     `/families/${familyUuid}/dashboard/stats/monthly-trend?from=${monthKey(first.year, first.month)}&to=${monthKey(refYear, refMonth)}`,
     { schema: monthlyTrendResponseSchema },
-  ).catch(emptyOnFailure<MonthlyTrendResponse>({ points: [], average: 0 }));
+  );
   const amounts = new Map(
     response.points.map((point) => [
       monthKey(point.year, point.month),
