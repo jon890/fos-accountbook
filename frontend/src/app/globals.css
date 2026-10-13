@@ -97,6 +97,12 @@
   --color-cat-etc-bg:       oklch(0.945 0.005 230);
   --color-cat-etc-fg:       oklch(0.510 0.015 230);
 
+  /* 분석 차트에서 카테고리 팔레트 8색을 다 쓴 뒤 이어 쓰는 색 (저장 색은 사용자 데이터라 토큰이 아니다) */
+  --color-chart-extra-1: oklch(0.420 0.100 230);
+  --color-chart-extra-2: oklch(0.420 0.110 330);
+  --color-chart-extra-3: oklch(0.420 0.100 152);
+  --color-chart-extra-4: oklch(0.440 0.100 60);
+
   /* ── shadcn → token mapping (Tailwind utility 호환) ─ */
   --color-background:         var(--background);
   --color-foreground:         var(--foreground);
@@ -179,6 +185,11 @@
   --color-cat-etc-bg: oklch(0.300 0.008 230);
   --color-cat-etc-fg: oklch(0.760 0.015 230);
   --color-category-fallback-bg: oklch(0.720 0.130 250 / 0.18);
+
+  --color-chart-extra-1: oklch(0.720 0.110 230);
+  --color-chart-extra-2: oklch(0.720 0.110 330);
+  --color-chart-extra-3: oklch(0.720 0.110 152);
+  --color-chart-extra-4: oklch(0.720 0.110 60);
 
   --color-member-1: oklch(0.78 0.12 275);
   --color-member-2: oklch(0.78 0.10 205);

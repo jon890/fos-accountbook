@@ -49,7 +49,7 @@ const breakdown: MonthlyCategoryBreakdown = {
 const analyticsBreakdown: CategoryBreakdownWithDelta = {
   ...breakdown,
   totalDelta: 10,
-  items: breakdown.items.map((item) => ({ ...item, deltaPercent: null, isNew: false })),
+  items: breakdown.items.map((item) => ({ ...item, color: null, deltaPercent: null, isNew: false })),
 };
 
 describe("차트 지연 로드", () => {

@@ -32,6 +32,7 @@ const breakdown = {
       categoryUuid: "food",
       name: "식비",
       icon: "🍔",
+      color: "oklch(0.560 0.140 35)",
       totalAmount: 120,
       percentage: 66.67,
       deltaPercent: 20.49,
@@ -41,6 +42,7 @@ const breakdown = {
       categoryUuid: "bus",
       name: null,
       icon: null,
+      color: null,
       totalAmount: 60,
       percentage: 33.33,
       deltaPercent: -25.51,
@@ -50,6 +52,7 @@ const breakdown = {
       categoryUuid: "new",
       name: "신규",
       icon: "📦",
+      color: "#AABBCC",
       totalAmount: 0,
       percentage: 0,
       deltaPercent: null,
@@ -59,6 +62,7 @@ const breakdown = {
       categoryUuid: "gift",
       name: "선물",
       icon: "🎁",
+      color: null,
       totalAmount: 30,
       percentage: 0,
       deltaPercent: null,
@@ -121,18 +125,10 @@ describe("getMonthlyTrend", () => {
       { path: "points.0.totalExpense", code: "invalid_type" },
     ]),
   ])(
-    "일반 실패와 응답 계약 위반에도 세 달의 점을 유지한다: %s",
+    "일반 실패와 응답 계약 위반을 그대로 전파한다: %s",
     async (error) => {
       api.mockRejectedValue(error);
-      expect(await getMonthlyTrend("family", "m3", 2026, 5)).toEqual({
-        period: "m3",
-        points: [
-          { year: 2026, month: 3, totalExpense: 0 },
-          { year: 2026, month: 4, totalExpense: 0 },
-          { year: 2026, month: 5, totalExpense: 0 },
-        ],
-        average: 0,
-      });
+      await expect(getMonthlyTrend("family", "m3", 2026, 5)).rejects.toBe(error);
     },
   );
   it("401은 전파한다", async () => {
@@ -170,6 +166,7 @@ describe("getCategoryBreakdownWithDelta", () => {
           categoryUuid: "food",
           name: "식비",
           icon: "🍔",
+          color: "oklch(0.560 0.140 35)",
           totalAmount: 120,
           percentage: 67,
           deltaPercent: 20,
@@ -179,6 +176,7 @@ describe("getCategoryBreakdownWithDelta", () => {
           categoryUuid: "bus",
           name: "Unknown",
           icon: "💰",
+          color: null,
           totalAmount: 60,
           percentage: 33,
           deltaPercent: -26,
@@ -188,6 +186,7 @@ describe("getCategoryBreakdownWithDelta", () => {
           categoryUuid: "new",
           name: "신규",
           icon: "📦",
+          color: "#AABBCC",
           totalAmount: 0,
           percentage: 0,
           deltaPercent: null,
@@ -197,6 +196,7 @@ describe("getCategoryBreakdownWithDelta", () => {
           categoryUuid: "gift",
           name: "선물",
           icon: "🎁",
+          color: null,
           totalAmount: 30,
           percentage: 0,
           deltaPercent: null,

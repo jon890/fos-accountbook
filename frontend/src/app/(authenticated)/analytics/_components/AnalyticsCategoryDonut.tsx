@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { getCategoryTone } from "@/lib/utils/category-tone";
+import { getCategoryChartColors } from "@/lib/utils/category-chart-color";
 import { formatCurrency } from "@/lib/utils/format";
 import type { CategoryBreakdownWithDelta } from "@/types/analytics";
 
@@ -56,6 +56,7 @@ export function AnalyticsCategoryDonut({
   const { totalExpense, totalDelta, items, month } = breakdown;
   const isEmpty = items.length === 0;
   const topItems = items.slice(0, topN);
+  const colors = getCategoryChartColors(items);
 
   return (
     <div className="bg-bg-elev rounded-[var(--radius-xl)] p-4 md:p-6 shadow-[var(--shadow-default)]">
@@ -77,12 +78,11 @@ export function AnalyticsCategoryDonut({
 
           <div className="flex-1 w-full md:min-w-0 grid grid-cols-2 gap-2 md:flex md:flex-col md:gap-2.5">
             {topItems.map((item) => {
-              const tone = getCategoryTone(item.name);
               return (
                 <div key={item.categoryUuid} className="flex items-center gap-2">
                   <span
                     className="size-2 rounded-full shrink-0"
-                    style={{ background: tone.fg }}
+                    style={{ background: colors.get(item.categoryUuid) }}
                     aria-hidden="true"
                   />
                   <span className="text-xs font-medium text-fg truncate flex-1">{item.name}</span>

@@ -31,7 +31,9 @@ jest.mock("@/app/(authenticated)/analytics/_components/AnalyticsClient", () => (
     initialMonth,
     initialTotalElements,
     categories,
+    initialTrend,
   }: {
+    initialTrend: unknown;
     initialYear: number;
     initialMonth: number;
     initialTotalElements: number;
@@ -39,6 +41,7 @@ jest.mock("@/app/(authenticated)/analytics/_components/AnalyticsClient", () => (
   }) => (
     <div data-testid="analytics-client" data-category-count={categories.length} data-total-elements={initialTotalElements}>
       분석:{initialYear}-{initialMonth}
+      {initialTrend === null && <p>월별 추이를 불러오지 못했습니다</p>}
     </div>
   ),
 }));
@@ -137,11 +140,18 @@ it.each([
   getExpensesAction,
   getFamilyCategoriesAction,
   getCategoryBreakdownWithDeltaAction,
-  getMonthlyTrendAction,
   getRecurringExpensesTotalAction,
 ])("각 조회의 일반 오류는 기본값으로 숨기지 않고 오류 화면으로 전달한다", async (action) => {
   (action as jest.Mock).mockResolvedValue({ success: false, error: { code: "C001", message: "조회 실패" } });
   await expect(AnalyticsPage({ searchParams: Promise.resolve({}) })).rejects.toThrow("조회 실패");
+  expect(redirect).not.toHaveBeenCalled();
+});
+
+it("월별 추이 조회의 일반 오류는 추이 카드에만 실패를 보인다", async () => {
+  jest.mocked(getMonthlyTrendAction).mockResolvedValue({ success: false, error: { code: "C001", message: "조회 실패" } });
+  render(await AnalyticsPage({ searchParams: Promise.resolve({}) }));
+  expect(screen.getByText("월별 추이를 불러오지 못했습니다")).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: /이번 달/ })).toBeInTheDocument();
   expect(redirect).not.toHaveBeenCalled();
 });
 

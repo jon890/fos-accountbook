@@ -72,7 +72,7 @@ export async function getMonthlyTrend(
   const response = await serverApiGet(
     `/families/${familyUuid}/dashboard/stats/monthly-trend?from=${monthKey(first.year, first.month)}&to=${monthKey(refYear, refMonth)}`,
     { schema: monthlyTrendResponseSchema },
-  ).catch(emptyOnFailure<MonthlyTrendResponse>({ points: [], average: 0 }));
+  );
   const amounts = new Map(
     response.points.map((point) => [
       monthKey(point.year, point.month),
@@ -129,6 +129,7 @@ export async function getCategoryBreakdownWithDelta(
       categoryUuid: item.categoryUuid,
       name: item.name ?? "Unknown",
       icon: item.icon ?? "💰",
+      color: item.color,
       totalAmount: item.totalAmount,
       percentage: Math.round(item.percentage),
       deltaPercent:
