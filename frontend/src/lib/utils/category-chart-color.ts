@@ -1,12 +1,12 @@
 import { CATEGORY_PALETTE } from "./category-palette";
 
-// 카테고리 화면 팔레트 8색 뒤에 어두운 변형 4색을 붙여 한 차트에서 12조각까지 겹치지 않게 한다.
+// 카테고리 화면 팔레트 8색 뒤에 다크 값이 있는 토큰 4색을 붙여 한 차트에서 12조각까지 겹치지 않게 한다.
 const CHART_PALETTE: readonly string[] = [
   ...CATEGORY_PALETTE,
-  "oklch(0.420 0.100 230)",
-  "oklch(0.420 0.110 330)",
-  "oklch(0.420 0.100 152)",
-  "oklch(0.440 0.100 60)",
+  "var(--color-chart-extra-1)",
+  "var(--color-chart-extra-2)",
+  "var(--color-chart-extra-3)",
+  "var(--color-chart-extra-4)",
 ];
 
 const OKLCH_PATTERN = /^oklch\(\s*(-?\d*\.?\d+)\s+(-?\d*\.?\d+)\s+(-?\d*\.?\d+)\s*\)$/;

@@ -68,4 +68,12 @@ describe("getCategoryChartColors", () => {
     expect(colors.get("big")).toBe("oklch(0.56 0.14 35)");
     expect(colors.get("small")).toBe(CATEGORY_PALETTE[1]);
   });
+
+  it("저장 색이 없는 12개 항목의 9~12번째는 다크 값이 있는 차트 토큰을 받는다", () => {
+    const items = Array.from({ length: 12 }, (_, index) => item(`c${index}`, null, 100 - index));
+    const colors = getCategoryChartColors(items);
+    for (let index = 8; index < 12; index += 1) {
+      expect(colors.get(`c${index}`)).toBe(`var(--color-chart-extra-${index - 7})`);
+    }
+  });
 });

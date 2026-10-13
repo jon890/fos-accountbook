@@ -46,3 +46,35 @@ function colorChroma(color: string): number {
 
   throw new Error(`지원하지 않는 계산 색상: ${color}`);
 }
+
+test.describe("다크 모드", () => {
+  test.use({ colorScheme: "dark" });
+
+  test("차트 추가 팔레트 토큰은 다크에서 밝은 값을 갖는다", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/analytics");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+
+    const readToken = () =>
+      page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--color-chart-extra-1").trim());
+    const dark = await readToken();
+    await page.evaluate(() => document.documentElement.setAttribute("data-theme", "light"));
+    const light = await readToken();
+
+    expect(dark).not.toBe(light);
+    expect(oklchLightness(dark)).toBeGreaterThan(0.6);
+  });
+});
+
+function oklchLightness(value: string): number {
+  const oklch = value.match(/^oklch\(\s*([-+]?\d*\.?\d+)/);
+  if (oklch) return Number(oklch[1]);
+
+  const oklab = value.match(/^oklab\(\s*([-+]?\d*\.?\d+)/);
+  if (oklab) return Number(oklab[1]);
+
+  const lab = value.match(/^lab\(\s*([-+]?\d*\.?\d+)/);
+  if (lab) return Number(lab[1]) / 100;
+
+  throw new Error(`지원하지 않는 색상: ${value}`);
+}
