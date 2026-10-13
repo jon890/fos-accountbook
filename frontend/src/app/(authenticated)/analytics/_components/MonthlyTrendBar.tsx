@@ -33,7 +33,7 @@ export function MonthlyTrendBar({ trend }: MonthlyTrendBarProps) {
           const isLast = idx === points.length - 1;
           const heightPct = Math.max(2, (point.totalExpense / max) * 100);
           return (
-            <div key={`${point.year}-${point.month}`} className="flex-1 flex flex-col items-center gap-1 min-w-0">
+            <div key={`${point.year}-${point.month}`} className="h-full flex-1 flex flex-col items-center gap-1 min-w-0">
               <span
                 className={cn(
                   "hidden md:block text-[10px] text-brand-700",
@@ -42,14 +42,16 @@ export function MonthlyTrendBar({ trend }: MonthlyTrendBarProps) {
               >
                 {point.totalExpense > 0 ? `₩${formatShortAmount(point.totalExpense)}` : ""}
               </span>
-              <div
-                className={cn(
-                  "w-full rounded-t-md transition-all",
-                  isLast ? "bg-brand-500" : "bg-brand-100",
-                )}
-                style={{ height: `${heightPct}%` }}
-                aria-label={`${point.year}년 ${point.month}월 지출 ${formatShortAmount(point.totalExpense)}`}
-              />
+              <div className="flex-1 min-h-0 w-full flex items-end">
+                <div
+                  className={cn(
+                    "w-full rounded-t-md transition-all",
+                    isLast ? "bg-brand-500" : "bg-brand-100",
+                  )}
+                  style={{ height: `${heightPct}%` }}
+                  aria-label={`${point.year}년 ${point.month}월 지출 ${formatShortAmount(point.totalExpense)}`}
+                />
+              </div>
               <span
                 className={cn(
                   "text-[10px] md:text-xs whitespace-nowrap",

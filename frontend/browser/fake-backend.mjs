@@ -491,6 +491,25 @@ const server = createServer(async (request, response) => {
     });
     return;
   }
+  if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/dashboard/stats/monthly-trend`) {
+    const [fromYear, fromMonth] = (requestUrl.searchParams.get("from") ?? "2026-10").split("-").map(Number);
+    const [toYear, toMonth] = (requestUrl.searchParams.get("to") ?? "2026-10").split("-").map(Number);
+    const monthCount = (toYear - fromYear) * 12 + (toMonth - fromMonth) + 1;
+    const points = Array.from({ length: Math.max(monthCount, 0) }, (_, index) => {
+      const monthIndex = fromYear * 12 + (fromMonth - 1) + index;
+      return {
+        year: Math.floor(monthIndex / 12),
+        month: (monthIndex % 12) + 1,
+        totalExpense: 100000 * (index + 1),
+      };
+    });
+    const total = points.reduce((sum, point) => sum + point.totalExpense, 0);
+    sendJson(response, 200, {
+      success: true,
+      data: { points, average: points.length > 0 ? Math.round(total / points.length) : 0 },
+    });
+    return;
+  }
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/dashboard/stats/category-breakdown`) {
     sendJson(response, 200, {
       success: true,
@@ -536,6 +555,10 @@ const server = createServer(async (request, response) => {
         currentPage: 0,
       },
     });
+    return;
+  }
+  if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/recurring-expenses/monthly-total`) {
+    sendJson(response, 200, { success: true, data: 850000 });
     return;
   }
   if (method === "GET" && pathname === `/api/v1/families/${FAMILY_UUID}/recurring-expenses`) {
