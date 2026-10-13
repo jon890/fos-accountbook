@@ -29,7 +29,7 @@ export function getCategoryChartColors(
     const key = normalizeColor(item.color);
     if (key === "" || used.has(key)) continue;
     used.add(key);
-    assigned.set(item.categoryUuid, item.color);
+    assigned.set(item.categoryUuid, item.color.trim());
   }
 
   let cursor = 0;

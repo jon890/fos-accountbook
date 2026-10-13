@@ -250,7 +250,7 @@ interface RecentExpense {
 | 집계 | 요청 인자 | 응답 `data` | 서비스 변환 |
 | --- | --- | --- | --- |
 | 일별 합계 | `year`, `month` | `year`, `month`, `dailyStats: DailyTransactionSummary[]`, `totalIncome`, `totalExpense` | 거래가 있는 날의 날짜 오름차순 배열을 반환한다. |
-| 카테고리 월 분포 | `year`, `month`, `compareWithPrev` | `year`, `month`, `totalExpense`, `items`<br>항목은 `categoryUuid`, `name`, `icon`, `color`, `totalAmount`, `percentage`, `deltaPercent`, `previousAmount` 를 포함한다. | 이름과 아이콘이 null 이면 기본값을 쓰고 색상 null 은 undefined 로 바꾼다. 비율과 전월 대비는 반올림하며 null 전월 대비는 유지한다. `previousAmount` 가 0 이고 이번 달 금액이 있으면 `isNew` 를 참으로 둔다. |
+| 카테고리 월 분포 | `year`, `month`, `compareWithPrev` | `year`, `month`, `totalExpense`, `items`<br>항목은 `categoryUuid`, `name`, `icon`, `color`, `totalAmount`, `percentage`, `deltaPercent`, `previousAmount` 를 포함한다. | 이름과 아이콘이 null 이면 기본값을 쓴다. 색상 null 은 대시보드 분포에서 undefined 로 바꾸고, 분석 분포에서는 null 그대로 둔다(차트 색 배정이 null 을 저장 색 없음으로 읽는다). 비율과 전월 대비는 반올림하며 null 전월 대비는 유지한다. `previousAmount` 가 0 이고 이번 달 금액이 있으면 `isNew` 를 참으로 둔다. |
 | 월별 추이 | `from`, `to` (`YYYY-MM`) | `points: { year, month, totalExpense }[]`, `average` | 없는 달은 0 으로 채운다. 평균은 빈 달도 포함한 요청 개월 수로 다시 계산한다. |
 
 카테고리 항목은 금액 내림차순이다.
