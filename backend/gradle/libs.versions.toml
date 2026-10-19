@@ -23,7 +23,7 @@ lombok = "1.18.48"
 querydsl = "5.1.0"
 
 # Cache
-caffeine = "3.3.0"
+caffeine = "3.3.1"
 
 # Architecture testing
 archunit = "1.5.1"
