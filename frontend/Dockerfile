@@ -1,7 +1,7 @@
 # Multi-stage build for Next.js application
 
 # Stage 1: Install dependencies
-FROM node:22-alpine AS deps
+FROM node:24.22.1-alpine AS deps
 
 RUN corepack enable && corepack prepare pnpm@10.22.0 --activate
 
@@ -11,7 +11,7 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 # Stage 2: Build
-FROM node:22-alpine AS builder
+FROM node:24.22.1-alpine AS builder
 
 RUN corepack enable && corepack prepare pnpm@10.22.0 --activate
 
@@ -31,7 +31,7 @@ ENV SKIP_ENV_VALIDATION=true
 RUN pnpm build
 
 # Stage 3: Runtime
-FROM node:22-alpine AS runner
+FROM node:24.22.1-alpine AS runner
 
 WORKDIR /app
 
