@@ -40,7 +40,7 @@ flowchart LR
 
 ## 로컬 실행
 
-도구 버전은 [`.tool-versions`](.tool-versions) 가 정한다(Node 22, pnpm 10, Java 21).
+도구 버전은 [`.tool-versions`](.tool-versions) 가 정한다(Node 24, pnpm 10, Java 21).
 
 ```bash
 # 1. MySQL (호스트 포트 13306)
