@@ -1,12 +1,12 @@
 [versions]
 # Spring Boot & Framework
-spring-boot = "4.1.1"
+spring-boot = "4.1.2"
 spring-dependency-management = "1.1.7"
 spotless = "8.10.4"
 google-java-format = "1.36.1"
 
 # Database
-mysql-connector = "26.7.0"
+mysql-connector = "26.10.0"
 h2 = "2.5.252"
 
 # Security & JWT
@@ -23,7 +23,7 @@ lombok = "1.18.48"
 querydsl = "5.1.0"
 
 # Cache
-caffeine = "3.3.0"
+caffeine = "3.3.1"
 
 # Architecture testing
 archunit = "1.5.1"
