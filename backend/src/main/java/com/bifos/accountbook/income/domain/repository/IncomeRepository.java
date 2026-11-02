@@ -30,12 +30,12 @@ public interface IncomeRepository {
   /** 가족 UUID와 카테고리 UUID로 수입 조회 */
   List<Income> findByFamilyUuidAndCategoryUuid(CustomUuid familyUuid, CustomUuid categoryUuid);
 
-  /** 가족 UUID와 필터링 조건으로 수입 조회 (페이징) */
+  /** 가족 UUID와 필터링 조건으로 수입 조회 (페이징). 기간은 startDate 이상, endDateExclusive 미만이다. */
   Page<Income> findByFamilyUuidWithFilters(
       CustomUuid familyUuid,
       CustomUuid categoryUuid,
       LocalDateTime startDate,
-      LocalDateTime endDate,
+      LocalDateTime endDateExclusive,
       Pageable pageable);
 
   /** 특정 카테고리의 수입 전체 이력을 다른 카테고리로 이동한다. */
