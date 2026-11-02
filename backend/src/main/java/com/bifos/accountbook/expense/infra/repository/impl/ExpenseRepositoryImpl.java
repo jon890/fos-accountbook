@@ -63,7 +63,7 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
       CustomUuid familyUuid,
       CustomUuid categoryUuid,
       LocalDateTime startDate,
-      LocalDateTime endDate,
+      LocalDateTime endDateExclusive,
       Pageable pageable) {
 
     QExpense expense = QExpense.expense;
@@ -77,7 +77,7 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
                 expense.status.eq(ExpenseStatus.ACTIVE),
                 categoryUuidEq(expense, categoryUuid),
                 dateGoe(expense, startDate),
-                dateLoe(expense, endDate))
+                dateLt(expense, endDateExclusive))
             .orderBy(expense.date.desc(), expense.id.desc())
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
@@ -93,7 +93,7 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
                 expense.status.eq(ExpenseStatus.ACTIVE),
                 categoryUuidEq(expense, categoryUuid),
                 dateGoe(expense, startDate),
-                dateLoe(expense, endDate))
+                dateLt(expense, endDateExclusive))
             .fetchOne();
 
     return new PageImpl<>(expenses, pageable, total != null ? total : 0L);
@@ -111,9 +111,9 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
     return startDate != null ? expense.date.goe(startDate) : null;
   }
 
-  /** 종료 날짜 동적 조건 (<= endDate) null이면 조건 미적용 */
-  private BooleanExpression dateLoe(QExpense expense, LocalDateTime endDate) {
-    return endDate != null ? expense.date.loe(endDate) : null;
+  /** 종료 날짜 동적 조건 (< endDateExclusive) null이면 조건 미적용 */
+  private BooleanExpression dateLt(QExpense expense, LocalDateTime endDateExclusive) {
+    return endDateExclusive != null ? expense.date.lt(endDateExclusive) : null;
   }
 
   @Override

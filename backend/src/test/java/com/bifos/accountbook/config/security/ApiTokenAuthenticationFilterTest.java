@@ -15,6 +15,9 @@ import com.bifos.accountbook.apitoken.application.dto.CreatedApiTokenResponse;
 import com.bifos.accountbook.apitoken.application.service.ApiTokenService;
 import com.bifos.accountbook.apitoken.domain.entity.ApiToken;
 import com.bifos.accountbook.apitoken.infra.repository.jpa.ApiTokenJpaRepository;
+import com.bifos.accountbook.budgetitem.application.dto.BudgetItemRequest;
+import com.bifos.accountbook.budgetitem.application.dto.BudgetItemResponse;
+import com.bifos.accountbook.budgetitem.application.service.BudgetItemService;
 import com.bifos.accountbook.category.domain.entity.Category;
 import com.bifos.accountbook.expense.application.dto.CreateExpenseRequest;
 import com.bifos.accountbook.expense.application.dto.UpdateExpenseRequest;
@@ -31,6 +34,7 @@ import com.bifos.accountbook.shared.value.CustomUuid;
 import com.bifos.accountbook.user.domain.entity.User;
 import com.bifos.accountbook.user.domain.value.UserStatus;
 import java.math.BigDecimal;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,6 +49,8 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 class ApiTokenAuthenticationFilterTest extends AbstractControllerTest {
 
   @Autowired private ApiTokenService apiTokenService;
+
+  @Autowired private BudgetItemService budgetItemService;
 
   @Autowired private ApiTokenJpaRepository apiTokenJpaRepository;
 
@@ -262,6 +268,77 @@ class ApiTokenAuthenticationFilterTest extends AbstractControllerTest {
     assertThat(recurringExpenseRepository.findActiveByUuid(template.getUuid()))
         .as("허용 목록 밖 요청으로 템플릿이 종료되면 안 된다")
         .isPresent();
+  }
+
+  @Test
+  @DisplayName("토큰 주인으로 예산 요약과 예산 항목 목록을 읽고, 예산 항목 쓰기와 단건 조회는 403 A005 이다")
+  void ownerCanReadBudgetButNotWriteIt() throws Exception {
+    BudgetItemResponse item =
+        budgetItemService.createBudgetItem(
+            userA.getUuid(),
+            familyA.getUuid(),
+            new BudgetItemRequest(
+                "식비 묶음", new BigDecimal("300000"), List.of(categoryA.getUuid().getValue())));
+    String familyUrl = "/api/v1/families/" + familyA.getUuid().getValue();
+    String budgetItemsUrl = familyUrl + "/budget-items";
+
+    perform(
+            get(familyUrl + "/dashboard/budget-summary").param("year", "2026").param("month", "10"),
+            tokenA.getToken())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.items[*].budgetItemUuid").value(hasItem(item.getUuid())));
+
+    perform(get(budgetItemsUrl), tokenA.getToken())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data[*].uuid").value(hasItem(item.getUuid())));
+
+    perform(
+            post(budgetItemsUrl)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        new BudgetItemRequest(
+                            "새 항목",
+                            new BigDecimal("1000"),
+                            List.of(categoryA.getUuid().getValue())))),
+            tokenA.getToken())
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("A005"));
+
+    perform(get(budgetItemsUrl + "/" + item.getUuid()), tokenA.getToken())
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("A005"));
+
+    perform(delete(budgetItemsUrl + "/" + item.getUuid()), tokenA.getToken())
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("A005"));
+
+    perform(get(familyUrl + "/dashboard/stats/monthly"), tokenA.getToken())
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("A005"));
+
+    assertThat(budgetItemService.getBudgetItems(userA.getUuid(), familyA.getUuid()))
+        .as("허용 목록 밖 요청으로 예산 항목이 바뀌면 안 된다")
+        .extracting(BudgetItemResponse::getUuid)
+        .containsExactly(item.getUuid());
+  }
+
+  @Test
+  @DisplayName("토큰 주인이 멤버가 아닌 가족의 예산은 읽을 수 없고 403 F003 이다")
+  void otherFamilyBudgetIsRejectedByService() throws Exception {
+    User userB = fixtures.users.user().email("other-budget@test.com").build();
+    Family familyB = fixtures.families.family().owner(userB).build();
+    String familyUrl = "/api/v1/families/" + familyB.getUuid().getValue();
+
+    perform(
+            get(familyUrl + "/dashboard/budget-summary").param("year", "2026").param("month", "10"),
+            tokenA.getToken())
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("F003"));
+
+    perform(get(familyUrl + "/budget-items"), tokenA.getToken())
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("F003"));
   }
 
   @Test

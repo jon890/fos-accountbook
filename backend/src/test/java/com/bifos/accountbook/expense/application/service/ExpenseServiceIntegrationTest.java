@@ -402,4 +402,34 @@ class ExpenseServiceIntegrationTest extends TestFixturesSupport {
     // Then
     assertThat(descriptions).containsExactly("셋째", "둘째", "첫째");
   }
+
+  @Test
+  @DisplayName("종료일 23:59:59 뒤 밀리초 지출은 나오고 다음 날 0시 지출은 나오지 않는다")
+  void getFamilyExpenses_EndDateCoversWholeLastDay() {
+    // Given
+    fixtures
+        .expenses
+        .expense(testFamily, foodCategory)
+        .description("말일 마지막 순간")
+        .date(LocalDateTime.of(2025, 3, 31, 23, 59, 59, 500_000_000))
+        .build();
+    fixtures
+        .expenses
+        .expense(testFamily, foodCategory)
+        .description("다음 달 첫 순간")
+        .date(LocalDateTime.of(2025, 4, 1, 0, 0))
+        .build();
+    ExpenseSearchRequest searchRequest =
+        ExpenseSearchRequest.withDefaults(0, 10, null, "2025-03-01", "2025-03-31");
+
+    // When
+    Page<ExpenseResponse> expenses =
+        expenseService.getFamilyExpenses(testUser.getUuid(), testFamily.getUuid(), searchRequest);
+
+    // Then
+    assertThat(expenses.getContent())
+        .extracting(ExpenseResponse::getDescription)
+        .containsExactly("말일 마지막 순간");
+    assertThat(expenses.getTotalElements()).isEqualTo(1);
+  }
 }
