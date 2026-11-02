@@ -65,7 +65,7 @@ public class IncomeRepositoryImpl implements IncomeRepository {
       CustomUuid familyUuid,
       CustomUuid categoryUuid,
       LocalDateTime startDate,
-      LocalDateTime endDate,
+      LocalDateTime endDateExclusive,
       Pageable pageable) {
 
     QIncome income = QIncome.income;
@@ -79,7 +79,7 @@ public class IncomeRepositoryImpl implements IncomeRepository {
                 income.status.eq(IncomeStatus.ACTIVE),
                 categoryUuidEq(income, categoryUuid),
                 dateGoe(income, startDate),
-                dateLoe(income, endDate))
+                dateLt(income, endDateExclusive))
             .orderBy(income.date.desc(), income.id.desc())
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
@@ -95,7 +95,7 @@ public class IncomeRepositoryImpl implements IncomeRepository {
                 income.status.eq(IncomeStatus.ACTIVE),
                 categoryUuidEq(income, categoryUuid),
                 dateGoe(income, startDate),
-                dateLoe(income, endDate))
+                dateLt(income, endDateExclusive))
             .fetchOne();
 
     return new PageImpl<>(incomes, pageable, total != null ? total : 0L);
@@ -113,9 +113,9 @@ public class IncomeRepositoryImpl implements IncomeRepository {
     return startDate != null ? income.date.goe(startDate) : null;
   }
 
-  /** 종료 날짜 동적 조건 (<= endDate) null이면 조건 미적용 */
-  private BooleanExpression dateLoe(QIncome income, LocalDateTime endDate) {
-    return endDate != null ? income.date.loe(endDate) : null;
+  /** 종료 날짜 동적 조건 (< endDateExclusive) null이면 조건 미적용 */
+  private BooleanExpression dateLt(QIncome income, LocalDateTime endDateExclusive) {
+    return endDateExclusive != null ? income.date.lt(endDateExclusive) : null;
   }
 
   @Override
