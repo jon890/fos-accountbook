@@ -20,6 +20,8 @@ public class ApiTokenAccessPolicy {
       List.of(
           rule("/api/v1/families", "GET"),
           rule("/api/v1/families/{familyUuid}/categories", "GET"),
+          rule("/api/v1/families/{familyUuid}/budget-items", "GET"),
+          rule("/api/v1/families/{familyUuid}/dashboard/budget-summary", "GET"),
           rule("/api/v1/families/{familyUuid}/expenses", "GET", "POST"),
           rule("/api/v1/families/{familyUuid}/expenses/{expenseUuid}", "GET", "PUT", "DELETE"),
           rule("/api/v1/families/{familyUuid}/incomes", "GET", "POST"),
