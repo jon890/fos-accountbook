@@ -183,6 +183,8 @@ API 인증 필터(`JwtAuthenticationFilter`)는 `typ=access` 인 토큰만 인�
 허용 목록 (ADR-B18)
     GET    /families
     GET    /families/{familyUuid}/categories
+    GET    /families/{familyUuid}/budget-items
+    GET    /families/{familyUuid}/dashboard/budget-summary
     GET    POST            /families/{familyUuid}/expenses
     GET    PUT    DELETE   /families/{familyUuid}/expenses/{expenseUuid}
     GET    POST            /families/{familyUuid}/incomes
@@ -192,6 +194,7 @@ API 인증 필터(`JwtAuthenticationFilter`)는 `typ=access` 인 토큰만 인�
 ```
 
 반복 지출은 조회와 수정만 연다. 등록과 종료, `/monthly-total` 은 연동 토큰으로 부를 수 없다.
+예산은 예산 항목 목록과 월 예산 요약 조회만 연다. 예산 항목의 등록, 수정, 삭제, 단건 조회와 다른 `/dashboard/**` 경로는 연동 토큰으로 부를 수 없다.
 지출 응답의 `recurringExpenseUuid` 로 에이전트가 그 지출을 만든 템플릿을 찾는다. 직접 등록한 지출이면 null 이다.
 
 ---

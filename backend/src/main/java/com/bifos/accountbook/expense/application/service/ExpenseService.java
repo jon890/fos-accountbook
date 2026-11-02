@@ -24,6 +24,7 @@ import com.bifos.accountbook.user.application.service.UserService;
 import com.bifos.accountbook.user.domain.entity.User;
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -147,10 +148,11 @@ public class ExpenseService {
       }
     }
 
-    LocalDateTime endDateTime = null;
+    // 종료일 하루 전체를 담도록 다음 날 0시 미만으로 조회한다. 23:59:59 뒤 밀리초 기록도 포함된다.
+    LocalDateTime endDateExclusive = null;
     if (searchRequest.getEndDate() != null && !searchRequest.getEndDate().isEmpty()) {
       try {
-        endDateTime = LocalDateTime.parse(searchRequest.getEndDate() + "T23:59:59");
+        endDateExclusive = LocalDate.parse(searchRequest.getEndDate()).plusDays(1).atStartOfDay();
       } catch (Exception e) {
         log.warn("Invalid endDate format: {}", searchRequest.getEndDate());
       }
@@ -166,7 +168,7 @@ public class ExpenseService {
     // QueryDSL이 null 조건을 자동으로 처리하므로 단일 메서드 호출
     Page<Expense> expenses =
         expenseRepository.findByFamilyUuidWithFilters(
-            familyUuid, categoryUuid, startDateTime, endDateTime, pageable);
+            familyUuid, categoryUuid, startDateTime, endDateExclusive, pageable);
 
     return expenses.map(ExpenseResponse::fromWithoutCategory);
   }

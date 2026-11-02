@@ -28,12 +28,12 @@ public interface ExpenseRepository {
   List<Expense> findByFamilyUuidAndDateBetween(
       CustomUuid familyUuid, LocalDateTime startDate, LocalDateTime endDate);
 
-  /** 가족 UUID와 필터링 조건으로 지출 조회 (페이징) */
+  /** 가족 UUID와 필터링 조건으로 지출 조회 (페이징). 기간은 startDate 이상, endDateExclusive 미만이다. */
   Page<Expense> findByFamilyUuidWithFilters(
       CustomUuid familyUuid,
       CustomUuid categoryUuid,
       LocalDateTime startDate,
-      LocalDateTime endDate,
+      LocalDateTime endDateExclusive,
       Pageable pageable);
 
   /** 가족 UUID로 지출 개수 조회 (삭제되지 않은) */

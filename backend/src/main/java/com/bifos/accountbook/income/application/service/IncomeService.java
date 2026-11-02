@@ -115,7 +115,7 @@ public class IncomeService {
             familyUuid,
             categoryUuid,
             searchRequest.getStartDate(),
-            searchRequest.getEndDate(),
+            searchRequest.getEndDateExclusive(),
             pageable);
 
     // 카테고리 정보를 포함하여 응답 생성

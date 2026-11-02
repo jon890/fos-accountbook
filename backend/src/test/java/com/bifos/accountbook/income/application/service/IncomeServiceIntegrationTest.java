@@ -237,7 +237,7 @@ class IncomeServiceIntegrationTest extends TestFixturesSupport {
             .page(0)
             .size(10)
             .startDate(LocalDateTime.of(2025, 1, 1, 0, 0))
-            .endDate(LocalDateTime.of(2025, 1, 31, 23, 59))
+            .endDateExclusive(LocalDateTime.of(2025, 2, 1, 0, 0))
             .build();
 
     // When
@@ -291,7 +291,7 @@ class IncomeServiceIntegrationTest extends TestFixturesSupport {
         IncomeSearchRequest.builder()
             .page(0)
             .size(10)
-            .endDate(LocalDateTime.of(2025, 1, 31, 23, 59))
+            .endDateExclusive(LocalDateTime.of(2025, 2, 1, 0, 0))
             .build();
 
     // When
@@ -321,7 +321,7 @@ class IncomeServiceIntegrationTest extends TestFixturesSupport {
             .size(10)
             .categoryUuid(sideJobCategory.getUuid().getValue())
             .startDate(LocalDateTime.of(2025, 1, 1, 0, 0))
-            .endDate(LocalDateTime.of(2025, 1, 31, 23, 59))
+            .endDateExclusive(LocalDateTime.of(2025, 2, 1, 0, 0))
             .build();
 
     // When
@@ -388,7 +388,7 @@ class IncomeServiceIntegrationTest extends TestFixturesSupport {
             .page(0)
             .size(10)
             .startDate(LocalDateTime.of(2025, 3, 1, 0, 0))
-            .endDate(LocalDateTime.of(2025, 3, 31, 23, 59))
+            .endDateExclusive(LocalDateTime.of(2025, 4, 1, 0, 0))
             .build();
 
     // When
@@ -431,7 +431,7 @@ class IncomeServiceIntegrationTest extends TestFixturesSupport {
             .size(10)
             .categoryUuid(null)
             .startDate(null)
-            .endDate(null)
+            .endDateExclusive(null)
             .build();
 
     // When
@@ -463,7 +463,7 @@ class IncomeServiceIntegrationTest extends TestFixturesSupport {
       IncomeSearchRequest searchRequest =
           IncomeSearchRequest.builder()
               .startDate(sameTime)
-              .endDate(sameTime.plusDays(1).minusSeconds(1))
+              .endDateExclusive(sameTime.plusDays(1))
               .page(page)
               .size(2)
               .build();
@@ -474,5 +474,35 @@ class IncomeServiceIntegrationTest extends TestFixturesSupport {
 
     // Then
     assertThat(descriptions).containsExactly("셋째", "둘째", "첫째");
+  }
+
+  @Test
+  @DisplayName("종료일 23:59:59 뒤 밀리초 수입은 나오고 다음 날 0시 수입은 나오지 않는다")
+  void getFamilyIncomes_EndDateCoversWholeLastDay() {
+    // Given
+    fixtures
+        .incomes
+        .income(testFamily, salaryCategory)
+        .description("말일 마지막 순간")
+        .date(LocalDateTime.of(2025, 3, 31, 23, 59, 59, 500_000_000))
+        .build();
+    fixtures
+        .incomes
+        .income(testFamily, salaryCategory)
+        .description("다음 달 첫 순간")
+        .date(LocalDateTime.of(2025, 4, 1, 0, 0))
+        .build();
+    IncomeSearchRequest searchRequest =
+        IncomeSearchRequest.withDefaults(0, 10, null, "2025-03-01", "2025-03-31");
+
+    // When
+    Page<IncomeResponse> incomes =
+        incomeService.getFamilyIncomes(testUser.getUuid(), testFamily.getUuid(), searchRequest);
+
+    // Then
+    assertThat(incomes.getContent())
+        .extracting(IncomeResponse::getDescription)
+        .containsExactly("말일 마지막 순간");
+    assertThat(incomes.getTotalElements()).isEqualTo(1);
   }
 }
