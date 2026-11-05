@@ -1,6 +1,6 @@
-# docs-check 오버레이 — fos-accountbook-backend
+# docs-audit 오버레이 — fos-accountbook-backend
 
-공용 코어(`~/.claude/skills/docs-check`)에 fos-accountbook-backend 특화를 주입한다.
+설치된 `docs-audit` 스킬에 fos-accountbook-backend 특화를 주입한다.
 코어에 없는 항목만 채운다 — 6축 정의·Hybrid 실행 모델 등 코어와 겹치는 내용은 반복하지 않는다.
 
 ## 저장소 배치
@@ -13,7 +13,7 @@
 
 ## docs-verifier 전용 에이전트 없음
 
-이 레포에는 `.claude/agents/` 가 없다 — docs-check 전용 검증 에이전트를 억지로 만들지 않는다.
+이 레포에는 `.claude/agents/` 가 없다 — docs-audit 전용 검증 에이전트를 억지로 만들지 않는다.
 코어의 "무거운 의미 검사" 위임은 범용 read-only 에이전트(`oh-my-claudecode:architect` 또는 `verifier`)로 대신한다.
 
 ## docs 구조
@@ -34,7 +34,7 @@ ADR 은 `docs/adr/ADR-BNN-{slug}.md` 파일 하나와 `docs/adr/INDEX.md` 표 �
 
 ```bash
 # cwd: backend
-ls docs/*.md docs/adr/*.md CLAUDE.md .claude/build-with-teams-overlay.md .claude/docs-check-overlay.md .claude/planning-overlay.md
+ls docs/*.md docs/adr/*.md CLAUDE.md .claude/build-with-teams-overlay.md .claude/docs-audit-overlay.md .claude/planning-overlay.md
 ```
 
 ## ADR Index 동기화

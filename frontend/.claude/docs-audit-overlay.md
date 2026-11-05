@@ -1,6 +1,6 @@
-# fos-accountbook docs-check 오버레이
+# fos-accountbook docs-audit 오버레이
 
-공용 코어(`~/.claude/skills/docs-check`)에 fos-accountbook 특화를 주입한다.
+설치된 `docs-audit` 스킬에 fos-accountbook 특화를 주입한다.
 
 ## 저장소 배치
 
