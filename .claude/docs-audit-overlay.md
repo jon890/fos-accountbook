@@ -1,6 +1,6 @@
-# fos-accountbook docs-check 오버레이 (저장소 공통)
+# fos-accountbook docs-audit 오버레이 (저장소 공통)
 
-공용 코어(`~/.claude/skills/docs-check`)에 저장소 공통 규칙을 주입한다.
+설치된 `docs-audit` 스킬에 저장소 공통 규칙을 주입한다.
 하위 프로젝트 문서의 감사 범위는 각 하위 프로젝트 오버레이가 소유한다.
 
 ## 저장소 배치
