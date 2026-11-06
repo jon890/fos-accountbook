@@ -19,7 +19,7 @@
 ```bash
 # cwd: <repo root>
 # 완료된 계획서는 지우므로 사용한 번호는 git 이력에서 찾는다
-bash "$SKILL_DIR/scripts/plan_number.sh" --prefix <접두사> | tail -1
+node "$SKILL_DIR/scripts/plan_number.ts" --prefix <접두사> | tail -1
 gh pr list --state open --json number,headRefName,title --jq '.[] | "\(.headRefName) \(.title)"'
 ```
 
