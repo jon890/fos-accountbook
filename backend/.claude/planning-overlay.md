@@ -61,7 +61,7 @@
 ## 검증
 
 - **critic 패턴 경로**: `backend/.claude/skills/_shared/common-critic-patterns.md` — 이 레포는 파일명이 `common-pitfalls.md` 가 아니라 `common-critic-patterns.md` 이니 혼동 금지.
-- 시드 P1~P7 은 코어 `verify_task.py` 5 패턴과 겹치는 항목이 자동 검출된다. 나머지는 self-check.
+- 시드 P1~P7 은 코어 `verify_task.ts` 5 패턴과 겹치는 항목이 자동 검출된다. 나머지는 self-check.
 - **backend-fos 전용 +α** (같은 파일 "backend-fos" 절): `@Transactional` 경계 누락(BE1), Entity-DTO 노출(BE2), AOP 자기호출 우회(BE3). 엔드포인트·서비스 phase 마다 self-check.
 - **Flyway 마이그레이션이나 엔티티 칸을 바꾸는 phase** 는 「검증」 절에 `backend/scripts/check-migrations-mysql.sh` 를 넣는다.
   테스트는 H2 에서 `ddl-auto: create-drop` 으로 스키마를 만들어 마이그레이션 SQL 을 실행하지 않는다.
@@ -71,7 +71,7 @@
 
 ```bash
 # cwd: <repo root>. tasks/ 는 저장소 루트에 있다
-bash "$SKILL_DIR/scripts/plan_number.sh" --prefix be- | tail -1
+node "$SKILL_DIR/scripts/plan_number.ts" --prefix be- | tail -1
 find backend/docs/adr -maxdepth 1 -name 'ADR-B*.md' | sed -E 's/.*ADR-B([0-9]+)-.*/\1/' | sort -n | tail -1
 gh pr list --state open --json number,headRefName,title --jq '.[] | "\(.headRefName) \(.title)"'
 ```
