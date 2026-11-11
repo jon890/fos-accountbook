@@ -1,7 +1,7 @@
 # fos-accountbook planning 오버레이 (저장소 공통)
 
 공용 코어(`~/.claude/skills/planning`)에 저장소 공통 규칙을 주입한다.
-하위 프로젝트 전용 규칙은 `frontend/.claude/planning-overlay.md`, `backend/.claude/planning-overlay.md` 가 소유한다.
+하위 프로젝트 전용 규칙은 `frontend/.claude/plan-overlay.md`, `backend/.claude/plan-overlay.md` 가 소유한다.
 
 ## 저장소 배치
 

@@ -34,7 +34,7 @@ ADR 은 `docs/adr/ADR-BNN-{slug}.md` 파일 하나와 `docs/adr/INDEX.md` 표 �
 
 ```bash
 # cwd: backend
-ls docs/*.md docs/adr/*.md CLAUDE.md .claude/build-with-teams-overlay.md .claude/docs-audit-overlay.md .claude/planning-overlay.md
+ls docs/*.md docs/adr/*.md CLAUDE.md .claude/implementation-overlay.md .claude/docs-audit-overlay.md .claude/plan-overlay.md
 ```
 
 ## ADR Index 동기화

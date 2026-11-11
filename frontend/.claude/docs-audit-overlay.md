@@ -20,13 +20,13 @@ ls docs/*.md docs/adr/*.md
 ```
 
 - 백엔드 ADR(`backend/docs/adr/INDEX.md`)과 루트 ADR(`docs/adr/INDEX.md`)은 이 오버레이의 감사 범위가 아니다.
-- 문서 간 책임 분리 표와 ADR 자명성 점검은 `planning-overlay.md` 의 「docs 컨벤션」 이 소유한다.
+- 문서 간 책임 분리 표와 ADR 자명성 점검은 `plan-overlay.md` 의 「docs 컨벤션」 이 소유한다.
 
 ## ADR 구조
 
 - 결정 하나당 `docs/adr/ADR-FNN-{slug}.md` 파일 하나를 둔다.
 - `docs/adr/INDEX.md` 표에 번호, 결정, 상태를 한 줄로 기록한다.
-- 파일과 목록의 작성 규칙은 `planning-overlay.md` 의 「ADR 표기 중 이 레포에서만 다른 것」 이 소유한다.
+- 파일과 목록의 작성 규칙은 `plan-overlay.md` 의 「ADR 표기 중 이 레포에서만 다른 것」 이 소유한다.
 
 ## ADR Index 동기화 검증
 
