@@ -105,4 +105,4 @@ ADR 번호는 `ADR-B` 접두어(backend 전용, 프론트엔드 `fos-accountbook
 
 ## 브랜치, 커밋, 핸드오프
 
-브랜치, 커밋, 핸드오프는 루트 `.claude/planning-overlay.md` 를 따른다.
+브랜치, 커밋, 핸드오프는 루트 `.claude/plan-overlay.md` 를 따른다.

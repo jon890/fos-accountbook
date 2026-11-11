@@ -17,7 +17,7 @@
 
 ## 브랜치 규칙
 
-브랜치와 PR 은 루트 `.claude/build-with-teams-overlay.md` 를 따른다.
+브랜치와 PR 은 루트 `.claude/implementation-overlay.md` 를 따른다.
 
 ## 에이전트 이름
 

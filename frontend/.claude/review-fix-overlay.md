@@ -10,7 +10,7 @@
 
 ## 검증 명령
 
-`build-with-teams-overlay.md` 의 「통합 검증 명령」 을 쓴다.
+`implementation-overlay.md` 의 「통합 검증 명령」 을 쓴다.
 봇 심각도 표기는 루트 `.claude/review-fix-overlay.md` 를 따른다.
 
 ## 학습 누적 위치
