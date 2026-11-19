@@ -38,6 +38,14 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# 실행에는 Node.js만 필요하므로 패키지 도구와 캐시 제거
+RUN rm -rf /usr/local/lib/node_modules/npm \
+    /usr/local/lib/node_modules/corepack \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+    /usr/local/bin/pnpm /usr/local/bin/pnpx \
+    /usr/local/bin/yarn /usr/local/bin/yarnpkg \
+    /root/.cache/node/corepack /root/.npm
+
 # 비루트 사용자 생성
 RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
 
