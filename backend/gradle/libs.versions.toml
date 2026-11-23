@@ -13,7 +13,7 @@ h2 = "2.5.252"
 jjwt = "0.13.0"
 
 # Logging & Monitoring
-p6spy = "2.0.1"
+p6spy = "2.1.0"
 
 # API Documentation
 springdoc-openapi = "3.2.0"
